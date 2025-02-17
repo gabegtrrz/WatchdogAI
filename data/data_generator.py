@@ -22,6 +22,13 @@ def generate_blockchain_data(num_transactions = 1000):
         # input 12 procurement officer names as list
     ]
 
+    # for training data, procurement methods shall be a dictionary that applies common procurement methods
+    # appropriately for each item. item_list must be done first
+    procurement_methods = [
+        'Competitive Bidding', 'Limited Source Bidding', 
+        'Negotiated Procurement', 'Direct Contracting'
+    ]
+
     for i in range(num_transactions):
         # timestamp object converted into str for immutability
         timestamp = fake.date_time_between(start_date='-1y',end_date='now').strftime('%Y-%m-%d %H:%M:%S')
@@ -35,7 +42,41 @@ def generate_blockchain_data(num_transactions = 1000):
         quantity = random.randint(1000, 10000)
         supplier = fake.company()
         procurement_officer = random.choice(procurement_officers)
+
+
+
         # procurement_method =
+        # for training data, procurement methods shall be a dictionary that applies common procurement methods
+        # appropriately for each item. item_list must be done first
+        # don't forget to add procurement_method to hash string and data.append()
+
+
+        # HASHING
+
+        # don't forget to add procurement_method to hash string
+        hash_string = f"{timestamp}{item_name}{quantity}
+        {unit_price}{supplier}{procurement_officer}
+        {transaction_date}"
+        
+
+        current_hash = hashlib.sha256(hash_string.encode()).hexdigest
+        # current_hash is made into the hexadecimal hash from the hash_string
+
+        # don't forget to add procurement_method
+        data.append([
+            i+1, item_name, quantity, 
+            unit_price, supplier, procurement_officer, 
+            transaction_date, previous_hash, current_hash,
+        ])
+
+        # setting up the previous hash for next iteration
+        previous_hash = current_hash
+
+    dataframe = pd.DataFrame(data, columns= [
+        'transaction id', 'item_name', 'quantity', 'unit_price', 'supplier', ' procurement_officer','transaction_date', 'previous_hash', 'current_hash'])
+    
+    return dataframe
+
 
 
 
