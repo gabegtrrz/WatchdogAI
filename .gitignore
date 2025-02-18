@@ -1,0 +1,8 @@
+# Ignore log files
+*.log
+
+# Ignore environment variables
+.env
+
+# Ignore env
+watchdogai_env/

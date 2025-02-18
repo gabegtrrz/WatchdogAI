@@ -25,9 +25,8 @@ def generate_blockchain_data(num_transactions = 1000):
     procurement_officers = [
         # input 12 procurement officer names as list
         # e.g.
-        John Dela Cruz,
-
-    ]
+        # John Dela Cruz,
+        ]
 
     # for training data, procurement methods shall be a dictionary that applies common procurement methods
     # appropriately for each item. item_list must be done first
