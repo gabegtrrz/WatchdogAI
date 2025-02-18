@@ -23,4 +23,12 @@ class TestDataGen(unittest.TestCase):
                 "current_hash",
             ],
         )  # Check column names
+
         self.assertEqual(df["previous_hash"][0], "0")  # Check genesis block
+    
+    def test_blockchain_data_types(self):
+        df = generate_blockchain_data(10)
+        self.assertEqual(df['quanitity'].dtype, 'int64')  # Check if quantity is integer
+        self.assertEqual(df['unit_price'], 'float64')
+    
+    ###
