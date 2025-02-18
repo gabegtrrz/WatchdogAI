@@ -3,7 +3,6 @@ import numpy as np
 import hashlib
 import random
 from faker import Faker
-from datetime import datetime, timedelta
 
 fake = Faker()
 
@@ -11,15 +10,23 @@ def generate_blockchain_data(num_transactions = 1000):
     data = []
     previous_hash = '0' # Genesis Block
 
-    item_list = ['Science Textbook for Grade 10', 'Acer Aspire 5 A515-56G-551P', ]
+    item_list = [
+        'Science Textbook for Grade 10', 'Acer Aspire 5 A515-56G-551P',
+
+        ]
+    
     base_prices = {
         'item 1': 12345,
         'item 2': 123
     }
+
     volatility = 0.10
 
     procurement_officers = [
         # input 12 procurement officer names as list
+        # e.g.
+        John Dela Cruz,
+
     ]
 
     # for training data, procurement methods shall be a dictionary that applies common procurement methods
