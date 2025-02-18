@@ -9,7 +9,7 @@ def generate_realtime_price_data (items, numdays=365):
 
     base_prices = {
         # base prices per item
-        # EXAMPLES ONLY
+        # BELOW ARE ONLY EXAMPLES 
         'Laptop': 800,
         'Projector': 300,
         'Books': 20,
@@ -17,4 +17,4 @@ def generate_realtime_price_data (items, numdays=365):
         'Printer': 200
     }
 
-
+    
