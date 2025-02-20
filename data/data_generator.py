@@ -11,14 +11,14 @@ def generate_blockchain_data(num_transactions = 1000):
     previous_hash = '0' # Genesis Block
 
     item_list = [
-        'Physics: Student book', 'Acer Aspire 5 A515-56G-551P', 'Casio fx-991EX Scientific Calculator', 'Canon PIXMA G3010 Printer',
+        'Physics Book', 'Acer Aspire 5 A515-56G-551P', 'Casio fx-991EX Scientific Calculator', 'Canon PIXMA G3010 Printer',
         'Magnifying Glass with LED Light (3X & 10X Zoom)', 'Modern Periodic Table Of The Elements (Size 12X17.5 Inches)', 'Magnetic Whiteboard 30 x 40cm',
-        'VEVOR Rotating World Globe with Stand 13 in/330.2 mm Diameter', 'Exam Gloves Box/100',
+        'VEVOR Rotating World Globe with Stand 13 in/330.2 mm Diameter', 'Nitrile Exam Gloves (Box of 100)',
         'Uvex Ultravision Goggles'
         ]
     
     base_prices = {
-        'Physics:Student book': 11393.02,
+        'Physics Book': 11393.02,
         'Acer Aspire 5 A515-56G-551P': 36997,
         'Casio fx-991EX Scientific Calculator': 1259.46,
         'Canon PIXMA G3010 Printer': 8795,
@@ -26,7 +26,7 @@ def generate_blockchain_data(num_transactions = 1000):
         'Modern Periodic Table Of The Elements (Size 12X17.5 Inches)': 38,
         'Magnetic Whiteboard 30 x 40cm': 149,
         'VEVOR Rotating World Globe with Stand 13 in/330.2 mm Diameter': 2757.58,
-        'Exam Gloves Box/100': 571.96,
+        'Nitrile Exam Gloves (Box of 100)': 571.96,
         'Uvex Ultravision Goggles': 41794.49
     }
 
