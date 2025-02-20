@@ -33,17 +33,37 @@ def generate_blockchain_data(num_transactions = 1000):
     volatility = 0.10
 
     procurement_officers = [
-        # input 12 procurement officer names as list
-        # e.g.
-        # John Dela Cruz,
+        'Casey Hernandez',
+        'Alex Rivera',
+        'James Patrick Mendoza',
+        'Morgan Cruz',
+        'Angela Ramirez',
+        'Taylor Martinez',
+        'Sophia Christine Navarro',
+        'Angela Renee Mendoza',
+        'Luke Andrew Navarro',
+        'Jamie Thompson',
+        'Christine Bautista',
         ]
 
     # for training data, procurement methods shall be a dictionary that applies common procurement methods
     # appropriately for each item. item_list must be done first
-    procurement_methods = [
-        'Competitive Bidding', 'Limited Source Bidding', 
-        'Negotiated Procurement', 'Direct Contracting'
-    ]
+    # procurement_methods = [
+    #     'Competitive Bidding', 'Limited Source Bidding', 
+    #     'Negotiated Procurement', 'Direct Contracting'
+    # ]
+
+    procurement_methods = {
+        "Competitive Bidding": 
+        {"items": ["Laptop", "Projector", "Printer", "Books"], "frequency": 0.6}, # Most common
+        "Limited Source Bidding": 
+        {"items": ["Software License"], "frequency": 0.2},  # Specialized items
+        "Negotiated Procurement": 
+        {"items": ["Laptop", "Printer"], "frequency": 0.15},  # Urgent/special cases
+        "Direct Contracting": 
+        {"items": ["Software License"], "frequency": 0.05}  # Unique/emergency
+    }
+
 
     for i in range(num_transactions):
         # timestamp object converted into str for immutability
@@ -61,7 +81,8 @@ def generate_blockchain_data(num_transactions = 1000):
 
 
 
-        # procurement_method =
+        #procurement_method =
+        
         # for training data, procurement methods shall be a dictionary that applies common procurement methods
         # appropriately for each item. item_list must be done first
         # don't forget to add procurement_method to hash string and data.append()
