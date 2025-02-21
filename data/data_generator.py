@@ -36,7 +36,7 @@ def generate_blockchain_data(num_transactions = 1000):
     "AmScope M150B-LED Replacement LED Bulb": 1000,
     "Beaker (1000ml)": 1250,
     'Calibration Service (for high-precision balance)': 20000,
-    "Replacement Xenon Flash Lamp for Do PerkinElmer])": 5000,
+    "Replacement Xenon Flash Lamp for Do PerkinElmer": 5000,
     "Sulfuric Acid (H2SO4) - 1M (1L)": 1500
     }
 
@@ -75,7 +75,7 @@ def generate_blockchain_data(num_transactions = 1000):
         "frequency": 0.2
     },
     "Direct Contracting": {
-        "items": ['Calibration Service (for high-precision balance)', "Replacement Xenon Flash Lamp for Do PerkinElmer])", "Sulfuric Acid (H2SO4) - 1M (1L)"], 
+        "items": ['Calibration Service (for high-precision balance)', "Replacement Xenon Flash Lamp for Do PerkinElmer", "Sulfuric Acid (H2SO4) - 1M (1L)"], 
         "frequency": 0.1
     }
     }
