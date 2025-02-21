@@ -69,11 +69,6 @@ def generate_blockchain_data(num_transactions = 1000):
         # timestamp object converted into str for immutability
         timestamp = fake.date_time_between(start_date='-1y',end_date='now').strftime('%Y-%m-%d %H:%M:%S')
         transaction_date = timestamp.split(' ')[0]
-        item_name = random.choice(item_list)
-
-        # price based on base_prices multiplied to set volatility
-        unit_price = base_prices[item_name] * (1 + random.uniform(-volatility, volatility))
-        unit_price = round(unit_price, 2)
 
         quantity = random.randint(1000, 10000)
         supplier = fake.company()
@@ -81,36 +76,50 @@ def generate_blockchain_data(num_transactions = 1000):
 
 
 
-        #procurement_method =
+        ### procurement_method
         
-        # for training data, procurement methods shall be a dictionary that applies common procurement methods
-        # appropriately for each item. item_list must be done first
-        # don't forget to add procurement_method to hash string and data.append()
+        # Procurement Method selection
+        methods = list(procurement_methods.keys())
+        frequencies = [procurement_methods[method]['frequency'] for method in methods]
+        procurement_method = random.choices(methods, weights=frequencies)[0]
+
+        ### Item selection
+        available_items = procurement_methods[procurement_method]["items"]
+        item_name = random.choice(available_items)
+
+        ### Volatility based on procurement method
+        if procurement_method == "Negotiated Procurement" or procurement_method == "Direct Contracting":
+            volatility = 0.15 # Higher Volatility for these methods
+        else:
+            volatility = 0.10 #Standard Volatility
+        
+        ### Price based on base_prices multiplied to set volatility
+        unit_price = base_prices[item_name] * (1 + random.uniform(-volatility, volatility))
+        unit_price = round(unit_price, 2)
 
 
-        # HASHING
-
-        # don't forget to add procurement_method to hash string
+        ### HASHING
         hash_string = f"{timestamp}{item_name}{quantity}
-        {unit_price}{supplier}{procurement_officer}
+        {unit_price}{procurement_method}{supplier}{procurement_officer}
         {transaction_date}"
         
 
         current_hash = hashlib.sha256(hash_string.encode()).hexdigest
         # current_hash is made into the hexadecimal hash from the hash_string
 
-        # don't forget to add procurement_method
+        
         data.append([
             i+1, item_name, quantity, 
-            unit_price, supplier, procurement_officer, 
+            unit_price, procurement_method, supplier, procurement_officer, 
             transaction_date, previous_hash, current_hash,
         ])
 
         # setting up the previous hash for next iteration
         previous_hash = current_hash
 
+    # !!! update columns !!!
     dataframe = pd.DataFrame(data, columns= [
-        'transaction id', 'item_name', 'quantity', 'unit_price', 'supplier', ' procurement_officer','transaction_date', 'previous_hash', 'current_hash'])
+        'transaction id', 'item_name', 'quantity', 'unit_price', 'procurement_method', 'supplier', 'procurement_officer','transaction_date', 'previous_hash', 'current_hash'])
     
     return dataframe
 
