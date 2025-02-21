@@ -17,7 +17,8 @@ class TestDataGen(unittest.TestCase):
                 "quantity",
                 "unit_price",
                 "supplier",
-                " procurement_officer",
+                'procurement_method',
+                "procurement_officer",
                 "transaction_date",
                 "previous_hash",
                 "current_hash",
@@ -29,6 +30,6 @@ class TestDataGen(unittest.TestCase):
     def test_blockchain_data_types(self):
         df = generate_blockchain_data(10)
         self.assertEqual(df['quanitity'].dtype, 'int64')  # Check if quantity is integer
-        self.assertEqual(df['unit_price'], 'float64')
+        self.assertEqual(df['unit_price'], 'float64')   # Check if quantity is float
     
     ###

@@ -9,26 +9,37 @@ fake = Faker()
 def generate_blockchain_data(num_transactions = 1000):
     data = []
     previous_hash = '0' # Genesis Block
-
-    item_list = [
-        'Physics: Student book', 'Acer Aspire 5 A515-56G-551P', 'Casio fx-991EX Scientific Calculator', 'Canon PIXMA G3010 Printer',
-        'Magnifying Glass with LED Light (3X & 10X Zoom)', 'Modern Periodic Table Of The Elements (Size 12X17.5 Inches)', 'Magnetic Whiteboard 30 x 40cm',
-        'VEVOR Rotating World Globe with Stand 13 in/330.2 mm Diameter', 'Exam Gloves Box/100',
-        'Uvex Ultravision Goggles'
-        ]
     
-    base_prices = {
-        'Physics: Student book': 11393.02,
-        'Acer Aspire 5 A515-56G-551P': 36997,
-        'Casio fx-991EX Scientific Calculator': 1259.46,
-        'Canon PIXMA G3010 Printer': 8795,
-        'Magnifying Glass with LED Light (3X & 10X Zoom)': 556.86,
-        'Modern Periodic Table Of The Elements (Size 12X17.5 Inches)': 38,
-        'Magnetic Whiteboard 30 x 40cm': 149,
-        'VEVOR Rotating World Globe with Stand 13 in/330.2 mm Diameter': 2757.58,
-        'Exam Gloves Box/100': 571.96,
-        'Uvex Ultravision Goggles': 41794.49
+    
+    base_prices = {  # UPDATE THESE WITH REAL VALUES!
+    "Compound Microscope (1000x)": 15000,
+    "Refracting Telescope (70mm)": 8000,
+    "Beaker (50ml)": 400,
+    "Beaker (100ml)": 500,
+    "Beaker (250ml)": 600,
+    "Beaker (500ml)": 750,
+    "Test Tube (10ml)": 250,
+    "Test Tube (20ml)": 350,
+    "Bunsen Burner": 2000,
+    "Triple Beam Balance": 5000,
+    "Microscope Slides (box of 50)": 500,
+    "Microscope Coverslips (box of 100)": 500,
+    "Dissecting Kit (basic)": 2000,
+    "Sodium Chloride (NaCl) - Solid (1kg)": 750,
+    "Hydrochloric Acid (HCl) - 1M (1L)": 1000,
+    "Lab Manual - Grade 10 Science": 1200,
+    "Reflecting Telescope (150mm)": 30000,
+    "Digital Spectrophotometer": 75000,
+    "Data Analysis Software (Logger Pro)": 15000,
+    "High-Precision Balance": 25000,
+    "Potassium Iodide (KI) - Solid (500g)": 3000,
+    "AmScope M150B-LED Replacement LED Bulb": 1000,
+    "Beaker (1000ml)": 1250,
+    'Calibration Service (for high-precision balance)': 20000,
+    "Replacement Xenon Flash Lamp for Do PerkinElmer])": 5000,
+    "Sulfuric Acid (H2SO4) - 1M (1L)": 1500
     }
+
 
     volatility = 0.10
 
@@ -47,21 +58,26 @@ def generate_blockchain_data(num_transactions = 1000):
         ]
 
     # for training data, procurement methods shall be a dictionary that applies common procurement methods
-    # appropriately for each item. item_list must be done first
-    # procurement_methods = [
-    #     'Competitive Bidding', 'Limited Source Bidding', 
-    #     'Negotiated Procurement', 'Direct Contracting'
-    # ]
+    # appropriately for each item.
 
+    # need to edit this below: update the item values accordingly
     procurement_methods = {
-        "Competitive Bidding": 
-        {"items": ["Laptop", "Projector", "Printer", "Books"], "frequency": 0.6}, # Most common
-        "Limited Source Bidding": 
-        {"items": ["Software License"], "frequency": 0.2},  # Specialized items
-        "Negotiated Procurement": 
-        {"items": ["Laptop", "Printer"], "frequency": 0.15},  # Urgent/special cases
-        "Direct Contracting": 
-        {"items": ["Software License"], "frequency": 0.05}  # Unique/emergency
+    "Competitive Bidding": {
+        "items": ["Compound Microscope (1000x)", "Refracting Telescope (70mm)", "Beaker (50ml)", "Beaker (100ml)", "Beaker (250ml)", "Beaker (500ml)", "Test Tube (10ml)", "Test Tube (20ml)", "Bunsen Burner", "Triple Beam Balance", "Microscope Slides (box of 50)", "Microscope Coverslips (box of 100)", "Dissecting Kit (basic)", "Sodium Chloride (NaCl) - Solid (1kg)", "Hydrochloric Acid (HCl) - 1M (1L)", "Lab Manual - Grade 10 Science"],
+        "frequency": 0.5
+    },
+    "Limited Source Bidding": {
+        "items": ["Reflecting Telescope (150mm)", "Digital Spectrophotometer", "Data Analysis Software (Logger Pro)", "High-Precision Balance"],
+        "frequency": 0.2
+    },
+    "Negotiated Procurement": {
+        "items": ["Potassium Iodide (KI) - Solid (500g)", "AmScope M150B-LED Replacement LED Bulb", "Beaker (1000ml)"],
+        "frequency": 0.2
+    },
+    "Direct Contracting": {
+        "items": ['Calibration Service (for high-precision balance)', "Replacement Xenon Flash Lamp for Do PerkinElmer])", "Sulfuric Acid (H2SO4) - 1M (1L)"], 
+        "frequency": 0.1
+    }
     }
 
 
