@@ -1,6 +1,7 @@
 import unittest
 import pandas as pd
 from data_generator import generate_blockchain_data
+from realtime_data import generate_realtime_price_data
 
 
 class TestDataGen(unittest.TestCase):
@@ -30,6 +31,9 @@ class TestDataGen(unittest.TestCase):
     def test_blockchain_data_types(self):
         df = generate_blockchain_data(10)
         self.assertEqual(df['quanitity'].dtype, 'int64')  # Check if quantity is integer
-        self.assertEqual(df['unit_price'], 'float64')   # Check if quantity is float
+        self.assertEqual(df['unit_price'].dtype, 'float64')   # Check if quantity is float
+        df['transaction_date'] =pd.to_datetime(df['transaction_date'], format='%Y-%m-%d') # Converts the column to datetime64
+        self.assertEqual(df['transaction_date'].dtype, 'datetime64[ns]')
     
-    ###
+    def test_realtime_basic(self):
+        df = generate_realtime_price_data ()
