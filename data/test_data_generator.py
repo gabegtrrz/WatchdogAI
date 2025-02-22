@@ -5,7 +5,7 @@ from realtime_data import generate_realtime_price_data
 
 
 class TestDataGen(unittest.TestCase):
-
+    
     def test_blockchain_data_basic(self):
         df = generate_blockchain_data(100)
         self.assertIsInstance(df, pd.DataFrame)  # Check if it's a DataFrame
@@ -35,5 +35,10 @@ class TestDataGen(unittest.TestCase):
         df['transaction_date'] =pd.to_datetime(df['transaction_date'], format='%Y-%m-%d') # Converts the column to datetime64
         self.assertEqual(df['transaction_date'].dtype, 'datetime64[ns]')
     
-    def test_realtime_basic(self):
+    def test_realtime__price_data_basic(self):
         df = generate_realtime_price_data ()
+        self.assertIsInstance(df, pd.DataFrame) #Checking if the output of realtime script is a pd.Dtaframe
+        self.assertGreater(df['unit_price'], 0) # Checking that the prices are non-zero or negative
+
+    def test_realtime_price_data_types(self):
+        df = 
