@@ -120,22 +120,22 @@ def generate_blockchain_data(num_transactions = 1000):
         {transaction_date}"
         
 
-        current_hash = hashlib.sha256(hash_string.encode()).hexdigest
-        # current_hash is made into the hexadecimal hash from the hash_string
+        block_hash = hashlib.sha256(hash_string.encode()).hexdigest
+        # block_hash is made into the hexadecimal hash from the hash_string
 
         
         data.append([
             i+1, item_name, quantity, 
             unit_price, procurement_method, supplier, procurement_officer, 
-            transaction_date, previous_hash, current_hash,
+            transaction_date, previous_hash, block_hash,
         ])
 
         # setting up the previous hash for next iteration
-        previous_hash = current_hash
+        previous_hash = block_hash
 
     # !!! update columns !!!
     dataframe = pd.DataFrame(data, columns= [
-        'transaction id', 'item_name', 'quantity', 'unit_price', 'procurement_method', 'supplier', 'procurement_officer','transaction_date', 'previous_hash', 'current_hash'])
+        'transaction id', 'item_name', 'quantity', 'unit_price', 'procurement_method', 'supplier', 'procurement_officer','transaction_date', 'previous_hash', 'block_hash'])
     
     return dataframe
 

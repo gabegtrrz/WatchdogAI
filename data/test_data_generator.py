@@ -21,7 +21,7 @@ class TestDataGen(unittest.TestCase):
                 "procurement_officer",
                 "transaction_date",
                 "previous_hash",
-                "current_hash",
+                "block_hash",
             ],
         )  # Check column names
 
