@@ -11,10 +11,17 @@ def generate_blockchain_data(num_transactions = 1000):
     previous_hash = '0' # Genesis Block
 
     item_list = [
-        'Physics: Student book', 'Acer Aspire 5 A515-56G-551P', 'Casio fx-991EX Scientific Calculator', 'Canon PIXMA G3010 Printer',
-        'Magnifying Glass with LED Light (3X & 10X Zoom)', 'Modern Periodic Table Of The Elements (Size 12X17.5 Inches)',
-        'Magnetic Whiteboard 30 x 40cm', 'VEVOR Rotating World Globe with Stand 13 in/330.2 mm Diameter', 'Exam Gloves Box/100',
-        'Uvex Ultravision Goggles'
+        "Compound Microscope (1000x)", "Refracting Telescope (70mm)", "Beaker (50ml)",
+        "Beaker (100ml)", "Beaker (250ml)", "Beaker (500ml)", "Test Tube (10ml)",
+        "Test Tube (20ml)", "Bunsen Burner", "Triple Beam Balance",
+        "Microscope Slides (box of 50)", "Microscope Coverslips (box of 100)",
+        "Dissecting Kit (basic)", "Sodium Chloride (NaCl) - Solid (1kg)",
+        "Hydrochloric Acid (HCl) - 1M (1L)", "Lab Manual - Grade 10 Science",
+        "Reflecting Telescope (150mm)", "Digital Spectrophotometer", "High-Precision Balance",
+        "Potassium Iodide (KI) - Solid (500g)",
+        "AmScope M150B-LED Replacement LED Bulb", "Beaker (1000ml)",
+        "Replacement Xenon Flash Lamp for Do PerkinElmer])",
+        "Sulfuric Acid (H2SO4) - 1M (1L)"
         ]
     
     base_prices = {
@@ -36,12 +43,10 @@ def generate_blockchain_data(num_transactions = 1000):
         "Lab Manual - Grade 10 Science": 333.30,
         "Reflecting Telescope (150mm)": 20255.87,
         "Digital Spectrophotometer": 18519.60,
-        "Data Analysis Software (Logger Pro)": 15000,####
         "High-Precision Balance": 15915,
         "Potassium Iodide (KI) - Solid (500g)": 1661,
         "AmScope M150B-LED Replacement LED Bulb": 693.93,
         "Beaker (1000ml)": 2044,
-        "Calibration Service (for high-precision balance)": 20000, #####
         "Replacement Xenon Flash Lamp for Do PerkinElmer])": 2893.78,
         "Sulfuric Acid (H2SO4) - 1M (1L)": 1302
     }
