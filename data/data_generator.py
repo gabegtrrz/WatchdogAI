@@ -10,34 +10,34 @@ def generate_blockchain_data(num_transactions = 1000):
     data = []
     previous_hash = '0' # Genesis Block
     
-    
+
     base_prices = {  # UPDATE THESE WITH REAL VALUES!
-    "Compound Microscope (1000x)": 15000,
-    "Refracting Telescope (70mm)": 8000,
-    "Beaker (50ml)": 400,
-    "Beaker (100ml)": 500,
-    "Beaker (250ml)": 600,
-    "Beaker (500ml)": 750,
-    "Test Tube (10ml)": 250,
-    "Test Tube (20ml)": 350,
-    "Bunsen Burner": 2000,
-    "Triple Beam Balance": 5000,
-    "Microscope Slides (box of 50)": 500,
-    "Microscope Coverslips (box of 100)": 500,
-    "Dissecting Kit (basic)": 2000,
-    "Sodium Chloride (NaCl) - Solid (1kg)": 750,
-    "Hydrochloric Acid (HCl) - 1M (1L)": 1000,
-    "Lab Manual - Grade 10 Science": 1200,
-    "Reflecting Telescope (150mm)": 30000,
-    "Digital Spectrophotometer": 75000,
-    "Data Analysis Software (Logger Pro)": 15000,
-    "High-Precision Balance": 25000,
-    "Potassium Iodide (KI) - Solid (500g)": 3000,
-    "AmScope M150B-LED Replacement LED Bulb": 1000,
-    "Beaker (1000ml)": 1250,
-    'Calibration Service (for high-precision balance)': 20000,
-    "Replacement Xenon Flash Lamp for Do PerkinElmer": 5000,
-    "Sulfuric Acid (H2SO4) - 1M (1L)": 1500
+        "Compound Microscope (1000x)": 121409.38,
+        "Refracting Telescope (70mm)": 5207.81,
+        "Beaker (50ml)": 161.00,
+        "Beaker (100ml)": 182.00,
+        "Beaker (250ml)": 238.00,
+        "Beaker (500ml)": 375.00,
+        "Test Tube (10ml)": 19.00,
+        "Test Tube (20ml)": 25.00,
+        "Bunsen Burner": 334.62,
+        "Triple Beam Balance": 2989.00,
+        "Microscope Slides (box of 50)": 489.01,
+        "Microscope Coverslips (box of 100)": 7520.34,
+        "Dissecting Kit (basic)": 630.79,
+        "Sodium Chloride (NaCl) - Solid (1kg)": 2700,
+        "Hydrochloric Acid (HCl) - 1M (1L)": 1475.13,
+        "Lab Manual - Grade 10 Science": 333.30,
+        "Reflecting Telescope (150mm)": 20255.87,
+        "Digital Spectrophotometer": 18519.60,
+        "Data Analysis Software (Logger Pro)": 15000,####
+        "High-Precision Balance": 15915,
+        "Potassium Iodide (KI) - Solid (500g)": 1661,
+        "AmScope M150B-LED Replacement LED Bulb": 693.93,
+        "Beaker (1000ml)": 2044,
+        "Calibration Service (for high-precision balance)": 20000, #####
+        "Replacement Xenon Flash Lamp for Do PerkinElmer])": 2893.78,
+        "Sulfuric Acid (H2SO4) - 1M (1L)": 1302
     }
 
 
