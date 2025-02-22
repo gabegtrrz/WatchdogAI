@@ -10,9 +10,9 @@ def generate_blockchain_data(num_transactions = 1000):
     data = []
     previous_hash = '0' # Genesis Block
     
-    
+
     base_prices = {  # UPDATE THESE WITH REAL VALUES!
-    "Compound Microscope (1000x)": 121409.38,
+        "Compound Microscope (1000x)": 121409.38,
         "Refracting Telescope (70mm)": 5207.81,
         "Beaker (50ml)": 161.00,
         "Beaker (100ml)": 182.00,
