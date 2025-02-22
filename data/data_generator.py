@@ -92,7 +92,7 @@ def generate_blockchain_data(num_transactions = 1000):
 
 
 
-        ### procurement_method
+        ### Procurement_method
         
         # Procurement Method selection
         methods = list(procurement_methods.keys())

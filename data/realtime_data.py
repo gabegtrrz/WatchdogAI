@@ -7,6 +7,7 @@ def generate_realtime_price_data (items, numdays=365):
     price_data = []
     start_date = datetime.now() - timedelta(days=numdays)
 
+    items = [] # add the items here bro from data_generator
     base_prices = {
         # base prices per item
         # BELOW ARE ONLY EXAMPLES 
