@@ -22,8 +22,6 @@ def generate_realtime_price_data (items, numdays=365):
         ]
     
     base_prices = {
-        # base prices per item
-        # BELOW ARE ONLY EXAMPLES 
         "Compound Microscope (1000x)": 121409.38,
         "Refracting Telescope (70mm)": 5207.81,
         "Beaker (50ml)": 161.00,
