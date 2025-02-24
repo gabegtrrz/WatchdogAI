@@ -30,12 +30,10 @@ def generate_blockchain_data(num_transactions = 1000):
         "Lab Manual - Grade 10 Science": 333.30,
         "Reflecting Telescope (150mm)": 20255.87,
         "Digital Spectrophotometer": 18519.60,
-        "Data Analysis Software (Logger Pro)": 15000,####
         "High-Precision Balance": 15915,
         "Potassium Iodide (KI) - Solid (500g)": 1661,
         "AmScope M150B-LED Replacement LED Bulb": 693.93,
         "Beaker (1000ml)": 2044,
-        "Calibration Service (for high-precision balance)": 20000, #####
         "Replacement Xenon Flash Lamp for Do PerkinElmer])": 2893.78,
         "Sulfuric Acid (H2SO4) - 1M (1L)": 1302
     }
