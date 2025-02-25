@@ -4,8 +4,6 @@ import random
 from datetime import datetime, timedelta
 
 def generate_realtime_price_data (items, numdays=365):
-    price_data = []
-    start_date = datetime.now() - timedelta(days=numdays)
 
     items = [
         "Compound Microscope (1000x)", "Refracting Telescope (70mm)", "Beaker (50ml)",
@@ -52,6 +50,12 @@ def generate_realtime_price_data (items, numdays=365):
 
     # Volatility factor (adjust for overall price fluctuation)
     volatility = 0.05  # 5% volatility
+
+    ### Here is where the data will be stored ###
+
+    price_data = []
+    start_date = datetime.now() - timedelta(days=numdays)
+
 
     for item in items:
         # output:
