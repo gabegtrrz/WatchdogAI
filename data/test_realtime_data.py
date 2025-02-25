@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from realtime_data import generate_realtime_price_data
+from items_list import items
 
 class TestRealtimePriceData(unittest.TestCase):
     
