@@ -2,12 +2,11 @@ import pandas as pd
 import numpy as np
 import random
 from datetime import datetime, timedelta
-from item_list import items, base_prices
+from item_list import ITEMS, BASE_PRICES, VOLATILITY_LOW
 
-# Volatility factor (adjust for overall price fluctuation)
-volatility = 0.05  # 5% volatility
 
-def generate_realtime_price_data (items = items, numdays=365, volatility = volatility, base_prices = base_prices):
+
+def generate_realtime_price_data (items = ITEMS, numdays=365, volatility = VOLATILITY_LOW, base_prices = BASE_PRICES):
     
     ### Here is where the data will be stored ###
 

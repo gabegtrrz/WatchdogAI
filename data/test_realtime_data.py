@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from data.realtime_data_generator import generate_realtime_price_data
-from data.item_list import items
+from data.item_list import ITEMS, BASE_PRICES, VOLATILITY_LOW
 
 class TestRealtimePriceData(unittest.TestCase):
     
@@ -49,10 +49,9 @@ class TestRealtimePriceData(unittest.TestCase):
     def test_price_greater_than_zero(self):
          self.assertTrue((self.df['price'] > 0).all())
 
-    def test_price_volatility(self):
+    def test_price_volatility(self, base_prices = BASE_PRICES, volatility = VOLATILITY_LOW):
          # To test that price volatilty is within reasonable bounds
 
-         volatity = 
 
 
 

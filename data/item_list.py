@@ -1,18 +1,14 @@
-items = [
-        "Compound Microscope (1000x)", "Refracting Telescope (70mm)", "Beaker (50ml)",
-        "Beaker (100ml)", "Beaker (250ml)", "Beaker (500ml)", "Test Tube (10ml)",
-        "Test Tube (20ml)", "Bunsen Burner", "Triple Beam Balance",
-        "Microscope Slides (box of 50)", "Microscope Coverslips (box of 100)",
-        "Dissecting Kit (basic)", "Sodium Chloride (NaCl) - Solid (1kg)",
-        "Hydrochloric Acid (HCl) - 1M (1L)", "Lab Manual - Grade 10 Science",
-        "Reflecting Telescope (150mm)", "Digital Spectrophotometer", "High-Precision Balance",
-        "Potassium Iodide (KI) - Solid (500g)",
-        "AmScope M150B-LED Replacement LED Bulb", "Beaker (1000ml)",
-        "Replacement Xenon Flash Lamp for Do PerkinElmer])",
-        "Sulfuric Acid (H2SO4) - 1M (1L)"
-        ]
-    
-base_prices = {
+'''
+This is where data configuration is stored for clean and maintainable code
+'''
+
+# Volatility factors (adjust for overall price fluctuation)
+VOLATILITY_LOW = 0.05
+VOLATILITY_MEDIUM = 0.10
+VOLATILITY_HIGH = 0.15
+
+
+BASE_PRICES = {
         "Compound Microscope (1000x)": 121409.38,
         "Refracting Telescope (70mm)": 5207.81,
         "Beaker (50ml)": 161.00,
@@ -38,3 +34,5 @@ base_prices = {
         "Replacement Xenon Flash Lamp for Do PerkinElmer])": 2893.78,
         "Sulfuric Acid (H2SO4) - 1M (1L)": 1302
 }
+
+ITEMS = list(BASE_PRICES.keys())

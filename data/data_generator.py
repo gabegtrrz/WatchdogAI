@@ -3,11 +3,11 @@ import numpy as np
 import hashlib
 import random
 from faker import Faker
-from item_list import base_prices
+from item_list import BASE_PRICES
 
 fake = Faker()
 
-def generate_blockchain_data(num_transactions = 1000, base_prices = base_prices):
+def generate_blockchain_data(num_transactions = 1000, base_prices = BASE_PRICES):
     data = []
     previous_hash = '0' # Genesis Block
 
