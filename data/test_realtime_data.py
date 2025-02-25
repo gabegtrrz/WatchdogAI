@@ -11,7 +11,7 @@ class TestRealtimePriceData(unittest.TestCase):
             'Compound Microscope (1000x)',
             'Beaker (50ml)', "Bunsen Burner"
         ]
-        self.num_days = '5'
+        self.num_days = 5
         self.df = generate_realtime_price_data(self.test_items, numdays=self.num_days)
 
     def test_structure(self):
@@ -27,10 +27,19 @@ class TestRealtimePriceData(unittest.TestCase):
     # output: unique items
     # success = all input items are found in output 
     def test_item_present(self):
-        var= self.df['item']
+        var= set(self.df['item'])
         print(var)
 
 
-    def test_date_range(self):
+test = TestRealtimePriceData()
+test.setUp()
+test.test_item_present()
+
+if __name__ == '__main__':
+        unittest.main()
+
+
+'''def test_date_range(self):
         # Test that the date range is correct
-        return None
+        return None'''
+    
