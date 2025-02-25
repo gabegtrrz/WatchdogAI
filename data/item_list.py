@@ -1,13 +1,4 @@
-import pandas as pd
-import numpy as np
-import random
-from datetime import datetime, timedelta
-
-def generate_realtime_price_data (items, numdays=365):
-
-    
-    '''
-    items = [
+items = [
         "Compound Microscope (1000x)", "Refracting Telescope (70mm)", "Beaker (50ml)",
         "Beaker (100ml)", "Beaker (250ml)", "Beaker (500ml)", "Test Tube (10ml)",
         "Test Tube (20ml)", "Bunsen Burner", "Triple Beam Balance",
@@ -19,9 +10,9 @@ def generate_realtime_price_data (items, numdays=365):
         "AmScope M150B-LED Replacement LED Bulb", "Beaker (1000ml)",
         "Replacement Xenon Flash Lamp for Do PerkinElmer])",
         "Sulfuric Acid (H2SO4) - 1M (1L)"
-        ]
-    '''
-    base_prices = {
+]
+
+base_prices = {
         # base prices per item
         # BELOW ARE ONLY EXAMPLES 
         "Compound Microscope (1000x)": 121409.38,
@@ -48,40 +39,4 @@ def generate_realtime_price_data (items, numdays=365):
         "Beaker (1000ml)": 2044,
         "Replacement Xenon Flash Lamp for Do PerkinElmer])": 2893.78,
         "Sulfuric Acid (H2SO4) - 1M (1L)": 1302
-    }
-
-    # Volatility factor (adjust for overall price fluctuation)
-    volatility = 0.05  # 5% volatility
-
-    ### Here is where the data will be stored ###
-
-    price_data = []
-    start_date = datetime.now() - timedelta(days=numdays)
-
-
-    for item in items:
-        # output:
-        # columns = items
-        # rows = daily price data with volatility
-
-        current_price = base_prices[item] * (1+random.uniform(-volatility, volatility))
-        price_history = [current_price]
-        
-        for i in range(numdays):
-            date= start_date + timedelta(days=i)
-
-            price_change = price_history[-1] * random.uniform(-volatility/2, volatility/2)
-            current_price = price_history[-1] + price_change
-            
-            # ensure current_price is non-zero and non-negative
-            if current_price <=0:
-                current_price = price_history[-1]
-
-            #add to price_history
-            price_history.append(current_price)
-            price_data.append([item, date.strftime('%Y-%m-%d'), round(current_price,2)])
-
-    df = pd.DataFrame(price_data, columns= ['item', 'date', 'price'])
-    return df
-
-
+}
