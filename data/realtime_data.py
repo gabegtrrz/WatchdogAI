@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 
 def generate_realtime_price_data (items, numdays=365):
 
+    
+    '''
     items = [
         "Compound Microscope (1000x)", "Refracting Telescope (70mm)", "Beaker (50ml)",
         "Beaker (100ml)", "Beaker (250ml)", "Beaker (500ml)", "Test Tube (10ml)",
@@ -18,7 +20,7 @@ def generate_realtime_price_data (items, numdays=365):
         "Replacement Xenon Flash Lamp for Do PerkinElmer])",
         "Sulfuric Acid (H2SO4) - 1M (1L)"
         ]
-    
+    '''
     base_prices = {
         # base prices per item
         # BELOW ARE ONLY EXAMPLES 
