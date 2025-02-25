@@ -3,7 +3,7 @@ import numpy as np
 import hashlib
 import random
 from faker import Faker
-from item_list import BASE_PRICES
+from data.procurement_data import BASE_PRICES
 
 fake = Faker()
 
