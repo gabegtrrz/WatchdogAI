@@ -25,7 +25,7 @@ def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCURE
         supplier = fake.company()
         procurement_officer = random.choice(PROCUREMENT_OFFICERS)
 
-        procurement_method = random.choices(methods, weights=frequencies, k=1)
+        procurement_method = random.choices(methods, weights=frequencies, k=1)[0]
         # methods and frequencies are aligned by position in their respective lists
 
 
@@ -59,7 +59,7 @@ def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCURE
         hash_string = f"{timestamp}{item_name}{quantity}{unit_price}{procurement_method}{supplier}{procurement_officer}{transaction_date}"
         
 
-        block_hash = hashlib.sha256(hash_string.encode()).hexdigest
+        block_hash = hashlib.sha256(hash_string.encode()).hexdigest()
         # block_hash is made into the hexadecimal hash from the hash_string
 
         
