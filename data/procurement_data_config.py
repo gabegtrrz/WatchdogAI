@@ -4,6 +4,7 @@
 
 import pandas as pd
 
+### PROCUREMENT_METHODS HERE ###
 
 METHODS_DATA = {
     "Competitive Bidding": {
@@ -59,16 +60,28 @@ for method, values in METHODS_DATA.items():
         row = {
             "Method": method,
             "Frequency": frequency,
-            "Item": item,
+            "Item_Name": item,
             "Base_Price": base_price
         }
         rows.append(row)
 
+### Final Procurement Data HERE
+
 PROCUREMENT_DATA = pd.DataFrame(rows)
 
-print(PROCUREMENT_DATA.head())
-
-
+PROCUREMENT_OFFICERS = [
+        'Casey Hernandez',
+        'Alex Rivera',
+        'James Patrick Mendoza',
+        'Morgan Cruz',
+        'Angela Ramirez',
+        'Taylor Martinez',
+        'Sophia Christine Navarro',
+        'Angela Renee Mendoza',
+        'Luke Andrew Navarro',
+        'Jamie Thompson',
+        'Christine Bautista',
+        ]
 
 ### VOLATILITY VARIABLES (adjust for overall price fluctuation)
 VOLATILITY_LOW = 0.05

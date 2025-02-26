@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from data.sim_transactions_generator import generate_blockchain_data
+from data.data_generator import generate_blockchain_data
 
 
 class TestDataGen(unittest.TestCase):
