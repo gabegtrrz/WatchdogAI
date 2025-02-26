@@ -3,11 +3,11 @@ import numpy as np
 import hashlib
 import random
 from faker import Faker
-from procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, VOLATILITY_MEDIUM, VOLATILITY_HIGH, BASE_PRICES
+from procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, VOLATILITY_MEDIUM, VOLATILITY_HIGH,
 
 fake = Faker()
 
-def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH, base_prices = BASE_PRICES):
+def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH,):
     data = []
     previous_hash = '0' # Genesis Block
     
@@ -50,7 +50,7 @@ def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCURE
          
         
         ### Price based on base_prices multiplied to set volatility
-        unit_price = base_prices[item_name] * (1 + random.uniform(-volatility, volatility))
+        unit_price = base_price (1 + random.uniform(-volatility, volatility))
         # random.uniform selects a float from the given range (lower bound, uper bound)
         unit_price = round(unit_price, 2)
 
