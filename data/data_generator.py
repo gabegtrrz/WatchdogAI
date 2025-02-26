@@ -77,3 +77,7 @@ def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCURE
         'transaction_id', 'item_name', 'quantity', 'unit_price', 'procurement_method', 'supplier', 'procurement_officer','transaction_date', 'previous_hash', 'block_hash'])
     
     return dataframe
+
+Test1 = generate_blockchain_data(num_transactions= 10)
+ColumnSet1 = Test1[['item_name','unit_price','procurement_method','supplier']]
+print(ColumnSet1)
