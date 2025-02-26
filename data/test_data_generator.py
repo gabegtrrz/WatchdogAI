@@ -49,3 +49,5 @@ class TestDataGen(unittest.TestCase):
         for i in range(1, len(previous_hashes)):
             # The previous_hash of this row should match the block_hash of the row before it
             self.assertEqual(previous_hashes[i], block_hashes[i - 1])
+
+if __name__ == '__main__': unittest.main()
