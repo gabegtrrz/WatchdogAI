@@ -27,7 +27,7 @@ class TestDataGen(unittest.TestCase):
         self.assertEqual(self.df["previous_hash"][0], "0")  # Check genesis block
     
     def test_blockchain_data_types(self):
-        self.assertEqual(self.df['quanitity'].dtype, 'int64')  # Check if quantity is integer
+        self.assertEqual(self.df['quantity'].dtype, 'int64')  # Check if quantity is integer
         self.assertEqual(self.df['unit_price'].dtype, 'float64')   # Check if quantity is float
         self.df['transaction_date'] =pd.to_datetime(self.df['transaction_date'], format='%Y-%m-%d') # Converts the column to datetime64
         self.assertEqual(self.df['transaction_date'].dtype, 'datetime64[ns]')
