@@ -16,7 +16,7 @@ class TestDataGen(unittest.TestCase):
         self.assertEqual(len(self.df), self.num_transactions)  # Check number of rows
 
         expected_columns = [
-            'transaction id', 'item_name', 'quantity', 'unit_price',
+            'transaction_id', 'item_name', 'quantity', 'unit_price',
             'procurement_method', 'supplier', 'procurement_officer',
             'transaction_date', 'previous_hash', 'block_hash'
         ]
@@ -34,8 +34,8 @@ class TestDataGen(unittest.TestCase):
     
     def test_transaction_ids_are_unique(self):
         #Makes sure every transaction has a unique ID
-        # Get all transaction IDs from the 'transaction id' column
-        ids = self.df['transaction id']
+        # Get all transaction_IDs from the 'transaction_id' column
+        ids = self.df['transaction_id']
         #turning them into a set to remove duplicates
         unique_ids = set(ids)
         self.assertEqual(len(unique_ids), len(ids))
