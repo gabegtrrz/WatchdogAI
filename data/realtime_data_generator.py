@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import random
 from datetime import datetime, timedelta
-from data.procurement_data_config import ITEMS, BASE_PRICES, VOLATILITY_LOW
+from procurement_data_config import ITEMS, BASE_PRICES, VOLATILITY_LOW
 
 
 

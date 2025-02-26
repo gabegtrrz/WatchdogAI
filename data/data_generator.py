@@ -3,7 +3,7 @@ import numpy as np
 import hashlib
 import random
 from faker import Faker
-from data.procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, VOLATILITY_MEDIUM, VOLATILITY_HIGH, BASE_PRICES
+from procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, VOLATILITY_MEDIUM, VOLATILITY_HIGH, BASE_PRICES
 
 fake = Faker()
 
@@ -56,9 +56,7 @@ def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCURE
 
 
         ### HASHING
-        hash_string = f"{timestamp}{item_name}{quantity}
-        {unit_price}{procurement_method}{supplier}{procurement_officer}
-        {transaction_date}"
+        hash_string = f"{timestamp}{item_name}{quantity}{unit_price}{procurement_method}{supplier}{procurement_officer}{transaction_date}"
         
 
         block_hash = hashlib.sha256(hash_string.encode()).hexdigest

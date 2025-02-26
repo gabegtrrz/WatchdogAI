@@ -2,8 +2,8 @@ import unittest
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from data.realtime_data_generator import generate_realtime_price_data
-from data.procurement_data_config import ITEMS, BASE_PRICES, VOLATILITY_LOW
+from realtime_data_generator import generate_realtime_price_data
+from procurement_data_config import ITEMS, BASE_PRICES, VOLATILITY_LOW
 
 class TestRealtimePriceData(unittest.TestCase):
     
