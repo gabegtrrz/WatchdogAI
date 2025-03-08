@@ -9,13 +9,16 @@ from procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, ITEM
 fake = Faker()
 
 def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH,):
+    ''' This is to generate clean or normal transaction data FOR TRAINING. '''
+
+
     data = []
     previous_hash = '0' # Genesis Block
     
     # Get PROCUREMENT_DATA values
     methods_and_frequencies = procurement_data.groupby('Method')['Frequency'].first() #This is a pandas series
-    methods = methods_and_frequencies.index.tolist()
-    frequencies = methods_and_frequencies.values.tolist()
+    methods = methods_and_frequencies.index.tolist() #List of Methods
+    frequencies = methods_and_frequencies.values.tolist() #List of frequencies
 
     for i in range(num_transactions):
         # timestamp object converted into str for immutability
