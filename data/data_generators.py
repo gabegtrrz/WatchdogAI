@@ -3,18 +3,22 @@ import numpy as np
 import hashlib
 import random
 from faker import Faker
-from procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, VOLATILITY_MEDIUM, VOLATILITY_HIGH
+from datetime import datetime, timedelta
+from procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, ITEMS, BASE_PRICES, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
 
 fake = Faker()
 
 def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH,):
+    ''' This is to generate clean or normal transaction data FOR TRAINING. '''
+
+
     data = []
     previous_hash = '0' # Genesis Block
     
     # Get PROCUREMENT_DATA values
     methods_and_frequencies = procurement_data.groupby('Method')['Frequency'].first() #This is a pandas series
-    methods = methods_and_frequencies.index.tolist()
-    frequencies = methods_and_frequencies.values.tolist()
+    methods = methods_and_frequencies.index.tolist() #List of Methods
+    frequencies = methods_and_frequencies.values.tolist() #List of frequencies
 
     for i in range(num_transactions):
         # timestamp object converted into str for immutability
@@ -77,3 +81,44 @@ def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCURE
         'transaction_id', 'item_name', 'quantity', 'unit_price', 'procurement_method', 'supplier', 'procurement_officer','transaction_date', 'previous_hash', 'block_hash'])
     
     return dataframe
+
+# %% Test Cell
+Test1 = generate_blockchain_data(num_transactions= 10)
+ColumnSet1 = Test1[['item_name','unit_price','procurement_method','supplier']]
+print(ColumnSet1)
+
+# %%
+
+
+def generate_realtime_price_data (items = ITEMS, numdays=365, volatility = VOLATILITY_LOW, base_prices = BASE_PRICES):
+    
+    ### Here is where the data will be stored ###
+
+    price_data = []
+    start_date = datetime.now() - timedelta(days=numdays)
+
+
+    for item in items:
+        # output:
+        # columns = items
+        # rows = daily price data with volatility
+
+        current_price = base_prices[item] * (1+random.uniform(-volatility, volatility))
+        price_history = [current_price]
+        
+        for i in range(numdays):
+            date= start_date + timedelta(days=i)
+
+            price_change = price_history[-1] * random.uniform(-volatility/2, volatility/2)
+            current_price = price_history[-1] + price_change
+            
+            # ensure current_price is non-zero and non-negative
+            if current_price <=0:
+                current_price = price_history[-1]
+
+            #add to price_history
+            price_history.append(current_price)
+            price_data.append([item, date.strftime('%Y-%m-%d'), round(current_price,2)])
+
+    df = pd.DataFrame(price_data, columns= ['item', 'date', 'price'])
+    return df
