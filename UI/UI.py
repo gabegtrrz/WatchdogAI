@@ -11,13 +11,13 @@ class WatchdogAIUI:
         self.title_label = tk.Label(root, text="Welcome to WatchdogAI", font=("Arial", 16))
         self.title_label.pack(pady=10)
 
-        ##Input Field##
-        self.input_label = tk.Label(root, text="Enter your data:")
+        ## Input Section ##
+        self.input_label = tk.Label(root, text="Enter Data:", font=("Arial", 12))
         self.input_label.pack(pady=5)
+
         self.input_entry = tk.Entry(root, width=30)
         self.input_entry.pack(pady=5)
 
-        ##Submit Button ##
         self.submit_button = tk.Button(root, text="Submit", command=self.submit_data)
         self.submit_button.pack(pady=10)
 
