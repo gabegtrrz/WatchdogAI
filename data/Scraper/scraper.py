@@ -42,7 +42,6 @@ def read_csv_and_calculate_average(file_path):
     for category in category_totals:
         avg_usd = category_totals[category] / category_counts[category]
         avg_php = avg_usd * USD_TO_PHP
-        print(f"{category}: ₱{avg_php:.2f}")
 
 if __name__ == "__main__":
     # Use a relative path for GitHub environment

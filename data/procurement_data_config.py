@@ -77,6 +77,8 @@ METHODS_DATA = {
     }
 }
 
+print(METHODS_DATA)
+
 # Converting this into a DataFrame for manageable data handling
 rows = []
 for method, values in METHODS_DATA.items():
