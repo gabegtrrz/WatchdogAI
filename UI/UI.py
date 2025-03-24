@@ -15,8 +15,8 @@ def load_and_calculate(csv_file):
         print("CSV Headers:", reader.fieldnames)
         for row in reader:
             # Replace with actual column names after checking headers
-            category = row['web-scraper-start-url']  # Update this
-            price_str = row['price'].strip()  # Update this
+            category = row['Category']  # Update this
+            price_str = row['Price'].strip()  # Update this
             if price_str:  # Skip empty prices
                 try:
                     price_usd = float(price_str.replace('$', ''))
@@ -42,7 +42,7 @@ tree.column("Etc", width=100, anchor="center")
 tree.pack(fill="both", expand=True)
 
 # CSV file path
-csv_file = r"C:\Users\Christopher\OneDrive\Desktop\MY FILES\3RD YR 2ND SEM\Capstone 1\thesis\WatchdogAI\UI\MethodData.csv"
+csv_file = r"data/Scraper/item price1.csv"  # Update this path
 
 # Debug file
 print(f"Looking for: {os.path.abspath(csv_file)}")

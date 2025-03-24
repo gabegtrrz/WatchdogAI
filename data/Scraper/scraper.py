@@ -1,25 +1,16 @@
 import csv
 from collections import defaultdict
-import chardet
 
 # Exchange rate: 1 USD to PHP
 USD_TO_PHP = 56.0
-
-def detect_encoding(file_path):
-    with open(file_path, 'r') as file:
-        result = chardet.detect(file.read())
-    return result['encoding']
 
 def read_csv_and_calculate_average(file_path):
     # Dictionary to store total price and count per category
     category_totals = defaultdict(float)
     category_counts = defaultdict(int)
     
-    # Detect file encoding
-    encoding = detect_encoding(file_path)
-    
     try:
-        with open(file_path, 'r', encoding=encoding) as file:
+        with open(file_path, 'r', encoding='utf-8') as file:  # Hardcode UTF-8 encoding
             reader = csv.DictReader(file)
             
             if not {'Category', 'Title', 'Price'}.issubset(reader.fieldnames):
@@ -39,6 +30,9 @@ def read_csv_and_calculate_average(file_path):
     except FileNotFoundError:
         print(f"Error: The file {file_path} was not found.")
         return
+    except UnicodeDecodeError:
+        print(f"Error: The file {file_path} could not be decoded as UTF-8. Please check the file's encoding.")
+        return
     except Exception as e:
         print(f"Error reading file: {e}")
         return
@@ -51,5 +45,7 @@ def read_csv_and_calculate_average(file_path):
         print(f"{category}: ₱{avg_php:.2f}")
 
 if __name__ == "__main__":
-    file_path = r'C:\Users\Christopher\OneDrive\Desktop\MY FILES\3RD YR 2ND SEM\Capstone 1\thesis\WatchdogAI\data\Scraper\item price1.csv'
+    # Use a relative path for GitHub environment
+    file_path = 'data/Scraper/item price1.csv'  # If running from data/Scraper/ directory
+    # file_path = 'data/Scraper/item price1.csv'  # If running from the root of the repository
     read_csv_and_calculate_average(file_path)
