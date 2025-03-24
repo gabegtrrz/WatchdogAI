@@ -6,7 +6,7 @@ import chardet
 USD_TO_PHP = 56.0
 
 def detect_encoding(file_path):
-    with open(file_path, 'rb') as file:
+    with open(file_path, 'r') as file:
         result = chardet.detect(file.read())
     return result['encoding']
 
@@ -51,5 +51,5 @@ def read_csv_and_calculate_average(file_path):
         print(f"{category}: ₱{avg_php:.2f}")
 
 if __name__ == "__main__":
-    file_path = r'C:\Users\Christopher\OneDrive\Desktop\MY FILES\3RD YR 2ND SEM\Capstone 1\thesis\WatchdogAI\Scraper\item price1.csv'
+    file_path = r'C:\Users\Christopher\OneDrive\Desktop\MY FILES\3RD YR 2ND SEM\Capstone 1\thesis\WatchdogAI\data\Scraper\item price1.csv'
     read_csv_and_calculate_average(file_path)
