@@ -3,33 +3,49 @@
 ### Scenario is procurement of Educational Materials for Grade 10 Science Class
 
 import pandas as pd
+from Scraper.scraper import read_csv_and_calculate_average
+
+CSV_FILE_PATH = r'C:\Users\Christopher\OneDrive\Desktop\MY FILES\3RD YR 2ND SEM\Capstone 1\thesis\WatchdogAI\Scraper\item price1.csv'
+
+average_prices = read_csv_and_calculate_average(CSV_FILE_PATH)
+
 
 ### PROCUREMENT_METHODS HERE ###
-
 METHODS_DATA = {
     "Competitive Bidding": {
         "frequency": 0.5,
         "items": {
-            "Compound Microscope (1000x)": 121409.38,
-            "Refracting Telescope (70mm)": 5207.81,
-            "Beaker (50ml)": 161.00, "Beaker (100ml)": 182.00,
-            "Beaker (250ml)": 238.00, "Beaker (500ml)": 375.00,
-            "Test Tube (10ml)": 19.00, "Test Tube (20ml)": 25.00,
-            "Bunsen Burner": 334.62, "Triple Beam Balance": 2989.00,
-            "Microscope Slides (box of 50)": 489.01,
-            "Microscope Coverslips (box of 100)": 7520.34,
-            "Dissecting Kit (basic)": 630.79,
-            "Sodium Chloride (NaCl) - Solid (1kg)": 2700,
-            "Hydrochloric Acid (HCl) - 1M (1L)": 1475.13,
-            "Lab Manual - Grade 10 Science": 333.30
+            "Compound Microscope": average_prices.get("Compound Microscope", 0.0),
+            "Beaker 50ml": average_prices.get("Beaker 50ml", 0.0),
+            "Beaker 100ml": average_prices.get("Beaker 100ml", 0.0),
+            "Beaker 250ml": average_prices.get("Beaker 250ml", 0.0), 
+            "Test Tube 15ml": average_prices.get("Compound Microscope", 0.0), 
+            "Bunsen Burner": average_prices.get("Compound Microscope", 0.0),
+            "Thermometer (-10 to 110C)": average_prices.get("Compound Microscope", 0.0), 
+            "Microscope Slides": average_prices.get("Compound Microscope", 0.0),
+            "Lab Manual - Grade 10 Science": average_prices.get("Compound Microscope", 0.0),
+            "Erlenmeyer Flask 250ml": average_prices.get("Compound Microscope", 0.0),
+            "Test Tube Rack": average_prices.get("Compound Microscope", 0.0),
+            "Filter Paper pack of 100": average_prices.get("Compound Microscope", 0.0),
         }
     },
     "Limited Source Bidding": {
         "frequency": 0.2,
         "items": {
-            "Reflecting Telescope (150mm)": 20255.87,
-            "Digital Spectrophotometer": 18519.60,
-            "High-Precision Balance": 15915
+            "Refracting Telescope 70mm": 20255.87,
+            "Triple Beam Balance": 20255.87,
+            "pH Meter basic": 20255.87,
+            "Graduated Cylinder 100ml": 20255.87,
+            "Hot Plate basic": 20255.87,
+            "Stopwatch digital": 20255.87,
+            "Prism glass": 18519.60,
+            "Spring Scale 500g": 15915,
+            "Bar Magnet pair": 15915,
+            "Bar Magnet pair": 15915,
+            "Tuning Fork 256 Hz": 15915,
+            "Lens Set convex concave": 15915,
+            "Ammeter basic": 15915,
+
         }
     },
     "Negotiated Procurement": {
