@@ -1,4 +1,4 @@
-# scraper.py (or your original file name)
+# scraper.py
 import time
 import requests
 import csv
@@ -18,7 +18,6 @@ USD_TO_PHP = 56.0  # Conversion rate: 1 USD = 56 PHP (adjust as needed)
 
 @dataclass
 class ProductData:
-    method: str = ""
     item: str = ""
     pricing_unit: str = "₱"
     avg_price: float = None
@@ -51,13 +50,12 @@ class DataPipeline:
     
     def save_to_csv(self):
         data_to_save = []
-        for method, details in METHODS_DATA.items():
-            for item in details["items"].keys():
-                if item in self.price_data and self.price_data[item]["count"] > 0:
-                    avg_price = self.price_data[item]["sum"] / self.price_data[item]["count"]
-                    data_to_save.append(ProductData(method=method, item=item, avg_price=avg_price))
-                else:
-                    data_to_save.append(ProductData(method=method, item=item, avg_price=0.0))
+        for item in self.price_data:
+            if self.price_data[item]["count"] > 0:
+                avg_price = self.price_data[item]["sum"] / self.price_data[item]["count"]
+                data_to_save.append(ProductData(item=item, avg_price=avg_price))
+            else:
+                data_to_save.append(ProductData(item=item, avg_price=0.0))
         
         if not data_to_save:
             logger.info("No data to save to CSV")
@@ -153,11 +151,11 @@ def threaded_search(product_name, pages, data_pipeline, max_workers=5, location=
 
 if __name__ == "__main__":
     MAX_RETRIES = 2
-    PAGES = 5
+    PAGES = 2
     MAX_THREADS = 3
     LOCATION = "us"
-    OUTPUT_FOLDER = "scraped_data"
-    OUTPUT_CSV = "procurement_prices.csv"
+    OUTPUT_FOLDER = "data"
+    OUTPUT_CSV = "item_average_prices.csv"
 
     # Create a single DataPipeline instance
     pipeline = DataPipeline(csv_filename=OUTPUT_CSV, folder_path=OUTPUT_FOLDER)
