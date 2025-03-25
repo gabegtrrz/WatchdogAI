@@ -160,19 +160,15 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
 
     print(f"Completed scrape_products for: {product_name}, page: {page_number}")
 
-def threaded_search(product_name, pages, folder_path, max_workers=5, location="us", retries=3):
-    search_pipeline = DataPipeline(csv_filename=f"{product_name}.csv", folder_path=folder_path)
-    
+def threaded_search(product_name, pages, data_pipeline, max_workers=5, location="us", retries=3):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
             executor.submit(
-                search_products, product_name, page, location, retries, search_pipeline
+                search_products, product_name, page, location, retries, data_pipeline
             ) for page in range(1, pages + 1)
         ]
         for future in futures:
             future.result()
-    
-    search_pipeline.close_pipeline()
 
 if __name__ == "__main__":
     PRODUCTS = ["phone", "compound microscope"]
@@ -180,14 +176,21 @@ if __name__ == "__main__":
     PAGES = 1
     MAX_THREADS = 3
     LOCATION = "us"
-    OUTPUT_FOLDER = "Scraper"  # Local folder to save CSV files
+    OUTPUT_FOLDER = "Scraper"
+    OUTPUT_CSV = "products.csv"  # Single CSV file name
+
+    # Create a single DataPipeline instance for all products
+    pipeline = DataPipeline(csv_filename=OUTPUT_CSV, folder_path=OUTPUT_FOLDER)
 
     for product in PRODUCTS:
         threaded_search(
             product,
             PAGES,
-            folder_path=OUTPUT_FOLDER,
+            data_pipeline=pipeline,
             max_workers=MAX_THREADS,
             retries=MAX_RETRIES,
             location=LOCATION
         )
+
+    # Close the pipeline after all products are processed
+    pipeline.close_pipeline()
