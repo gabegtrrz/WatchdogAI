@@ -17,9 +17,8 @@ USD_TO_PHP = 56.0  # Conversion rate: 1 USD = 56 PHP (adjust as needed)
 @dataclass
 class ProductData:
     category: str = ""
-    title: str = ""
     pricing_unit: str = "₱"
-    price: float = None
+    avg_price: float = None
 
     def __post_init__(self):
         self.check_string_fields()
@@ -34,52 +33,39 @@ class ProductData:
                     setattr(self, field.name, value)
 
 class DataPipeline:
-    def __init__(self, csv_filename="", folder_path="", storage_queue_limit=50):
-        self.titles_seen = []
-        self.storage_queue = []
-        self.storage_queue_limit = storage_queue_limit
+    def __init__(self, csv_filename="", folder_path=""):
+        self.price_sums = {"phone": 0.0, "compound microscope": 0.0}  # Sum of prices per category
+        self.price_counts = {"phone": 0, "compound microscope": 0}   # Count of items per category
         # Ensure folder exists
         os.makedirs(folder_path, exist_ok=True)
         self.csv_filename = os.path.join(folder_path, csv_filename) if folder_path else csv_filename
-        self.csv_file_open = False
+    
+    def add_data(self, category, price):
+        if price > 0:  # Only include valid prices
+            self.price_sums[category] += price
+            self.price_counts[category] += 1
     
     def save_to_csv(self):
-        if not self.storage_queue:
+        data_to_save = []
+        for category in self.price_sums:
+            if self.price_counts[category] > 0:  # Only include categories with data
+                avg_price = self.price_sums[category] / self.price_counts[category]
+                data_to_save.append(ProductData(category=category, avg_price=avg_price))
+        
+        if not data_to_save:
+            logger.info("No data to save to CSV")
             return
-        
-        self.csv_file_open = True
-        data_to_save = self.storage_queue.copy()
-        self.storage_queue.clear()
-        
+
         keys = [field.name for field in fields(data_to_save[0])]
         file_exists = os.path.exists(self.csv_filename) and os.path.getsize(self.csv_filename) > 0
 
-        with open(self.csv_filename, mode="a", newline="", encoding="utf-8") as output_file:
+        with open(self.csv_filename, mode="w", newline="", encoding="utf-8") as output_file:
             writer = csv.DictWriter(output_file, fieldnames=keys)
-            if not file_exists:
+            if not file_exists or not file_exists:  # Always write header for simplicity
                 writer.writeheader()
             writer.writerows([asdict(item) for item in data_to_save])
         
-        self.csv_file_open = False
-
-    def is_duplicate(self, input_data):
-        if input_data.title in self.titles_seen:
-            logger.warning(f"Duplicate item found: {input_data.title}. Item dropped")
-            return True
-        self.titles_seen.append(input_data.title)
-        return False
-    
-    def add_data(self, scraped_data):
-        if not self.is_duplicate(scraped_data):
-            self.storage_queue.append(scraped_data)
-            if len(self.storage_queue) >= self.storage_queue_limit and not self.csv_file_open:
-                self.save_to_csv()
-                
-    def close_pipeline(self):
-        if self.csv_file_open:
-            time.sleep(3)
-        if self.storage_queue:
-            self.save_to_csv()
+        logger.info(f"Saved average prices to {self.csv_filename}")
 
 def get_scrapeops_url(url, location="us"):
     payload = {
@@ -129,8 +115,7 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
                 if not h2 or not h2.text.strip() or h2.text.strip() == last_title:
                     continue
 
-                title = h2.text.strip()
-                last_title = title
+                last_title = h2.text.strip()
 
                 symbol_element = div.find('span', class_="a-price-symbol")
                 usd_symbol = symbol_element.text if symbol_element else "$"
@@ -139,14 +124,7 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
                 if prices:
                     usd_price = clean_price(prices[0].text, usd_symbol)
                     php_price = usd_price * USD_TO_PHP if usd_price else 0.0
-                    
-                    product = ProductData(
-                        category=category,
-                        title=title,
-                        pricing_unit="₱",
-                        price=php_price
-                    )
-                    data_pipeline.add_data(product)
+                    data_pipeline.add_data(category, php_price)
 
             success = True
 
@@ -177,9 +155,9 @@ if __name__ == "__main__":
     MAX_THREADS = 3
     LOCATION = "us"
     OUTPUT_FOLDER = "Scraper"
-    OUTPUT_CSV = "products.csv"  # Single CSV file name
+    OUTPUT_CSV = "average_prices.csv"  # Single CSV file for average prices
 
-    # Create a single DataPipeline instance for all products
+    # Create a single DataPipeline instance
     pipeline = DataPipeline(csv_filename=OUTPUT_CSV, folder_path=OUTPUT_FOLDER)
 
     for product in PRODUCTS:
@@ -192,5 +170,5 @@ if __name__ == "__main__":
             location=LOCATION
         )
 
-    # Close the pipeline after all products are processed
-    pipeline.close_pipeline()
+    # Save the average prices to CSV
+    pipeline.save_to_csv()
