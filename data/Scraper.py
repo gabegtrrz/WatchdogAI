@@ -7,12 +7,6 @@ import logging, os
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
 import os.path
-import sys
-
-# Add the 'data' subfolder to the Python module search path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'data')))
-
-# Import METHODS_DATA from procurement_data_config.py
 from procurement_data_config import METHODS_DATA
 
 logging.basicConfig(level=logging.INFO)
@@ -151,10 +145,10 @@ def threaded_search(product_name, category, pages, data_pipeline, max_workers=5,
 
 if __name__ == "__main__":
     MAX_RETRIES = 2
-    PAGES = 5
+    PAGES = 1
     MAX_THREADS = 3
     LOCATION = "us"
-    OUTPUT_FOLDER = "scraped_data"
+    OUTPUT_FOLDER = "Scraper_Output"
     OUTPUT_CSV = "average_prices.csv"
 
     pipeline = DataPipeline(csv_filename=OUTPUT_CSV, folder_path=OUTPUT_FOLDER)
