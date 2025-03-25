@@ -1,3 +1,4 @@
+# scraper.py (or your original file name)
 import time
 import requests
 import csv
@@ -7,7 +8,7 @@ import logging, os
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
 import os.path
-from procurement_data_config import METHODS_DATA
+from procurement_data_config import METHODS_DATA  # Import from the other file
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,7 +18,8 @@ USD_TO_PHP = 56.0  # Conversion rate: 1 USD = 56 PHP (adjust as needed)
 
 @dataclass
 class ProductData:
-    category: str = ""
+    method: str = ""
+    item: str = ""
     pricing_unit: str = "₱"
     avg_price: float = None
 
@@ -35,22 +37,27 @@ class ProductData:
 
 class DataPipeline:
     def __init__(self, csv_filename="", folder_path=""):
-        self.price_sums = {method: 0.0 for method in METHODS_DATA.keys()}
-        self.price_counts = {method: 0 for method in METHODS_DATA.keys()}
+        self.price_data = {}  # {item: {"sum": float, "count": int}}
+        # Ensure folder exists
         os.makedirs(folder_path, exist_ok=True)
         self.csv_filename = os.path.join(folder_path, csv_filename) if folder_path else csv_filename
     
-    def add_data(self, category, price):
-        if price > 0:
-            self.price_sums[category] += price
-            self.price_counts[category] += 1
+    def add_data(self, item, price):
+        if price > 0:  # Only include valid prices
+            if item not in self.price_data:
+                self.price_data[item] = {"sum": 0.0, "count": 0}
+            self.price_data[item]["sum"] += price
+            self.price_data[item]["count"] += 1
     
     def save_to_csv(self):
         data_to_save = []
-        for category in self.price_sums:
-            if self.price_counts[category] > 0:
-                avg_price = self.price_sums[category] / self.price_counts[category]
-                data_to_save.append(ProductData(category=category, avg_price=avg_price))
+        for method, details in METHODS_DATA.items():
+            for item in details["items"].keys():
+                if item in self.price_data and self.price_data[item]["count"] > 0:
+                    avg_price = self.price_data[item]["sum"] / self.price_data[item]["count"]
+                    data_to_save.append(ProductData(method=method, item=item, avg_price=avg_price))
+                else:
+                    data_to_save.append(ProductData(method=method, item=item, avg_price=0.0))
         
         if not data_to_save:
             logger.info("No data to save to CSV")
@@ -73,6 +80,7 @@ def get_scrapeops_url(url, location="us"):
     return "https://proxy.scrapeops.io/v1/?" + urlencode(payload)
 
 def clean_price(price_str, pricing_unit):
+    """Clean and convert price string to float, handling edge cases."""
     if not price_str or pricing_unit not in price_str:
         return 0.0
     try:
@@ -83,7 +91,7 @@ def clean_price(price_str, pricing_unit):
         logger.warning(f"Could not convert price '{price_str}' to float")
         return 0.0
 
-def search_products(product_name: str, category: str, page_number=1, location="us", retries=3, data_pipeline=None):
+def search_products(product_name: str, page_number=1, location="us", retries=3, data_pipeline=None):
     tries = 0
     success = False
 
@@ -119,7 +127,7 @@ def search_products(product_name: str, category: str, page_number=1, location="u
                 if prices:
                     usd_price = clean_price(prices[0].text, usd_symbol)
                     php_price = usd_price * USD_TO_PHP if usd_price else 0.0
-                    data_pipeline.add_data(category, php_price)
+                    data_pipeline.add_data(product_name, php_price)
 
             success = True
 
@@ -133,11 +141,11 @@ def search_products(product_name: str, category: str, page_number=1, location="u
 
     print(f"Completed scrape_products for: {product_name}, page: {page_number}")
 
-def threaded_search(product_name, category, pages, data_pipeline, max_workers=5, location="us", retries=3):
+def threaded_search(product_name, pages, data_pipeline, max_workers=5, location="us", retries=3):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
             executor.submit(
-                search_products, product_name, category, page, location, retries, data_pipeline
+                search_products, product_name, page, location, retries, data_pipeline
             ) for page in range(1, pages + 1)
         ]
         for future in futures:
@@ -145,24 +153,30 @@ def threaded_search(product_name, category, pages, data_pipeline, max_workers=5,
 
 if __name__ == "__main__":
     MAX_RETRIES = 2
-    PAGES = 1
+    PAGES = 5
     MAX_THREADS = 3
     LOCATION = "us"
-    OUTPUT_FOLDER = "Scraper_Output"
-    OUTPUT_CSV = "average_prices.csv"
+    OUTPUT_FOLDER = "scraped_data"
+    OUTPUT_CSV = "procurement_prices.csv"
 
+    # Create a single DataPipeline instance
     pipeline = DataPipeline(csv_filename=OUTPUT_CSV, folder_path=OUTPUT_FOLDER)
 
+    # Collect all items from METHODS_DATA to search
+    all_items = []
     for method, details in METHODS_DATA.items():
-        for item in details["items"].keys():
-            threaded_search(
-                product_name=item,
-                category=method,
-                pages=PAGES,
-                data_pipeline=pipeline,
-                max_workers=MAX_THREADS,
-                retries=MAX_RETRIES,
-                location=LOCATION
-            )
+        all_items.extend(details["items"].keys())
 
+    # Scrape average prices for all items
+    for item in all_items:
+        threaded_search(
+            item,
+            PAGES,
+            data_pipeline=pipeline,
+            max_workers=MAX_THREADS,
+            retries=MAX_RETRIES,
+            location=LOCATION
+        )
+
+    # Save the results to CSV
     pipeline.save_to_csv()
