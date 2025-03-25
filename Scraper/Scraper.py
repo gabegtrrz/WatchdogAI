@@ -6,17 +6,17 @@ from bs4 import BeautifulSoup
 import logging, os
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
+import os.path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-#API KEY from scrapeops.io
 API_KEY = '39460d69-2a10-482d-bd64-5e96132d14f1'
-USD_TO_PHP = 56.0  # Conversion rate: 1 USD = 56 PHP (as of 3/25/2025)
+USD_TO_PHP = 56.0  # Conversion rate: 1 USD = 56 PHP (adjust as needed)
 
 @dataclass
 class ProductData:
-    category: str = "" 
+    category: str = ""
     title: str = ""
     pricing_unit: str = "₱"
     price: float = None
@@ -34,11 +34,13 @@ class ProductData:
                     setattr(self, field.name, value)
 
 class DataPipeline:
-    def __init__(self, csv_filename="", storage_queue_limit=50):
+    def __init__(self, csv_filename="", folder_path="", storage_queue_limit=50):
         self.titles_seen = []
         self.storage_queue = []
         self.storage_queue_limit = storage_queue_limit
-        self.csv_filename = csv_filename
+        # Ensure folder exists
+        os.makedirs(folder_path, exist_ok=True)
+        self.csv_filename = os.path.join(folder_path, csv_filename) if folder_path else csv_filename
         self.csv_file_open = False
     
     def save_to_csv(self):
@@ -102,7 +104,6 @@ def clean_price(price_str, pricing_unit):
 def search_products(product_name: str, page_number=1, location="us", retries=3, data_pipeline=None):
     tries = 0
     success = False
-    # Determine category based on product_name
     category = "phone" if "phone" in product_name.lower() else "compound microscope"
 
     while tries < retries and not success:
@@ -140,7 +141,7 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
                     php_price = usd_price * USD_TO_PHP if usd_price else 0.0
                     
                     product = ProductData(
-                        category=category,  
+                        category=category,
                         title=title,
                         pricing_unit="₱",
                         price=php_price
@@ -159,8 +160,8 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
 
     print(f"Completed scrape_products for: {product_name}, page: {page_number}")
 
-def threaded_search(product_name, pages, max_workers=5, location="us", retries=3):
-    search_pipeline = DataPipeline(csv_filename=f"{product_name}.csv")
+def threaded_search(product_name, pages, folder_path, max_workers=5, location="us", retries=3):
+    search_pipeline = DataPipeline(csv_filename=f"{product_name}.csv", folder_path=folder_path)
     
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
@@ -174,16 +175,18 @@ def threaded_search(product_name, pages, max_workers=5, location="us", retries=3
     search_pipeline.close_pipeline()
 
 if __name__ == "__main__":
-    PRODUCTS = ["phone", "compound microscope"]  # Added compound microscope
+    PRODUCTS = ["phone", "compound microscope"]
     MAX_RETRIES = 2
     PAGES = 1
     MAX_THREADS = 3
     LOCATION = "us"
+    OUTPUT_FOLDER = "Scraper"  # Local folder to save CSV files
 
     for product in PRODUCTS:
         threaded_search(
             product,
             PAGES,
+            folder_path=OUTPUT_FOLDER,
             max_workers=MAX_THREADS,
             retries=MAX_RETRIES,
             location=LOCATION
