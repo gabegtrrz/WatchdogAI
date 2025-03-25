@@ -150,7 +150,7 @@ def threaded_search(product_name, pages, data_pipeline, max_workers=5, location=
             future.result()
 
 if __name__ == "__main__":
-    MAX_RETRIES = 2
+    MAX_RETRIES = 3
     PAGES = 2
     MAX_THREADS = 3
     LOCATION = "us"
