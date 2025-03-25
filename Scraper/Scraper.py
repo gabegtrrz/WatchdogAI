@@ -7,6 +7,13 @@ import logging, os
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
 import os.path
+import sys
+
+# Add the 'data' subfolder to the Python module search path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'data')))
+
+# Import METHODS_DATA from procurement_data_config.py
+from procurement_data_config import METHODS_DATA
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,21 +41,20 @@ class ProductData:
 
 class DataPipeline:
     def __init__(self, csv_filename="", folder_path=""):
-        self.price_sums = {"phone": 0.0, "compound microscope": 0.0}  # Sum of prices per category
-        self.price_counts = {"phone": 0, "compound microscope": 0}   # Count of items per category
-        # Ensure folder exists
+        self.price_sums = {method: 0.0 for method in METHODS_DATA.keys()}
+        self.price_counts = {method: 0 for method in METHODS_DATA.keys()}
         os.makedirs(folder_path, exist_ok=True)
         self.csv_filename = os.path.join(folder_path, csv_filename) if folder_path else csv_filename
     
     def add_data(self, category, price):
-        if price > 0:  # Only include valid prices
+        if price > 0:
             self.price_sums[category] += price
             self.price_counts[category] += 1
     
     def save_to_csv(self):
         data_to_save = []
         for category in self.price_sums:
-            if self.price_counts[category] > 0:  # Only include categories with data
+            if self.price_counts[category] > 0:
                 avg_price = self.price_sums[category] / self.price_counts[category]
                 data_to_save.append(ProductData(category=category, avg_price=avg_price))
         
@@ -57,12 +63,9 @@ class DataPipeline:
             return
 
         keys = [field.name for field in fields(data_to_save[0])]
-        file_exists = os.path.exists(self.csv_filename) and os.path.getsize(self.csv_filename) > 0
-
         with open(self.csv_filename, mode="w", newline="", encoding="utf-8") as output_file:
             writer = csv.DictWriter(output_file, fieldnames=keys)
-            if not file_exists or not file_exists:  # Always write header for simplicity
-                writer.writeheader()
+            writer.writeheader()
             writer.writerows([asdict(item) for item in data_to_save])
         
         logger.info(f"Saved average prices to {self.csv_filename}")
@@ -76,7 +79,6 @@ def get_scrapeops_url(url, location="us"):
     return "https://proxy.scrapeops.io/v1/?" + urlencode(payload)
 
 def clean_price(price_str, pricing_unit):
-    """Clean and convert price string to float, handling edge cases."""
     if not price_str or pricing_unit not in price_str:
         return 0.0
     try:
@@ -87,10 +89,9 @@ def clean_price(price_str, pricing_unit):
         logger.warning(f"Could not convert price '{price_str}' to float")
         return 0.0
 
-def search_products(product_name: str, page_number=1, location="us", retries=3, data_pipeline=None):
+def search_products(product_name: str, category: str, page_number=1, location="us", retries=3, data_pipeline=None):
     tries = 0
     success = False
-    category = "phone" if "phone" in product_name.lower() else "compound microscope"
 
     while tries < retries and not success:
         try:
@@ -138,37 +139,36 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
 
     print(f"Completed scrape_products for: {product_name}, page: {page_number}")
 
-def threaded_search(product_name, pages, data_pipeline, max_workers=5, location="us", retries=3):
+def threaded_search(product_name, category, pages, data_pipeline, max_workers=5, location="us", retries=3):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
             executor.submit(
-                search_products, product_name, page, location, retries, data_pipeline
+                search_products, product_name, category, page, location, retries, data_pipeline
             ) for page in range(1, pages + 1)
         ]
         for future in futures:
             future.result()
 
 if __name__ == "__main__":
-    PRODUCTS = ["phone", "compound microscope"]
     MAX_RETRIES = 2
-    PAGES = 1
+    PAGES = 5
     MAX_THREADS = 3
     LOCATION = "us"
-    OUTPUT_FOLDER = "Scraper"
-    OUTPUT_CSV = "average_prices.csv"  # Single CSV file for average prices
+    OUTPUT_FOLDER = "scraped_data"
+    OUTPUT_CSV = "average_prices.csv"
 
-    # Create a single DataPipeline instance
     pipeline = DataPipeline(csv_filename=OUTPUT_CSV, folder_path=OUTPUT_FOLDER)
 
-    for product in PRODUCTS:
-        threaded_search(
-            product,
-            PAGES,
-            data_pipeline=pipeline,
-            max_workers=MAX_THREADS,
-            retries=MAX_RETRIES,
-            location=LOCATION
-        )
+    for method, details in METHODS_DATA.items():
+        for item in details["items"].keys():
+            threaded_search(
+                product_name=item,
+                category=method,
+                pages=PAGES,
+                data_pipeline=pipeline,
+                max_workers=MAX_THREADS,
+                retries=MAX_RETRIES,
+                location=LOCATION
+            )
 
-    # Save the average prices to CSV
     pipeline.save_to_csv()
