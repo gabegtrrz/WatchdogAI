@@ -8,7 +8,7 @@ from procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, ITEM
 
 fake = Faker()
 
-def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH,):
+def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH,):
     ''' This is to generate clean or normal transaction data FOR TRAINING. '''
 
 
@@ -83,7 +83,7 @@ def generate_blockchain_data(num_transactions = 1000, procurement_data = PROCURE
     return dataframe
 
 # %% Test Cell
-Test1 = generate_blockchain_data(num_transactions= 10)
+Test1 = generate_transaction_data(num_transactions= 10)
 ColumnSet1 = Test1[['item_name','unit_price','procurement_method','supplier']]
 print(ColumnSet1)
 
