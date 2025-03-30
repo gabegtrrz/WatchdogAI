@@ -1,13 +1,11 @@
-# scraper.py
 import time
 import requests
-import csv
+import json
 from dataclasses import dataclass, field, fields, asdict
 from bs4 import BeautifulSoup
 import logging, os
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
-import os.path
 from procurement_data_config import METHODS_DATA  # Import from the other file
 
 logging.basicConfig(level=logging.INFO)
@@ -35,11 +33,10 @@ class ProductData:
                     setattr(self, field.name, value)
 
 class DataPipeline:
-    def __init__(self, csv_filename="", folder_path=""):
+    def __init__(self, json_filename="", folder_path=""):
         self.price_data = {}  # {item: {"sum": float, "count": int}}
-        # Ensure folder exists
         os.makedirs(folder_path, exist_ok=True)
-        self.csv_filename = os.path.join(folder_path, csv_filename) if folder_path else csv_filename
+        self.json_filename = os.path.join(folder_path, json_filename) if folder_path else json_filename
     
     def add_data(self, item, price):
         if price > 0:  # Only include valid prices
@@ -48,26 +45,19 @@ class DataPipeline:
             self.price_data[item]["sum"] += price
             self.price_data[item]["count"] += 1
     
-    def save_to_csv(self):
-        data_to_save = []
+    def save_to_json(self):
+        data_to_save = {}
         for item in self.price_data:
             if self.price_data[item]["count"] > 0:
                 avg_price = self.price_data[item]["sum"] / self.price_data[item]["count"]
-                data_to_save.append(ProductData(item=item, avg_price=avg_price))
+                data_to_save[item] = {"avg_price": avg_price, "pricing_unit": "₱"}
             else:
-                data_to_save.append(ProductData(item=item, avg_price=0.0))
+                data_to_save[item] = {"avg_price": 0.0, "pricing_unit": "₱"}
         
-        if not data_to_save:
-            logger.info("No data to save to CSV")
-            return
-
-        keys = [field.name for field in fields(data_to_save[0])]
-        with open(self.csv_filename, mode="w", newline="", encoding="utf-8") as output_file:
-            writer = csv.DictWriter(output_file, fieldnames=keys)
-            writer.writeheader()
-            writer.writerows([asdict(item) for item in data_to_save])
+        with open(self.json_filename, mode="w", encoding="utf-8") as output_file:
+            json.dump(data_to_save, output_file, indent=4)
         
-        logger.info(f"Saved average prices to {self.csv_filename}")
+        logger.info(f"Saved average prices to {self.json_filename}")
 
 def get_scrapeops_url(url, location="us"):
     payload = {
@@ -78,7 +68,6 @@ def get_scrapeops_url(url, location="us"):
     return "https://proxy.scrapeops.io/v1/?" + urlencode(payload)
 
 def clean_price(price_str, pricing_unit):
-    """Clean and convert price string to float, handling edge cases."""
     if not price_str or pricing_unit not in price_str:
         return 0.0
     try:
@@ -137,8 +126,6 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
     if not success:
         logger.error(f"Failed to scrape page {page_number} for {product_name}, retries exceeded: {retries}")
 
-    print(f"Completed scrape_products for: {product_name}, page: {page_number}")
-
 def threaded_search(product_name, pages, data_pipeline, max_workers=5, location="us", retries=3):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
@@ -155,17 +142,14 @@ if __name__ == "__main__":
     MAX_THREADS = 3
     LOCATION = "us"
     OUTPUT_FOLDER = "data"
-    OUTPUT_CSV = "item_average_prices.csv"
+    OUTPUT_JSON = "item_average_prices.json"
 
-    # Create a single DataPipeline instance
-    pipeline = DataPipeline(csv_filename=OUTPUT_CSV, folder_path=OUTPUT_FOLDER)
+    pipeline = DataPipeline(json_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER)
 
-    # Collect all items from METHODS_DATA to search
     all_items = []
     for method, details in METHODS_DATA.items():
         all_items.extend(details["items"].keys())
 
-    # Scrape average prices for all items
     for item in all_items:
         threaded_search(
             item,
@@ -176,5 +160,4 @@ if __name__ == "__main__":
             location=LOCATION
         )
 
-    # Save the results to CSV
-    pipeline.save_to_csv()
+    pipeline.save_to_json()

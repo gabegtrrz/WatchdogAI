@@ -1,0 +1,182 @@
+{
+    "Compound Microscope": {
+        "avg_price": 8991.551219512197,
+        "pricing_unit": "\u20b1"
+    },
+    "Beaker 50ml": {
+        "avg_price": 915.2618867924531,
+        "pricing_unit": "\u20b1"
+    },
+    "Beaker 100ml": {
+        "avg_price": 795.6507317073169,
+        "pricing_unit": "\u20b1"
+    },
+    "Beaker 250ml": {
+        "avg_price": 1279.88,
+        "pricing_unit": "\u20b1"
+    },
+    "Test Tube 15ml": {
+        "avg_price": 929.0694736842102,
+        "pricing_unit": "\u20b1"
+    },
+    "Bunsen Burner": {
+        "avg_price": 1324.4336000000008,
+        "pricing_unit": "\u20b1"
+    },
+    "Thermometer (-10 to 110C)": {
+        "avg_price": 1181.488,
+        "pricing_unit": "\u20b1"
+    },
+    "Microscope Slides": {
+        "avg_price": 1223.2306382978722,
+        "pricing_unit": "\u20b1"
+    },
+    "Lab Manual - Grade 10 Science": {
+        "avg_price": 1306.7487999999998,
+        "pricing_unit": "\u20b1"
+    },
+    "Erlenmeyer Flask 250ml": {
+        "avg_price": 1624.098461538462,
+        "pricing_unit": "\u20b1"
+    },
+    "Test Tube Rack": {
+        "avg_price": 852.2671698113205,
+        "pricing_unit": "\u20b1"
+    },
+    "Filter Paper pack of 100": {
+        "avg_price": 815.3102222222223,
+        "pricing_unit": "\u20b1"
+    },
+    "Refracting Telescope 70mm": {
+        "avg_price": 11206.982127659578,
+        "pricing_unit": "\u20b1"
+    },
+    "Triple Beam Balance": {
+        "avg_price": 5451.320000000002,
+        "pricing_unit": "\u20b1"
+    },
+    "pH Meter basic": {
+        "avg_price": 3384.249056603773,
+        "pricing_unit": "\u20b1"
+    },
+    "Graduated Cylinder 100ml": {
+        "avg_price": 973.9058823529408,
+        "pricing_unit": "\u20b1"
+    },
+    "Hot Plate basic": {
+        "avg_price": 2870.7032558139545,
+        "pricing_unit": "\u20b1"
+    },
+    "Stopwatch digital": {
+        "avg_price": 1247.2937931034483,
+        "pricing_unit": "\u20b1"
+    },
+    "Prism glass": {
+        "avg_price": 778.0728712871293,
+        "pricing_unit": "\u20b1"
+    },
+    "Spring Scale 500g": {
+        "avg_price": 913.0239999999998,
+        "pricing_unit": "\u20b1"
+    },
+    "Bar Magnet pair": {
+        "avg_price": 715.9015384615387,
+        "pricing_unit": "\u20b1"
+    },
+    "Tuning Fork 256 Hz": {
+        "avg_price": 1486.5078260869577,
+        "pricing_unit": "\u20b1"
+    },
+    "Lens Set convex concave": {
+        "avg_price": 1591.060512820513,
+        "pricing_unit": "\u20b1"
+    },
+    "Ammeter basic": {
+        "avg_price": 5452.173333333332,
+        "pricing_unit": "\u20b1"
+    },
+    "Voltmeter basic": {
+        "avg_price": 928.1131034482765,
+        "pricing_unit": "\u20b1"
+    },
+    "Hydrochloric Acid": {
+        "avg_price": 1538.9733333333338,
+        "pricing_unit": "\u20b1"
+    },
+    "Dissecting Kit": {
+        "avg_price": 1180.1160000000004,
+        "pricing_unit": "\u20b1"
+    },
+    "Petri Dishes pack of 20": {
+        "avg_price": 1389.5182608695652,
+        "pricing_unit": "\u20b1"
+    },
+    "Universal Indicator Solution 100ml": {
+        "avg_price": 1486.2184615384615,
+        "pricing_unit": "\u20b1"
+    },
+    "Copper Sulfate": {
+        "avg_price": 4072.278000000001,
+        "pricing_unit": "\u20b1"
+    },
+    "Rubber Stoppers": {
+        "avg_price": 512.8977777777776,
+        "pricing_unit": "\u20b1"
+    },
+    "Dropper Bottle 50ml": {
+        "avg_price": 662.098723404255,
+        "pricing_unit": "\u20b1"
+    },
+    "Agar Powder 100g": {
+        "avg_price": 1203.3580487804877,
+        "pricing_unit": "\u20b1"
+    },
+    "Iron Filings 250g": {
+        "avg_price": 975.1531034482755,
+        "pricing_unit": "\u20b1"
+    },
+    "Safety Goggles": {
+        "avg_price": 908.1242276422764,
+        "pricing_unit": "\u20b1"
+    },
+    "Litmus Paper": {
+        "avg_price": 570.8301886792451,
+        "pricing_unit": "\u20b1"
+    },
+    "Pipette 10ml": {
+        "avg_price": 1660.0192000000002,
+        "pricing_unit": "\u20b1"
+    },
+    "Gloves nitrile box of 100": {
+        "avg_price": 692.3102439024389,
+        "pricing_unit": "\u20b1"
+    },
+    "Lab Aprons pack of 10": {
+        "avg_price": 2065.8986666666683,
+        "pricing_unit": "\u20b1"
+    },
+    "Funnel plastic 100mm": {
+        "avg_price": 663.1100000000005,
+        "pricing_unit": "\u20b1"
+    },
+    "Alcohol Burner": {
+        "avg_price": 789.2972972972971,
+        "pricing_unit": "\u20b1"
+    },
+    "Fire Blanket": {
+        "avg_price": 1658.4427722772289,
+        "pricing_unit": "\u20b1"
+    },
+    "Test Tube Brush": {
+        "avg_price": 523.068965517241,
+        "pricing_unit": "\u20b1"
+    },
+    "Microscope Coverslips box of 100": {
+        "avg_price": 2894.421463414634,
+        "pricing_unit": "\u20b1"
+    },
+    "Spatula stainless steel": {
+        "avg_price": 727.6760784313728,
+        "pricing_unit": "\u20b1"
+    }
+}
