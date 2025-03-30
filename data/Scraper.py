@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import logging, os
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
+from datetime import datetime
 from procurement_data_config import METHODS_DATA  # Import from the other file
 
 logging.basicConfig(level=logging.INFO)
@@ -19,6 +20,7 @@ class ProductData:
     item: str = ""
     pricing_unit: str = "₱"
     avg_price: float = None
+    url: str = ""  # Added URL field
 
     def __post_init__(self):
         self.check_string_fields()
@@ -33,19 +35,43 @@ class ProductData:
                     setattr(self, field.name, value)
 
 class DataPipeline:
-    def __init__(self, json_filename="", folder_path=""):
+    def __init__(self, json_filename="", folder_path="", realtime_filename="realtime_prices.json"):
         self.price_data = {}  # {item: {"sum": float, "count": int}}
         os.makedirs(folder_path, exist_ok=True)
         self.json_filename = os.path.join(folder_path, json_filename) if folder_path else json_filename
-    
-    def add_data(self, item, price):
+        self.realtime_filename = os.path.join(folder_path, realtime_filename) if folder_path else realtime_filename
+        self.realtime_data = self.load_realtime_data()
+
+    def load_realtime_data(self):
+        if not os.path.exists(self.realtime_filename):
+            initial_data = {"latest_date_updated": "", "items": {}}
+            with open(self.realtime_filename, 'w', encoding='utf-8') as f:
+                json.dump(initial_data, f, indent=4)
+            return initial_data
+        with open(self.realtime_filename, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    def should_scrape(self):
+        today = datetime.now().strftime('%Y-%m-%d')
+        latest_date = self.realtime_data.get('latest_date_updated', '')
+        return latest_date != today
+
+    def add_data(self, item, price, url=""):
         if price > 0:  # Only include valid prices
             if item not in self.price_data:
                 self.price_data[item] = {"sum": 0.0, "count": 0}
             self.price_data[item]["sum"] += price
             self.price_data[item]["count"] += 1
-    
+            
+            # Update realtime data
+            if item not in self.realtime_data["items"]:
+                self.realtime_data["items"][item] = {}
+            self.realtime_data["items"][item]["price"] = price
+            self.realtime_data["items"][item]["url"] = url
+            self.realtime_data["latest_date_updated"] = datetime.now().strftime('%Y-%m-%d')
+
     def save_to_json(self):
+        # Save average prices
         data_to_save = {}
         for item in self.price_data:
             if self.price_data[item]["count"] > 0:
@@ -57,7 +83,12 @@ class DataPipeline:
         with open(self.json_filename, mode="w", encoding="utf-8") as output_file:
             json.dump(data_to_save, output_file, indent=4)
         
+        # Save realtime prices
+        with open(self.realtime_filename, mode="w", encoding="utf-8") as realtime_file:
+            json.dump(self.realtime_data, realtime_file, indent=4)
+        
         logger.info(f"Saved average prices to {self.json_filename}")
+        logger.info(f"Saved realtime prices to {self.realtime_filename}")
 
 def get_scrapeops_url(url, location="us"):
     payload = {
@@ -111,10 +142,13 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
                 usd_symbol = symbol_element.text if symbol_element else "$"
                 
                 prices = div.find_all('span', class_="a-offscreen")
+                link = div.find('a', class_="a-link-normal")
+                product_url = f"https://www.amazon.com{link['href']}" if link else ""
+
                 if prices:
                     usd_price = clean_price(prices[0].text, usd_symbol)
                     php_price = usd_price * USD_TO_PHP if usd_price else 0.0
-                    data_pipeline.add_data(product_name, php_price)
+                    data_pipeline.add_data(product_name, php_price, product_url)
 
             success = True
 
@@ -143,21 +177,24 @@ if __name__ == "__main__":
     LOCATION = "us"
     OUTPUT_FOLDER = "data"
     OUTPUT_JSON = "item_average_prices.json"
+    REALTIME_JSON = "realtime_prices.json"
 
-    pipeline = DataPipeline(json_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER)
+    pipeline = DataPipeline(json_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_filename=REALTIME_JSON)
 
     all_items = []
     for method, details in METHODS_DATA.items():
         all_items.extend(details["items"].keys())
 
-    for item in all_items:
-        threaded_search(
-            item,
-            PAGES,
-            data_pipeline=pipeline,
-            max_workers=MAX_THREADS,
-            retries=MAX_RETRIES,
-            location=LOCATION
-        )
-
-    pipeline.save_to_json()
+    if pipeline.should_scrape():
+        for item in all_items:
+            threaded_search(
+                item,
+                PAGES,
+                data_pipeline=pipeline,
+                max_workers=MAX_THREADS,
+                retries=MAX_RETRIES,
+                location=LOCATION
+            )
+        pipeline.save_to_json()
+    else:
+        logger.info("Data is up-to-date for today, skipping scraping.")
