@@ -31,7 +31,7 @@ METHODS_DATA = {
     "Competitive Bidding": {
         "frequency": 0.5,
         "items": {item: AVERAGE_PRICES.get(item, 0.0) for item in [
-            "Compound Microscope", "Beaker 50ml", "Beaker 100ml", "Beaker 250ml", "Test Tube 15ml", 
+            "Compound Microscope (1000x)", "Beaker 50ml", "Beaker 100ml", "Beaker 250ml", "Test Tube 15ml", 
             "Bunsen Burner", "Thermometer (-10 to 110C)", "Microscope Slides", "Lab Manual - Grade 10 Science", 
             "Erlenmeyer Flask 250ml", "Test Tube Rack", "Filter Paper pack of 100"]
         }
