@@ -1,7 +1,7 @@
 import time
 import requests
 import json
-from dataclasses import dataclass, field, fields, asdict
+from dataclasses import dataclass, fields
 from bs4 import BeautifulSoup
 import logging, os
 from concurrent.futures import ThreadPoolExecutor
@@ -20,7 +20,7 @@ class ProductData:
     item: str = ""
     pricing_unit: str = "₱"
     avg_price: float = None
-    url: str = ""  # Added URL field
+    url: str = ""  #URL field
 
     def __post_init__(self):
         self.check_string_fields()
