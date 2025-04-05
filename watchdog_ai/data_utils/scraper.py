@@ -1,103 +1,97 @@
+# [Source: scraper.txt]
 import time
 import requests
 import json
-import logging, os
-
-from dataclasses import dataclass, fields
+import logging
+import os
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
 from datetime import datetime
-from procurement_data_config import METHODS_DATA  # The import from the other file
+
+### Local Imports ###
+from procurement_data_config import METHODS_DATA
+from api_key import SCRAPEOPS_API_KEY
+
+### Placeholder for METHODS_DATA if import fails or is not available
+# METHODS_DATA = {
+#     "Method1": {"items": {"laptop": {}, "mouse": {}}},
+#     "Method2": {"items": {"keyboard": {}, "monitor": {}}},
+# }
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-API_KEY = '39460d69-2a10-482d-bd64-5e96132d14f1'
-USD_TO_PHP = 56.0  # Conversion rate: 1 USD = 56 PHP (adjust as needed)
 
-@dataclass
-class ProductData:
-    item: str = ""
-    pricing_unit: str = "₱"
-    avg_price: float = None
-    url: str = ""  #URL field
+API_KEY = SCRAPEOPS_API_KEY # API key for ScrapeOps
 
-    def __post_init__(self):
-        self.check_string_fields()
-    
-    def check_string_fields(self):
-        for field in fields(self):
-            if isinstance(getattr(self, field.name), str):
-                value = getattr(self, field.name).strip()
-                if not value:
-                    setattr(self, field.name, f"No {field.name}")
-                else:
-                    setattr(self, field.name, value)
+USD_TO_PHP = 56.0 # Conversion rate: 1 USD = 56 PHP
+MAX_SOURCES_PER_ITEM = 5 # Maximum number of sources to average per item
 
 class DataPipeline:
-    def __init__(self, average_price_filename="", folder_path="", realtime_prices_filename="realtime_prices.json"):
-        self.price_data = {}  # {item: {"sum": float, "count": int}}
+    # I modified __init__ to handle single output file only
+    def __init__(self, output_filename="realtime_average_prices.json", folder_path="scraper_output"):
+        # Stores {item: [{"price": float, "url": str}, ...]}
+        self.scraped_data = {}
         os.makedirs(folder_path, exist_ok=True)
-        self.average_price_filename = os.path.join(folder_path, average_price_filename) if folder_path else average_price_filename
-        self.realtime_prices_filename = os.path.join(folder_path, realtime_prices_filename) if folder_path else realtime_prices_filename
-        self.realtime_data = self.load_realtime_data()
+        self.output_filename = os.path.join(folder_path, output_filename)
+        self.last_updated_time = None # Will store the timestamp when saving
 
-    def load_realtime_data(self):
-        if not os.path.exists(self.realtime_prices_filename):
-            initial_data = {"latest_date_updated": "", "items": {}}
-            with open(self.realtime_prices_filename, 'w', encoding='utf-8') as f:
-                json.dump(initial_data, f, indent=4)
-            return initial_data
-        with open(self.realtime_prices_filename, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    
-    def load_average_prices(self):
-        if not os.path.exists(self.average_price_filename):
-            return {}
-        with open(self.average_price_filename, 'r', encoding='utf-8') as f:
-            return json.load(f)
-
-    def should_scrape(self):
-        today = datetime.now().strftime('%Y-%m-%d')
-        latest_date = self.realtime_data.get('latest_date_updated', '')
-        return latest_date != today
-        # returns True if the latest date is not today, indicating that scraping is needed
-        # returns False if the latest date is today, indicating that scraping is not needed
-
+    # Modified add_data to store price and URL pairs, and use MAX_SOURCES_PER_ITEM
     def add_data(self, item, price, url=""):
+       
         if price > 0:  # Only include valid prices
-            if item not in self.price_data:
-                self.price_data[item] = {"sum": 0.0, "count": 0}
-            self.price_data[item]["sum"] += price
-            self.price_data[item]["count"] += 1
-            
-            # Update realtime data
-            if item not in self.realtime_data["items"]:
-                self.realtime_data["items"][item] = {}
-            self.realtime_data["items"][item]["price"] = price
-            self.realtime_data["items"][item]["url"] = url
-            self.realtime_data["latest_date_updated"] = datetime.now().strftime('%Y-%m-%d')
+            if item not in self.scraped_data:
+                self.scraped_data[item] = []
 
-    def save_to_json(self):
-        # Save average prices
-        data_to_save = {}
-        for item in self.price_data:
-            if self.price_data[item]["count"] > 0:
-                avg_price = self.price_data[item]["sum"] / self.price_data[item]["count"]
-                data_to_save[item] = {"avg_price": avg_price, "pricing_unit": "₱"}
+            # Add data only if we haven't reached the max number of sources
+            if len(self.scraped_data[item]) < MAX_SOURCES_PER_ITEM:
+                 # Ensure URL is not empty, provide a placeholder if necessary
+                source_url = url if url else "N/A"
+                self.scraped_data[item].append({"price": price, "url": source_url})
+                logger.info(f"Added price {price} from {source_url} for item {item}. Sources: {len(self.scraped_data[item])}/{MAX_SOURCES_PER_ITEM}")
             else:
-                data_to_save[item] = {"avg_price": 0.0, "pricing_unit": "₱"}
-        
-        with open(self.average_price_filename, mode="w", encoding="utf-8") as output_file:
-            json.dump(data_to_save, output_file, indent=4)
-        
-        # Save realtime prices
-        with open(self.realtime_prices_filename, mode="w", encoding="utf-8") as realtime_file:
-            json.dump(self.realtime_data, realtime_file, indent=4)
-        
-        logger.info(f"Saved average prices to {self.average_price_filename}")
-        logger.info(f"Saved realtime prices to {self.realtime_prices_filename}")
+                 logger.debug(f"({MAX_SOURCES_PER_ITEM}) prices accomplished {item}.")
+
+
+    # Modified save_to_json to create the desired output structure
+    def save_to_json(self):
+
+        #initialized output_data as an empty dictionary
+        output_data = {}
+
+        self.last_updated_time = datetime.now().isoformat() # !!! Use ISO format for timestamp
+
+        for item, sources in self.scraped_data.items():
+            if not sources: # Skip items with no valid sources found
+                logger.warning(f"No valid sources found for item: {item}. Skipping.")
+                continue
+
+            # Calculate average price from the collected sources (up to MAX_SOURCES_PER_ITEM)
+            total_price = sum(source["price"] for source in sources)
+            num_sources = len(sources)
+            average_price = total_price / num_sources if num_sources > 0 else 0.0
+            # source_links = [source["url"] for source in sources]
+
+            output_data[item] = {
+                "item_name": item, # Added for clarity, matches the key
+                "last_updated": self.last_updated_time,
+                "average_price": round(average_price, 2), # Round to 2 decimal places
+                "pricing_unit": "₱",
+                "num_sources": num_sources,
+                # "source_links": source_links
+            }
+            logger.info(f"Calculated average price for {item}: {average_price:.2f} from {num_sources} sources.")
+
+        # Save the combined data to the single JSON file
+        try:
+            with open(self.output_filename, mode="w", encoding="utf-8") as output_file:
+                json.dump(output_data, output_file, indent=4)
+            logger.info(f"Successfully saved data to {self.output_filename}")
+        except IOError as e:
+            logger.error(f"Error saving data to {self.output_filename}: {e}")
+
 
 def get_scrapeops_url(url, location="us"):
     payload = {
@@ -105,159 +99,199 @@ def get_scrapeops_url(url, location="us"):
         "url": url,
         "country": location
     }
-    return "https://proxy.scrapeops.io/v1/?" + urlencode(payload)
+    # Ensure the base URL ends with a slash if needed, and handle query params correctly
+    proxy_url = "https://proxy.scrapeops.io/v1/?" + urlencode(payload)
+    logger.debug(f"Generated ScrapeOps URL: {proxy_url}")
+    return proxy_url
+
 
 def clean_price(price_str, pricing_unit):
     if not price_str or pricing_unit not in price_str:
+        logger.debug(f"Price string '{price_str}' is empty or does not contain unit '{pricing_unit}'.")
         return 0.0
     try:
-        cleaned = price_str.replace(pricing_unit, "").replace(",", "").strip()
-        cleaned = ''.join(c for c in cleaned if c.isdigit() or c == '.')
+        # More robust cleaning
+        cleaned = ''.join(filter(lambda x: x.isdigit() or x == '.', price_str.replace(pricing_unit, "").replace(",", "").strip()))
         return float(cleaned) if cleaned else 0.0
-    except (ValueError, TypeError):
-        logger.warning(f"Could not convert price '{price_str}' to float")
+    except (ValueError, TypeError) as e:
+        logger.warning(f"Could not convert price '{price_str}' to float: {e}")
         return 0.0
 
+
 def search_products(product_name: str, page_number=1, location="us", retries=3, data_pipeline=None):
+    """Scrapes a single page of Amazon search results for a product."""
     tries = 0
     success = False
+    search_url = f"https://www.amazon.com/s?k={product_name.replace(' ', '+')}&page={page_number}" # URL encode product name
 
     while tries < retries and not success:
         try:
-            url = get_scrapeops_url(
-                f"https://www.amazon.com/s?k={product_name}&page={page_number}", 
-                location=location,
-            )
-            resp = requests.get(url, timeout=10)
-            resp.raise_for_status()
-            
-            logger.info(f"Successfully fetched page {page_number} for {product_name}")
+            proxy_url = get_scrapeops_url(search_url, location=location)
+            logger.info(f"Attempt {tries+1}/{retries}: Fetching page {page_number} for '{product_name}' via proxy: {proxy_url}")
+            # Increased timeout for potentially slow proxy/network
+            resp = requests.get(proxy_url, timeout=20)
+            resp.raise_for_status() # Check for HTTP errors
+
+            logger.info(f"Successfully fetched page {page_number} for '{product_name}'. Status: {resp.status_code}")
             soup = BeautifulSoup(resp.text, 'html.parser')
 
-            for ad in soup.find_all("div", class_="Adholder"):
-                ad.decompose()
+            # Find result containers (might need adjustment based on current Amazon structure)
+            # Using 'data-component-type="s-search-result"' is often more reliable
+            results = soup.find_all('div', {'data-component-type': 's-search-result'})
+            logger.info(f"Found {len(results)} potential results on page {page_number} for '{product_name}'.")
 
-            divs = soup.find_all('div')
-            last_title = ""
+            if not results:
+                 logger.warning(f"No search result containers found on page {page_number} for '{product_name}'. Check selectors.")
+                 # Try to save soup for debugging if needed
+                 # with open(f"debug_{product_name}_page{page_number}.html", "w", encoding="utf-8") as f:
+                 #     f.write(resp.text)
 
-            for div in divs:
-                h2 = div.find('h2')
-                if not h2 or not h2.text.strip() or h2.text.strip() == last_title:
-                    continue
+            processed_count = 0
+            for result in results:
+                # Limit processing if max sources already reached for this item in the pipeline
+                if product_name in data_pipeline.scraped_data and len(data_pipeline.scraped_data[product_name]) >= MAX_SOURCES_PER_ITEM:
+                     logger.info(f"Max sources ({MAX_SOURCES_PER_ITEM}) reached for '{product_name}' during scraping. Stopping processing for this item.")
+                     success = True # Mark as success for this page, even if stopping early
+                     return # Exit the function early for this item
 
-                last_title = h2.text.strip()
+                title_element = result.find('h2')
+                item_title = title_element.text.strip() if title_element else "N/A"
 
-                symbol_element = div.find('span', class_="a-price-symbol")
-                usd_symbol = symbol_element.text if symbol_element else "$"
-                
-                prices = div.find_all('span', class_="a-offscreen")
-                link = div.find('a', class_="a-link-normal")
-                product_url = f"https://www.amazon.com{link['href']}" if link else ""
+                price_element = result.find('span', class_='a-price')
+                price_symbol_element = result.find('span', class_='a-price-symbol')
+                price_whole_element = result.find('span', class_='a-price-whole')
+                price_fraction_element = result.find('span', class_='a-price-fraction')
 
-                if prices:
-                    usd_price = clean_price(prices[0].text, usd_symbol)
+                usd_symbol = price_symbol_element.text if price_symbol_element else "$"
+                price_str = ""
+                if price_whole_element and price_fraction_element:
+                    price_str = f"{usd_symbol}{price_whole_element.text}{price_fraction_element.text}"
+                elif price_element: # Fallback if whole/fraction not found
+                     price_str = price_element.text.strip()
+
+
+                link_element = result.find('a', class_='a-link-normal', href=True)
+                # Construct full URL, ensure it doesn't start with /gp/slredirect/
+                product_url = ""
+                if link_element and link_element['href'] and not link_element['href'].startswith('/gp/slredirect/'):
+                    product_url = f"https://www.amazon.com{link_element['href']}"
+
+                if price_str and product_url:
+                    usd_price = clean_price(price_str, usd_symbol)
                     php_price = usd_price * USD_TO_PHP if usd_price else 0.0
-                    data_pipeline.add_data(product_name, php_price, product_url)
+                    if php_price > 0:
+                         # Add data to the pipeline
+                        data_pipeline.add_data(product_name, php_price, product_url)
+                        processed_count += 1
+                    else:
+                         logger.debug(f"Skipping item '{item_title}' due to zero price after cleaning/conversion.")
 
-            success = True
+                else:
+                     logger.debug(f"Skipping result for '{item_title}' due to missing price ('{price_str}') or URL ('{product_url}').")
 
+
+            if processed_count == 0 and len(results) > 0:
+                 logger.warning(f"Processed 0 items with valid prices/URLs from {len(results)} results found for '{product_name}' on page {page_number}.")
+
+            success = True # Mark as successful if the page was fetched and parsed, even if no items added
+
+        except requests.exceptions.RequestException as e:
+            tries += 1
+            logger.warning(f"Network error scraping page {page_number} for '{product_name}': {str(e)}, tries left: {retries-tries}")
+            if tries < retries: time.sleep(2) # Wait longer before retrying on network errors
         except Exception as e:
             tries += 1
-            logger.warning(f"Failed to scrape page {page_number}: {str(e)}, tries left: {retries-tries}")
-            time.sleep(1)
+            logger.error(f"Unexpected error scraping page {page_number} for '{product_name}': {str(e)}, tries left: {retries-tries}", exc_info=True) # Log traceback
+            if tries < retries: time.sleep(1)
 
     if not success:
-        logger.error(f"Failed to scrape page {page_number} for {product_name}, retries exceeded: {retries}")
+        logger.error(f"Failed to scrape page {page_number} for '{product_name}' after {retries} retries.")
+
+
 
 def threaded_search(product_name, pages, data_pipeline, max_workers=5, location="us", retries=3):
+    """Runs search_products in parallel threads for multiple pages."""
+    logger.info(f"Starting threaded search for '{product_name}' across {pages} pages.")
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit tasks
         futures = [
             executor.submit(
                 search_products, product_name, page, location, retries, data_pipeline
             ) for page in range(1, pages + 1)
         ]
+        # Wait for all tasks to complete (optional, result() blocks)
         for future in futures:
-            future.result()
+            try:
+                future.result() # Retrieve result or raise exception if task failed
+            except Exception as e:
+                 logger.error(f"A thread encountered an error during execution: {e}", exc_info=True)
 
-### Callable function to run the scraper ###
-# This function can be called from other scripts or modules
 
+# Modified run_scraper function
 def run_scraper():
     MAX_RETRIES = 3
-    PAGES = 2
+    PAGES_TO_SCRAPE = 1 # Adjust how many pages per item (more pages = more potential sources)
     MAX_THREADS = 3
-    LOCATION = "us"
+    LOCATION = "us" # Or specify desired Amazon region (e.g., "uk", "ca")
 
-    # Output folder and filenames
-    OUTPUT_FOLDER = "scraper_output"
-    OUTPUT_JSON = "item_average_prices.json"
-    REALTIME_JSON = "realtime_prices.json"
+    # Output folder and filename
+    OUTPUT_FOLDER = "watchdog_ai/data_utils/scraper_output"
+    OUTPUT_JSON = "realtime_average_prices.json" # Single output file
 
-    pipeline = DataPipeline(average_price_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_prices_filename=REALTIME_JSON)
+    # Initialize the modified pipeline
+    pipeline = DataPipeline(output_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER)
 
+    # --- Item Collection ---
     all_items = []
+    try:
+        # Collects all items from METHODS_DATA
+        for method, details in METHODS_DATA.items():
+            # Ensure 'items' key exists and is a dictionary
+            if isinstance(details.get("items"), dict):
+                all_items.extend(details["items"].keys())
+            else:
+                 logger.warning(f"Expected a dictionary for 'items' in method '{method}', but got {type(details.get('items'))}. Skipping.")
 
-    # Collects all items from METHODS_DATA
-    for method, details in METHODS_DATA.items():
-         all_items.extend(details["items"].keys())
-    all_items = list(set(all_items)) 
+        # Remove duplicates
+        ### MODIFY HERE TO LIMIT !!! FOR TESTING !!! ###
+        all_items = list(set(all_items)) [:1] # Limit to 2 items for testing
+        if not all_items:
+             logger.error("No items found to scrape. Check METHODS_DATA structure.")
+             return # Exit if no items
+        logger.info(f"Items to scrape: {all_items}")
 
-    if pipeline.should_scrape():
-        logger.info("Scraping needed. Starting scraper...") # Added log
-        for item in all_items:
-            threaded_search(
-                item,
-                PAGES,
-                data_pipeline=pipeline,
-                max_workers=MAX_THREADS,
-                retries=MAX_RETRIES,
-                location=LOCATION
-            )
-        pipeline.save_to_json()
-        logger.info("Scraping complete and data saved.") # Added log
-    else:
-        logger.info("Data is up-to-date for today, skipping scraping.")
-
-def test_run_scraper():
-    MAX_RETRIES = 3
-    PAGES = 2
-    MAX_THREADS = 3
-    LOCATION = "us"
-
-    # Output folder and filenames
-    OUTPUT_FOLDER = "scraper_output"
-    OUTPUT_JSON = "item_average_prices.json"
-    REALTIME_JSON = "realtime_prices.json"
-
-    pipeline = DataPipeline(average_price_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_prices_filename=REALTIME_JSON)
-
-    all_items = []
-
-    # Collects all items from METHODS_DATA
-    for method, details in METHODS_DATA.items():
-         all_items.extend(details["items"].keys())
-    all_items = list(set(all_items)) [:1]  # Limit to 2 items for testing
-    logger.info(f"Selected items for scraping: {all_items}")
-
-    if pipeline.should_scrape():
-        logger.info("Scraping needed. Starting scraper...") # Added log
-        for item in all_items:
-            threaded_search(
-                item,
-                PAGES,
-                data_pipeline=pipeline,
-                max_workers=MAX_THREADS,
-                retries=MAX_RETRIES,
-                location=LOCATION
-            )
-        pipeline.save_to_json()
-        logger.info("Scraping complete and data saved.") # Added log
-    else:
-        logger.info("Data is up-to-date for today, skipping scraping.")
+    except Exception as e:
+         logger.error(f"Error collecting items from METHODS_DATA: {e}", exc_info=True)
+         return # Exit if there's an error collecting items
 
 
+    
+    logger.info("Starting scraper...")
+    start_time = time.time()
+
+    for item in all_items:
+        threaded_search(
+            item,
+            PAGES_TO_SCRAPE,
+            data_pipeline=pipeline,
+            max_workers=MAX_THREADS,
+            retries=MAX_RETRIES,
+            location=LOCATION
+        )
+
+    end_time = time.time()
+    logger.info(f"Scraping threads completed in {end_time - start_time:.2f} seconds.")
+
+    # --- Saving Data ---
+    pipeline.save_to_json()
+    logger.info("Scraping process finished.")
+
+
+# --- Main Execution Block ---
 if __name__ == "__main__":
+    
+    # print(API_KEY)
 
-    # This block is for testing the scraper independently
-    # un this script directly to test the scraping functionality
-    test_run_scraper()
+    print("Running scraper directly...")
+    run_scraper()
+    print("Scraper finished.")
