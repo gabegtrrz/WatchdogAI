@@ -1,4 +1,4 @@
-from procurement_data_config import METHODS_DATA
+from watchdog_ai.data_utils.procurement_data_config import METHODS_DATA
 
 
 all_items = []

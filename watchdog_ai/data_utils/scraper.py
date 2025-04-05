@@ -7,7 +7,7 @@ import logging, os
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
 from datetime import datetime
-from procurement_data_config import METHODS_DATA  # Import from the other file
+from procurement_data_config import METHODS_DATA  # The import from the other file
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,6 +55,8 @@ class DataPipeline:
         today = datetime.now().strftime('%Y-%m-%d')
         latest_date = self.realtime_data.get('latest_date_updated', '')
         return latest_date != today
+        # returns True if the latest date is not today, indicating that scraping is needed
+        # returns False if the latest date is today, indicating that scraping is not needed
 
     def add_data(self, item, price, url=""):
         if price > 0:  # Only include valid prices
@@ -170,22 +172,31 @@ def threaded_search(product_name, pages, data_pipeline, max_workers=5, location=
         for future in futures:
             future.result()
 
-if __name__ == "__main__":
+### Callable function to run the scraper ###
+# This function can be called from other scripts or modules
+
+def run_scraper_if_needed():
     MAX_RETRIES = 3
     PAGES = 2
     MAX_THREADS = 3
     LOCATION = "us"
-    OUTPUT_FOLDER = "data"
+
+    # Output folder and filenames
+    OUTPUT_FOLDER = "data_utils"
     OUTPUT_JSON = "item_average_prices.json"
     REALTIME_JSON = "realtime_prices.json"
 
     pipeline = DataPipeline(json_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_filename=REALTIME_JSON)
 
     all_items = []
+
+    # Collects all items from METHODS_DATA
     for method, details in METHODS_DATA.items():
-        all_items.extend(details["items"].keys())
+         all_items.extend(details["items"].keys())
+    all_items = list(set(all_items)) 
 
     if pipeline.should_scrape():
+        logger.info("Scraping needed. Starting scraper...") # Added log
         for item in all_items:
             threaded_search(
                 item,
@@ -196,5 +207,13 @@ if __name__ == "__main__":
                 location=LOCATION
             )
         pipeline.save_to_json()
+        logger.info("Scraping complete and data saved.") # Added log
     else:
         logger.info("Data is up-to-date for today, skipping scraping.")
+
+
+if __name__ == "__main__":
+
+    # This block is for testing the scraper independently
+    # un this script directly to test the scraping functionality
+    run_scraper_if_needed()
