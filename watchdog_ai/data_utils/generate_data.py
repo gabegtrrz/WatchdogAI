@@ -64,11 +64,11 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
         unit_price = round(unit_price, 2)
 
         
-        data.append([
-            i+1, item_name, quantity, procurement_method, 
-            unit_price, average_price, supplier, procurement_officer, 
-            transaction_date,
-        ])
+        # data.append([
+        #     i+1, item_name, quantity, procurement_method, 
+        #     unit_price, average_price, supplier, procurement_officer, 
+        #     transaction_date,
+        # ])
 
 
     # !!! update columns !!!

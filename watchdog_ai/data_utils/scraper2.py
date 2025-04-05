@@ -24,8 +24,9 @@ logger = logging.getLogger(__name__)
 
 
 API_KEY = '39460d69-2a10-482d-bd64-5e96132d14f1'
-# with open('watchdog_ai/data_utils/scraper_output/API_KEY.txt', 'r') as f:
+# with open('watchdog_ai/data_utils/API_KEY.txt', 'r') as f:
 #     API_KEY = f.read().strip()
+
 USD_TO_PHP = 56.0 # Conversion rate: 1 USD = 56 PHP
 MAX_SOURCES_PER_ITEM = 5 # Maximum number of sources to average per item
 
@@ -52,7 +53,7 @@ class DataPipeline:
                 self.scraped_data[item].append({"price": price, "url": source_url})
                 logger.info(f"Added price {price} from {source_url} for item {item}. Sources: {len(self.scraped_data[item])}/{MAX_SOURCES_PER_ITEM}")
             else:
-                 logger.debug(f"Max sources ({MAX_SOURCES_PER_ITEM}) accomplished {item}. Skipping price {price} from {url}")
+                 logger.debug(f"({MAX_SOURCES_PER_ITEM}) prices accomplished {item}.")
 
 
     # Modified save_to_json to create the desired output structure
@@ -72,7 +73,7 @@ class DataPipeline:
             total_price = sum(source["price"] for source in sources)
             num_sources = len(sources)
             average_price = total_price / num_sources if num_sources > 0 else 0.0
-            source_links = [source["url"] for source in sources]
+            # source_links = [source["url"] for source in sources]
 
             output_data[item] = {
                 "item_name": item, # Added for clarity, matches the key
@@ -80,7 +81,7 @@ class DataPipeline:
                 "average_price": round(average_price, 2), # Round to 2 decimal places
                 "pricing_unit": "₱",
                 "num_sources": num_sources,
-                "source_links": source_links
+                # "source_links": source_links
             }
             logger.info(f"Calculated average price for {item}: {average_price:.2f} from {num_sources} sources.")
 
@@ -235,7 +236,7 @@ def run_scraper():
     LOCATION = "us" # Or specify desired Amazon region (e.g., "uk", "ca")
 
     # Output folder and filename
-    OUTPUT_FOLDER = "scraper_output"
+    OUTPUT_FOLDER = "watchdog_ai/data_utils/scraper_output"
     OUTPUT_JSON = "realtime_average_prices.json" # Single output file
 
     # Initialize the modified pipeline
