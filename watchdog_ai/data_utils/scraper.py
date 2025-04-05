@@ -51,6 +51,12 @@ class DataPipeline:
             return initial_data
         with open(self.realtime_prices_filename, 'r', encoding='utf-8') as f:
             return json.load(f)
+    
+    def load_average_prices(self):
+        if not os.path.exists(self.average_price_filename):
+            return {}
+        with open(self.average_price_filename, 'r', encoding='utf-8') as f:
+            return json.load(f)
 
     def should_scrape(self):
         today = datetime.now().strftime('%Y-%m-%d')
