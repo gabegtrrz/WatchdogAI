@@ -11,6 +11,7 @@ from datetime import datetime
 
 ### Local Imports ###
 from procurement_data_config import METHODS_DATA
+from api_key import SCRAPEOPS_API_KEY
 
 ### Placeholder for METHODS_DATA if import fails or is not available
 # METHODS_DATA = {
@@ -23,9 +24,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-API_KEY = '39460d69-2a10-482d-bd64-5e96132d14f1'
-# with open('watchdog_ai/data_utils/API_KEY.txt', 'r') as f:
-#     API_KEY = f.read().strip()
+API_KEY = SCRAPEOPS_API_KEY # API key for ScrapeOps
 
 USD_TO_PHP = 56.0 # Conversion rate: 1 USD = 56 PHP
 MAX_SOURCES_PER_ITEM = 5 # Maximum number of sources to average per item
@@ -291,6 +290,8 @@ def run_scraper():
 # --- Main Execution Block ---
 if __name__ == "__main__":
     
+    # print(API_KEY)
+
     print("Running scraper directly...")
     run_scraper()
     print("Scraper finished.")
