@@ -7,7 +7,8 @@ import os
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
-from datetime import datetime
+from datetime import datetime, date
+import pathlib
 
 ### Local Imports ###
 from procurement_data_config import METHODS_DATA
@@ -23,6 +24,16 @@ from api_key import SCRAPEOPS_API_KEY
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+### Define constants for file paths ###
+
+# determines the absolute path to the directory where the scraper.py script itself is located
+
+SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
+
+OUTPUT_FOLDER_PATH = SCRIPT_DIR / "scraper_output" # Folder for output files
+OUTPUT_JSON_FILENAME = "realtime_average_prices.json"
+OUTPUT_JSON_FULL_PATH = OUTPUT_FOLDER_PATH / OUTPUT_JSON_FILENAME
+
 
 API_KEY = SCRAPEOPS_API_KEY # API key for ScrapeOps
 
@@ -31,11 +42,12 @@ MAX_SOURCES_PER_ITEM = 5 # Maximum number of sources to average per item
 
 class DataPipeline:
     # I modified __init__ to handle single output file only
-    def __init__(self, output_filename="realtime_average_prices.json", folder_path="scraper_output"):
+    def __init__(self, output_filename=OUTPUT_JSON_FILENAME, folder_path=OUTPUT_JSON_FULL_PATH):
         # Stores {item: [{"price": float, "url": str}, ...]}
         self.scraped_data = {}
+        self.output_filepath = folder_path / output_filename
+        folder_path.mkdir(parents=True, exist_ok=True) 
         os.makedirs(folder_path, exist_ok=True)
-        self.output_filename = os.path.join(folder_path, output_filename)
         self.last_updated_time = None # Will store the timestamp when saving
 
     # Modified add_data to store price and URL pairs, and use MAX_SOURCES_PER_ITEM
@@ -86,7 +98,7 @@ class DataPipeline:
 
         # Save the combined data to the single JSON file
         try:
-            with open(self.output_filename, mode="w", encoding="utf-8") as output_file:
+            with open(self.output_filepath, mode="w", encoding="utf-8") as output_file:
                 json.dump(output_data, output_file, indent=4)
             logger.info(f"Successfully saved data to {self.output_filename}")
         except IOError as e:
@@ -228,18 +240,14 @@ def threaded_search(product_name, pages, data_pipeline, max_workers=5, location=
 
 
 # Modified run_scraper function
-def run_scraper():
+def run_scraper(limit_items=None):
     MAX_RETRIES = 3
     PAGES_TO_SCRAPE = 1 # Adjust how many pages per item (more pages = more potential sources)
     MAX_THREADS = 3
     LOCATION = "us" # Or specify desired Amazon region (e.g., "uk", "ca")
 
-    # Output folder and filename
-    OUTPUT_FOLDER = "watchdog_ai/data_utils/scraper_output"
-    OUTPUT_JSON = "realtime_average_prices.json" # Single output file
-
-    # Initialize the modified pipeline
-    pipeline = DataPipeline(output_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER)
+    
+    pipeline = DataPipeline()
 
     # --- Item Collection ---
     all_items = []
@@ -254,18 +262,25 @@ def run_scraper():
 
         # Remove duplicates
         ### MODIFY HERE TO LIMIT !!! FOR TESTING !!! ###
-        all_items = list(set(all_items)) [:1] # Limit to 2 items for testing
+        all_items = list(set(all_items))
+
+        ### Applying limit for items to be scraped ###
+        if limit_items is not None and limit_items > 0:
+             logger.info(f"Limiting processing to the first {limit_items} items.")
+             all_items = all_items[:limit_items]
+
         if not all_items:
-             logger.error("No items found to scrape. Check METHODS_DATA structure.")
-             return # Exit if no items
-        logger.info(f"Items to scrape: {all_items}")
+             logger.error("No items found to scrape.")
+             return
+        logger.info(f"Items to scrape ({len(all_items)}): {all_items}")
 
     except Exception as e:
          logger.error(f"Error collecting items from METHODS_DATA: {e}", exc_info=True)
          return # Exit if there's an error collecting items
 
 
-    
+    ### Scraper stars here ###
+    logger.info("Scraper initialized.")
     logger.info("Starting scraper...")
     start_time = time.time()
 
@@ -282,16 +297,53 @@ def run_scraper():
     end_time = time.time()
     logger.info(f"Scraping threads completed in {end_time - start_time:.2f} seconds.")
 
-    # --- Saving Data ---
+    ### Saving Data ###
     pipeline.save_to_json()
     logger.info("Scraping process finished.")
 
 
-# --- Main Execution Block ---
+### Check data freshness and run scraper if needed ###
+def check_and_run_scraper_if_needed():
+    
+    # checks if the average price data file exists and was updated today.
+    # if not, runs the scraper.
+    
+    should_scrape = False
+    today = date.today()
+
+    logger.info(f"Checking data file: {OUTPUT_JSON_FULL_PATH}")
+
+    if not OUTPUT_JSON_FULL_PATH.exists():
+        logger.info("Data file does not exist. Scraping needed.")
+        should_scrape = True
+    else:
+        try:
+            # Get modification time and convert to date
+            last_modified_timestamp = OUTPUT_JSON_FULL_PATH.stat().st_mtime # system call to get last modified time
+            # Convert to date object
+            last_modified_date = date.fromtimestamp(last_modified_timestamp)
+            logger.info(f"Data file last modified on: {last_modified_date}")
+
+            if last_modified_date < today:
+                logger.info("Data file is outdated. Scraping needed.")
+                should_scrape = True
+            else:
+                logger.info("Data file is up-to-date.")
+        except Exception as e:
+            logger.error(f"Error checking file modification date: {e}. Assuming scrape is needed.", exc_info=True)
+            should_scrape = True # Scrape if unsure
+    
+    if should_scrape:
+        run_scraper()
+    else:
+        logger.info("Skipping scraping as data is current.")
+
+
+### Main Execution Block ###
 if __name__ == "__main__":
     
     # print(API_KEY)
 
     print("Running scraper directly...")
-    run_scraper()
+    run_scraper(limit_items=1) # Set limit_items to 1 for testing
     print("Scraper finished.")
