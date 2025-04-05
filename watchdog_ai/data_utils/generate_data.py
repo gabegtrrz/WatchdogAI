@@ -14,9 +14,8 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
 
 
     data = []
-    previous_hash = '0' # Genesis Block
     
-    # Get PROCUREMENT_DATA values
+    # Get procurement methods and appropriate frequency from procurement_data values
     methods_and_frequencies = procurement_data.groupby('Method')['Frequency'].first() #This is a pandas series
     methods = methods_and_frequencies.index.tolist() #List of Methods
     frequencies = methods_and_frequencies.values.tolist() #List of frequencies
@@ -28,7 +27,7 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
 
         quantity = random.randint(1000, 10000)
         supplier = fake.company()
-        procurement_officer = random.choice(PROCUREMENT_OFFICERS)
+        procurement_officer = random.choice(procurement_officers)
 
         procurement_method = random.choices(methods, weights=frequencies, k=1)[0]
         # methods and frequencies are aligned by position in their respective lists
@@ -38,20 +37,25 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
         # returns a NEW DataFrame filtered -> containing only the filtered rows
 
 
+        ### This is where we pick the item row from the available items:
+        # .sample(1) randomly selects one row from the available items DataFrame and outputs a DataFrame with one row
+        # .iloc[0] is used to access the first row of the resulting DataFrame
+
         item_row = available_items.sample(1).iloc[0]
         # .sample(1) is like drawing one card from a deck of available items
         # .iloc[0] pulls out that first card from the array
         # output is a series (array)
 
-        item_name = item_row['Item_Name']
-        base_price = item_row['Base_Price']
+        #average_price = 
 
+        item_name = item_row['Item_Name']
+        base_price = item_row['Base_Price'] #not the actual price
 
         ### Determining Volatility
         if procurement_method in ["Negotiated Procurement", "Direct Contracting"]:
-            volatility = VOLATILITY_HIGH
+            volatility = volatility_high
         else:
-            volatility = VOLATILITY_MEDIUM
+            volatility = volatility_medium
          
         
         ### Price based on base_prices multiplied to set volatility
@@ -59,26 +63,16 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
         # random.uniform selects a float from the given range (lower bound, uper bound)
         unit_price = round(unit_price, 2)
 
-
-        ### HASHING
-        hash_string = f"{timestamp}{item_name}{quantity}{unit_price}{procurement_method}{supplier}{procurement_officer}{transaction_date}"
-        
-
-        block_hash = hashlib.sha256(hash_string.encode()).hexdigest()
-        # block_hash is made into the hexadecimal hash from the hash_string
-
         
         data.append([
-            i+1, item_name, quantity, 
-            unit_price, procurement_method, supplier, procurement_officer, 
-            transaction_date, previous_hash, block_hash,
+            i+1, item_name, quantity, procurement_method, 
+            unit_price, average_price, supplier, procurement_officer, 
+            transaction_date,
         ])
 
-        # setting up the previous hash for next iteration
-        previous_hash = block_hash
 
     # !!! update columns !!!
     dataframe = pd.DataFrame(data, columns= [
-        'transaction_id', 'item_name', 'quantity', 'unit_price', 'procurement_method', 'supplier', 'procurement_officer','transaction_date', 'previous_hash', 'block_hash'])
+        'transaction_id', 'item_name', 'quantity', 'procurement_method', 'unit_price', 'average_price', 'supplier', 'procurement_officer','transaction_date',])
     
     return dataframe
