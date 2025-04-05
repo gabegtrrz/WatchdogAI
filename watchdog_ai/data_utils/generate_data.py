@@ -3,7 +3,7 @@ import hashlib
 import random
 from faker import Faker
 from datetime import datetime, timedelta
-from watchdog_ai.data_utils.procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, ITEMS, BASE_PRICES, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
+from watchdog_ai.data_utils.procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
 
 fake = Faker()
 
