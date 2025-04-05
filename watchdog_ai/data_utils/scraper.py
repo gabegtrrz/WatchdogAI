@@ -1,9 +1,10 @@
 import time
 import requests
 import json
+import logging, os
+
 from dataclasses import dataclass, fields
 from bs4 import BeautifulSoup
-import logging, os
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
 from datetime import datetime
@@ -35,20 +36,20 @@ class ProductData:
                     setattr(self, field.name, value)
 
 class DataPipeline:
-    def __init__(self, json_filename="", folder_path="", realtime_filename="realtime_prices.json"):
+    def __init__(self, average_price_filename="", folder_path="", realtime_prices_filename="realtime_prices.json"):
         self.price_data = {}  # {item: {"sum": float, "count": int}}
         os.makedirs(folder_path, exist_ok=True)
-        self.json_filename = os.path.join(folder_path, json_filename) if folder_path else json_filename
-        self.realtime_filename = os.path.join(folder_path, realtime_filename) if folder_path else realtime_filename
+        self.average_price_filename = os.path.join(folder_path, average_price_filename) if folder_path else average_price_filename
+        self.realtime_prices_filename = os.path.join(folder_path, realtime_prices_filename) if folder_path else realtime_prices_filename
         self.realtime_data = self.load_realtime_data()
 
     def load_realtime_data(self):
-        if not os.path.exists(self.realtime_filename):
+        if not os.path.exists(self.realtime_prices_filename):
             initial_data = {"latest_date_updated": "", "items": {}}
-            with open(self.realtime_filename, 'w', encoding='utf-8') as f:
+            with open(self.realtime_prices_filename, 'w', encoding='utf-8') as f:
                 json.dump(initial_data, f, indent=4)
             return initial_data
-        with open(self.realtime_filename, 'r', encoding='utf-8') as f:
+        with open(self.realtime_prices_filename, 'r', encoding='utf-8') as f:
             return json.load(f)
 
     def should_scrape(self):
@@ -82,15 +83,15 @@ class DataPipeline:
             else:
                 data_to_save[item] = {"avg_price": 0.0, "pricing_unit": "₱"}
         
-        with open(self.json_filename, mode="w", encoding="utf-8") as output_file:
+        with open(self.average_price_filename, mode="w", encoding="utf-8") as output_file:
             json.dump(data_to_save, output_file, indent=4)
         
         # Save realtime prices
-        with open(self.realtime_filename, mode="w", encoding="utf-8") as realtime_file:
+        with open(self.realtime_prices_filename, mode="w", encoding="utf-8") as realtime_file:
             json.dump(self.realtime_data, realtime_file, indent=4)
         
-        logger.info(f"Saved average prices to {self.json_filename}")
-        logger.info(f"Saved realtime prices to {self.realtime_filename}")
+        logger.info(f"Saved average prices to {self.average_price_filename}")
+        logger.info(f"Saved realtime prices to {self.realtime_prices_filename}")
 
 def get_scrapeops_url(url, location="us"):
     payload = {
@@ -186,7 +187,7 @@ def run_scraper():
     OUTPUT_JSON = "item_average_prices.json"
     REALTIME_JSON = "realtime_prices.json"
 
-    pipeline = DataPipeline(json_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_filename=REALTIME_JSON)
+    pipeline = DataPipeline(average_price_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_prices_filename=REALTIME_JSON)
 
     all_items = []
 
@@ -222,7 +223,7 @@ def test_run_scraper():
     OUTPUT_JSON = "item_average_prices.json"
     REALTIME_JSON = "realtime_prices.json"
 
-    pipeline = DataPipeline(json_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_filename=REALTIME_JSON)
+    pipeline = DataPipeline(average_price_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_prices_filename=REALTIME_JSON)
 
     all_items = []
 
