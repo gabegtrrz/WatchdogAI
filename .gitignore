@@ -6,3 +6,9 @@
 
 # Ignore env
 watchdogai_env/
+
+# Ignore paper draft
+resource/
+
+# scraper outputs
+scraper_output/
