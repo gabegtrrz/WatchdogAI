@@ -303,7 +303,7 @@ def run_scraper(limit_items=None):
 
 
 ### Check data freshness and run scraper if needed ###
-def check_and_run_scraper_if_needed():
+def check_and_run_scraper_if_needed(limit_items=None):
     
     # checks if the average price data file exists and was updated today.
     # if not, runs the scraper.
@@ -334,7 +334,7 @@ def check_and_run_scraper_if_needed():
             should_scrape = True # Scrape if unsure
     
     if should_scrape:
-        run_scraper()
+        run_scraper(limit_items=limit_items) # Run the scraper if needed
     else:
         logger.info("Skipping scraping as data is current.")
 
