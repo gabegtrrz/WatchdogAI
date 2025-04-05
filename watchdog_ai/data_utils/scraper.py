@@ -175,14 +175,14 @@ def threaded_search(product_name, pages, data_pipeline, max_workers=5, location=
 ### Callable function to run the scraper ###
 # This function can be called from other scripts or modules
 
-def run_scraper_if_needed():
+def run_scraper():
     MAX_RETRIES = 3
     PAGES = 2
     MAX_THREADS = 3
     LOCATION = "us"
 
     # Output folder and filenames
-    OUTPUT_FOLDER = "data_utils"
+    OUTPUT_FOLDER = "scraper_output"
     OUTPUT_JSON = "item_average_prices.json"
     REALTIME_JSON = "realtime_prices.json"
 
@@ -211,9 +211,46 @@ def run_scraper_if_needed():
     else:
         logger.info("Data is up-to-date for today, skipping scraping.")
 
+def test_run_scraper():
+    MAX_RETRIES = 3
+    PAGES = 2
+    MAX_THREADS = 3
+    LOCATION = "us"
+
+    # Output folder and filenames
+    OUTPUT_FOLDER = "scraper_output"
+    OUTPUT_JSON = "item_average_prices.json"
+    REALTIME_JSON = "realtime_prices.json"
+
+    pipeline = DataPipeline(json_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_filename=REALTIME_JSON)
+
+    all_items = []
+
+    # Collects all items from METHODS_DATA
+    for method, details in METHODS_DATA.items():
+         all_items.extend(details["items"].keys())
+    all_items = list(set(all_items)) [:2]  # Limit to 2 items for testing
+    logger.info(f"Selected items for scraping: {all_items}")
+
+    if pipeline.should_scrape():
+        logger.info("Scraping needed. Starting scraper...") # Added log
+        for item in all_items:
+            threaded_search(
+                item,
+                PAGES,
+                data_pipeline=pipeline,
+                max_workers=MAX_THREADS,
+                retries=MAX_RETRIES,
+                location=LOCATION
+            )
+        pipeline.save_to_json()
+        logger.info("Scraping complete and data saved.") # Added log
+    else:
+        logger.info("Data is up-to-date for today, skipping scraping.")
+
 
 if __name__ == "__main__":
 
     # This block is for testing the scraper independently
     # un this script directly to test the scraping functionality
-    run_scraper_if_needed()
+    test_run_scraper()
