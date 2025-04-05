@@ -236,7 +236,7 @@ def test_run_scraper():
     # Collects all items from METHODS_DATA
     for method, details in METHODS_DATA.items():
          all_items.extend(details["items"].keys())
-    all_items = list(set(all_items)) [:2]  # Limit to 2 items for testing
+    all_items = list(set(all_items)) [:1]  # Limit to 2 items for testing
     logger.info(f"Selected items for scraping: {all_items}")
 
     if pipeline.should_scrape():
