@@ -11,4 +11,4 @@ watchdogai_env/
 resource/
 
 # scraper outputs
-scraper_output/
+# scraper_output/
