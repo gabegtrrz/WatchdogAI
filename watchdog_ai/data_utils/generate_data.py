@@ -49,12 +49,12 @@ def load_average_price_data():
         logger.error(f"Error loading average prices: {e}", exc_info=True)
         return {}
         
-def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH,):
+def generate_transaction_data(scrape_num: int, num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH,):
     ''' This is to generate clean or normal transaction data FOR TRAINING. '''
 
 
     ### Ensure average_price data is up-to-date ###
-    scraper.check_and_run_scraper_if_needed()
+    scraper.check_and_run_scraper_if_needed(limit_items=scrape_num) # scrape_num is the number of items variation to scrape
 
     ### Load average prices from the JSON file ###
     average_price_data = load_average_price_data()
@@ -155,3 +155,10 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
     logger.info(f"Transaction data saved to {csv_file_path}.")
 
     return
+
+
+if __name__ == "__main__":
+    # Example usage
+    generate_transaction_data(scrape_num=10, num_transactions=1000)
+    # The scrape_num is the number of items to scrape from the web.
+    # The num_transactions is the number of transactions to generate.
