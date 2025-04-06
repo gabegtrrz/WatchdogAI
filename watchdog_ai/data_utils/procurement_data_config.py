@@ -47,17 +47,17 @@ METHODS_DATA = {
     "Negotiated Procurement": {
         "frequency": 0.2,
         "items": {item: AVERAGE_PRICES.get(item, 0.0) for item in [
-            "Voltmeter basic", "Hydrochloric Acid", "Dissecting Kit", "Petri Dishes pack of 20", 
-            "Universal Indicator Solution 100ml", "Copper Sulfate", "Rubber Stoppers", "Dropper Bottle 50ml", 
-            "Agar Powder 100g", "Iron Filings 250g"]
+            "Voltmeter basic", "Hydrochloric Acid Science Laboratory", "Dissecting Kit", "Petri Dishes pack of 20", 
+            "Universal Indicator Solution 100ml", "Copper Sulfate", "Laboratory Rubber Stoppers", "Dropper Bottle 50ml", 
+            "Laboratory Agar Powder 100g", "Iron Filings 250g"]
         }
     },
     "Direct Contracting": {
         "frequency": 0.1,
         "items": {item: AVERAGE_PRICES.get(item, 0.0) for item in [
-            "Safety Goggles", "Litmus Paper", "Pipette 10ml", "Gloves nitrile box of 100", 
-            "Lab Aprons pack of 10", "Funnel plastic 100mm", "Alcohol Burner", "Fire Blanket", 
-            "Test Tube Brush", "Microscope Coverslips box of 100", "Spatula stainless steel"]
+            "Laboratory Safety Goggles", "Litmus Paper", "Pipette 10ml", "Laboratory Gloves nitrile box of 100", 
+            "Laboratory Aprons pack of 10", "Funnel plastic 100mm", "Laboratory Alcohol Burner", "Fire Blanket", 
+            "Test Tube Brush", "Microscope Coverslips box of 100", "Laboratory Spatula stainless steel"]
         }
     }
 }
