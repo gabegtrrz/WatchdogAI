@@ -1,9 +1,17 @@
-import pandas as pd
+
+# Data nad Logic Imports
 import hashlib
 import random
 from faker import Faker
 from datetime import datetime, timedelta
+
+# File Handling Imports
+import pandas as pd
+import json
+
+# Local Imports 
 from watchdog_ai.data_utils.procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
+from watchdog_ai.data_utils import scraper
 
 fake = Faker()
 
