@@ -1,12 +1,10 @@
 # viewer/views.py
-import json
 import pandas as pd
 from django.shortcuts import render, redirect
 from django.views import View
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from datetime import datetime
-import os
 from decimal import Decimal
 from .models import Transaction, Anomaly
 
@@ -31,7 +29,7 @@ class UploadView(View):
                 messages.error(request, "CSV file must contain columns: transaction_id, item_name, quantity, procurement_method, unit_price, average_price, supplier, procurement_officer, transaction_date")
                 return redirect('upload')
 
-            # Store transactions in the database
+            # Store transactions in the database(will update soon to delete the transactions when reloading the page)
             for _, row in df.iterrows():
                 Transaction.objects.update_or_create(
                     transaction_id=row["transaction_id"],
@@ -51,6 +49,7 @@ class UploadView(View):
             messages.error(request, f"Error processing file: {str(e)}")
         return redirect('upload')
 
+        # Transaction reset
 class ResetTransactionsView(View):
     def post(self, request):
         try:
@@ -171,7 +170,7 @@ class ExportAnomaliesView(View):
         if not anomalies:
             return HttpResponse("No anomalies found.", content_type="text/plain")
 
-        # Create CSV
+        
         import csv
         from io import StringIO
         output = StringIO()

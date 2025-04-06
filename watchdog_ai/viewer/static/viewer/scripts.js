@@ -1,4 +1,3 @@
-// viewer/static/viewer/scripts.js
 function runAnomalyDetection() {
     const contamination = document.getElementById('contamination').value;
 

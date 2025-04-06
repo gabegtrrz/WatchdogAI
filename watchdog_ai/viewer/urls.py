@@ -1,4 +1,3 @@
-# viewer/urls.py
 from django.urls import path
 from .views import UploadView, TransactionView, AnomalyDetectionView, ExportAnomaliesView, ReportsView, ResetTransactionsView
 
