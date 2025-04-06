@@ -12,3 +12,11 @@ resource/
 
 # scraper outputs
 # scraper_output/
+
+# all py cache
+*.pyc
+__pycache__/
+.vscode/
+*.log
+
+api_key.py
