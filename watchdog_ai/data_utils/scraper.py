@@ -240,6 +240,8 @@ def threaded_search(product_name, pages, data_pipeline, max_workers=5, location=
 
 
 def run_scraper(limit_items=None):
+    """Main function to run the scraper."""
+    logger.info("Initializing scraper...")
     MAX_RETRIES = 3
     PAGES_TO_SCRAPE = 1 # Adjust how many pages per item (more pages = more potential sources)
     MAX_THREADS = 3
@@ -260,7 +262,6 @@ def run_scraper(limit_items=None):
                  logger.warning(f"Expected a dictionary for 'items' in method '{method}', but got {type(details.get('items'))}. Skipping.")
 
         # Remove duplicates
-        ### MODIFY HERE TO LIMIT !!! FOR TESTING !!! ###
         all_items = list(set(all_items))
 
         ### Applying limit for items to be scraped ###
@@ -271,6 +272,7 @@ def run_scraper(limit_items=None):
         if not all_items:
              logger.error("No items found to scrape.")
              return
+        
         logger.info(f"Items to scrape ({len(all_items)}): {all_items}")
 
     except Exception as e:
@@ -324,7 +326,7 @@ def check_and_run_scraper_if_needed(limit_items=None):
             logger.info(f"Data file last modified on: {last_modified_date}")
 
             if last_modified_date < today:
-                logger.info("Data file is outdated. Scraping needed.")
+                logger.info(f"Data file is outdated. Last modified date is {last_modified_date}, today is {today}")
                 should_scrape = True
             else:
                 logger.info("Data file is up-to-date.")
@@ -333,6 +335,7 @@ def check_and_run_scraper_if_needed(limit_items=None):
             should_scrape = True # Scrape if unsure
     
     if should_scrape:
+        logger.info("Running scraper...")
         run_scraper(limit_items=limit_items) # Run the scraper if needed
     else:
         logger.info("Skipping scraping as data is current.")

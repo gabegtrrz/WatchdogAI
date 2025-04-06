@@ -52,6 +52,10 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
     ''' This is to generate clean or normal transaction data FOR TRAINING. '''
 
 
+    ### Ensure average_price data is up-to-date ###
+    logger.info("Checking if average price data is up-to-date...")
+
+
     data = []
     
     # Get procurement methods and appropriate frequency from procurement_data values
