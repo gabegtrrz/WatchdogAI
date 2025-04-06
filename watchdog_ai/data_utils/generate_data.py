@@ -177,7 +177,7 @@ def generate_transaction_data(scrape_num: int = None, num_transactions = 1000, p
         'transaction_id', 'item_name', 'quantity', 'procurement_method', 'unit_price', 'average_price', 'supplier', 'procurement_officer','transaction_date'])
     
     ### Exporting dataframe to CSV ###
-    save_dir = os.path.join(os.getcwd(), 'transactions_folder')
+    save_dir = os.path.join(os.path.abspath(__file__), 'transactions_folder')
     os.makedirs(save_dir, exist_ok=True)  # Create directory if it doesn't exist
 
     csv_filename = f"simulated_transactions_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.csv"
