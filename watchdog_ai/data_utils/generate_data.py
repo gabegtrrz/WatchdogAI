@@ -9,7 +9,7 @@ import pandas as pd
 import json
 
 # Local Imports 
-from watchdog_ai.data_utils.procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
+from watchdog_ai.data_utils.procurement_data_config import PROCUREMENT_DATA, BASE_PRICES, PROCUREMENT_OFFICERS, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
 from watchdog_ai.data_utils import scraper
 
 # Set up logging
@@ -24,7 +24,7 @@ fake = Faker()
 SCRAPER_OUTPUT_FILE = scraper.OUTPUT_JSON_FULL_PATH
 
 
-def load_average_prices():
+def load_average_price_data():
     ''' Load average prices from the JSON file. '''
     try:
         with open(SCRAPER_OUTPUT_FILE, 'r', encoding='utf-8') as file:
@@ -55,6 +55,13 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
     ### Ensure average_price data is up-to-date ###
     scraper.check_and_run_scraper_if_needed()
 
+    ### Load average prices from the JSON file ###
+    average_price_data = load_average_price_data()
+    if not average_price_data:
+        pass
+        # Backup to avoid crashing if scraper requires maintenance
+
+
     data = []
     
     # Get procurement methods and appropriate frequency from procurement_data values
@@ -63,9 +70,8 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
     frequencies = methods_and_frequencies.values.tolist() #List of frequencies
 
     for i in range(num_transactions):
-        # timestamp object converted into str for immutability
-        timestamp = fake.date_time_between(start_date='-1y',end_date='now').strftime('%Y-%m-%d %H:%M:%S')
-        transaction_date = timestamp.split(' ')[0]
+        # datetime object converted into str for immutability
+        transaction_date = fake.date_time_between(start_date='-1y',end_date='now').strftime('%Y-%m-%d')
 
         quantity = random.randint(1000, 10000)
         supplier = fake.company()
@@ -75,23 +81,41 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
         # methods and frequencies are aligned by position in their respective lists
 
 
-        available_items = procurement_data[procurement_data['Method'] == procurement_method]
+        ### Retrieving available_items from procurement_data based on the procurement method ###
+
+        # procurement_data is a pandas DataFrame containing procurement data
         # returns a NEW DataFrame filtered -> containing only the filtered rows
+        available_items = procurement_data[procurement_data['Method'] == procurement_method]
+        
+        ### ---------
 
 
-        ### This is where we pick the item row from the available items:
-        # .sample(1) randomly selects one row from the available items DataFrame and outputs a DataFrame with one row
+        ### This is where we pick the item row from the available items ###
+
+        # .sample(1) randomly selects one row from the available items DataFrame
+        # returns a DataFrame with 1 row
         # .iloc[0] is used to access the first row of the resulting DataFrame
 
-        item_row = available_items.sample(1).iloc[0]
         # .sample(1) is like drawing one card from a deck of available items
         # .iloc[0] pulls out that first card from the array
         # output is a series (array)
 
-        #average_price = 
+        item_row = available_items.sample(1).iloc[0]
+        
+        ### ---------
+
+
+         
 
         item_name = item_row['Item_Name']
-        base_price = item_row['Base_Price'] #not the actual price
+        item_avg_price_info = average_price_data.get(item_name)
+        average_price = item_row['Base_Price'] # Default if not found
+        if item_avg_price_info:
+            average_price = item_avg_price_info.get('average_price', average_price)
+        else: 
+            logger.warning(f"Average price for {item_name} not found in the data. Using default base price.")
+            # This is to avoid crashing if the item is not found in the average price data
+
 
         ### Determining Volatility
         if procurement_method in ["Negotiated Procurement", "Direct Contracting"]:
@@ -100,20 +124,20 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
             volatility = volatility_medium
          
         
-        ### Price based on base_prices multiplied to set volatility
-        unit_price = base_price * (1 + random.uniform(-volatility, volatility))
+        ### Price based on average_price multiplied to set volatility
+        unit_price = average_price * (1 + random.uniform(-volatility, volatility))
         # random.uniform selects a float from the given range (lower bound, uper bound)
         unit_price = round(unit_price, 2)
 
-        
-        # data.append([
-        #     i+1, item_name, quantity, procurement_method, 
-        #     unit_price, average_price, supplier, procurement_officer, 
-        #     transaction_date,
-        # ])
+         # !!! Make columns match with dataframe variable !!!
+        data.append([
+            i+1, item_name, quantity, procurement_method, 
+            unit_price, average_price, supplier, procurement_officer, 
+            transaction_date,
+        ])
 
 
-    # !!! update columns !!!
+    # !!! Make columns match with data variable !!!
     dataframe = pd.DataFrame(data, columns= [
         'transaction_id', 'item_name', 'quantity', 'procurement_method', 'unit_price', 'average_price', 'supplier', 'procurement_officer','transaction_date',])
     
