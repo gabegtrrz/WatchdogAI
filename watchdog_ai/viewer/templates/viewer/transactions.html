@@ -33,8 +33,10 @@
                 <th>Item Name</th>
                 <th>Qty</th>
                 <th>Unit Price</th>
+                <th>Average Price</th>
                 <th>Procurement Method</th>
                 <th>Supplier</th>
+                <th>Procurement Officer</th>
             </tr>
         </thead>
         <tbody>
@@ -44,11 +46,13 @@
                     <td>{{ transaction.item_name }}</td>
                     <td>{{ transaction.quantity }}</td>
                     <td>{{ transaction.unit_price }}</td>
+                    <td>{{ transaction.average_price|default:"N/A" }}</td>
                     <td>{{ transaction.procurement_method }}</td>
                     <td>{{ transaction.supplier }}</td>
+                    <td>{{ transaction.procurement_officer|default:"N/A" }}</td>
                 </tr>
             {% empty %}
-                <tr><td colspan="6">No transactions found.</td></tr>
+                <tr><td colspan="8">No transactions found.</td></tr>
             {% endfor %}
         </tbody>
     </table>

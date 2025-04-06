@@ -11,7 +11,7 @@
             {% csrf_token %}
             <div class="upload-box">
                 <p>Choose a CSV file or drag it here</p>
-                <p>File must contain: item_id, quantity, unit_price, procurement_method_name, supplier, transaction_date</p>
+                <p>File must contain: transaction_id, item_name, quantity, procurement_method, unit_price, average_price, supplier, procurement_officer, transaction_date</p>
                 <input type="file" name="file" accept=".csv" required>
             </div>
             <button type="submit" class="btn">Upload File</button>

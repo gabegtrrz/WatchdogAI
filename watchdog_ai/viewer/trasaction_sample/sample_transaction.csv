@@ -1,0 +1,9 @@
+transaction_id,item_name,quantity,procurement_method,unit_price,average_price,supplier,procurement_officer,transaction_date
+10001,Compound Microscope (1000x),10,Competitive Bidding,58000.00,50000.00,LabCorp,John Doe,2025-03-02
+10002,Breaker 50mL,10,Competitive Bidding,100.00,80.00,LabCorp,Jane Smith,2025-03-03
+10003,Breaker 100mL,10,Competitive Bidding,250.00,200.00,LabCorp,John Doe,2025-03-04
+10004,Test tube 15mL,10,Competitive Bidding,250.00,200.00,LabCorp,Jane Smith,2025-03-05
+10005,Bunsen Burner,10,Competitive Bidding,350.00,300.00,LabCorp,John Doe,2025-03-06
+10007,Thermometer (-10 to 110C),8,Competitive Bidding,1100.00,900.00,LabCorp,Jane Smith,2025-03-07
+10008,Lab Manual-Grade 10 Science,10,Competitive Bidding,250.00,200.00,LabCorp,John Doe,2025-03-08
+10009,Erlenmeyer Flask 250mL,25,Competitive Bidding,250.00,200.00,LabCorp,Jane Smith,2025-03-09
