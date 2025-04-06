@@ -1,13 +1,14 @@
 import time
 import requests
 import json
+import logging, os
+
 from dataclasses import dataclass, fields
 from bs4 import BeautifulSoup
-import logging, os
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode
 from datetime import datetime
-from procurement_data_config import METHODS_DATA  # Import from the other file
+from procurement_data_config import METHODS_DATA  # The import from the other file
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,26 +36,34 @@ class ProductData:
                     setattr(self, field.name, value)
 
 class DataPipeline:
-    def __init__(self, json_filename="", folder_path="", realtime_filename="realtime_prices.json"):
+    def __init__(self, average_price_filename="", folder_path="", realtime_prices_filename="realtime_prices.json"):
         self.price_data = {}  # {item: {"sum": float, "count": int}}
         os.makedirs(folder_path, exist_ok=True)
-        self.json_filename = os.path.join(folder_path, json_filename) if folder_path else json_filename
-        self.realtime_filename = os.path.join(folder_path, realtime_filename) if folder_path else realtime_filename
+        self.average_price_filename = os.path.join(folder_path, average_price_filename) if folder_path else average_price_filename
+        self.realtime_prices_filename = os.path.join(folder_path, realtime_prices_filename) if folder_path else realtime_prices_filename
         self.realtime_data = self.load_realtime_data()
 
     def load_realtime_data(self):
-        if not os.path.exists(self.realtime_filename):
+        if not os.path.exists(self.realtime_prices_filename):
             initial_data = {"latest_date_updated": "", "items": {}}
-            with open(self.realtime_filename, 'w', encoding='utf-8') as f:
+            with open(self.realtime_prices_filename, 'w', encoding='utf-8') as f:
                 json.dump(initial_data, f, indent=4)
             return initial_data
-        with open(self.realtime_filename, 'r', encoding='utf-8') as f:
+        with open(self.realtime_prices_filename, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    
+    def load_average_prices(self):
+        if not os.path.exists(self.average_price_filename):
+            return {}
+        with open(self.average_price_filename, 'r', encoding='utf-8') as f:
             return json.load(f)
 
     def should_scrape(self):
         today = datetime.now().strftime('%Y-%m-%d')
         latest_date = self.realtime_data.get('latest_date_updated', '')
         return latest_date != today
+        # returns True if the latest date is not today, indicating that scraping is needed
+        # returns False if the latest date is today, indicating that scraping is not needed
 
     def add_data(self, item, price, url=""):
         if price > 0:  # Only include valid prices
@@ -80,15 +89,15 @@ class DataPipeline:
             else:
                 data_to_save[item] = {"avg_price": 0.0, "pricing_unit": "₱"}
         
-        with open(self.json_filename, mode="w", encoding="utf-8") as output_file:
+        with open(self.average_price_filename, mode="w", encoding="utf-8") as output_file:
             json.dump(data_to_save, output_file, indent=4)
         
         # Save realtime prices
-        with open(self.realtime_filename, mode="w", encoding="utf-8") as realtime_file:
+        with open(self.realtime_prices_filename, mode="w", encoding="utf-8") as realtime_file:
             json.dump(self.realtime_data, realtime_file, indent=4)
         
-        logger.info(f"Saved average prices to {self.json_filename}")
-        logger.info(f"Saved realtime prices to {self.realtime_filename}")
+        logger.info(f"Saved average prices to {self.average_price_filename}")
+        logger.info(f"Saved realtime prices to {self.realtime_prices_filename}")
 
 def get_scrapeops_url(url, location="us"):
     payload = {
@@ -170,22 +179,31 @@ def threaded_search(product_name, pages, data_pipeline, max_workers=5, location=
         for future in futures:
             future.result()
 
-if __name__ == "__main__":
+### Callable function to run the scraper ###
+# This function can be called from other scripts or modules
+
+def run_scraper():
     MAX_RETRIES = 3
     PAGES = 2
     MAX_THREADS = 3
     LOCATION = "us"
-    OUTPUT_FOLDER = "data"
+
+    # Output folder and filenames
+    OUTPUT_FOLDER = "scraper_output"
     OUTPUT_JSON = "item_average_prices.json"
     REALTIME_JSON = "realtime_prices.json"
 
-    pipeline = DataPipeline(json_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_filename=REALTIME_JSON)
+    pipeline = DataPipeline(average_price_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_prices_filename=REALTIME_JSON)
 
     all_items = []
+
+    # Collects all items from METHODS_DATA
     for method, details in METHODS_DATA.items():
-        all_items.extend(details["items"].keys())
+         all_items.extend(details["items"].keys())
+    all_items = list(set(all_items)) 
 
     if pipeline.should_scrape():
+        logger.info("Scraping needed. Starting scraper...") # Added log
         for item in all_items:
             threaded_search(
                 item,
@@ -196,5 +214,50 @@ if __name__ == "__main__":
                 location=LOCATION
             )
         pipeline.save_to_json()
+        logger.info("Scraping complete and data saved.") # Added log
     else:
         logger.info("Data is up-to-date for today, skipping scraping.")
+
+def test_run_scraper():
+    MAX_RETRIES = 3
+    PAGES = 2
+    MAX_THREADS = 3
+    LOCATION = "us"
+
+    # Output folder and filenames
+    OUTPUT_FOLDER = "scraper_output"
+    OUTPUT_JSON = "item_average_prices.json"
+    REALTIME_JSON = "realtime_prices.json"
+
+    pipeline = DataPipeline(average_price_filename=OUTPUT_JSON, folder_path=OUTPUT_FOLDER, realtime_prices_filename=REALTIME_JSON)
+
+    all_items = []
+
+    # Collects all items from METHODS_DATA
+    for method, details in METHODS_DATA.items():
+         all_items.extend(details["items"].keys())
+    all_items = list(set(all_items)) [:1]  # Limit to 2 items for testing
+    logger.info(f"Selected items for scraping: {all_items}")
+
+    if pipeline.should_scrape():
+        logger.info("Scraping needed. Starting scraper...") # Added log
+        for item in all_items:
+            threaded_search(
+                item,
+                PAGES,
+                data_pipeline=pipeline,
+                max_workers=MAX_THREADS,
+                retries=MAX_RETRIES,
+                location=LOCATION
+            )
+        pipeline.save_to_json()
+        logger.info("Scraping complete and data saved.") # Added log
+    else:
+        logger.info("Data is up-to-date for today, skipping scraping.")
+
+
+if __name__ == "__main__":
+
+    # This block is for testing the scraper independently
+    # un this script directly to test the scraping functionality
+    test_run_scraper()
