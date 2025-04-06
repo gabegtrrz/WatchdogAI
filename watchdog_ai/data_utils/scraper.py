@@ -31,7 +31,8 @@ logger = logging.getLogger(__name__)
 SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
 
 OUTPUT_FOLDER_PATH = SCRIPT_DIR / "scraper_output" # Folder for output files
-OUTPUT_JSON_FILENAME = f"realtime_average_prices_{date.today().strftime('%Y-%m-%d')}.json"
+# OUTPUT_JSON_FILENAME = f"realtime_average_prices_{date.today().strftime('%Y-%m-%d')}.json"
+OUTPUT_JSON_FILENAME = f"realtime_average_prices_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
 OUTPUT_JSON_FULL_PATH = OUTPUT_FOLDER_PATH / OUTPUT_JSON_FILENAME
 
 
@@ -42,7 +43,7 @@ MAX_SOURCES_PER_ITEM = 5 # Maximum number of sources to average per item
 
 class DataPipeline:
     
-    def __init__(self, output_filename=OUTPUT_JSON_FILENAME, folder_path=OUTPUT_JSON_FULL_PATH):
+    def __init__(self, output_filename=OUTPUT_JSON_FILENAME, folder_path=OUTPUT_FOLDER_PATH):
         # Stores {item: [{"price": float, "url": str}, ...]}
         self.scraped_data = {}
         self.output_filepath = folder_path / output_filename
@@ -350,6 +351,6 @@ if __name__ == "__main__":
     # print(API_KEY)
 
     print("Running scraper directly...")
-    run_scraper()
+    run_scraper(limit_items=1)
     #check_and_run_scraper_if_needed(limit_items=1) # Set limit_items to 1 for testing
     print("Scraper finished.")
