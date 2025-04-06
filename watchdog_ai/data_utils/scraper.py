@@ -32,7 +32,7 @@ SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
 
 OUTPUT_FOLDER_PATH = SCRIPT_DIR / "scraper_output" # Folder for output files
 # OUTPUT_JSON_FILENAME = f"realtime_average_prices_{date.today().strftime('%Y-%m-%d')}.json"
-OUTPUT_JSON_FILENAME = f"realtime_average_prices_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
+OUTPUT_JSON_FILENAME = f"realtime_average_prices_{date.today().strftime('%Y-%m-%d')}.json"
 OUTPUT_JSON_FULL_PATH = OUTPUT_FOLDER_PATH / OUTPUT_JSON_FILENAME
 
 
