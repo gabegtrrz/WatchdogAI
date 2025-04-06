@@ -4,6 +4,11 @@
 {% block title %}Transaction View - WatchdogAI{% endblock %}
 
 {% block content %}
+    <!-- Hidden form to include CSRF token -->
+    <form id="csrf-form" style="display: none;">
+        {% csrf_token %}
+    </form>
+
     <h2>Transaction View</h2>
     <form method="get" class="filters">
         <label>Start Date:</label>

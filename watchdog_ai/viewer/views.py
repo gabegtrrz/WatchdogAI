@@ -7,12 +7,8 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from datetime import datetime
 import os
-import logging
+from decimal import Decimal
 from .models import Transaction, Anomaly
-
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 class UploadView(View):
     def get(self, request):
@@ -58,9 +54,7 @@ class UploadView(View):
 class ResetTransactionsView(View):
     def post(self, request):
         try:
-            # Delete all transactions and anomalies
             Transaction.objects.all().delete()
-            # Anomalies are automatically deleted due to CASCADE, but let's be explicit
             Anomaly.objects.all().delete()
             messages.success(request, "All transactions and anomalies have been successfully reset.")
         except Exception as e:
@@ -119,68 +113,62 @@ class TransactionView(View):
 
 class AnomalyDetectionView(View):
     def post(self, request):
-        logger.debug("Received anomaly detection request")
-        
         # Validate contamination
         try:
             contamination = float(request.POST.get("contamination", 0.1))
-            logger.debug(f"Contamination value: {contamination}")
             if not 0 <= contamination <= 0.5:
-                logger.error("Contamination out of range")
                 return JsonResponse({"error": "Contamination must be between 0.0 and 0.5"}, status=400)
-        except ValueError:
-            logger.error("Invalid contamination value")
+        except ValueError as e:
             return JsonResponse({"error": "Contamination must be a valid number"}, status=400)
 
         # Fetch transactions
         transactions = Transaction.objects.all()
-        logger.debug(f"Found {transactions.count()} transactions")
-
         if not transactions.exists():
-            logger.warning("No transactions found for anomaly detection")
-            return JsonResponse({"status": "success", "anomalies": []})
+            return JsonResponse({"status": "success", "anomalies": []}, status=200)
 
-        # Run anomaly detection using average_price from the Transaction model
+        # Run anomaly detection
         Anomaly.objects.all().delete()  # Clear previous anomalies
         anomalies = []
         for transaction in transactions:
             if transaction.average_price is None:
-                logger.debug(f"Skipping transaction {transaction.transaction_id}: No average price")
                 continue
 
-            unit_price = float(transaction.unit_price)
-            avg_price = float(transaction.average_price)
+            try:
+                unit_price = Decimal(str(transaction.unit_price))
+                avg_price = Decimal(str(transaction.average_price))
+            except (ValueError, TypeError):
+                continue
+
             if avg_price == 0:
-                logger.debug(f"Skipping transaction {transaction.transaction_id}: Average price is 0")
                 continue
 
-            # Calculate percentage difference
-            percentage_diff = ((unit_price - avg_price) / avg_price) * 100
-            logger.debug(f"Transaction {transaction.transaction_id}: unit_price={unit_price}, avg_price={avg_price}, percentage_diff={percentage_diff}")
+            try:
+                percentage_diff = ((unit_price - avg_price) / avg_price) * 100
+            except Exception:
+                continue
 
-            if abs(percentage_diff) > 20:  # Flag if price is more than 20% above/below average
-                anomaly = Anomaly.objects.create(
-                    transaction=transaction,
-                    anomaly_score=f"Unit price {abs(percentage_diff):.1f}% {'above' if percentage_diff > 0 else 'below'} real-time average"
-                )
-                anomalies.append({
-                    "transaction_id": transaction.transaction_id,
-                    "item_name": transaction.item_name,
-                    "unit_price": float(transaction.unit_price),
-                    "procurement_method": transaction.procurement_method,
-                    "anomaly_score": anomaly.anomaly_score
-                })
-                logger.debug(f"Flagged anomaly for transaction {transaction.transaction_id}")
+            if abs(percentage_diff) > 20:
+                try:
+                    anomaly = Anomaly.objects.create(
+                        transaction=transaction,
+                        anomaly_score=f"Unit price {abs(percentage_diff):.1f}% {'above' if percentage_diff > 0 else 'below'} average"
+                    )
+                    anomalies.append({
+                        "transaction_id": transaction.transaction_id,
+                        "item_name": transaction.item_name,
+                        "unit_price": float(transaction.unit_price),
+                        "procurement_method": transaction.procurement_method,
+                        "anomaly_score": anomaly.anomaly_score
+                    })
+                except Exception:
+                    continue
 
-        logger.debug(f"Detected {len(anomalies)} anomalies")
-        return JsonResponse({"status": "success", "anomalies": anomalies})
+        return JsonResponse({"status": "success", "anomalies": anomalies}, status=200)
 
 class ExportAnomaliesView(View):
     def get(self, request):
-        logger.debug("Exporting anomalies to CSV")
         anomalies = Anomaly.objects.all()
         if not anomalies:
-            logger.warning("No anomalies found for export")
             return HttpResponse("No anomalies found.", content_type="text/plain")
 
         # Create CSV
@@ -199,7 +187,6 @@ class ExportAnomaliesView(View):
             ])
         response = HttpResponse(output.getvalue(), content_type="text/csv")
         response['Content-Disposition'] = 'attachment; filename="anomalies.csv"'
-        logger.debug("Anomalies exported successfully")
         return response
 
 class ReportsView(View):

@@ -1,6 +1,7 @@
 // viewer/static/viewer/scripts.js
 function runAnomalyDetection() {
     const contamination = document.getElementById('contamination').value;
+
     fetch('/anomaly-detection/', {
         method: 'POST',
         headers: {
@@ -9,10 +10,19 @@ function runAnomalyDetection() {
         },
         body: `contamination=${contamination}`
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok: ' + response.statusText);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.error) {
-            alert(data.error);
+            alert('Error from server: ' + data.error);
+            return;
+        }
+        if (!data.anomalies) {
+            alert('No anomalies found or unexpected response format.');
             return;
         }
         const tbody = document.getElementById('anomaly-results');
@@ -29,5 +39,7 @@ function runAnomalyDetection() {
             tbody.appendChild(row);
         });
     })
-    .catch(error => alert('Error running anomaly detection: ' + error));
+    .catch(error => {
+        alert('Error running anomaly detection: ' + error.message);
+    });
 }
