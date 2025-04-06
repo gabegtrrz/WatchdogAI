@@ -10,8 +10,8 @@ import json
 import os
 
 # Local Imports 
-from watchdog_ai.data_utils.procurement_data_config import PROCUREMENT_DATA, BASE_PRICES, PROCUREMENT_OFFICERS, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
-from watchdog_ai.data_utils import scraper
+from procurement_data_config import PROCUREMENT_DATA, BASE_PRICES, PROCUREMENT_OFFICERS, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
+import scraper
 
 # Set up logging
 import logging
