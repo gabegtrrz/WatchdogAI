@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 # File Handling Imports
 import pandas as pd
 import json
+import os
 
 # Local Imports 
 from watchdog_ai.data_utils.procurement_data_config import PROCUREMENT_DATA, BASE_PRICES, PROCUREMENT_OFFICERS, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
@@ -133,12 +134,24 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
         data.append([
             i+1, item_name, quantity, procurement_method, 
             unit_price, average_price, supplier, procurement_officer, 
-            transaction_date,
+            transaction_date
         ])
 
 
     # !!! Make columns match with data variable !!!
     dataframe = pd.DataFrame(data, columns= [
-        'transaction_id', 'item_name', 'quantity', 'procurement_method', 'unit_price', 'average_price', 'supplier', 'procurement_officer','transaction_date',])
+        'transaction_id', 'item_name', 'quantity', 'procurement_method', 'unit_price', 'average_price', 'supplier', 'procurement_officer','transaction_date'])
     
-    return dataframe
+    ### Exporting dataframe to CSV ###
+    save_dir = os.path.join(os.getcwd(), 'transactions_folder')
+    os.makedirs(save_dir, exist_ok=True)  # Create directory if it doesn't exist
+
+    csv_filename = f"simulated_transactions_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.csv"
+    csv_file_path = os.path.join(save_dir, csv_filename)
+    
+    dataframe.to_csv(csv_file_path, index=False)
+
+    logger.info(f"Transaction data {csv_filename} generated successfully with {num_transactions} records.")
+    logger.info(f"Transaction data saved to {csv_file_path}.")
+
+    return
