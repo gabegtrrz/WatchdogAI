@@ -350,5 +350,6 @@ if __name__ == "__main__":
     # print(API_KEY)
 
     print("Running scraper directly...")
-    check_and_run_scraper_if_needed(limit_items=1) # Set limit_items to 1 for testing
+    run_scraper()
+    #check_and_run_scraper_if_needed(limit_items=1) # Set limit_items to 1 for testing
     print("Scraper finished.")
