@@ -305,7 +305,6 @@ def run_scraper(limit_items=None):
 
 ### Check data freshness and run scraper if needed ###
 def check_and_run_scraper_if_needed(limit_items=None):
-    
     '''checks if the average price data file exists and was updated today.
     if not, runs the scraper.'''
     
@@ -319,6 +318,7 @@ def check_and_run_scraper_if_needed(limit_items=None):
         should_scrape = True
     else:
         try:
+            logger.info("Checking if average price data is up-to-date...")
             # Get modification time and convert to date
             last_modified_timestamp = OUTPUT_JSON_FULL_PATH.stat().st_mtime # system call to get last modified time
             # Convert to date object
@@ -335,10 +335,13 @@ def check_and_run_scraper_if_needed(limit_items=None):
             should_scrape = True # Scrape if unsure
     
     if should_scrape:
+        logger.info("Scraper check complete.")
+        logger.info("Scraping needed.")
         logger.info("Running scraper...")
         run_scraper(limit_items=limit_items) # Run the scraper if needed
     else:
-        logger.info("Skipping scraping as data is current.")
+        logger.info("Scraper check complete.")
+        logger.info("Skipping scraping, data is current.")
 
 
 ### Main Execution Block ###

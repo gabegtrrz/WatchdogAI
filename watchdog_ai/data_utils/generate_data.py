@@ -53,8 +53,7 @@ def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUR
 
 
     ### Ensure average_price data is up-to-date ###
-    logger.info("Checking if average price data is up-to-date...")
-
+    scraper.check_and_run_scraper_if_needed()
 
     data = []
     
