@@ -193,7 +193,7 @@ def generate_transaction_data(scrape_num: int, num_transactions = 1000, procurem
 
 if __name__ == "__main__":
     # Example usage
-    generate_transaction_data(scrape_num=10, num_transactions=1000)
+    generate_transaction_data(num_transactions=1000)
     # The scrape_num is the number of items to scrape from the web.
     # Set scrape_num=0 if you don't want the check_and_run function to limit the scraper run.
     # The num_transactions is the number of transactions to generate.
