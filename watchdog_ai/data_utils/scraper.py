@@ -162,7 +162,7 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
             for result in results:
                 # Limit processing if max sources already reached for this item in the pipeline
                 if product_name in data_pipeline.scraped_data and len(data_pipeline.scraped_data[product_name]) >= MAX_SOURCES_PER_ITEM:
-                     logger.info(f"Max sources ({MAX_SOURCES_PER_ITEM}) reached for '{product_name}' during scraping. Stopping processing for this item.")
+                     logger.info(f"Max sources ({MAX_SOURCES_PER_ITEM}) reached for '{product_name}' proceeding with next item.")
                      success = True # Mark as success for this page, even if stopping early
                      return # Exit the function early for this item
 
