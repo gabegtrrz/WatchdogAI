@@ -16,8 +16,14 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.shortcuts import redirect
 
 urlpatterns = [
+    # Admin URL
     path("admin/", admin.site.urls),
+    # Redirect the root URL (/) to the upload page
+    path('', lambda request: redirect('upload'), name='home'),
+    # Include the viewer app's URLs
+    path('', include('viewer.urls')),
 ]
