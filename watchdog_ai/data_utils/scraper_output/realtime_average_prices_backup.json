@@ -1,0 +1,317 @@
+{
+    "Microscope Slides": {
+        "item_name": "Microscope Slides",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 513.74,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Laboratory Safety Goggles": {
+        "item_name": "Laboratory Safety Goggles",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 711.31,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Bar Magnet pair": {
+        "item_name": "Bar Magnet pair",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 450.69,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Spring Scale 500g": {
+        "item_name": "Spring Scale 500g",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 729.57,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Compound Microscope (1000x)": {
+        "item_name": "Compound Microscope (1000x)",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 5498.64,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Bunsen Burner": {
+        "item_name": "Bunsen Burner",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1198.4,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Laboratory Rubber Stoppers": {
+        "item_name": "Laboratory Rubber Stoppers",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 533.34,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Refracting Telescope 70mm": {
+        "item_name": "Refracting Telescope 70mm",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 4826.42,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Tuning Fork 256 Hz": {
+        "item_name": "Tuning Fork 256 Hz",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 689.02,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Iron Filings 250g": {
+        "item_name": "Iron Filings 250g",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 933.07,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Petri Dishes pack of 20": {
+        "item_name": "Petri Dishes pack of 20",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 738.19,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Copper Sulfate": {
+        "item_name": "Copper Sulfate",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1804.88,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Erlenmeyer Flask 250ml": {
+        "item_name": "Erlenmeyer Flask 250ml",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1280.16,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Universal Indicator Solution 100ml": {
+        "item_name": "Universal Indicator Solution 100ml",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1161.55,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Litmus Paper": {
+        "item_name": "Litmus Paper",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 413.84,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Beaker 50ml": {
+        "item_name": "Beaker 50ml",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 836.08,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Pipette 10ml": {
+        "item_name": "Pipette 10ml",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 914.14,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Microscope Coverslips box of 100": {
+        "item_name": "Microscope Coverslips box of 100",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 641.2,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Laboratory Spatula stainless steel": {
+        "item_name": "Laboratory Spatula stainless steel",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 553.62,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Laboratory Aprons pack of 10": {
+        "item_name": "Laboratory Aprons pack of 10",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 3094.0,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Stopwatch digital": {
+        "item_name": "Stopwatch digital",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 587.22,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Voltmeter basic": {
+        "item_name": "Voltmeter basic",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 777.73,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Laboratory Agar Powder 100g": {
+        "item_name": "Laboratory Agar Powder 100g",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 2046.24,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Hydrochloric Acid Science Laboratory": {
+        "item_name": "Hydrochloric Acid Science Laboratory",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1780.24,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Graduated Cylinder 100ml": {
+        "item_name": "Graduated Cylinder 100ml",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 651.28,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Ammeter basic": {
+        "item_name": "Ammeter basic",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1158.64,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Triple Beam Balance": {
+        "item_name": "Triple Beam Balance",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 3201.97,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Prism glass": {
+        "item_name": "Prism glass",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 704.14,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Lens Set convex concave": {
+        "item_name": "Lens Set convex concave",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 860.27,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Dropper Bottle 50ml": {
+        "item_name": "Dropper Bottle 50ml",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 423.92,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Thermometer (-10 to 110C)": {
+        "item_name": "Thermometer (-10 to 110C)",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 934.64,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Test Tube Brush": {
+        "item_name": "Test Tube Brush",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 407.9,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Filter Paper pack of 100": {
+        "item_name": "Filter Paper pack of 100",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 582.4,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Test Tube 15ml": {
+        "item_name": "Test Tube 15ml",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 819.28,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Laboratory Alcohol Burner": {
+        "item_name": "Laboratory Alcohol Burner",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 574.0,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Beaker 250ml": {
+        "item_name": "Beaker 250ml",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1208.93,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "pH Meter basic": {
+        "item_name": "pH Meter basic",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 693.84,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Funnel plastic 100mm": {
+        "item_name": "Funnel plastic 100mm",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 739.87,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Lab Manual - Grade 10 Science": {
+        "item_name": "Lab Manual - Grade 10 Science",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1436.51,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Beaker 100ml": {
+        "item_name": "Beaker 100ml",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 855.46,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Laboratory Gloves nitrile box of 100": {
+        "item_name": "Laboratory Gloves nitrile box of 100",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 520.13,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Test Tube Rack": {
+        "item_name": "Test Tube Rack",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1114.18,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Dissecting Kit": {
+        "item_name": "Dissecting Kit",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 856.35,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Hot Plate basic": {
+        "item_name": "Hot Plate basic",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1701.84,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    },
+    "Fire Blanket": {
+        "item_name": "Fire Blanket",
+        "last_updated": "2025-04-06T19:54:02.102691",
+        "average_price": 1134.78,
+        "pricing_unit": "\u20b1",
+        "num_sources": 5
+    }
+}

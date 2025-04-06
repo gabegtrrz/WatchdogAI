@@ -102,7 +102,7 @@ def generate_transaction_data(scrape_num: int = None, num_transactions = 1000, p
 
         # Filter 2: Get the items that are available in the average price data
         items_list_for_method = procurement_data['Item_Name'].tolist() # Need to turn to list to apply filter
-        valid_items_for_transaction = list(items_list_for_method & items_in_average_price_data)
+        valid_items_for_transaction = list(set(items_list_for_method) & items_in_average_price_data)
 
         if not valid_items_for_transaction:
             # This might happen if the scraper didn't find prices for items listed
