@@ -239,7 +239,6 @@ def threaded_search(product_name, pages, data_pipeline, max_workers=5, location=
                  logger.error(f"A thread encountered an error during execution: {e}", exc_info=True)
 
 
-# Modified run_scraper function
 def run_scraper(limit_items=None):
     MAX_RETRIES = 3
     PAGES_TO_SCRAPE = 1 # Adjust how many pages per item (more pages = more potential sources)
@@ -305,8 +304,8 @@ def run_scraper(limit_items=None):
 ### Check data freshness and run scraper if needed ###
 def check_and_run_scraper_if_needed(limit_items=None):
     
-    # checks if the average price data file exists and was updated today.
-    # if not, runs the scraper.
+    '''checks if the average price data file exists and was updated today.
+    if not, runs the scraper.'''
     
     should_scrape = False
     today = date.today()
