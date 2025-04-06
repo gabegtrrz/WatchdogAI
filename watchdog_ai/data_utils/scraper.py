@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
 
 OUTPUT_FOLDER_PATH = SCRIPT_DIR / "scraper_output" # Folder for output files
+# OUTPUT_JSON_FILENAME = f"realtime_average_prices_{date.today().strftime('%Y-%m-%d')}.json"
 OUTPUT_JSON_FILENAME = f"realtime_average_prices_{date.today().strftime('%Y-%m-%d')}.json"
 OUTPUT_JSON_FULL_PATH = OUTPUT_FOLDER_PATH / OUTPUT_JSON_FILENAME
 
@@ -42,7 +43,7 @@ MAX_SOURCES_PER_ITEM = 5 # Maximum number of sources to average per item
 
 class DataPipeline:
     
-    def __init__(self, output_filename=OUTPUT_JSON_FILENAME, folder_path=OUTPUT_JSON_FULL_PATH):
+    def __init__(self, output_filename=OUTPUT_JSON_FILENAME, folder_path=OUTPUT_FOLDER_PATH):
         # Stores {item: [{"price": float, "url": str}, ...]}
         self.scraped_data = {}
         self.output_filepath = folder_path / output_filename
@@ -162,7 +163,7 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
             for result in results:
                 # Limit processing if max sources already reached for this item in the pipeline
                 if product_name in data_pipeline.scraped_data and len(data_pipeline.scraped_data[product_name]) >= MAX_SOURCES_PER_ITEM:
-                     logger.info(f"Max sources ({MAX_SOURCES_PER_ITEM}) reached for '{product_name}' during scraping. Stopping processing for this item.")
+                     logger.info(f"Max sources ({MAX_SOURCES_PER_ITEM}) reached for '{product_name}' proceeding with next item.")
                      success = True # Mark as success for this page, even if stopping early
                      return # Exit the function early for this item
 
@@ -350,5 +351,6 @@ if __name__ == "__main__":
     # print(API_KEY)
 
     print("Running scraper directly...")
-    check_and_run_scraper_if_needed(limit_items=1) # Set limit_items to 1 for testing
+    run_scraper(limit_items=1)
+    #check_and_run_scraper_if_needed(limit_items=1) # Set limit_items to 1 for testing
     print("Scraper finished.")
