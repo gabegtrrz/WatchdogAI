@@ -1,4 +1,3 @@
-
 # Data nad Logic Imports
 import hashlib
 import random
@@ -13,10 +12,42 @@ import json
 from watchdog_ai.data_utils.procurement_data_config import PROCUREMENT_DATA, PROCUREMENT_OFFICERS, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
 from watchdog_ai.data_utils import scraper
 
+# Set up logging
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 fake = Faker()
 
 
+SCRAPER_OUTPUT_FILE = scraper.OUTPUT_JSON_FULL_PATH
 
+
+def load_average_prices():
+    ''' Load average prices from the JSON file. '''
+    try:
+        with open(SCRAPER_OUTPUT_FILE, 'r', encoding='utf-8') as file:
+            logger.info(f"Loading average prices from {SCRAPER_OUTPUT_FILE}")
+            # Load the JSON data from the file
+            return json.load(file)
+
+    except FileNotFoundError:
+        logger.info(f"File {SCRAPER_OUTPUT_FILE} not found. Running scraper...")
+        scraper.run_scraper() 
+        # Retry loading the average prices after running the scraper
+        try:
+            with open(SCRAPER_OUTPUT_FILE, 'r', encoding='utf-8') as file:
+                logger.info(f"Loading average prices from {SCRAPER_OUTPUT_FILE} after running scraper")
+                return json.load(file)
+        except Exception as e:
+            logger.error(f"Error loading average prices after running scraper: {e}", exc_info=True)
+            return {}
+    
+    except Exception as e:
+        logger.error(f"Error loading average prices: {e}", exc_info=True)
+        return {}
+        
 def generate_transaction_data(num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH,):
     ''' This is to generate clean or normal transaction data FOR TRAINING. '''
 
