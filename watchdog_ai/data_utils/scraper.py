@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
 
 OUTPUT_FOLDER_PATH = SCRIPT_DIR / "scraper_output" # Folder for output files
-OUTPUT_JSON_FILENAME = "realtime_average_prices.json"
+OUTPUT_JSON_FILENAME = f"realtime_average_prices_{date.today().strftime('%Y-%m-%d')}.json"
 OUTPUT_JSON_FULL_PATH = OUTPUT_FOLDER_PATH / OUTPUT_JSON_FILENAME
 
 
@@ -41,7 +41,7 @@ USD_TO_PHP = 56.0 # Conversion rate: 1 USD = 56 PHP
 MAX_SOURCES_PER_ITEM = 5 # Maximum number of sources to average per item
 
 class DataPipeline:
-    # I modified __init__ to handle single output file only
+    
     def __init__(self, output_filename=OUTPUT_JSON_FILENAME, folder_path=OUTPUT_JSON_FULL_PATH):
         # Stores {item: [{"price": float, "url": str}, ...]}
         self.scraped_data = {}
@@ -100,9 +100,9 @@ class DataPipeline:
         try:
             with open(self.output_filepath, mode="w", encoding="utf-8") as output_file:
                 json.dump(output_data, output_file, indent=4)
-            logger.info(f"Successfully saved data to {self.output_filename}")
+            logger.info(f"Successfully saved data to {self.output_filepath}")
         except IOError as e:
-            logger.error(f"Error saving data to {self.output_filename}: {e}")
+            logger.error(f"Error saving data to {self.output_filepath}: {e}")
 
 
 def get_scrapeops_url(url, location="us"):
