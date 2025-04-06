@@ -49,7 +49,7 @@ def load_average_price_data():
         logger.error(f"Error loading average prices: {e}", exc_info=True)
         return {}
         
-def generate_transaction_data(scrape_num: int, num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH,):
+def generate_transaction_data(scrape_num: int = None, num_transactions = 1000, procurement_data = PROCUREMENT_DATA, procurement_officers = PROCUREMENT_OFFICERS, volatility_medium = VOLATILITY_MEDIUM, volatility_high = VOLATILITY_HIGH,):
     ''' This is to generate clean or normal transaction data FOR TRAINING. '''
 
 
