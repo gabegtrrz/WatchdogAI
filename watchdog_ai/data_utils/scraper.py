@@ -11,7 +11,7 @@ from datetime import datetime, date
 import pathlib
 
 ### Local Imports ###
-from procurement_data_config import METHODS_DATA
+from procurement_data_config import PROCUREMENT_DATA
 from api_key import SCRAPEOPS_API_KEY
 
 ### Placeholder for METHODS_DATA if import fails or is not available
@@ -254,16 +254,10 @@ def run_scraper(limit_items=None):
     # --- Item Collection ---
     all_items = []
     try:
-        # Collects all items from METHODS_DATA
-        for method, details in METHODS_DATA.items():
-            # Ensure 'items' key exists and is a dictionary
-            if isinstance(details.get("items"), dict):
-                all_items.extend(details["items"].keys())
-            else:
-                 logger.warning(f"Expected a dictionary for 'items' in method '{method}', but got {type(details.get('items'))}. Skipping.")
+        all_items = PROCUREMENT_DATA['Item_Name'].tolist() # Get all items from PROCUREMENT_DATA
 
-        # Remove duplicates
-        all_items = list(set(all_items))
+        all_items = list(set(all_items)) # Remove duplicates
+        
 
         ### Applying limit for items to be scraped ###
         if limit_items is not None and limit_items > 0:
@@ -277,7 +271,7 @@ def run_scraper(limit_items=None):
         logger.info(f"Items to scrape ({len(all_items)}): {all_items}")
 
     except Exception as e:
-         logger.error(f"Error collecting items from METHODS_DATA: {e}", exc_info=True)
+         logger.error(f"Error collecting items from PROCUREMENT_DATA: {e}", exc_info=True)
          return # Exit if there's an error collecting items
 
 

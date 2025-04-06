@@ -68,12 +68,11 @@ for method, values in METHODS_DATA.items():
     frequency = values['frequency']
     items = values['items']
 
-    for item, base_price in items.items():
+    for item in items:
         row = {
             "Method": method,
             "Frequency": frequency,
-            "Item_Name": item,
-            "Base_Price": base_price
+            "Item_Name": item
         }
         rows.append(row)
 
