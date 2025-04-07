@@ -73,7 +73,7 @@ class UploadView(View):
             blocks_to_create = [] # 
             row_num = 1 # For user-friendly error messages
 
-            for index, row in df.itemrows():
+            for index, row in df.iterrows():
                 row_num += 1 #starting from row 2 assuming that column names = row 1
                 try:
                     # 2. prepare and validate row data (add more validation and erro handlng later)
