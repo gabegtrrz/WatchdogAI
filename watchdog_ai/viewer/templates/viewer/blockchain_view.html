@@ -8,39 +8,39 @@
     <p>Displaying {{ blockchain_blocks.count }} of {{ total_blocks }} total blocks recorded.</p>
 
     <div class="table-responsive">
-        <table class="table table-striped table-bordered table-hover table-sm">
+        <table class="table table-striped table-bordered table-hover table-sm" style="border-collapse: collapse;">
             <thead class="thead-light">
                 <tr>
-                    <th>Block #</th>
-                    <th>Timestamp (UTC)</th>
-                    <th>Transaction ID</th>
-                    <th>Supplier</th>
-                    <th>Item Name</th>
-                    <th>Unit Price</th>
-                    <th>Quantity</th>
-                    <th>Block Hash</th>
-                    <th>Previous Hash</th>
+                    <th style="border: 1px solid black;">Block #</th>
+                    <th style="border: 1px solid black;">Timestamp (UTC)</th>
+                    <th style="border: 1px solid black;">Transaction ID</th>
+                    <th style="border: 1px solid black;">Supplier</th>
+                    <th style="border: 1px solid black;">Item Name</th>
+                    <th style="border: 1px solid black;">Unit Price</th>
+                    <th style="border: 1px solid black;">Quantity</th>
+                    <th style="border: 1px solid black;">Block Hash</th>
+                    <th style="border: 1px solid black;">Previous Hash</th>
                 </tr>
             </thead>
             <tbody>
                 {% for block in blockchain_blocks %}
                 <tr>
-                    <td>{{ block.block_number }}</td>
-                    <td>{{ block.timestamp|date:"Y-m-d H:i:s" }}</td>
+                    <td style="border: 1px solid black;">{{ block.block_number }}</td>
+                    <td style="border: 1px solid black;">{{ block.timestamp|date:"Y-m-d H:i:s" }}</td>
                     {# Access data via mirrored fields if available, otherwise fallback to JSON #}
-                    <td>{{ block.transaction_id_query | default:block.transaction_data_json.transaction_id | default:"N/A" }}</td>
-                    <td>{{ block.supplier_query | default:block.transaction_data_json.supplier | default:"N/A" }}</td>
-                    <td>{{ block.item_name_query | default:block.transaction_data_json.item_name | default:"N/A" }}</td>
+                    <td style="border: 1px solid black;">{{ block.transaction_id_query | default:block.transaction_data_json.transaction_id | default:"N/A" }}</td>
+                    <td style="border: 1px solid black;">{{ block.supplier_query | default:block.transaction_data_json.supplier | default:"N/A" }}</td>
+                    <td style="border: 1px solid black;">{{ block.item_name_query | default:block.transaction_data_json.item_name | default:"N/A" }}</td>
                     {# Ensure prices/quantities from JSON are handled #}
-                    <td>{{ block.transaction_data_json.unit_price | default:"N/A" }}</td> 
-                    <td>{{ block.transaction_data_json.quantity | default:"N/A" }}</td>
+                    <td style="border: 1px solid black;">{{ block.transaction_data_json.unit_price | default:"N/A" }}</td> 
+                    <td style="border: 1px solid black;">{{ block.transaction_data_json.quantity | default:"N/A" }}</td>
                     {# Display truncated hashes for readability #}
-                    <td title="{{ block.block_hash }}"><code>{{ block.block_hash|slice:":10" }}...{{ block.block_hash|slice:"-10:" }}</code></td>
-                    <td title="{{ block.previous_hash }}"><code>{{ block.previous_hash|slice:":10" }}...{{ block.previous_hash|slice:"-10:" }}</code></td>
+                    <td style="border: 1px solid black;" title="{{ block.block_hash }}"><code>{{ block.block_hash|slice:":10" }}...{{ block.block_hash|slice:"-10:" }}</code></td>
+                    <td style="border: 1px solid black;" title="{{ block.previous_hash }}"><code>{{ block.previous_hash|slice:":10" }}...{{ block.previous_hash|slice:"-10:" }}</code></td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9" class="text-center">No blockchain records found. Please upload transactions first.</td>
+                    <td colspan="9" class="text-center" style="border: 1px solid black;">No blockchain records found. Please upload transactions first.</td>
                 </tr>
                 {% endfor %}
             </tbody>
