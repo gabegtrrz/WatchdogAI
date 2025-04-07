@@ -12,7 +12,7 @@
         <h1>ANOMALY DETECTION</h1>
         <a href="{% url 'upload' %}">Upload Procurement Data</a>
         <a href="{% url 'transactions' %}">Transaction View</a>
-        <a href="{% url 'reports' %}">Reports</a>
+        {% comment %} <a href="{% url 'reports' %}">Reports</a> {% endcomment %}
     </div>
     <div class="container">
         {% block content %}

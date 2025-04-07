@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.views import View
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 from .models import Transaction, Anomaly
 
@@ -63,8 +63,12 @@ class ResetTransactionsView(View):
 class TransactionView(View):
     def get(self, request):
         # Filters
-        start_date = request.GET.get("start_date", "2025-03-01")
-        end_date = request.GET.get("end_date", "2025-04-04")
+        today = date.today()
+        one_month_ago = today - timedelta(days=30)
+
+
+        start_date = request.GET.get("start_date", one_month_ago.strftime("%Y-%m-%d"))
+        end_date = request.GET.get("end_date", today.strftime("%Y-%m-%d"))
         supplier = request.GET.get("supplier", "")
         procurement_method = request.GET.get("procurement_method", "")
 
@@ -108,6 +112,8 @@ class TransactionView(View):
             "total_pages": total_pages,
             "selected_supplier": supplier,
             "selected_method": procurement_method,
+            "today": today,
+            "one_month_ago": one_month_ago,
         })
 
 class AnomalyDetectionView(View):

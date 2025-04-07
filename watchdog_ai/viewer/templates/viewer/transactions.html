@@ -11,9 +11,9 @@
     <h2>Transaction View</h2>
     <form method="get" class="filters">
         <label>Start Date:</label>
-        <input type="date" name="start_date" value="{{ start_date|default:'2025-03-01' }}">
+        <input type="date" name="start_date" value="{{ start_date|default:one_month_ago }}">
         <label>End Date:</label>
-        <input type="date" name="end_date" value="{{ end_date|default:'2025-04-04' }}">
+        <input type="date" name="end_date" value="{{ end_date|default:today }}">
         <label>Supplier:</label>
         <select name="supplier">
             <option value="">All</option>
@@ -98,7 +98,7 @@
 
     <div class="section">
         <h2>Blockchain Integrity Status</h2>
-        <p>Check Date: 2023-04-04</p>
+        <p>Check Date: {{ today|date:"Y-m-d" }}</p>
         <p>Status: <span style="color: green;">Valid</span></p>
     </div>
 {% endblock %}
