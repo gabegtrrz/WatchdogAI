@@ -1,53 +1,82 @@
-# viewer/views.py
-import pandas as pd
-from django.shortcuts import render, redirect
 from django.views import View
+from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
-from datetime import datetime, date, timedelta
+
+# File Handling
+from django.db import transaction, IntegrityError
+
+import pandas as pd
 from decimal import Decimal
-from .models import Transaction, Anomaly
+
+from datetime import datetime, date, timedelta
+from django.utils import timezone
+
+# Local imports
+from .models import Transaction, Anomaly, BlockchainTransactionData
+from .blockchain import create_new_block_instance
 
 class UploadView(View):
     def get(self, request):
         return render(request, 'viewer/upload.html')
 
+    @transaction.atomic
     def post(self, request):
+
+       # validating file upload 
         if 'file' not in request.FILES:
-            messages.error(request, "Please upload a CSV file.")
+            messages.error(request, "No CSV file uploaded.")
             return redirect('upload')
 
+        # validating file type
         file = request.FILES['file']
+        if not file.name.endswith('.csv'):
+            messages.error(request, "Please upload a valid csv file.")
+            return redirect('upload')
+        
+        
         try:
             # Read CSV file
             df = pd.read_csv(file)
-            required_columns = [
-                "transaction_id", "item_name", "quantity", "procurement_method",
-                "unit_price", "average_price", "supplier", "procurement_officer", "transaction_date"
-            ]
-            if not all(col in df.columns for col in required_columns):
-                messages.error(request, "CSV file must contain columns: transaction_id, item_name, quantity, procurement_method, unit_price, average_price, supplier, procurement_officer, transaction_date")
-                return redirect('upload')
 
-            # Store transactions in the database(will update soon to delete the transactions when reloading the page)
-            for _, row in df.iterrows():
-                Transaction.objects.update_or_create(
-                    transaction_id=row["transaction_id"],
-                    defaults={
-                        "item_name": row["item_name"],
-                        "quantity": row["quantity"],
-                        "procurement_method": row["procurement_method"],
-                        "unit_price": row["unit_price"],
-                        "average_price": row["average_price"],
-                        "supplier": row["supplier"],
-                        "procurement_officer": row["procurement_officer"],
-                        "transaction_date": datetime.strptime(row["transaction_date"], "%Y-%m-%d").date()
-                    }
-                )
-            messages.success(request, "File successfully parsed, validated, and added to blockchain.")
-        except Exception as e:
-            messages.error(request, f"Error processing file: {str(e)}")
-        return redirect('upload')
+            # validating columns
+            required_columns = { 
+                "transaction_id", "item_name", "quantity", "procurement_method",
+                "unit_price", "average_price", "supplier", "procurement_officer", 
+                "transaction_date" 
+            }
+            missing_cols = required_columns - set(df.columns)
+            if missing_cols:
+                messages.error(request, f"CSV is missing required columns: {', '.join(missing_cols)}")
+                return redirect('upload')
+            extra_cols = set(df.columns) - required_columns
+            if extra_cols:
+                 messages.warning(request, f"CSV contains extra columns (will be ignored): {', '.join(extra_cols)}")
+            
+            ### Integrating Blockchain ###
+            try:
+                latest
+
+
+        #     #### Store transactions in the database(will update soon to delete the transactions when reloading the page)
+        #     for _, row in df.iterrows():
+        #         Transaction.objects.update_or_create(
+        #             transaction_id=row["transaction_id"],
+        #             defaults={
+        #                 "item_name": row["item_name"],
+        #                 "quantity": row["quantity"],
+        #                 "procurement_method": row["procurement_method"],
+        #                 "unit_price": row["unit_price"],
+        #                 "average_price": row["average_price"],
+        #                 "supplier": row["supplier"],
+        #                 "procurement_officer": row["procurement_officer"],
+        #                 "transaction_date": datetime.strptime(row["transaction_date"], "%Y-%m-%d").date()
+        #             }
+        #         )
+        #     messages.success(request, "File successfully parsed, validated, and added to blockchain.")
+        # except Exception as e:
+        #     messages.error(request, f"Error processing file: {str(e)}")
+        # return redirect('upload')
 
         # Transaction reset
 class ResetTransactionsView(View):

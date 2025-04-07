@@ -33,7 +33,7 @@ class Block:
 
 ### Helper function for creating block instances before saving to DB###
 
-def create_new_block(validated_transaction_data, last_block_index, last_block_hash):
+def create_new_block_instance(validated_transaction_data, last_block_index, last_block_hash):
     """
     Creates a new Block instance (not yet saved, but) ready to be added to the simulated blockchain
 
