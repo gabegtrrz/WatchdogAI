@@ -1,4 +1,8 @@
 from django.views import View
+from django.views.generic import ListView
+
+from django.core.paginator import Paginator
+
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
@@ -138,6 +142,23 @@ class UploadView(View):
         
         return redirect('upload') 
 
+# -------------------
+
+class BlockchainTransactionListView(ListView):
+    model = BlockchainTransactionData
+    template_name = 'viewer/blockchain_view.html'
+    #Name of the variable in the template context
+    context_object_name = 'blockchain_blocks' 
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['total_blocks'] = self.model.objects.count()
+
+        return context
+
+
+# -------------------
         
 class ResetTransactionsView(View):
     def post(self, request):
