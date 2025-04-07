@@ -54,31 +54,91 @@ class UploadView(View):
                  messages.warning(request, f"CSV contains extra columns (will be ignored): {', '.join(extra_cols)}")
             
             ### Integrating Blockchain ###
+            # get latest block's state reliably
             try:
-                latest
+                latest_block_from_db = BlockchainTransactionData.objects.latest('block_number')
+                last_hash = latest_block_from_db.block_hash
+                last_index = latest_block_from_db.block_number
+            except BlockchainTransactionData.DoesNotExist:
+                # Genesis case: No blocks in the database yet
+                last_hash = "0" * 64 #full-length zero hash for consistency
+                last_index = -1 
 
 
-        #     #### Store transactions in the database(will update soon to delete the transactions when reloading the page)
-        #     for _, row in df.iterrows():
-        #         Transaction.objects.update_or_create(
-        #             transaction_id=row["transaction_id"],
-        #             defaults={
-        #                 "item_name": row["item_name"],
-        #                 "quantity": row["quantity"],
-        #                 "procurement_method": row["procurement_method"],
-        #                 "unit_price": row["unit_price"],
-        #                 "average_price": row["average_price"],
-        #                 "supplier": row["supplier"],
-        #                 "procurement_officer": row["procurement_officer"],
-        #                 "transaction_date": datetime.strptime(row["transaction_date"], "%Y-%m-%d").date()
-        #             }
-        #         )
-        #     messages.success(request, "File successfully parsed, validated, and added to blockchain.")
-        # except Exception as e:
-        #     messages.error(request, f"Error processing file: {str(e)}")
-        # return redirect('upload')
+            ### collect new block data before saving ###
+            blocks_to_create = [] # 
+            row_num = 1 # For user-friendly error messages
 
-        # Transaction reset
+            for index, row in df.itemrows():
+                row_num += 1 #starting from row 2 assuming that column names = row 1
+                try:
+                    # 2. prepare and validate row data (add more validation and erro handlng later)
+                    
+                    #convrt row to dict, handle potential NaN/None, enforce types
+                    transaction_details = {
+                        "transaction_id": int(pd.to_numeric(row["transaction_id"])),
+                        "item_name": str(row["item_name"]).strip(),
+                        "quantity": int(pd.tonumeric(row['quantity'])),
+                        "procurement_method": str(row["procurement_method"]).strip(),
+                        # Use Decimal for prices, handle potential errors/NaN bcause decimal only acccepts string/numerical values
+                        "unit_price": Decimal(str(row["unit_price"])) if pd.notna(row["unit_price"]) else None,
+                        "average_price": Decimal(str(row["average_price"])) if pd.notna(row["average_price"]) else None,
+                        "supplier": str(row["supplier"]).strip() if pd.notna(row["supplier"]) else None,
+                        "procurement_officer": str(row["procurement_officer"]).strip() if pd.notna(row["procurement_officer"]) else None,
+                        # Parsing date robustly
+                        "transaction_date": datetime.strptime(str(row["transaction_date"]).strip(), "%Y-%m-%d").date() if pd.notna(row["transaction_date"]) else None
+                    }
+
+                    if transaction_details['unit_price'] is None or transaction_details['unit_price'] < 0:
+                         raise ValueError(f"Unit price cannot be empty or negative. Check {transaction_details['transaction_id']}")
+                    if transaction_details['transaction_date'] is None:
+                        raise ValueError(f"Transaction date cannot be empty. Check {transaction_details['transaction_id']}")
+                    
+                    # !!!3. create new block instance (in-memory)
+
+                    new_block_obj = create_new_block_instance(
+                        validated_transaction_data=transaction_details,
+                        last_block_index=last_index,
+                        last_block_hash=last_hash
+                        )
+                    
+                    # 4. Prepare BlockchainTransactionData model instance for saving
+                    block_transaction_db_instance = BlockchainTransactionData(
+                        block_hash=new_block_obj.hash,
+                        block_number=new_block_obj.index,
+                        previous_hash=new_block_obj.previous_hash,
+                        timestamp=new_block_obj.timestamp, # Use timestamp from Block object
+                        transaction_data_json=new_block_obj.transaction_data, # Store the exact data used for hashing
+
+                        #populating mirrored query fields
+                        transaction_id_query=transaction_details.get("transaction_id"),
+                        item_name_query=transaction_details.get("item_name"),
+                        supplier_query=transaction_details.get("supplier"),
+                        transaction_date_query=transaction_details.get("transaction_date"),
+                       procurement_method_query =transaction_details.get("procurement_method")
+                    )
+
+                    # 5. append to blocks_to_create
+                    blocks_to_create.append(block_transaction_db_instance)
+
+                    # !!! Update for next block in the loop
+                    last_hash = new_block_obj.hash
+                    last_index = new_block_obj.index
+                
+                except (ValueError, TypeError, KeyError) as validation_error:
+                    #catch error for specific row
+                    messages.error(request, f"Error processing CSV row {row_num}: {validation_error}. Upload cancelled and rolled-back.")
+                    raise IntegrityError(f"CSV Row {row_num} validation failed.") from validation_error
+        except IntegrityError:
+            pass # The transaction.atomic ensures rollback happened
+
+        except Exception as e:
+            messages.error(request, f"An unexpected error occured: {e}")
+             # Rollback is handled by @transaction.atomic
+        
+        return redirect('upload') 
+
+        
 class ResetTransactionsView(View):
     def post(self, request):
         try:
