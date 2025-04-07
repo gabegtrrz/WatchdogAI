@@ -82,7 +82,7 @@ class UploadView(View):
                     transaction_details = {
                         "transaction_id": int(pd.to_numeric(row["transaction_id"])),
                         "item_name": str(row["item_name"]).strip(),
-                        "quantity": int(pd.tonumeric(row['quantity'])),
+                        "quantity": int(pd.to_numeric(row['quantity'])),
                         "procurement_method": str(row["procurement_method"]).strip(),
                         # Use Decimal for prices, handle potential errors/NaN bcause decimal only acccepts string/numerical values
                         "unit_price": Decimal(str(row["unit_price"])) if pd.notna(row["unit_price"]) else None,
@@ -99,6 +99,13 @@ class UploadView(View):
                         raise ValueError(f"Transaction date cannot be empty. Check {transaction_details['transaction_id']}")
                     
                     # !!!3. create new block instance (in-memory)
+                    for key, value in transaction_details.items():
+                        if isinstance(value, Decimal):
+                            transaction_details[key] = float(value)
+                        elif isinstance(value, date):
+                            transaction_details[key] = value.isoformat()
+
+                    
 
                     new_block_obj = create_new_block_instance(
                         validated_transaction_data=transaction_details,
@@ -128,11 +135,22 @@ class UploadView(View):
                     # !!! Update for next block in the loop
                     last_hash = new_block_obj.hash
                     last_index = new_block_obj.index
-                
+
+
+
                 except (ValueError, TypeError, KeyError) as validation_error:
                     #catch error for specific row
                     messages.error(request, f"Error processing CSV row {row_num}: {validation_error}. Upload cancelled and rolled-back.")
                     raise IntegrityError(f"CSV Row {row_num} validation failed.") from validation_error
+
+            ### !!! 6 Bulk Create 
+            if blocks_to_create:
+                BlockchainTransactionData.objects.bulk_create(blocks_to_create)
+                messages.success(request, f"{len(blocks_to_create)} transactions successfully processed and added to the blockchain ledger.")
+            else:
+                 messages.warning(request, "CSV file processed, but no valid transaction rows were found to add.")
+
+
         except IntegrityError:
             pass # The transaction.atomic ensures rollback happened
 
