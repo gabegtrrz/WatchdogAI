@@ -21,7 +21,7 @@ This Django application analyzes procurement transactions for anomalies and reco
 
 1.  **Clone the Repository:**
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/gabegtrrz/WatchdogAI.git
     cd watchdog_ai 
     ```
     
