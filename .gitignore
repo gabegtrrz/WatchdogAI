@@ -20,3 +20,5 @@ __pycache__/
 *.log
 
 api_key.py
+
+*.sqlite3

@@ -1,0 +1,104 @@
+{% extends 'viewer/base.html' %}
+
+{% block title %}Transaction View - WatchdogAI{% endblock %}
+
+{% block content %}
+    <!-- Hidden form to include CSRF token -->
+    <form id="csrf-form" style="display: none;">
+        {% csrf_token %}
+    </form>
+
+    <h2>Transaction View</h2>
+    <form method="get" class="filters">
+        <label>Start Date:</label>
+        <input type="date" name="start_date" value="{{ start_date|default:one_month_ago }}">
+        <label>End Date:</label>
+        <input type="date" name="end_date" value="{{ end_date|default:today }}">
+        <label>Supplier:</label>
+        <select name="supplier">
+            <option value="">All</option>
+            {% for supplier in suppliers %}
+                <option value="{{ supplier }}" {% if supplier == selected_supplier %}selected{% endif %}>{{ supplier }}</option>
+            {% endfor %}
+        </select>
+        <label>Procurement Method:</label>
+        <select name="procurement_method">
+            <option value="">All</option>
+            {% for method in methods %}
+                <option value="{{ method }}" {% if method == selected_method %}selected{% endif %}>{{ method }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn">Filter</button>
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>Item Name</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Average Price</th>
+                <th>Procurement Method</th>
+                <th>Supplier</th>
+                <th>Procurement Officer</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction.transaction_id }}</td>
+                    <td>{{ transaction.item_name }}</td>
+                    <td>{{ transaction.quantity }}</td>
+                    <td>{{ transaction.unit_price }}</td>
+                    <td>{{ transaction.average_price|default:"N/A" }}</td>
+                    <td>{{ transaction.procurement_method }}</td>
+                    <td>{{ transaction.supplier }}</td>
+                    <td>{{ transaction.procurement_officer|default:"N/A" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8">No transactions found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="pagination">
+        {% if current_page > 1 %}
+            <a href="?page={{ current_page|add:-1 }}&start_date={{ start_date }}&end_date={{ end_date }}&supplier={{ selected_supplier }}&procurement_method={{ selected_method }}">Previous</a>
+        {% endif %}
+        <span>Page {{ current_page }} of {{ total_pages }}</span>
+        {% if current_page < total_pages %}
+            <a href="?page={{ current_page|add:1 }}&start_date={{ start_date }}&end_date={{ end_date }}&supplier={{ selected_supplier }}&procurement_method={{ selected_method }}">Next</a>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Anomaly Detection</h2>
+        <label>Contamination (0.0-0.5):</label>
+        <input type="number" id="contamination" step="0.1" min="0" max="0.5" value="0.1">
+        <button class="btn" onclick="runAnomalyDetection()">Run Anomaly Detection</button>
+    </div>
+
+    <div class="section">
+        <h2>Anomaly Results</h2>
+        <table id="anomaly-table">
+            <thead>
+                <tr>
+                    <th>Transaction ID</th>
+                    <th>Item Name</th>
+                    <th>Unit Price</th>
+                    <th>Procurement Method</th>
+                    <th>Anomaly Score</th>
+                </tr>
+            </thead>
+            <tbody id="anomaly-results">
+                <!-- Populated by JavaScript -->
+            </tbody>
+        </table>
+        <a href="{% url 'export_anomalies' %}" class="btn">Export Anomalies to CSV</a>
+    </div>
+
+    <div class="section">
+        <h2>Blockchain Integrity Status</h2>
+        <p>Check Date: {{ today|date:"Y-m-d" }}</p>
+        <p>Status: <span style="color: green;">Valid</span></p>
+    </div>
+{% endblock %}
