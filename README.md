@@ -2,7 +2,7 @@
 
 This Django application analyzes procurement transactions for anomalies and records them onto a simulated blockchain ledger for data integrity.
 
-## 30% Includes:
+### 30% Includes:
 * **Data Generation:** generating simulated data for training the Isolation Forest Model
 * **Web Scraping Module:** scraping item prices from external sources (Amazon), retrieving average price for each item, mechanism for checking if it's up-to-date; and running the scraper if not up-to-date, storing this in JSON format
 * **Initial Simulated Blockchain Module:** an initial implementation of the simulated blockchain, along with its data_structure, its integration as a Django Model for ORM, and its internal services.
