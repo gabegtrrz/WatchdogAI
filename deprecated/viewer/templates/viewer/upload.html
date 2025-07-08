@@ -1,0 +1,39 @@
+{% extends 'viewer/base.html' %}
+
+{% block title %}Upload Procurement Data - WatchdogAI{% endblock %}
+
+{% block content %}
+    <h2>Upload Procurement Data</h2>
+    <div class="section">
+        <h3>Upload Transaction CSV File</h3>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="upload-box">
+                <p>Choose a CSV file or drag it here</p>
+                <p>File must contain: transaction_id, item_name, quantity, procurement_method, unit_price, average_price, supplier, procurement_officer, transaction_date</p>
+                <input type="file" name="file" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn">Upload File</button>
+        </form>
+        <!-- Reset Transactions Button -->
+        <form method="post" action="{% url 'reset_transactions' %}" onsubmit="return confirm('Are you sure you want to reset all transactions? This action cannot be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Reset Transactions</button>
+        </form>
+    </div>
+    <div class="section">
+        <h3>Upload Status</h3>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="status {{ message.tags }}">
+                    {% if message.tags == 'success' %}
+                        <span class="icon">✔</span>
+                    {% else %}
+                        <span class="icon">✖</span>
+                    {% endif %}
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+{% endblock %}
