@@ -1,3 +1,5 @@
+_inherited from **WatchdogAI_v1**._
+
 # Watchdog AI - Procurement Anomaly Detection & Blockchain Ledger
 
 This Django application analyzes procurement transactions for anomalies and records them onto a simulated blockchain ledger for data integrity.
