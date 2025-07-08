@@ -131,7 +131,7 @@ class DataPipeline:
 
 def get_scrapeops_url(url, location="us"):
     payload = {
-        "api_key": API_KEY,
+        "api_key": SCRAPEOPS_API_KEY,
         "url": url,
         "country": location
     }
