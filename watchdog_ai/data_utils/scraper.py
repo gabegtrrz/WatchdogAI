@@ -128,14 +128,20 @@ class DataPipeline:
         except IOError as e:
             logger.error(f"Error saving data to {self.output_filepath}: {e}")
 
+# Function to generate ScrapeOps proxy URL
+# This function includes an option to render JavaScript, which is crucial for scraping sites like Alibaba that heavily rely on JS for content rendering.
 
-def get_scrapeops_url(url, location="us"):
+def get_scrapeops_url(url, location="us", render_js=False):
+    """Generates a ScrapeOps proxy URL, now with a JS rendering option."""
     payload = {
         "api_key": SCRAPEOPS_API_KEY,
         "url": url,
         "country": location
     }
-    # Ensure the base URL ends with a slash if needed, and handle query params correctly
+    # Add JS rendering to the payload if requested
+    if render_js:
+        payload['render_js'] = 'true'
+
     proxy_url = "https://proxy.scrapeops.io/v1/?" + urlencode(payload)
     logger.debug(f"Generated ScrapeOps URL: {proxy_url}")
     return proxy_url
@@ -244,6 +250,87 @@ def search_products(product_name: str, page_number=1, location="us", retries=3, 
         logger.error(f"Failed to scrape page {page_number} for '{product_name}' after {retries} retries.")
 
 
+### Alibaba Search Function ###
+# This function is specifically designed to scrape Alibaba search results.
+
+def search_alibaba_products(product_name: str, page_number=1, location="us", retries=3, data_pipeline=None):
+    """Scrapes a single page of Alibaba search results for a product."""
+    tries = 0
+    success = False
+    # Use Alibaba's search URL structure
+    search_url = f"https://www.alibaba.com/trade/search?SearchText={product_name.replace(' ', '+')}&page={page_number}"
+
+    while tries < retries and not success:
+        try:
+            # Crucially, enable JS rendering for Alibaba
+            proxy_url = get_scrapeops_url(search_url, location=location, render_js=True)
+            logger.info(f"Attempt {tries+1}/{retries}: Fetching page {page_number} for '{product_name}' from Alibaba via proxy.")
+            
+            # Increase timeout for JS rendering
+            resp = requests.get(proxy_url, timeout=60) 
+            resp.raise_for_status()
+
+            logger.info(f"Successfully fetched page {page_number} for '{product_name}'. Status: {resp.status_code}")
+            soup = BeautifulSoup(resp.text, 'html.parser')
+
+            # --- Alibaba's Selectors ---
+            # NOTE: These selectors are based on Alibaba's structure and may need updates if the site changes.
+            
+            # Main container for a single product
+            results = soup.select('div.fy23-search-card') 
+            logger.info(f"Found {len(results)} potential results on page {page_number} for '{product_name}'.")
+
+            if not results:
+                 logger.warning(f"No search result containers found for '{product_name}'. Alibaba's structure may have changed.")
+
+            processed_count = 0
+            for result in results:
+                if product_name in data_pipeline.scraped_data and len(data_pipeline.scraped_data[product_name]) >= MAX_SOURCES_PER_ITEM:
+                     logger.info(f"Max sources ({MAX_SOURCES_PER_ITEM}) reached for '{product_name}'.")
+                     success = True
+                     return
+
+                # Product Title
+                title_element = result.select_one('h2.search-card-e-title')
+                item_title = title_element.text.strip() if title_element else "N/A"
+
+                # Product Price
+                price_element = result.select_one('div.search-card-e-price-main')
+                price_str = price_element.get_text(strip=True) if price_element else ""
+                
+                # Product URL
+                link_element = result.select_one('a.search-card-e-slider__link')
+                product_url = ""
+                if link_element and link_element.get('href'):
+                    # Ensure URL starts with https:
+                    product_url = "https:" + link_element['href'] if link_element['href'].startswith('//') else link_element['href']
+
+                if price_str and product_url:
+                    # Assumes price is in USD ($) which is common on Alibaba
+                    usd_price = clean_price(price_str, "$") 
+                    php_price = usd_price * USD_TO_PHP if usd_price > 0 else 0.0
+                    
+                    if php_price > 0:
+                        data_pipeline.add_data(product_name, php_price, product_url)
+                        processed_count += 1
+                    else:
+                         logger.debug(f"Skipping item '{item_title}' due to zero price after cleaning.")
+                else:
+                    logger.debug(f"Skipping result for '{item_title}' due to missing price ('{price_str}') or URL ('{product_url}').")
+            
+            success = True
+
+        except requests.exceptions.RequestException as e:
+            tries += 1
+            logger.warning(f"Network error scraping Alibaba for '{product_name}': {str(e)}, tries left: {retries-tries}")
+            if tries < retries: time.sleep(5) # Wait longer for JS rendering requests
+        except Exception as e:
+            tries += 1
+            logger.error(f"Unexpected error scraping Alibaba for '{product_name}': {str(e)}", exc_info=True)
+            if tries < retries: time.sleep(2)
+
+    if not success:
+        logger.error(f"Failed to scrape Alibaba for '{product_name}' after {retries} retries.")
 
 def threaded_search(product_name, pages, data_pipeline, max_workers=5, location="us", retries=3):
     """Runs search_products in parallel threads for multiple pages."""
@@ -252,7 +339,11 @@ def threaded_search(product_name, pages, data_pipeline, max_workers=5, location=
         # Submit tasks
         futures = [
             executor.submit(
+                # Amazon search_products function
                 search_products, product_name, page, location, retries, data_pipeline
+
+                # Alibaba search_products function
+                # search_alibaba_products, product_name, page, location, retries, data_pipeline
             ) for page in range(1, pages + 1)
         ]
         # Wait for all tasks to complete (optional, result() blocks)
