@@ -83,8 +83,11 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
         # --- Validate 'item_name' ---
         raw_item_name = row.get('item_name')
 
-        # 1. Check for missing (NaN, None) or blank (empty string, whitespace) values first.
-        if pd.isna(raw_item_name) or str(raw_item_name).strip() == '':
+        # 1. Check for invalid, missing (NaN, None) or blank (empty string, whitespace) values.
+
+        if isinstance(raw_item_name, (pd.Series, pd.DataFrame)):
+            errors_in_row.append({'field': 'item_name', 'error': 'Invalid item_name value.'})
+        elif pd.isna(raw_item_name) or str(raw_item_name).strip() == '':
             errors_in_row.append({'field': 'item_name', 'error': 'Item name is required and cannot be blank.'})
 
         # --- Validate 'procurement_method_name' ---
