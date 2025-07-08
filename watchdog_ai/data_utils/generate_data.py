@@ -11,7 +11,7 @@ import os
 
 # Local Imports 
 from procurement_data_config import METHODS_DATA, PROCUREMENT_DATA, BASE_PRICES, PROCUREMENT_OFFICERS, VOLATILITY_LOW, VOLATILITY_MEDIUM, VOLATILITY_HIGH
-import watchdog_ai.data_utils.scraper as scraper
+import watchdog_ai.apps.data_augmentation.scraper as scraper
 
 # Set up logging
 import logging

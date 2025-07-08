@@ -1,4 +1,32 @@
+# --- Project Specific ---
+
+# Ignore produced JSON files
+*.json
+
 # Ignore log files
+*.log
+
+# Ignore environment variables
+.env
+
+# Ignore env
+venv/
+
+# Ignore paper draft
+resource/
+
+# scraper outputs
+# scraper_output/
+
+# all py cache
+*.pyc
+__pycache__/
+.vscode/
+*.log
+
+api_key.py
+
+*.sqlite3# Ignore log files
 *.log
 
 # Ignore environment variables
