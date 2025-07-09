@@ -162,7 +162,7 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
 
 
 @transaction.atomic
-def create_transactions_from_data(valid_data: List[Dict]) -> int:
+def create_transactions_from_data(valid_data: List[Dict]) -> List[Transaction]:
     """
     Creates Transaction objects in the database from validated data.
 
@@ -178,12 +178,12 @@ def create_transactions_from_data(valid_data: List[Dict]) -> int:
                     the `process_transaction_csv` function.
 
     Returns:
-        The number of transaction records successfully created.
+        A list of the transaction records successfully created.
     """
-    created_count = 0
+    created_transactions = []
     for data in valid_data:
         # Using .create() ensures the model's .save() method is called.
-        Transaction.objects.create(**data)
-        created_count += 1
+        new_transaction = Transaction.objects.create(**data)
+        created_transactions.append(new_transaction)
 
-    return created_count
+    return created_transactions

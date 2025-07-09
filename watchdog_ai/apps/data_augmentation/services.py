@@ -119,23 +119,23 @@ def scrape_average_price_for_item(item_name: str) -> Decimal | None:
         logger.warning(f"Could not find any prices for item: {item_name}")
         return None
         
-    average_price = sum(all_prices) / len(all_prices)
+    average_price = sum(all_prices) / Decimal(len(all_prices))
     
     # Standardize to 4 decimal places for consistency with the model
     return average_price.quantize(Decimal('0.0001'))
 
-def enrich_transactions():
+
+def enrich_transaction_list(transactions: list[Transaction]):
     """
-    Enriches transactions with average price.
+    Enriches a list of transactions with an average price.
     It uses a caching mechanism to avoid re-scraping for the same item on the same day.
     """
-    transactions_to_enrich = Transaction.objects.filter(average_price__isnull=True)
-    logger.info(f"Found {transactions_to_enrich.count()} transactions to enrich.")
+    logger.info(f"Starting enrichment for {len(transactions)} transactions.")
 
     transactions_to_update = []
 
-    for transaction in transactions_to_enrich:
-        item_name = transaction.item_name
+    for transaction in transactions:
+        item_name = str(transaction.item_name)
         # Use today's date for the cache
         date_to_check = timezone.now().date()
 
