@@ -5,8 +5,8 @@ from .models import Transaction, Item, ProcurementMethod
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
     """
-    Admin view for the Transaction model, providing a comprehensive interface
-    for viewing and managing transactions.
+    Admin view for the Transaction model. All fields are read-only to prevent
+    manual changes, as transactions should be immutable once created.
     """
     list_display = (
         'transaction_id',
@@ -37,14 +37,25 @@ class TransactionAdmin(admin.ModelAdmin):
     autocomplete_fields = ('procurement_method',)
     
     ordering = ('-created_at',)
-    readonly_fields = (
-        'transaction_id', 'created_at', 'block', 'average_price', 'unit_purchase_price'
-        )
+
+    def get_readonly_fields(self, request, obj=None):
+        """Dynamically sets fields as read-only for non-superusers."""
+        if request.user.is_superuser:
+            return ()
+        return tuple(field.name for field in self.model._meta.fields)
+
+    def has_add_permission(self, request):
+        """Allow adding transactions only for superusers."""
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        """Allow deleting transactions only for superusers."""
+        return request.user.is_superuser
 
     # Organize the detail view into logical sections.
     fieldsets = (
         ('Core Information', {
-            'fields': ('transaction_id', 'item_name', 'quantity', 'transaction_date')
+            'fields': ('id', 'transaction_id', 'item_name', 'quantity', 'transaction_date')
         }),
         ('Financials', {
             'fields': ('unit_purchase_price', 'average_price')
@@ -81,3 +92,23 @@ class ProcurementMethodAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
     ordering = ('name',)
+
+    def get_readonly_fields(self, request, obj=None):
+        """
+        Makes all fields read-only for non-superusers.
+        """
+        if request.user.is_superuser:
+            return ()
+        return tuple(f.name for f in self.model._meta.fields)
+
+    def has_add_permission(self, request):
+        """
+        Allows only superusers to add procurement methods.
+        """
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        """
+        Allows only superusers to delete procurement methods.
+        """
+        return request.user.is_superuser
