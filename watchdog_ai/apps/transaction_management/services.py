@@ -89,6 +89,8 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
             errors_in_row.append({'field': 'item_name', 'error': 'Invalid item_name value.'})
         elif pd.isna(raw_item_name) or str(raw_item_name).strip() == '':
             errors_in_row.append({'field': 'item_name', 'error': 'Item name is required and cannot be blank.'})
+        else:
+            cleaned_row_data['item_name'] = str(raw_item_name).strip().upper()
 
         # --- Validate 'procurement_method_name' ---
         raw_procurement_method_name = row.get('procurement_method_name')
