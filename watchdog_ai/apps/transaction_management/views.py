@@ -59,8 +59,15 @@ def transaction_upload_ui(request):
             messages.success(request, f'Successfully created {len(created_transactions)} transactions.')
             
             # Enrich the newly created transactions
-            enrich_transaction_list(created_transactions)
-            messages.info(request, 'Started data enrichment for new transactions.')
+            enrichment_stats = enrich_transaction_list(created_transactions)
+            
+            updated_count = enrichment_stats.get('updated', 0)
+            skipped_count = enrichment_stats.get('skipped', 0)
+
+            messages.info(
+                request, 
+                f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped."
+            )
 
         except Exception as e:
             messages.error(request, f'An unexpected error occurred during database creation: {str(e)}')
@@ -117,8 +124,9 @@ class TransactionUploadAPIView(APIView):
 
             return Response(
                 {
-                    'message': f'Successfully created {len(created_transactions)} transactions. Enrichment started.',
-                    'created_count': len(created_transactions)
+                    'message': f'Successfully created {len(created_transactions)} transactions.',
+                    'created_count': len(created_transactions),
+                    'enrichment_stats': enrichment_stats
                 },
                 status=status.HTTP_201_CREATED
             )

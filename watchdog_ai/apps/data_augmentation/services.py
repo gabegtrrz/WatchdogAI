@@ -127,12 +127,18 @@ def scrape_average_price_for_item(item_name: str) -> Decimal | None:
 
 def enrich_transaction_list(transactions: list[Transaction]):
     """
-    Enriches a list of transactions with an average price.
+    Enriches a list of transactions with an average price and returns enrichment stats.
+    
     It uses a caching mechanism to avoid re-scraping for the same item on the same day.
+
+    Returns:
+        A dictionary with counts of updated and skipped transactions.
+        Example: {'updated': 10, 'skipped': 2}
     """
     logger.info(f"Starting enrichment for {len(transactions)} transactions.")
 
     transactions_to_update = []
+    skipped_count = 0
 
     for transaction in transactions:
         item_name = str(transaction.item_name)
@@ -166,6 +172,7 @@ def enrich_transaction_list(transactions: list[Transaction]):
                 )
             else:
                 logger.warning(f"Could not scrape a price for '{item_name}'. It will be skipped.")
+                skipped_count += 1
                 continue # Skip to the next transaction
 
         transactions_to_update.append(transaction)
@@ -175,4 +182,9 @@ def enrich_transaction_list(transactions: list[Transaction]):
         Transaction.objects.bulk_update(transactions_to_update, ['average_price'])
         logger.info(f"Successfully updated {len(transactions_to_update)} transactions.")
     else:
-        logger.info("No transactions were updated.") 
+        logger.info("No transactions were updated.")
+        
+    return {
+        'updated': len(transactions_to_update),
+        'skipped': skipped_count
+    } 
