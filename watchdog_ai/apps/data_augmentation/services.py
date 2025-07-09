@@ -6,7 +6,7 @@ import logging
 import os
 from decimal import Decimal, getcontext
 from django.utils import timezone
-from watchdog_ai.apps.core.models import Transaction
+from apps.core.models import Transaction
 from .models import ItemAveragePrice
 
 # It's better to configure this in Django's settings.py

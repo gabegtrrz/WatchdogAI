@@ -7,7 +7,7 @@ from rest_framework import status
 
 from .serializers import TransactionCSVUploadSerializer
 from .services import process_transaction_csv, create_transactions_from_data
-from watchdog_ai.apps.data_augmentation.services import enrich_transaction_list
+from apps.data_augmentation.services import enrich_transaction_list
 
 def transaction_upload_ui(request):
     """
