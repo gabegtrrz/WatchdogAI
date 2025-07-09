@@ -34,32 +34,61 @@ class Transaction(models.Model):
     '''
     
     block = models.ForeignKey(
-    'blockchain.Block',             # Link to the Block model
-    on_delete=models.CASCADE,       # If a Block is deleted, its Transactions are also deleted
-    related_name='transactions',    # Lets us do `block.transactions.all()` in Block model function
-    null=True,                      # IMPORTANT: Allows the transaction to exist before adding to a block
-    blank=True,                      # Also for allowing it to be unassigned
-    db_index=True
-    )
+        'blockchain.Block',             # Link to the Block model
+        on_delete=models.CASCADE,       # If a Block is deleted, its Transactions are also deleted
+        related_name='transactions',    # Lets us do `block.transactions.all()` in Block model function
+        null=True,                      # IMPORTANT: Allows the transaction to exist before adding to a block
+        blank=True,                      # Also for allowing it to be unassigned
+        db_index=True
+        )
     
 
-    transaction_id = models.CharField(max_length=50, unique=True, db_index=True) # db_index for faster lookups
-    item_name = models.CharField(max_length=255, null=False, blank=False)
+    transaction_id = models.CharField(
+        max_length=50,
+        unique=True,
+        db_index=True, # db_index for faster lookups
+        ) 
+    
+    item_name = models.CharField(
+        max_length=255,
+        null=False,
+        blank=False
+        )
     quantity = models.IntegerField(null=False, blank=False)
 
-    unit_purchase_price = models.DecimalField(max_digits=15, decimal_places=4, null=False, blank=False)
-    average_price = models.DecimalField(max_digits=15, decimal_places=4, null=True, blank=True) # Can be null if not available
+    unit_purchase_price = models.DecimalField(
+        max_digits=15,
+        decimal_places=4,
+        null=False,
+        blank=False
+        )
+    
+    average_price = models.DecimalField(
+        max_digits=15,
+        decimal_places=4,
+        null=True, # Can be null/blank if not available
+        blank=True
+        ) 
     
     # procurement_method = models.CharField(max_length=100, null=False, blank=False)
     procurement_method = models.ForeignKey(
-    'ProcurementMethod',
-    on_delete=models.PROTECT,
-    related_name='transactions',
-    null=False, blank=False
-    )
+        'ProcurementMethod',
+        on_delete=models.PROTECT,
+        related_name='transactions',
+        null=False, blank=False
+        )
 
-    supplier = models.CharField(max_length=100, null=False, blank=False)
-    procurement_officer = models.CharField(max_length=100, null=True, blank=True)
+    supplier = models.CharField(
+        max_length=100,
+        null=False,
+        blank=False
+        )
+    procurement_officer = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+        )
+    
     transaction_date = models.DateField(null=False, blank=False) # Date of the actual transaction
     created_at = models.DateTimeField(auto_now_add=True) # Automatically sets on creation for auditing
 
@@ -105,12 +134,13 @@ class Transaction(models.Model):
             raise ValidationError({'average_price': 'Average price must be a positive value if provided.'})
         
     def save(self, *args, **kwargs):
-        # ensures validation runs on every save.
-        self.full_clean()
 
         # Generate a unique transaction_id if one isn't provided
         if not self.transaction_id:
             self.transaction_id = uuid.uuid4().hex[:32]
+
+        # ensures validation runs on every save.
+        self.full_clean()
 
         super().save(*args, **kwargs)
 
