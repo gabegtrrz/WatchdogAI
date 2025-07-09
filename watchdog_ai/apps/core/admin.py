@@ -5,23 +5,58 @@ from .models import Transaction, Item, ProcurementMethod
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
     """
-    Admin view for the Transaction model.
+    Admin view for the Transaction model, providing a comprehensive interface
+    for viewing and managing transactions.
     """
-    list_display = ('transaction_id', 'item_name', 'quantity', 'transaction_date', 'block')
+    list_display = (
+        'transaction_id',
+        'item_name',
+        'quantity',
+        'unit_purchase_price',
+        'average_price', # Here for tracking only.
+        'procurement_officer',
+        'procurement_method',
+        'supplier',
+        'transaction_date',
+        'block',
+    )
     list_filter = ('transaction_date', 'supplier', 'procurement_method')
     search_fields = (
-        '^transaction_id',
+        'transaction_id',
         'item_name',
         'supplier',
         'procurement_officer',
-        'procurement_method',
+        'procurement_method__name',
         'block__hash',
     )
     search_help_text = 'Search by Transaction ID, Item Name, Supplier, Officer, Method, or Block Hash.'
+    
+    # Use raw_id_fields for 'block' to handle large numbers of blocks efficiently.
     raw_id_fields = ('block',)
+    # Use autocomplete for 'procurement_method' for a better user experience.
+    autocomplete_fields = ('procurement_method',)
+    
     ordering = ('-created_at',)
+    readonly_fields = (
+        'transaction_id', 'created_at', 'block', 'average_price', 'unit_purchase_price'
+        )
 
-
+    # Organize the detail view into logical sections.
+    fieldsets = (
+        ('Core Information', {
+            'fields': ('transaction_id', 'item_name', 'quantity', 'transaction_date')
+        }),
+        ('Financials', {
+            'fields': ('unit_purchase_price', 'average_price')
+        }),
+        ('Procurement Details', {
+            'fields': ('supplier', 'procurement_officer', 'procurement_method')
+        }),
+        ('Blockchain Link', {
+            'classes': ('collapse',),
+            'fields': ('block', 'created_at'),
+        }),
+    )
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
