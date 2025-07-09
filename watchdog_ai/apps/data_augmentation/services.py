@@ -38,7 +38,7 @@ def get_scrapeops_url(url, location="us", render_js=False):
     logger.debug(f"Generated ScrapeOps URL: {proxy_url}")
     return proxy_url
 
-def clean_price(price_str):
+def clean_price(price_str) -> Decimal | None:
     if not price_str:
         return None
     try:
@@ -51,8 +51,9 @@ def clean_price(price_str):
         logger.warning(f"Could not convert price '{price_str}' to Decimal: {e}")
         return None
 
-def scrape_amazon_prices(product_name: str, location="us", retries=3):
+def scrape_amazon_prices(product_name: str, location="us", retries=3) -> list[Decimal]:
     """Scrapes a single page of Amazon search results for a product and returns a list of prices."""
+    
     search_url = f"https://www.amazon.com/s?k={product_name.replace(' ', '+')}"
     prices = []
     
@@ -65,7 +66,7 @@ def scrape_amazon_prices(product_name: str, location="us", retries=3):
             resp.raise_for_status()
 
             soup = BeautifulSoup(resp.text, 'html.parser')
-            results = soup.find_all('div', {'data-component-type': 's-search-result'})
+            results = soup.find_all('div', attrs={'data-component-type': 's-search-result'})
             
             if not results:
                 logger.warning(f"No search result containers found for '{product_name}'.")
@@ -122,7 +123,6 @@ def scrape_average_price_for_item(item_name: str) -> Decimal | None:
     
     # Standardize to 4 decimal places for consistency with the model
     return average_price.quantize(Decimal('0.0001'))
-
 
 def enrich_transactions():
     """
