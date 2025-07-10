@@ -49,6 +49,32 @@ class Transaction(models.Model):
         db_index=True, # db_index for faster lookups
     ) 
 
+    # --- Project Information ---
+    project_name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Name of the project for this procurement transaction."
+    )
+    end_user_unit = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="End user unit or department for this procurement."
+    )
+    project_description = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Detailed description of the project."
+    )
+    approved_budget = models.DecimalField(
+        max_digits=15,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        help_text="Approved Budget for the Contract (ABC)."
+    )
+
     # --- Item Details ---
     item_name = models.CharField(
         max_length=255,
@@ -110,6 +136,10 @@ class Transaction(models.Model):
         """
         return {
             'transaction_id': self.transaction_id,
+            'project_name': self.project_name,
+            'end_user_unit': self.end_user_unit,
+            'project_description': self.project_description,
+            'approved_budget': str(self.approved_budget) if self.approved_budget is not None else None,
             'item_name': self.item_name,
             'quantity': self.quantity,
             # converting decimal to string for consistent hashing
@@ -119,8 +149,8 @@ class Transaction(models.Model):
             'procurement_method': self.procurement_method.name,
             'supplier': self.supplier,
             'procurement_officer': self.procurement_officer,
-            'transaction_date': self.transaction_date.isoformat(),
-            'created_at': self.created_at.isoformat() if self.created_at else None, # included created_at for full data representation, more secure if altered
+            'transaction_date': str(self.transaction_date),
+            'created_at': str(self.created_at) if self.created_at else None, # included created_at for full data representation, more secure if altered
         }
 
     def clean(self):
@@ -135,6 +165,9 @@ class Transaction(models.Model):
         # Note: average_price can be null, so only validate if it's not null
         if self.average_price is not None and self.average_price <= 0:
             raise ValidationError({'average_price': 'Average price must be a positive value if provided.'})
+        # Validate approved_budget if provided
+        if self.approved_budget is not None and self.approved_budget <= 0:
+            raise ValidationError({'approved_budget': 'Approved budget must be a positive value if provided.'})
         
     def save(self, *args, **kwargs):
 
@@ -156,7 +189,7 @@ class Item(models.Model):
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.name} (ID: {self.id})"
+        return str(self.name)
     
 
 class ProcurementMethod(models.Model):
@@ -164,4 +197,4 @@ class ProcurementMethod(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
