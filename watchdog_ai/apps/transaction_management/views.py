@@ -82,10 +82,19 @@ def transaction_upload_ui(request):
                 # Extract success message from result data
                 success_message = blockchain_result.get('success_message', 'Transactions successfully appended to blockchain.')
                 messages.success(request, success_message)
+                
+                    
             else:
                 # Extract error message from result data
                 error_message = blockchain_result.get('error_message', 'Failed to append transactions to blockchain.')
                 messages.error(request, error_message)
+                
+                # Add additional error details if available
+                if 'error_type' in blockchain_result:
+                    messages.error(request, f"Error type: {blockchain_result['error_type']}")
+                
+                if 'admin_log_written' in blockchain_result and blockchain_result['admin_log_written']:
+                    messages.warning(request, "Detailed error log has been written for admin review.")
 
         except Exception as e:
             messages.error(request, f'An unexpected error occurred during database creation: {str(e)}')
