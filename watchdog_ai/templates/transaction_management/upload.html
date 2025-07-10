@@ -18,6 +18,45 @@
                         <div class="alert alert-{{ message.tags }}" style="border-radius: 4px;">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
+                
+                <!-- Blockchain Status Section -->
+                {% if blockchain_status %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Blockchain Integration Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>Total Transactions:</strong> {{ blockchain_status.total_transactions }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Pending Integration:</strong> {{ blockchain_status.pending_integration }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Successfully Integrated:</strong> {{ blockchain_status.successfully_integrated }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Failed Integration:</strong> {{ blockchain_status.failed_integration }}
+                            </div>
+                        </div>
+                        {% if blockchain_status.failed_integration > 0 %}
+                        <div class="mt-3">
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="retry_blockchain" class="btn btn-warning">
+                                    Retry Failed Blockchain Integration
+                                </button>
+                            </form>
+                            <small class="text-muted ml-2">
+                                This will retry integration for transactions that previously failed.
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="form-group">
@@ -43,6 +82,8 @@
                 <code>transaction_date</code>
                 <code>procurement_method_name</code>
                 <code>supplier</code>
+                <code>invoice_number</code>
+                <code>payment_receipt_number</code>
             </div>
         </div>
     </div>

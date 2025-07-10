@@ -4,20 +4,22 @@ Blockchain Integration Module
 Purpose: Processes transaction data and adds it to the simulated blockchain to ensure data integrity.
 
 Key Processes:
-- Prepare Transaction for Blockchain: Formats the enriched data for blockchain inclusion.
-- Generate Hash: Creates a unique hash for the transaction data.
-- Append Transaction to Blockchain: Adds the transaction and its hash to the simulated blockchain.
-- Initiate Integrity Check: Triggers the blockchain integrity verification process.
-- Handle Successful Transaction: Manages the successful addition of a transaction.
-- Handle Transaction/Integrity Errors: Manages errors during blockchain operations.
+- Atomic Blockchain Integration: Ensures all-or-nothing blockchain operations
+- Status Tracking: Tracks integration status for each transaction
+- Retry Mechanism: Allows retrying failed integrations
+- Error Reporting: Sends error reports to admin email
 """
 
 import hashlib
 import json
 import logging
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from django.db import transaction as db_transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 from .models import Block
 from .services import create_new_block, verify_blockchain_integrity, create_genesis_block
@@ -32,394 +34,192 @@ class BlockchainIntegrationError(Exception):
     pass
 
 
-class TransactionHashMismatchError(BlockchainIntegrationError):
-    """Raised when transaction hash validation fails"""
-    pass
-
-
-class BlockchainIntegrityError(BlockchainIntegrationError):
-    """Raised when blockchain integrity check fails"""
-    pass
-
-
 class BlockchainIntegrationService:
     """
-    Main service class for blockchain integration operations.
+    Simple atomic blockchain integration service.
     Handles the complete lifecycle of adding transactions to the blockchain.
     """
 
     def __init__(self):
-        # Setup instance-specific logger
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         
-    def prepare_transaction_for_blockchain(self, transaction):
+    def integrate_transactions_atomic(self, transactions):
         """
-        Prepares and formats transaction data for blockchain inclusion.
+        Atomically integrates transactions into the blockchain.
+        If any step fails, all changes are rolled back.
         
         Args:
-            transaction: The transaction object to prepare
+            transactions (list): List of Transaction objects to integrate
             
         Returns:
-            dict: Formatted transaction data ready for blockchain
-            
-        Raises:
-            BlockchainIntegrationError: If transaction preparation fails
+            dict: Result with success status and details
         """
-        try:
-            self.logger.info(f"Preparing transaction {transaction.transaction_id} for blockchain")
-            
-            # Check transaction has valid ID
-            if not transaction.transaction_id:
-                raise BlockchainIntegrationError("Transaction must have a valid transaction_id")
-                
-            # Get basic transaction data
-            transaction_data = transaction.to_dict()
-            
-            # Add blockchain-specific metadata for tracking
-            blockchain_data = {
-                **transaction_data,  # Spread operator to include all original data
-                'blockchain_timestamp': timezone.now().isoformat(),  # When added to blockchain, .isoformat() guarantees a consistent, unambiguous string representation of the timestamp
-                'blockchain_version': '1.0',  # Version for future compatibility
-                'data_integrity_hash': self.generate_transaction_hash(transaction_data)
-            }
-            
-            self.logger.info(f"Transaction {transaction.transaction_id} prepared successfully for blockchain")
-            return blockchain_data
-            
-        except Exception as e:
-            error_msg = f"Failed to prepare transaction {transaction.transaction_id} for blockchain: {str(e)}"
-            self.logger.error(error_msg)
-            raise BlockchainIntegrationError(error_msg) from e
-
-    def generate_transaction_hash(self, transaction_data):
-        """
-        Creates a unique SHA-256 hash for the transaction data.
-        
-        Args:
-            transaction_data (dict): Transaction data to hash
-            
-        Returns:
-            str: SHA-256 hash of the transaction data
-            
-        Raises:
-            BlockchainIntegrationError: If hash generation fails
-        """
-        try:
-            # Convert dict to consistent string format for hashing
-            # sort_keys=True ensures same order every time
-            # separators removes extra spaces for consistency
-            transaction_string = json.dumps(
-                transaction_data, 
-                sort_keys=True, 
-                separators=(',', ':'),
-                ensure_ascii=True
-            ).encode('utf-8')
-            
-            # Generate SHA-256 hash
-            hash_value = hashlib.sha256(transaction_string).hexdigest()
-            self.logger.debug(f"Generated hash for transaction data: {hash_value}")
-            return hash_value
-            
-        except Exception as e:
-            error_msg = f"Failed to generate hash for transaction data: {transaction_data['transaction_id']}. Error: {str(e)}"
-            self.logger.error(error_msg)
-            raise BlockchainIntegrationError(error_msg) from e
-
-    def append_transactions_to_blockchain(self, transactions):
-        """
-        Adds transactions to the blockchain by creating a new block.
-        Uses the create_new_block service which handles the blockchain logic.
-        
-        Args:
-            transactions (list): List of Transaction objects to add
-            
-        Returns:
-            Block: The newly created block containing the transactions
-            
-        Raises:
-            BlockchainIntegrationError: If blockchain append operation fails
-        """
-        try:
-            self.logger.info(f"Appending {len(transactions)} transaction(s) to blockchain")
-            
-            # Check we have transactions to process
-            if not transactions:
-                raise BlockchainIntegrationError("Cannot append empty transaction list to blockchain")
-            
-            # Validate all transactions are Transaction objects
-            for transaction in transactions:
-                if not isinstance(transaction, Transaction):
-                    raise BlockchainIntegrationError(f"Invalid transaction type: {type(transaction)}. Expected Transaction object.")
-                
-                # Check if transaction is already in a block (warn but continue)
-                if transaction.block is not None:
-                    block_index = getattr(transaction.block, 'index', 'unknown')
-                    self.logger.warning(f"Transaction {transaction.transaction_id} already assigned to block {block_index}")
-                    
-            # Use existing service to create new block with transactions
-            new_block = create_new_block(transactions)
-            
-            # Check if block creation was successful
-            if new_block is None:
-                raise BlockchainIntegrationError("Failed to create new block for transactions")
-                
-            self.logger.info(f"Successfully created block {new_block.index} with {len(transactions)} transaction(s)")
-            return new_block
-            
-        except Exception as e:
-            error_msg = f"Failed to append transactions to blockchain: {str(e)}"
-            self.logger.error(error_msg)
-            raise BlockchainIntegrationError(error_msg) from e
-
-    def initiate_integrity_check(self):
-        """
-        Triggers the blockchain integrity verification process.
-        
-        Returns:
-            bool: True if blockchain integrity is valid, False otherwise
-            
-        Raises:
-            BlockchainIntegrityError: If integrity check encounters an error
-        """
-        try:
-            
-            # Use existing blockchain verification service
-            integrity_result = verify_blockchain_integrity()
-            return integrity_result
-            
-        except BlockchainIntegrityError:
-            # Re-raise integrity errors as-is
-            raise
-        except Exception as e:
-            error_msg = f"Error during blockchain integrity check: {str(e)}"
-            self.logger.error(error_msg)
-            raise BlockchainIntegrityError(error_msg) from e
-
-    def process_transaction_batch(self, transactions):
-        """
-        Complete workflow for processing a batch of transactions through the blockchain.
-        
-        Args:
-            transactions (list): Transactions to process
-            
-        Returns:
-            tuple: (success_status, result_data) - success is bool, result_data is dict
-        """
-        # Initialize result tracking dictionary
-        result_data = {
-            'processed_transactions': [],  # List of processed transaction info
-            'block_created': None,         # Info about created block
-            'integrity_verified': False,   # Whether integrity check passed
-            'errors': [],                  # List of any errors encountered
-            'timestamp': timezone.now().isoformat()  # When processing started
+        result = {
+            'success': False,
+            'integrated_count': 0,
+            'failed_count': 0,
+            'error_message': None,
+            'block_info': None
         }
         
         try:
-            # Use database transaction to ensure all-or-nothing processing
             with db_transaction.atomic():
-                self.logger.info(f"Starting batch processing of {len(transactions)} transactions")
-                
-                # Step 1: Prepare all transactions for blockchain
-                prepared_transactions = []
+                # Step 1: Update transaction status to 'pending'
                 for transaction in transactions:
-                    try:
-                        # Prepare each transaction individually
-                        prepared_data = self.prepare_transaction_for_blockchain(transaction)
-                        prepared_transactions.append({
-                            'transaction': transaction,
-                            'prepared_data': prepared_data
-                        })
-                        
-                        # Track in result data
-                        result_data['processed_transactions'].append({
-                            'transaction_id': transaction.transaction_id,
-                            'status': 'prepared',
-                            'hash': prepared_data['data_integrity_hash']
-                        })
-                        
-                    except Exception as e:
-                        error_msg = f"Failed to prepare transaction {transaction.transaction_id}: {str(e)}"
-                        self.logger.error(error_msg)
-                        result_data['errors'].append(error_msg)
-                        raise BlockchainIntegrationError(error_msg)
+                    transaction.blockchain_status = 'pending'
+                    transaction.last_blockchain_attempt = timezone.now()
+                    transaction.save(update_fields=['blockchain_status', 'last_blockchain_attempt'])
                 
-                # Step 2: Add transactions to blockchain using existing service
-                new_block = self.append_transactions_to_blockchain(transactions)
-                result_data['block_created'] = {
-                    'index': new_block.index,
-                    'hash': new_block.hash,
-                    'transaction_count': len(transactions)
-                }
+                # Step 2: Create new block with transactions
+                new_block = create_new_block(transactions)
+                if not new_block:
+                    raise BlockchainIntegrationError("Failed to create new block")
                 
                 # Step 3: Verify blockchain integrity
-                integrity_status = self.initiate_integrity_check()
-                result_data['integrity_verified'] = integrity_status
+                integrity_valid = verify_blockchain_integrity()
+                if not integrity_valid:
+                    raise BlockchainIntegrationError("Blockchain integrity check failed")
                 
-                # Step 4: Handle successful completion
-                success_message = self.handle_successful_transaction(transactions, new_block, result_data)
-                result_data['success_message'] = success_message
+                # Step 4: Update transaction status to 'integrated'
+                for transaction in transactions:
+                    transaction.blockchain_status = 'integrated'
+                    transaction.blockchain_error = None
+                    transaction.save(update_fields=['blockchain_status', 'blockchain_error'])
                 
-                self.logger.info(f"Successfully processed batch of {len(transactions)} transactions")
-                return True, result_data
+                result.update({
+                    'success': True,
+                    'integrated_count': len(transactions),
+                    'block_info': {
+                        'index': new_block.index,
+                        'hash': new_block.hash,
+                        'transaction_count': len(transactions)
+                    }
+                })
+                
+                self.logger.info(f"Successfully integrated {len(transactions)} transactions into block {new_block.index}")
+                return result
                 
         except Exception as e:
-            # Step 5: Handle any errors that occurred
-            error_response = self.handle_transaction_errors(e, result_data)
-            return False, error_response
-
-    def handle_successful_transaction(self, transactions, block, result_data):
-        """
-        Manages the successful addition of transactions to the blockchain.
-        
-        Args:
-            transactions (list): Successfully processed transactions
-            block: The block containing the transactions
-            result_data (dict): Processing result data
+            error_msg = f"Blockchain integration failed: {str(e)}"
+            self.logger.error(error_msg, exc_info=True)
             
-        Returns:
-            str: Success message for UI communication
-        """
-        try:
-            # Create user-friendly success message
-            success_message = (
-                f"Successfully added {len(transactions)} transaction(s) to blockchain. "
-                f"Block {block.index} created with hash {block.hash[:16]}... "
-                f"Blockchain integrity verified."
-            )
-            
-            self.logger.info(success_message)
-            
-            # Log details for each transaction
+            # Update transaction status to 'failed'
             for transaction in transactions:
-                self.logger.info(f"Transaction {transaction.transaction_id} successfully added to block {block.index}")
+                transaction.blockchain_status = 'failed'
+                transaction.blockchain_error = error_msg
+                transaction.blockchain_retry_count += 1
+                transaction.save(update_fields=['blockchain_status', 'blockchain_error', 'blockchain_retry_count'])
             
-            # TODO: Add additional success handling here if needed
-            # (e.g., notifications, webhooks, external system updates)
+            result.update({
+                'success': False,
+                'failed_count': len(transactions),
+                'error_message': error_msg
+            })
             
-            return success_message
+            # Send error report to admin
+            self._send_error_report(transactions, error_msg)
             
-        except Exception as e:
-            self.logger.error(f"Error in success handling: {str(e)}")
-            return f"Transactions processed but success handling encountered issues: {str(e)}"
+            return result
 
-    def handle_transaction_errors(self, error, result_data):
+    def retry_failed_integrations(self, max_retries=3):
         """
-        Manages errors during blockchain transaction or integrity check.
+        Retries blockchain integration for transactions that previously failed.
         
         Args:
-            error: The error that occurred
-            result_data (dict): Current processing result data
+            max_retries (int): Maximum number of retry attempts
             
         Returns:
-            dict: Error response data for UI communication
+            dict: Result with retry statistics
         """
-        try:
-            error_message = f"Blockchain integration failed: {str(error)}"
-            
-            # Log detailed error with stack trace
-            self.logger.error(error_message, exc_info=True)
-            
-            # Create comprehensive error response for UI
-            error_response = {
-                **result_data,  # Include all existing result data
-                'success': False,
-                'error_type': type(error).__name__,
-                'error_message': error_message,
-                'error_timestamp': timezone.now().isoformat(),
-                'admin_log_written': True
-            }
-            
-            # Write detailed admin log for later review
-            self._write_admin_error_log(error, result_data)
-            
-            return error_response
-            
-        except Exception as logging_error:
-            # Fallback error handling if even error handling fails
-            fallback_message = f"Critical error in error handling: {str(logging_error)}"
-            self.logger.critical(fallback_message)
-            
+        # Get transactions that failed and haven't exceeded max retries
+        failed_transactions = Transaction.objects.filter(
+            blockchain_status='failed',
+            blockchain_retry_count__lt=max_retries
+        ).select_related('block')
+        
+        if not failed_transactions.exists():
             return {
-                'success': False,
-                'error_message': fallback_message,
-                'error_timestamp': timezone.now().isoformat(),
-                'admin_log_written': False
+                'success': True,
+                'message': 'No failed transactions to retry',
+                'retried_count': 0
             }
+        
+        # Group transactions by block (if they were part of the same batch)
+        # For simplicity, we'll retry them individually or in small batches
+        result = self.integrate_transactions_atomic(list(failed_transactions))
+        
+        return {
+            'success': result['success'],
+            'retried_count': result['integrated_count'] + result['failed_count'],
+            'integrated_count': result['integrated_count'],
+            'failed_count': result['failed_count'],
+            'error_message': result.get('error_message')
+        }
 
-    def _write_admin_error_log(self, error, result_data):
+    def _send_error_report(self, transactions, error_msg):
         """
-        Writes detailed error log for admin review.
+        Sends error report to admin email.
         
         Args:
-            error: The error that occurred
-            result_data (dict): Processing result data
+            transactions (list): Transactions that failed
+            error_msg (str): Error message
         """
         try:
-            # Create structured admin log entry
-            admin_log_entry = {
-                'timestamp': timezone.now().isoformat(),
-                'error_type': type(error).__name__,
-                'error_message': str(error),
-                'error_details': result_data,
-                'blockchain_state': self._get_blockchain_state_summary(),
-                'stack_trace': str(error.__traceback__) if hasattr(error, '__traceback__') else 'Not available'
-            }
+            # Create email content
+            subject = "Blockchain Integration Error Report"
             
-            # Log with special marker for admin review
-            self.logger.error(
-                "ADMIN_REVIEW_REQUIRED - Blockchain Integration Error",
-                extra={'admin_log': admin_log_entry}
+            body = f"""
+            Blockchain integration failed for {len(transactions)} transaction(s).
+            
+            Error: {error_msg}
+            
+            Failed Transactions:
+            """
+            
+            for transaction in transactions:
+                body += f"- {transaction.transaction_id}: {transaction.item_name}\n"
+            
+            body += f"""
+            Timestamp: {timezone.now()}
+            
+            Please review the blockchain integration logs for more details.
+            """
+            
+            # Send email (you'll need to configure email settings in Django)
+            self._send_email(
+                to_email="watchdogai.help@gmail.com",
+                subject=subject,
+                body=body
             )
             
+            self.logger.info("Error report sent to admin email")
+            
         except Exception as e:
-            self.logger.critical(f"Failed to write admin error log: {str(e)}")
+            self.logger.error(f"Failed to send error report: {str(e)}")
 
-    def _get_blockchain_state_summary(self):
+    def _send_email(self, to_email, subject, body):
         """
-        Gets a summary of current blockchain state for debugging.
-        
-        Returns:
-            dict: Blockchain state summary
+        Sends email using Django's email backend.
+        Requires proper email configuration in settings.py
         """
         try:
-            # Get latest block info
-            latest_block = Block.objects.order_by('-index').first()
+            from django.core.mail import send_mail
             
-            # Count various entities
-            total_blocks = Block.objects.count()
-            total_transactions = Transaction.objects.count()
-            unlinked_transactions = Transaction.objects.filter(block__isnull=True).count()
-            
-            return {
-                'total_blocks': total_blocks,
-                'total_transactions': total_transactions,
-                'unlinked_transactions': unlinked_transactions,
-                'latest_block_index': latest_block.index if latest_block else None,
-                'latest_block_hash': latest_block.hash if latest_block else None
-            }
-            
+            send_mail(
+                subject=subject,
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[to_email],
+                fail_silently=False,
+            )
         except Exception as e:
-            return {'error': f"Failed to get blockchain state: {str(e)}"}
+            self.logger.error(f"Email sending failed: {str(e)}")
 
 
-# Convenience functions for direct usage
-def integrate_single_transaction(transaction):
-    """
-    Integrates a single transaction into the blockchain.
-    
-    Args:
-        transaction: Transaction object to integrate
-        
-    Returns:
-        tuple: (success_status, result_data)
-    """
-    service = BlockchainIntegrationService()
-    return service.process_transaction_batch([transaction])
-
-
+### Convenience functions for direct usage
 def integrate_transaction_batch(transactions):
     """
-    Integrates a batch of transactions into the blockchain.
+    Integrates a batch of transactions into the blockchain atomically.
     
     Args:
         transactions (list): List of Transaction objects to integrate
@@ -428,48 +228,41 @@ def integrate_transaction_batch(transactions):
         tuple: (success_status, result_data)
     """
     service = BlockchainIntegrationService()
-    return service.process_transaction_batch(transactions)
+    result = service.integrate_transactions_atomic(transactions)
+    return result['success'], result
 
 
-def verify_transaction_in_blockchain(transaction):
+def retry_failed_blockchain_integrations():
     """
-    Verifies if a transaction exists in the blockchain and validates its integrity.
+    Retries all failed blockchain integrations.
     
-    Args:
-        transaction: Transaction object to verify
-        
     Returns:
-        dict: Verification result data
+        dict: Retry result data
+    """
+    service = BlockchainIntegrationService()
+    return service.retry_failed_integrations()
+
+
+def get_blockchain_status_summary():
+    """
+    Gets a summary of blockchain integration status.
+    
+    Returns:
+        dict: Status summary
     """
     try:
-        # Check if transaction is linked to a block
-        if not transaction.block:
-            return {
-                'verified': False,
-                'reason': 'Transaction not linked to any block',
-                'transaction_id': transaction.transaction_id
-            }
-        
-        # Recalculate transaction hash and verify block integrity
-        service = BlockchainIntegrationService()
-        current_hash = service.generate_transaction_hash(transaction.to_dict())
-        
-        # Check if block hash is still valid (not tampered with)
-        block_hash_valid = transaction.block.hash == transaction.block.calculate_hash()
+        total_transactions = Transaction.objects.count()
+        pending_count = Transaction.objects.filter(blockchain_status='pending').count()
+        integrated_count = Transaction.objects.filter(blockchain_status='integrated').count()
+        failed_count = Transaction.objects.filter(blockchain_status='failed').count()
         
         return {
-            'verified': block_hash_valid,
-            'transaction_id': transaction.transaction_id,
-            'block_index': transaction.block.index,
-            'block_hash': transaction.block.hash,
-            'block_hash_valid': block_hash_valid,
-            'current_transaction_hash': current_hash
+            'total_transactions': total_transactions,
+            'pending_integration': pending_count,
+            'successfully_integrated': integrated_count,
+            'failed_integration': failed_count,
+            'integration_rate': (integrated_count / total_transactions * 100) if total_transactions > 0 else 0
         }
-        
     except Exception as e:
-        logger.error(f"Error verifying transaction {transaction.transaction_id}: {str(e)}")
-        return {
-            'verified': False,
-            'error': str(e),
-            'transaction_id': transaction.transaction_id
-        }
+        logger.error(f"Error getting blockchain status summary: {str(e)}")
+        return {'error': str(e)}

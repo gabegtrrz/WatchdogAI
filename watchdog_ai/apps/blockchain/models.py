@@ -50,7 +50,11 @@ class Block(models.Model):
         and all transactions associated with this block.
         """
         try:
-            transaction_list = [t.to_dict() for t in self.transactions.all().order_by('id')]
+            # If the block hasn't been saved yet (no primary key), return empty transaction list
+            if self.pk is None:
+                transaction_list = []
+            else:
+                transaction_list = [t.to_dict() for t in self.transactions.all().order_by('id')]
             # list comprehension correctly handles the case where there are no transactions,
             # resulting in an empty list, which is the desired behavior for hashing.
 
