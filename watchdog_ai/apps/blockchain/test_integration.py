@@ -11,8 +11,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'watchdog_ai.settings')
 django.setup()
 
 from apps.core.models import Transaction, ProcurementMethod
-from apps.blockchain.integration import BlockchainIntegrationService, integrate_single_transaction
-from apps.blockchain.services import verify_blockchain_integrity
+from apps.blockchain.integration import BlockchainIntegrationService, integrate_single_transaction, verify_transaction_in_blockchain
+from apps.blockchain.services import verify_blockchain_integrity, create_genesis_block
 
 def test_blockchain_integration():
     """Test the blockchain integration functionality"""
@@ -71,7 +71,7 @@ def test_blockchain_integration():
         print(f"❌ Integration error: {e}")
     
     # Test 3: Verify blockchain integrity
-    print("\n🔍 Test 3: Verifying blockchain integrity")
+    print("\n Test 3: Verifying blockchain integrity")
     try:
         integrity_result = verify_blockchain_integrity()
         if integrity_result:
@@ -82,9 +82,9 @@ def test_blockchain_integration():
         print(f"❌ Integrity check error: {e}")
     
     # Test 4: Verify specific transaction
-    print("\n🔍 Test 4: Verifying specific transaction")
+    print("\n Test 4: Verifying specific transaction")
     try:
-        verification_result = service.verify_transaction_in_blockchain(test_transaction)
+        verification_result = verify_transaction_in_blockchain(test_transaction)
         if verification_result.get('verified'):
             print("✅ Transaction verification successful")
             print(f"   - Block index: {verification_result['block_index']}")
@@ -93,6 +93,28 @@ def test_blockchain_integration():
             print(f"❌ Transaction verification failed: {verification_result.get('reason', 'Unknown')}")
     except Exception as e:
         print(f"❌ Verification error: {e}")
+    
+    # Test 5: Test genesis block creation
+    print("\n  Test 5: Testing genesis block creation")
+    try:
+        genesis_block = create_genesis_block()
+        if genesis_block:
+            print("✅ Genesis block created/verified successfully")
+            print(f"   - Block index: {genesis_block.index}")
+            print(f"   - Block hash: {genesis_block.hash[:16]}...")
+        else:
+            print("❌ Genesis block creation failed")
+    except Exception as e:
+        print(f"❌ Genesis block error: {e}")
+    
+    # Test 6: Test transaction hash generation
+    print("\n🔐 Test 6: Testing transaction hash generation")
+    try:
+        transaction_hash = service.generate_transaction_hash(test_transaction.to_dict())
+        print(f"✅ Transaction hash generated successfully")
+        print(f"   - Hash: {transaction_hash[:16]}...")
+    except Exception as e:
+        print(f"❌ Hash generation error: {e}")
     
     print("\n" + "=" * 50)
     print("🏁 Blockchain Integration Test Complete")
