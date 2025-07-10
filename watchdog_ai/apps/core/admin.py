@@ -73,7 +73,7 @@ class TransactionAdmin(admin.ModelAdmin):
         }),
         ('Blockchain Link', {
             'fields': ('block',),
-            'description': 'Block ID shows database primary key, Block name shows blockchain index'
+            'description': 'Block ID (first figure) shows database primary key, Block name (second figure) shows blockchain index'
         }),
     )
 
