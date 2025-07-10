@@ -39,7 +39,8 @@ class Transaction(models.Model):
         related_name='transactions',    # Lets us do `block.transactions.all()` in Block model function
         null=True,                      # IMPORTANT: Allows the transaction to exist before adding to a block
         blank=True,                      # Also for allowing it to be unassigned
-        db_index=True
+        db_index=True,
+        help_text="The blockchain block that contains this transaction."
     )
 
     # --- Transaction Identification ---
@@ -47,6 +48,7 @@ class Transaction(models.Model):
         max_length=50,
         unique=True,
         db_index=True, # db_index for faster lookups
+        help_text="Unique identifier for this transaction."
     ) 
 
     # --- Project Information ---
@@ -79,22 +81,29 @@ class Transaction(models.Model):
     item_name = models.CharField(
         max_length=255,
         null=False,
-        blank=False
+        blank=False,
+        help_text="Name or description of the item being procured."
     )
-    quantity = models.IntegerField(null=False, blank=False)
+    quantity = models.IntegerField(
+        null=False, 
+        blank=False,
+        help_text="Number of units of the item being procured."
+    )
 
     # --- Pricing ---
     unit_purchase_price = models.DecimalField(
         max_digits=15,
         decimal_places=4,
         null=False,
-        blank=False
+        blank=False,
+        help_text="Price per unit of the item being procured."
     )
     average_price = models.DecimalField(
         max_digits=15,
         decimal_places=4,
         null=True, # Can be null/blank if not available
-        blank=True
+        blank=True,
+        help_text="Average price per unit across similar transactions (if available)."
     ) 
 
     # --- Procurement Method ---
@@ -102,24 +111,49 @@ class Transaction(models.Model):
         'ProcurementMethod',
         on_delete=models.PROTECT,
         related_name='transactions',
-        null=False, blank=False
+        null=False, 
+        blank=False,
+        help_text="The method used for procurement (e.g., Public Bidding, Direct Contracting)."
     )
 
     # --- Supplier & Officer ---
     supplier = models.CharField(
         max_length=100,
         null=False,
-        blank=False
+        blank=False,
+        help_text="Supplier or vendor for this transaction."
     )
     procurement_officer = models.CharField(
         max_length=100,
         null=True,
-        blank=True
+        blank=True,
+        help_text="Name of the procurement officer responsible for this transaction."
+    )
+
+    # --- Financial Tracking ---
+    invoice_number = models.CharField(
+        max_length=100,
+        null=False,
+        blank=False,
+        help_text="Invoice number for this transaction."
+    )
+    payment_receipt_number = models.CharField(
+        max_length=100,
+        null=False,
+        blank=False,
+        help_text="Payment receipt number for this transaction."
     )
 
     # --- Timestamps ---
-    transaction_date = models.DateField(null=False, blank=False) # Date of the actual transaction
-    created_at = models.DateTimeField(auto_now_add=True) # Automatically sets on creation for auditing
+    transaction_date = models.DateField(
+        null=False, 
+        blank=False,
+        help_text="Date when the transaction was completed."
+    ) # Date of the actual transaction
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Timestamp when this transaction record was created in the system."
+    ) # Automatically sets on creation for auditing
 
     class Meta:
         ordering = ['-transaction_date', 'transaction_id']
@@ -149,6 +183,8 @@ class Transaction(models.Model):
             'procurement_method': self.procurement_method.name,
             'supplier': self.supplier,
             'procurement_officer': self.procurement_officer,
+            'invoice_number': self.invoice_number,
+            'payment_receipt_number': self.payment_receipt_number,
             'transaction_date': str(self.transaction_date),
             'created_at': str(self.created_at) if self.created_at else None, # included created_at for full data representation, more secure if altered
         }
@@ -184,9 +220,22 @@ class Transaction(models.Model):
 class Item(models.Model):
     """Represents an item that can be procured."""
     # manual ID
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
+    id = models.UUIDField(
+        primary_key=True, 
+        default=uuid.uuid4, 
+        editable=False,
+        help_text="Unique identifier for this item."
+    )
+    name = models.CharField(
+        max_length=255, 
+        unique=True,
+        help_text="Name of the item that can be procured."
+    )
+    description = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Detailed description of the item."
+    )
 
     def __str__(self):
         return str(self.name)
@@ -194,7 +243,11 @@ class Item(models.Model):
 
 class ProcurementMethod(models.Model):
     """Represents a method of procurement, e.g., 'Public Bidding'."""
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(
+        max_length=255, 
+        unique=True,
+        help_text="Name of the procurement method (e.g., Public Bidding, Direct Contracting)."
+    )
 
     def __str__(self):
         return str(self.name)
