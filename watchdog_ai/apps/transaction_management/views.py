@@ -76,7 +76,16 @@ def transaction_upload_ui(request):
             )
 
             ### Integrate to Blockchain
-            integrate_transaction_batch(created_transactions)
+            blockchain_success, blockchain_result = integrate_transaction_batch(created_transactions)
+            
+            if blockchain_success:
+                # Extract success message from result data
+                success_message = blockchain_result.get('success_message', 'Transactions successfully appended to blockchain.')
+                messages.success(request, success_message)
+            else:
+                # Extract error message from result data
+                error_message = blockchain_result.get('error_message', 'Failed to append transactions to blockchain.')
+                messages.error(request, error_message)
 
         except Exception as e:
             messages.error(request, f'An unexpected error occurred during database creation: {str(e)}')
@@ -131,12 +140,23 @@ class TransactionUploadAPIView(APIView):
             # Enrich the newly created transactions
             enrichment_stats = enrich_transaction_list(created_transactions)
 
+            # Integrate to Blockchain
+            blockchain_success, blockchain_result = integrate_transaction_batch(created_transactions)
+            
+            response_data = {
+                'message': f'Successfully created {len(created_transactions)} transactions.',
+                'created_count': len(created_transactions),
+                'enrichment_stats': enrichment_stats,
+                'blockchain_integration': {
+                    'success': blockchain_success,
+                    'message': blockchain_result.get('success_message' if blockchain_success else 'error_message', 
+                                                   'Blockchain integration completed' if blockchain_success else 'Blockchain integration failed'),
+                    'details': blockchain_result
+                }
+            }
+
             return Response(
-                {
-                    'message': f'Successfully created {len(created_transactions)} transactions.',
-                    'created_count': len(created_transactions),
-                    'enrichment_stats': enrichment_stats
-                },
+                response_data,
                 status=status.HTTP_201_CREATED
             )
         except Exception as e:
