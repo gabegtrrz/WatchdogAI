@@ -8,7 +8,7 @@ from rest_framework import status
 from .serializers import TransactionCSVUploadSerializer
 from .services import process_transaction_csv, create_transactions_from_data
 from apps.data_augmentation.services import enrich_transaction_list
-from apps.blockchain.integration import integrate_transaction_batch
+from apps.blockchain.integration import integrate_transaction_batch, retry_failed_blockchain_integrations, get_blockchain_status_summary
 
 def transaction_upload_ui(request):
     """
@@ -16,6 +16,10 @@ def transaction_upload_ui(request):
     Handles POST to process the file by calling the service layer directly.
     """
     if request.method == 'POST':
+        # Handle retry action
+        if 'retry_blockchain' in request.POST:
+            return handle_blockchain_retry(request)
+        
         uploaded_file = request.FILES.get('csv_file')
         # Check if the 'dry_run' checkbox was selected in the form
         is_dry_run = request.POST.get('dry_run') == 'true'
@@ -79,29 +83,50 @@ def transaction_upload_ui(request):
             blockchain_success, blockchain_result = integrate_transaction_batch(created_transactions)
             
             if blockchain_success:
-                # Extract success message from result data
-                success_message = blockchain_result.get('success_message', 'Transactions successfully appended to blockchain.')
-                messages.success(request, success_message)
-                
+                messages.success(request, f"Successfully integrated {blockchain_result['integrated_count']} transactions into blockchain.")
+                if blockchain_result.get('block_info'):
+                    block_info = blockchain_result['block_info']
+                    messages.info(request, f"Block {block_info['index']} created with hash {block_info['hash'][:16]}...")
                     
             else:
-                # Extract error message from result data
                 error_message = blockchain_result.get('error_message', 'Failed to append transactions to blockchain.')
                 messages.error(request, error_message)
-                
-                # Add additional error details if available
-                if 'error_type' in blockchain_result:
-                    messages.error(request, f"Error type: {blockchain_result['error_type']}")
-                
-                if 'admin_log_written' in blockchain_result and blockchain_result['admin_log_written']:
-                    messages.warning(request, "Detailed error log has been written for admin review.")
+                messages.warning(request, "You can retry blockchain integration using the button below.")
 
         except Exception as e:
             messages.error(request, f'An unexpected error occurred during database creation: {str(e)}')
 
         return redirect('transaction-upload-ui')
 
-    return render(request, 'transaction_management/upload.html')
+    # Get blockchain status for display
+    blockchain_status = get_blockchain_status_summary()
+    
+    return render(request, 'transaction_management/upload.html', {
+        'blockchain_status': blockchain_status
+    })
+
+
+def handle_blockchain_retry(request):
+    """
+    Handles retry of failed blockchain integrations.
+    """
+    try:
+        retry_result = retry_failed_blockchain_integrations()
+        
+        if retry_result['success']:
+            if retry_result['retried_count'] > 0:
+                messages.success(request, f"Retry completed: {retry_result['integrated_count']} transactions integrated, {retry_result['failed_count']} still failed.")
+            else:
+                messages.info(request, "No failed transactions to retry.")
+        else:
+            error_msg = retry_result.get('error_message', 'Retry failed')
+            messages.error(request, f"Retry failed: {error_msg}")
+            
+    except Exception as e:
+        messages.error(request, f"Error during retry: {str(e)}")
+    
+    return redirect('transaction-upload-ui')
+
 
 class TransactionUploadAPIView(APIView):
     """

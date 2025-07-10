@@ -155,6 +155,32 @@ class Transaction(models.Model):
         help_text="Timestamp when this transaction record was created in the system."
     ) # Automatically sets on creation for auditing
 
+    # --- Blockchain Integration Status ---
+    blockchain_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', 'Pending Blockchain Integration'),
+            ('integrated', 'Successfully Integrated'),
+            ('failed', 'Blockchain Integration Failed'),
+        ],
+        default='pending',
+        help_text="Status of blockchain integration for this transaction."
+    )
+    blockchain_error = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Error message if blockchain integration failed."
+    )
+    blockchain_retry_count = models.IntegerField(
+        default=0,
+        help_text="Number of times blockchain integration has been retried."
+    )
+    last_blockchain_attempt = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp of the last blockchain integration attempt."
+    )
+
     class Meta:
         ordering = ['-transaction_date', 'transaction_id']
         verbose_name = "Transaction"
