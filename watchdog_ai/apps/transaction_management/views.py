@@ -8,6 +8,7 @@ from rest_framework import status
 from .serializers import TransactionCSVUploadSerializer
 from .services import process_transaction_csv, create_transactions_from_data
 from apps.data_augmentation.services import enrich_transaction_list
+from apps.blockchain.integration import integrate_transaction_batch
 
 def transaction_upload_ui(request):
     """
@@ -68,6 +69,14 @@ def transaction_upload_ui(request):
                 request, 
                 f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped."
             )
+
+            messages.info(
+                request,
+                f'Appending to Blockchain...'
+            )
+
+            ### Integrate to Blockchain
+            integrate_transaction_batch(created_transactions)
 
         except Exception as e:
             messages.error(request, f'An unexpected error occurred during database creation: {str(e)}')
