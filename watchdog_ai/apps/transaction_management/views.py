@@ -58,7 +58,7 @@ def transaction_upload_ui(request):
         try:
             created_transactions = create_transactions_from_data(valid_data)
             messages.success(request, f'Successfully created {len(created_transactions)} transactions.')
-            
+            '''
             # Enrich the newly created transactions
             enrichment_stats = enrich_transaction_list(created_transactions)
             
@@ -69,7 +69,7 @@ def transaction_upload_ui(request):
                 request, 
                 f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped."
             )
-
+'''
             messages.info(
                 request,
                 f'Appending to Blockchain...'
