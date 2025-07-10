@@ -129,7 +129,7 @@ class TransactionUploadAPIView(APIView):
             created_transactions = create_transactions_from_data(valid_data)
             
             # Enrich the newly created transactions
-            enrich_transaction_list(created_transactions)
+            enrichment_stats = enrich_transaction_list(created_transactions)
 
             return Response(
                 {
