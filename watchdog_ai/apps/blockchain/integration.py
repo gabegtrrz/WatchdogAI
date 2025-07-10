@@ -78,9 +78,9 @@ class BlockchainIntegrationService:
             # Add blockchain-specific metadata for tracking
             blockchain_data = {
                 **transaction_data,  # Spread operator to include all original data
-                'blockchain_timestamp': timezone.now().isoformat(),  # When added to blockchain
+                'blockchain_timestamp': timezone.now().isoformat(),  # When added to blockchain, .isoformat() guarantees a consistent, unambiguous string representation of the timestamp
                 'blockchain_version': '1.0',  # Version for future compatibility
-                'data_integrity_hash': self.generate_transaction_hash(transaction_data)  # Hash for integrity
+                'data_integrity_hash': self.generate_transaction_hash(transaction_data)
             }
             
             self.logger.info(f"Transaction {transaction.transaction_id} prepared successfully for blockchain")
@@ -121,16 +121,17 @@ class BlockchainIntegrationService:
             return hash_value
             
         except Exception as e:
-            error_msg = f"Failed to generate hash for transaction data: {str(e)}"
+            error_msg = f"Failed to generate hash for transaction data: {transaction_data['transaction_id']}. Error: {str(e)}"
             self.logger.error(error_msg)
             raise BlockchainIntegrationError(error_msg) from e
 
-    def append_transaction_to_blockchain(self, transactions):
+    def append_transactions_to_blockchain(self, transactions):
         """
         Adds transactions to the blockchain by creating a new block.
+        Uses the create_new_block service which handles the blockchain logic.
         
         Args:
-            transactions (list): List of transactions to add
+            transactions (list): List of Transaction objects to add
             
         Returns:
             Block: The newly created block containing the transactions
@@ -145,12 +146,17 @@ class BlockchainIntegrationService:
             if not transactions:
                 raise BlockchainIntegrationError("Cannot append empty transaction list to blockchain")
             
-            # Check if any transactions are already in blocks (warn but continue)
+            # Validate all transactions are Transaction objects
             for transaction in transactions:
+                if not isinstance(transaction, Transaction):
+                    raise BlockchainIntegrationError(f"Invalid transaction type: {type(transaction)}. Expected Transaction object.")
+                
+                # Check if transaction is already in a block (warn but continue)
                 if transaction.block is not None:
-                    self.logger.warning(f"Transaction {transaction.transaction_id} already assigned to block {transaction.block.index}")
+                    block_index = getattr(transaction.block, 'index', 'unknown')
+                    self.logger.warning(f"Transaction {transaction.transaction_id} already assigned to block {block_index}")
                     
-            # Use existing service to create new block
+            # Use existing service to create new block with transactions
             new_block = create_new_block(transactions)
             
             # Check if block creation was successful
@@ -176,18 +182,9 @@ class BlockchainIntegrationService:
             BlockchainIntegrityError: If integrity check encounters an error
         """
         try:
-            self.logger.info("Initiating blockchain integrity check")
             
             # Use existing blockchain verification service
             integrity_result = verify_blockchain_integrity()
-            
-            # Log result
-            if integrity_result:
-                self.logger.info("Blockchain integrity check passed successfully")
-            else:
-                self.logger.error("Blockchain integrity check failed")
-                raise BlockchainIntegrityError("Blockchain integrity verification failed")
-                
             return integrity_result
             
         except BlockchainIntegrityError:
@@ -246,8 +243,8 @@ class BlockchainIntegrationService:
                         result_data['errors'].append(error_msg)
                         raise BlockchainIntegrationError(error_msg)
                 
-                # Step 2: Add transactions to blockchain
-                new_block = self.append_transaction_to_blockchain(transactions)
+                # Step 2: Add transactions to blockchain using existing service
+                new_block = self.append_transactions_to_blockchain(transactions)
                 result_data['block_created'] = {
                     'index': new_block.index,
                     'hash': new_block.hash,
@@ -411,7 +408,7 @@ def integrate_single_transaction(transaction):
     Integrates a single transaction into the blockchain.
     
     Args:
-        transaction: Transaction to integrate
+        transaction: Transaction object to integrate
         
     Returns:
         tuple: (success_status, result_data)
@@ -425,7 +422,7 @@ def integrate_transaction_batch(transactions):
     Integrates a batch of transactions into the blockchain.
     
     Args:
-        transactions (list): Transactions to integrate
+        transactions (list): List of Transaction objects to integrate
         
     Returns:
         tuple: (success_status, result_data)
@@ -439,7 +436,7 @@ def verify_transaction_in_blockchain(transaction):
     Verifies if a transaction exists in the blockchain and validates its integrity.
     
     Args:
-        transaction: Transaction to verify
+        transaction: Transaction object to verify
         
     Returns:
         dict: Verification result data
