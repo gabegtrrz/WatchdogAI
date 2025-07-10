@@ -75,7 +75,7 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
         # }
 
 
-    for i, (index, row) in enumerate(df.iterrows()):
+    for i, row in enumerate(df.to_dict(orient='records')): #alternate method for large files (unlikely) is itterrows() which gives overhead for processing each row at a time. to_dict() is faster but loads all data into memory.
         row_num = i + 2  # For user-friendly error reporting
         errors_in_row = []
         cleaned_row_data = {}
@@ -89,6 +89,8 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
             errors_in_row.append({'field': 'item_name', 'error': 'Invalid item_name value.'})
         elif pd.isna(raw_item_name) or str(raw_item_name).strip() == '':
             errors_in_row.append({'field': 'item_name', 'error': 'Item name is required and cannot be blank.'})
+        else:
+            cleaned_row_data['item_name'] = str(raw_item_name).strip().upper()
 
         # --- Validate 'procurement_method_name' ---
         raw_procurement_method_name = row.get('procurement_method_name')
@@ -162,7 +164,7 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
 
 
 @transaction.atomic
-def create_transactions_from_data(valid_data: List[Dict]) -> int:
+def create_transactions_from_data(valid_data: List[Dict]) -> List[Transaction]:
     """
     Creates Transaction objects in the database from validated data.
 
@@ -178,12 +180,12 @@ def create_transactions_from_data(valid_data: List[Dict]) -> int:
                     the `process_transaction_csv` function.
 
     Returns:
-        The number of transaction records successfully created.
+        A list of the transaction records successfully created.
     """
-    created_count = 0
+    created_transactions = []
     for data in valid_data:
         # Using .create() ensures the model's .save() method is called.
-        Transaction.objects.create(**data)
-        created_count += 1
+        new_transaction = Transaction.objects.create(**data)
+        created_transactions.append(new_transaction)
 
-    return created_count
+    return created_transactions

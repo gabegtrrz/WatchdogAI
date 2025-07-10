@@ -7,6 +7,7 @@ from rest_framework import status
 
 from .serializers import TransactionCSVUploadSerializer
 from .services import process_transaction_csv, create_transactions_from_data
+from apps.data_augmentation.services import enrich_transaction_list
 
 def transaction_upload_ui(request):
     """
@@ -54,8 +55,20 @@ def transaction_upload_ui(request):
 
         # If not a dry run, proceed to save the data.
         try:
-            created_count = create_transactions_from_data(valid_data)
-            messages.success(request, f'Successfully created {created_count} transactions.')
+            created_transactions = create_transactions_from_data(valid_data)
+            messages.success(request, f'Successfully created {len(created_transactions)} transactions.')
+            
+            # Enrich the newly created transactions
+            enrichment_stats = enrich_transaction_list(created_transactions)
+            
+            updated_count = enrichment_stats.get('updated', 0)
+            skipped_count = enrichment_stats.get('skipped', 0)
+
+            messages.info(
+                request, 
+                f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped."
+            )
+
         except Exception as e:
             messages.error(request, f'An unexpected error occurred during database creation: {str(e)}')
 
@@ -104,11 +117,16 @@ class TransactionUploadAPIView(APIView):
             
         try:
             # Call the service layer to create the transactions
-            created_count = create_transactions_from_data(valid_data)
+            created_transactions = create_transactions_from_data(valid_data)
+            
+            # Enrich the newly created transactions
+            enrich_transaction_list(created_transactions)
+
             return Response(
                 {
-                    'message': f'Successfully created {created_count} transactions.',
-                    'created_count': created_count
+                    'message': f'Successfully created {len(created_transactions)} transactions.',
+                    'created_count': len(created_transactions),
+                    'enrichment_stats': enrichment_stats
                 },
                 status=status.HTTP_201_CREATED
             )
