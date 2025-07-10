@@ -116,10 +116,16 @@ def verify_blockchain_integrity():
         bool: True if the chain is valid, False otherwise.
     """
     try:
+        logger.info("Initiating blockchain integrity check")
+
+        # Get all blocks in the chain and order them by index.
+        logger.info("Getting all blocks in the chain and ordering them by index.")
         blocks = Block.objects.order_by('index')
         if not blocks.exists():
             logger.warning("No blocks found in the blockchain to verify integrity.")
             return False
+
+        logger.info("Starting blockchain integrity verification.")
 
         previous_block = None
 
@@ -151,6 +157,7 @@ def verify_blockchain_integrity():
         
         logger.info("Blockchain integrity verified successfully. The chain is valid.")
         return True
+        
     except Exception as e:
         logger.critical(f"An unexpected error occurred during blockchain integrity verification: {e}")
         return False

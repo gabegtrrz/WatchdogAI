@@ -24,4 +24,7 @@ urlpatterns = [
 
     # Include the transaction_management app's URLs. The root path ('/') is handled within this app.
     path('', include('apps.transaction_management.urls')),
+    
+    # Include blockchain integration URLs for API endpoints
+    path('blockchain/', include('apps.blockchain.urls')),
 ]

@@ -55,7 +55,7 @@ class TransactionAdmin(admin.ModelAdmin):
     # Organize the detail view into logical sections.
     fieldsets = (
         ('Core Information', {
-            'fields': ('id', 'transaction_id', 'item_name', 'quantity', 'transaction_date')
+            'fields': ('transaction_id', 'item_name', 'quantity', 'transaction_date')
         }),
         ('Financials', {
             'fields': ('unit_purchase_price', 'average_price')
@@ -64,8 +64,7 @@ class TransactionAdmin(admin.ModelAdmin):
             'fields': ('supplier', 'procurement_officer', 'procurement_method')
         }),
         ('Blockchain Link', {
-            'classes': ('collapse',),
-            'fields': ('block', 'created_at'),
+            'fields': ('block',),
         }),
     )
 
