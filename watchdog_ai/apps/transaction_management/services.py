@@ -8,12 +8,14 @@ from apps.core.models import Item, ProcurementMethod, Transaction
 
 # Define the columns the CSV must have for validation.
 REQUIRED_COLUMNS = [
-    'item_name',  # Changed from item_id
+    'item_name',
     'quantity',
     'unit_purchase_price',
     'transaction_date',
     'procurement_method_name',
-    'supplier'
+    'supplier',
+    'invoice_number',
+    'payment_receipt_number'
 ]
 
 def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
@@ -153,6 +155,71 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
             errors_in_row.append({'field': 'supplier', 'error': 'Supplier is required and cannot be blank.'})
         else:
             cleaned_row_data['supplier'] = str(raw_supplier).strip()
+
+        # --- Validate 'invoice_number' (is present) ---
+        raw_invoice_number = row.get('invoice_number')
+        if pd.isna(raw_invoice_number) or str(raw_invoice_number).strip() == '':
+            errors_in_row.append({'field': 'invoice_number', 'error': 'Invoice number is required and cannot be blank.'})
+        else:
+            cleaned_row_data['invoice_number'] = str(raw_invoice_number).strip()
+
+        # --- Validate 'payment_receipt_number' (is present) ---
+        raw_payment_receipt_number = row.get('payment_receipt_number')
+        if pd.isna(raw_payment_receipt_number) or str(raw_payment_receipt_number).strip() == '':
+            errors_in_row.append({'field': 'payment_receipt_number', 'error': 'Payment receipt number is required and cannot be blank.'})
+        else:
+            cleaned_row_data['payment_receipt_number'] = str(raw_payment_receipt_number).strip()
+
+        # --- Validate optional fields ---
+        
+        # --- Validate 'transaction_id' (optional, auto-generated if not provided) ---
+        raw_transaction_id = row.get('transaction_id')
+        if not pd.isna(raw_transaction_id) and str(raw_transaction_id).strip() != '':
+            cleaned_row_data['transaction_id'] = str(raw_transaction_id).strip()
+
+        # --- Validate 'project_name' (optional) ---
+        raw_project_name = row.get('project_name')
+        if not pd.isna(raw_project_name) and str(raw_project_name).strip() != '':
+            cleaned_row_data['project_name'] = str(raw_project_name).strip()
+
+        # --- Validate 'end_user_unit' (optional) ---
+        raw_end_user_unit = row.get('end_user_unit')
+        if not pd.isna(raw_end_user_unit) and str(raw_end_user_unit).strip() != '':
+            cleaned_row_data['end_user_unit'] = str(raw_end_user_unit).strip()
+
+        # --- Validate 'project_description' (optional) ---
+        raw_project_description = row.get('project_description')
+        if not pd.isna(raw_project_description) and str(raw_project_description).strip() != '':
+            cleaned_row_data['project_description'] = str(raw_project_description).strip()
+
+        # --- Validate 'approved_budget' (optional, but must be positive if provided) ---
+        raw_approved_budget = row.get('approved_budget')
+        if not pd.isna(raw_approved_budget) and str(raw_approved_budget).strip() != '':
+            try:
+                approved_budget = Decimal(str(raw_approved_budget))
+                if approved_budget <= 0:
+                    errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget must be a positive number if provided.'})
+                else:
+                    cleaned_row_data['approved_budget'] = approved_budget
+            except InvalidOperation:
+                errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget must be a valid number if provided.'})
+
+        # --- Validate 'average_price' (optional, but must be positive if provided) ---
+        raw_average_price = row.get('average_price')
+        if not pd.isna(raw_average_price) and str(raw_average_price).strip() != '':
+            try:
+                average_price = Decimal(str(raw_average_price))
+                if average_price <= 0:
+                    errors_in_row.append({'field': 'average_price', 'error': 'Average price must be a positive number if provided.'})
+                else:
+                    cleaned_row_data['average_price'] = average_price
+            except InvalidOperation:
+                errors_in_row.append({'field': 'average_price', 'error': 'Average price must be a valid number if provided.'})
+
+        # --- Validate 'procurement_officer' (optional) ---
+        raw_procurement_officer = row.get('procurement_officer')
+        if not pd.isna(raw_procurement_officer) and str(raw_procurement_officer).strip() != '':
+            cleaned_row_data['procurement_officer'] = str(raw_procurement_officer).strip()
 
         if errors_in_row:
             validation_errors.append({'row': row_num, 'errors': errors_in_row})

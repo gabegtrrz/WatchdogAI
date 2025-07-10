@@ -1,13 +1,13 @@
-item_name,quantity,unit_purchase_price,transaction_date,procurement_method_name,supplier
-Beakers (250ml),100,5.50,2023-10-25,Competitive Bidding,Sci-Supply Co.
-Microscope Slides (Box of 50),20,12.75,2023-10-24,Direct Contracting,LabEssentials Inc.
-Safety Goggles,50,8.99,2023-10-23,Competitive Bidding,Sci-Supply Co.
-Bunsen Burner,10,75.00,2023-10-22,Direct Contracting,LabEssentials Inc.
-Sulfuric Acid (98%),5,45.50,2023-10-21,Negotiated Procurement,ChemSource
-,10,1.00,2023-10-20,Competitive Bidding,ChemSource
-Test Tubes,500,0.50,2023-10-19,Online Shopping,Bio-Equip Ltd.
-Pipettes (10ml),-5,3.25,2023-10-18,Competitive Bidding,Sci-Supply Co.
-Lab Coats (Medium),15,0.00,2023-10-17,Direct Contracting,LabEssentials Inc.
-Graduated Cylinders (100ml),30,15.00,yesterday,Competitive Bidding,Bio-Equip Ltd.
-Litmus Paper (Pack of 100),200,2.50,2023-10-16,Competitive Bidding,
-Filter Paper (Box),twenty,9.99,2023-10-15,Competitive Bidding,ChemSource
+transaction_id,project_name,end_user_unit,project_description,approved_budget,item_name,quantity,unit_purchase_price,average_price,procurement_method_name,supplier,procurement_officer,invoice_number,payment_receipt_number,transaction_date
+TXN-2024-001,Science Lab Equipment Upgrade,Chemistry Department,Upgrading laboratory equipment for advanced chemistry experiments,50000.0000,Beakers (250ml),100,5.50,5.25,Competitive Bidding,Sci-Supply Co.,John Smith,INV-2024-001,PR-2024-001,2024-01-15
+TXN-2024-002,Microscope Facility Enhancement,Biology Department,Enhancing microscopy capabilities for research projects,75000.0000,Microscope Slides (Box of 50),20,12.75,12.50,Direct Contracting,LabEssentials Inc.,Sarah Johnson,INV-2024-002,PR-2024-002,2024-01-16
+TXN-2024-003,Safety Equipment Procurement,Physics Department,Ensuring safety standards in physics laboratories,25000.0000,Safety Goggles,50,8.99,9.25,Competitive Bidding,Sci-Supply Co.,Michael Brown,INV-2024-003,PR-2024-003,2024-01-17
+TXN-2024-004,Advanced Lab Equipment,Chemistry Department,Procuring advanced laboratory equipment for research,100000.0000,Bunsen Burner,10,75.00,72.50,Direct Contracting,LabEssentials Inc.,Emily Davis,INV-2024-004,PR-2024-004,2024-01-18
+TXN-2024-005,Chemical Reagents Supply,Chemistry Department,Maintaining chemical inventory for experiments,15000.0000,Sulfuric Acid (98%),5,45.50,44.75,Negotiated Procurement,ChemSource,David Wilson,INV-2024-005,PR-2024-005,2024-01-19
+TXN-2024-006,Lab Glassware Supply,Biology Department,Replenishing essential laboratory glassware,5000.0000,,200,1.00,1.10,Competitive Bidding,ChemSource,Lisa Anderson,INV-2024-006,PR-2024-006,2024-01-20
+TXN-2024-007,Bulk Microscope Supplies,Biology Department,Large-scale purchase of microscopy materials,30000.0000,Test Tubes,500,0.50,0.48,Online Shopping,Bio-Equip Ltd.,Robert Taylor,INV-2024-007,PR-2024-007,2024-01-21
+TXN-2024-008,Precision Instruments,Chemistry Department,Acquiring precision measurement instruments,8000.0000,Pipettes (10ml),-5,3.25,3.30,Competitive Bidding,Sci-Supply Co.,Jennifer Lee,INV-2024-008,PR-2024-008,2024-01-22
+TXN-2024-009,Lab Safety Equipment,Physics Department,Ensuring comprehensive safety measures,12000.0000,Lab Coats (Medium),15,0.00,9.75,Direct Contracting,LabEssentials Inc.,Thomas Garcia,INV-2024-009,PR-2024-009,2024-01-23
+TXN-2024-010,Measurement Equipment,Biology Department,Upgrading measurement and analysis tools,45000.0000,Graduated Cylinders (100ml),30,15.00,14.80,Competitive Bidding,Bio-Equip Ltd.,Amanda White,INV-2024-010,PR-2024-010,yesterday
+TXN-2024-011,Chemical Testing Supplies,Chemistry Department,Maintaining chemical testing capabilities,5000.0000,Litmus Paper (Pack of 100),200,2.50,2.45,Competitive Bidding,,Christopher Martinez,INV-2024-011,PR-2024-011,2024-01-25
+TXN-2024-012,Lab Filtration Equipment,Physics Department,Enhancing filtration and separation processes,8000.0000,Filter Paper (Box),twenty,9.99,10.25,Competitive Bidding,ChemSource,Rachel Thompson,INV-2024-012,PR-2024-012,2024-01-26

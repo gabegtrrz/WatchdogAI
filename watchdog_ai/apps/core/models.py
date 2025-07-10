@@ -22,13 +22,13 @@ class Transaction(models.Model):
 
 
     '''
-    Remember to update the following if adding a new field:
+    !!! Remember to update the following if adding a new field:
         - methods:
             - to_dict()
             - clean()
             - save()
             - __str__()
-        - transaction_management services.py (if necessary)
+        - transaction_management/services.py (if necessary)
 
     '''
     
