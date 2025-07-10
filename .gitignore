@@ -6,6 +6,9 @@
 # Ignore log files
 *.log
 
+# Ignore logs directory
+logs/
+
 # Ignore environment variables
 .env
 
