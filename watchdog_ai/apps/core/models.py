@@ -20,7 +20,6 @@ class Transaction(models.Model):
     Transactions are linked to a specific Block.
     '''
 
-    # block: Optional['Block']
 
     '''
     Remember to update the following if adding a new field:
@@ -33,6 +32,7 @@ class Transaction(models.Model):
 
     '''
     
+    # --- Blockchain Linkage ---
     block = models.ForeignKey(
         'blockchain.Block',             # Link to the Block model
         on_delete=models.CASCADE,       # If a Block is deleted, its Transactions are also deleted
@@ -40,55 +40,58 @@ class Transaction(models.Model):
         null=True,                      # IMPORTANT: Allows the transaction to exist before adding to a block
         blank=True,                      # Also for allowing it to be unassigned
         db_index=True
-        )
-    
+    )
 
+    # --- Transaction Identification ---
     transaction_id = models.CharField(
         max_length=50,
         unique=True,
         db_index=True, # db_index for faster lookups
-        ) 
-    
+    ) 
+
+    # --- Item Details ---
     item_name = models.CharField(
         max_length=255,
         null=False,
         blank=False
-        )
+    )
     quantity = models.IntegerField(null=False, blank=False)
 
+    # --- Pricing ---
     unit_purchase_price = models.DecimalField(
         max_digits=15,
         decimal_places=4,
         null=False,
         blank=False
-        )
-    
+    )
     average_price = models.DecimalField(
         max_digits=15,
         decimal_places=4,
         null=True, # Can be null/blank if not available
         blank=True
-        ) 
-    
-    # procurement_method = models.CharField(max_length=100, null=False, blank=False)
+    ) 
+
+    # --- Procurement Method ---
     procurement_method = models.ForeignKey(
         'ProcurementMethod',
         on_delete=models.PROTECT,
         related_name='transactions',
         null=False, blank=False
-        )
+    )
 
+    # --- Supplier & Officer ---
     supplier = models.CharField(
         max_length=100,
         null=False,
         blank=False
-        )
+    )
     procurement_officer = models.CharField(
         max_length=100,
         null=True,
         blank=True
-        )
-    
+    )
+
+    # --- Timestamps ---
     transaction_date = models.DateField(null=False, blank=False) # Date of the actual transaction
     created_at = models.DateTimeField(auto_now_add=True) # Automatically sets on creation for auditing
 
