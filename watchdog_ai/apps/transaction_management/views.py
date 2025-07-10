@@ -8,7 +8,7 @@ from rest_framework import status
 from .serializers import TransactionCSVUploadSerializer
 from .services import process_transaction_csv, create_transactions_from_data
 from apps.data_augmentation.services import enrich_transaction_list
-from apps.blockchain.integration import integrate_transaction_batch
+from apps.blockchain.integration import integrate_transaction_batch, retry_failed_blockchain_integrations, get_blockchain_status_summary
 
 def transaction_upload_ui(request):
     """
@@ -16,6 +16,10 @@ def transaction_upload_ui(request):
     Handles POST to process the file by calling the service layer directly.
     """
     if request.method == 'POST':
+        # Handle retry action
+        if 'retry_blockchain' in request.POST:
+            return handle_blockchain_retry(request)
+        
         uploaded_file = request.FILES.get('csv_file')
         # Check if the 'dry_run' checkbox was selected in the form
         is_dry_run = request.POST.get('dry_run') == 'true'
@@ -58,7 +62,7 @@ def transaction_upload_ui(request):
         try:
             created_transactions = create_transactions_from_data(valid_data)
             messages.success(request, f'Successfully created {len(created_transactions)} transactions.')
-            
+            '''
             # Enrich the newly created transactions
             enrichment_stats = enrich_transaction_list(created_transactions)
             
@@ -69,21 +73,60 @@ def transaction_upload_ui(request):
                 request, 
                 f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped."
             )
-
+'''
             messages.info(
                 request,
                 f'Appending to Blockchain...'
             )
 
             ### Integrate to Blockchain
-            integrate_transaction_batch(created_transactions)
+            blockchain_success, blockchain_result = integrate_transaction_batch(created_transactions)
+            
+            if blockchain_success:
+                messages.success(request, f"Successfully integrated {blockchain_result['integrated_count']} transactions into blockchain.")
+                if blockchain_result.get('block_info'):
+                    block_info = blockchain_result['block_info']
+                    messages.info(request, f"Block {block_info['index']} created with hash {block_info['hash'][:16]}...")
+                    
+            else:
+                error_message = blockchain_result.get('error_message', 'Failed to append transactions to blockchain.')
+                messages.error(request, error_message)
+                messages.warning(request, "You can retry blockchain integration using the button below.")
 
         except Exception as e:
             messages.error(request, f'An unexpected error occurred during database creation: {str(e)}')
 
         return redirect('transaction-upload-ui')
 
-    return render(request, 'transaction_management/upload.html')
+    # Get blockchain status for display
+    blockchain_status = get_blockchain_status_summary()
+    
+    return render(request, 'transaction_management/upload.html', {
+        'blockchain_status': blockchain_status
+    })
+
+
+def handle_blockchain_retry(request):
+    """
+    Handles retry of failed blockchain integrations.
+    """
+    try:
+        retry_result = retry_failed_blockchain_integrations()
+        
+        if retry_result['success']:
+            if retry_result['retried_count'] > 0:
+                messages.success(request, f"Retry completed: {retry_result['integrated_count']} transactions integrated, {retry_result['failed_count']} still failed.")
+            else:
+                messages.info(request, "No failed transactions to retry.")
+        else:
+            error_msg = retry_result.get('error_message', 'Retry failed')
+            messages.error(request, f"Retry failed: {error_msg}")
+            
+    except Exception as e:
+        messages.error(request, f"Error during retry: {str(e)}")
+    
+    return redirect('transaction-upload-ui')
+
 
 class TransactionUploadAPIView(APIView):
     """
@@ -129,14 +172,25 @@ class TransactionUploadAPIView(APIView):
             created_transactions = create_transactions_from_data(valid_data)
             
             # Enrich the newly created transactions
-            enrich_transaction_list(created_transactions)
+            enrichment_stats = enrich_transaction_list(created_transactions)
+
+            # Integrate to Blockchain
+            blockchain_success, blockchain_result = integrate_transaction_batch(created_transactions)
+            
+            response_data = {
+                'message': f'Successfully created {len(created_transactions)} transactions.',
+                'created_count': len(created_transactions),
+                'enrichment_stats': enrichment_stats,
+                'blockchain_integration': {
+                    'success': blockchain_success,
+                    'message': blockchain_result.get('success_message' if blockchain_success else 'error_message', 
+                                                   'Blockchain integration completed' if blockchain_success else 'Blockchain integration failed'),
+                    'details': blockchain_result
+                }
+            }
 
             return Response(
-                {
-                    'message': f'Successfully created {len(created_transactions)} transactions.',
-                    'created_count': len(created_transactions),
-                    'enrichment_stats': enrichment_stats
-                },
+                response_data,
                 status=status.HTTP_201_CREATED
             )
         except Exception as e:
