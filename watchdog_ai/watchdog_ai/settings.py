@@ -169,3 +169,151 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ==============================================================================
+# LOGGING CONFIGURATION
+# ==============================================================================
+
+# Create logs directory if it doesn't exist
+import os
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'detailed': {
+            'format': '[{asctime}] {levelname} {name} {funcName}:{lineno} - {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file_general': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'watchdog_ai.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
+        'file_errors': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'errors.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
+        'file_blockchain': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'blockchain.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
+        'file_transactions': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'transactions.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
+        'file_ai_analytics': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'ai_analytics.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
+    },
+    'loggers': {
+        # Django framework logging
+        'django': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console', 'file_errors'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        
+        # Your app-specific loggers
+        'apps.core': {
+            'handlers': ['console', 'file_transactions'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.transaction_management': {
+            'handlers': ['console', 'file_transactions'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.blockchain': {
+            'handlers': ['console', 'file_blockchain'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.ai_analytics': {
+            'handlers': ['console', 'file_ai_analytics'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.data_augmentation': {
+            'handlers': ['console', 'file_transactions'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.users': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Data utilities logging
+        'data_utils': {
+            'handlers': ['console', 'file_transactions'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        
+        # Root logger - catches all other loggers
+        '': {
+            'handlers': ['console', 'file_general'],
+            'level': 'WARNING',
+        },
+    },
+}
