@@ -18,7 +18,7 @@ class TransactionAdmin(admin.ModelAdmin):
         'procurement_method',
         'supplier',
         'transaction_date',
-        'block',
+        'get_block_info',
     )
     list_filter = ('transaction_date', 'supplier', 'procurement_method')
     search_fields = (
@@ -37,6 +37,14 @@ class TransactionAdmin(admin.ModelAdmin):
     autocomplete_fields = ('procurement_method',)
     
     ordering = ('-created_at',)
+
+    def get_block_info(self, obj):
+        """Display block information in a more user-friendly format."""
+        if obj.block:
+            return f"Block {obj.block.index} (DB ID: {obj.block.id})"
+        return "Not linked to block"
+    get_block_info.short_description = 'Blockchain Block'  # type: ignore
+    get_block_info.admin_order_field = 'block__index'  # type: ignore
 
     def get_readonly_fields(self, request, obj=None):
         """Dynamically sets fields as read-only for non-superusers."""
@@ -65,6 +73,7 @@ class TransactionAdmin(admin.ModelAdmin):
         }),
         ('Blockchain Link', {
             'fields': ('block',),
+            'description': 'Block ID shows database primary key, Block name shows blockchain index'
         }),
     )
 
