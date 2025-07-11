@@ -124,7 +124,6 @@ def verify_blockchain_integrity():
         if not blocks.exists():
             logger.warning("No blocks found in the blockchain to verify integrity. Creating genesis block.")
             create_genesis_block()
-            return False
 
         logger.info("Starting blockchain integrity verification.")
 
