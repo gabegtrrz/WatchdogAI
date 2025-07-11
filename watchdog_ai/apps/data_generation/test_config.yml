@@ -1,0 +1,31 @@
+# Purpose: To generate an unseen dataset for evaluating the model's performance.
+
+data_generator:
+  n_samples: 2500
+  random_state: 99 # A different seed for a completely different dataset
+  anomaly_fraction: 0.04 # A slightly higher fraction to test against more outliers
+
+  # --- Feature rules are identical to training to ensure a consistent baseline ---
+  feature_rules:
+    unit_price: { type: 'normal', mean: 500, std_dev: 150 }
+    average_price: { type: 'normal', mean: 510, std_dev: 140 }
+    quantity: { type: 'log-normal', mean: 4, std_dev: 1.5 }
+    supplier: 
+      type: 'categorical'
+      values: ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D']
+      weights: [0.4, 0.3, 0.2, 0.1]
+    has_invoice: { type: 'binary', probability_of_one: 0.98 }
+
+  # --- Rules for injecting a mix of known and novel anomalies ---
+  anomaly_rules:
+    # Rule 1 (Known): An extreme quantity, which the model should have learned.
+    - { feature: 'quantity', type: 'extreme_value', factor: 20.0 }
+
+    # Rule 2 (Novel): Force a transaction to occur on a weekend.
+    - { feature: 'is_weekend', type: 'fixed_value', value: 1 }
+
+    # Rule 3 (Novel): Force a transaction to be missing an invoice.
+    - { feature: 'has_invoice', type: 'fixed_value', value: 0 }
+
+    # Rule 4 (Novel): Create a huge deviation between unit and average price.
+    - { feature: 'price_deviation_ratio', type: 'extreme_value', factor: 12.0 }
