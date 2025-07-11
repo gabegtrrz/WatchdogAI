@@ -122,8 +122,8 @@ def verify_blockchain_integrity():
         logger.info("Getting all blocks in the chain and ordering them by index.")
         blocks = Block.objects.order_by('index')
         if not blocks.exists():
-            logger.warning("No blocks found in the blockchain to verify integrity.")
-            return False
+            logger.warning("No blocks found in the blockchain to verify integrity. Creating genesis block.")
+            create_genesis_block()
 
         logger.info("Starting blockchain integrity verification.")
 
