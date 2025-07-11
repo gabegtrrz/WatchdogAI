@@ -9,6 +9,7 @@ from .serializers import TransactionCSVUploadSerializer
 from .services import process_transaction_csv, create_transactions_from_data
 from apps.data_augmentation.services import enrich_transaction_list
 from apps.blockchain.integration import integrate_transaction_batch, retry_failed_blockchain_integrations, get_blockchain_status_summary
+from apps.blockchain.integrity_service import integrity_service
 
 def transaction_upload_ui(request):
     """
@@ -79,19 +80,33 @@ def transaction_upload_ui(request):
                 f'Appending to Blockchain...'
             )
 
-            ### Integrate to Blockchain
+            ### Integrate to Blockchain with Integrity Checks
             blockchain_success, blockchain_result = integrate_transaction_batch(created_transactions)
+            
+            # Check integrity results
+            integrity_checks = blockchain_result.get('integrity_checks', {})
             
             if blockchain_success:
                 messages.success(request, f"Successfully integrated {blockchain_result['integrated_count']} transactions into blockchain.")
                 if blockchain_result.get('block_info'):
                     block_info = blockchain_result['block_info']
                     messages.info(request, f"Block {block_info['index']} created with hash {block_info['hash'][:16]}...")
+                
+                # Report integrity check results
+                if integrity_checks.get('before', {}).get('alert_sent'):
+                    messages.warning(request, "⚠️ Blockchain integrity alert sent before integration.")
+                if integrity_checks.get('after', {}).get('alert_sent'):
+                    messages.warning(request, "⚠️ Blockchain integrity alert sent after integration.")
                     
             else:
                 error_message = blockchain_result.get('error_message', 'Failed to append transactions to blockchain.')
                 messages.error(request, error_message)
-                messages.warning(request, "You can retry blockchain integration using the button below.")
+                
+                # Check if failure was due to integrity issues
+                if integrity_checks.get('before', {}).get('alert_sent'):
+                    messages.error(request, "❌ Integration blocked due to blockchain integrity issues.")
+                else:
+                    messages.warning(request, "You can retry blockchain integration using the button below.")
 
         except Exception as e:
             messages.error(request, f'An unexpected error occurred during database creation: {str(e)}')

@@ -23,6 +23,7 @@ from django.conf import settings
 
 from .models import Block
 from .services import create_new_block, verify_blockchain_integrity, create_genesis_block
+from .integrity_service import integrity_service
 from apps.core.models import Transaction
 
 # Setup logging for this module
@@ -54,13 +55,34 @@ class BlockchainIntegrationService:
         Returns:
             dict: Result with success status and details
         """
+
+        # Initialize result dictionary with default values
+        # Keep note of this dictionary structure
         result = {
             'success': False,
             'integrated_count': 0,
             'failed_count': 0,
             'error_message': None,
-            'block_info': None
+            'block_info': None,
+            'integrity_checks': {
+                'before': None,
+                'after': None
+            }
         }
+        
+        # Step 0: Check integrity BEFORE integration
+        before_check = integrity_service.check_integrity_before_integration(transactions)
+        result['integrity_checks']['before'] = before_check
+        
+        if not before_check['integrity_valid']:
+            error_msg = "Blockchain integrity compromised before integration"
+            self.logger.error(error_msg)
+            result.update({
+                'success': False,
+                'failed_count': len(transactions),
+                'error_message': error_msg
+            })
+            return result
         
         try:
             with db_transaction.atomic():
@@ -75,12 +97,7 @@ class BlockchainIntegrationService:
                 if not new_block:
                     raise BlockchainIntegrationError("Failed to create new block")
                 
-                # Step 3: Verify blockchain integrity
-                integrity_valid = verify_blockchain_integrity()
-                if not integrity_valid:
-                    raise BlockchainIntegrationError("Blockchain integrity check failed")
-                
-                # Step 4: Update transaction status to 'integrated'
+                # Step 3: Update transaction status to 'integrated'
                 for transaction in transactions:
                     transaction.blockchain_status = 'integrated'
                     transaction.blockchain_error = None
@@ -97,7 +114,6 @@ class BlockchainIntegrationService:
                 })
                 
                 self.logger.info(f"Successfully integrated {len(transactions)} transactions into block {new_block.index}")
-                return result
                 
         except Exception as e:
             error_msg = f"Blockchain integration failed: {str(e)}"
@@ -120,6 +136,12 @@ class BlockchainIntegrationService:
             self._send_error_report(transactions, error_msg)
             
             return result
+        
+        # Step 4: Check integrity AFTER integration
+        after_check = integrity_service.check_integrity_after_integration(transactions, result['success'])
+        result['integrity_checks']['after'] = after_check
+        
+        return result
 
     def retry_failed_integrations(self, max_retries=3):
         """
