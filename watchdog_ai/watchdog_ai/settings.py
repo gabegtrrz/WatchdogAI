@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'apps.ai_analytics.apps.AiAnalyticsConfig',
     'apps.users.apps.UsersConfig',
     'apps.core.apps.CoreConfig',
+    'apps.data_generation.apps.DataGenerationConfig',
     
     # It's better to use the full AppConfig path in INSTALLED_APPS
     # for explicit configuration, custom startup logic (ready() method), and improved clarity,
