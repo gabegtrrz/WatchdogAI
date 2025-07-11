@@ -18,8 +18,8 @@ venv/
 # Ignore paper draft
 resource/
 
-# scraper outputs
-# scraper_output/
+# data_generator outputs
+data/output/
 
 # all py cache
 *.pyc
