@@ -4,7 +4,7 @@ from typing import List, Dict, Tuple
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
-from apps.core.models import Item, ProcurementMethod, Transaction
+from apps.core.models import ProcurementMethod, Transaction
 
 # Define the columns the CSV must have for validation.
 REQUIRED_COLUMNS = [
@@ -66,7 +66,6 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
     validation_errors = []
 
     # Pre-fetch all valid procurement methods into efficient lookups.
-    # valid_item_names = set(name.upper() for name in Item.objects.values_list('name', flat=True))
     procurement_methods_map = {method.name.upper(): method for method in ProcurementMethod.objects.all()}
 
     # The procurement_methods_map dictionary would look something like this  in memory:

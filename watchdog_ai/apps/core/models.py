@@ -243,28 +243,6 @@ class Transaction(models.Model):
         super().save(*args, **kwargs)
 
 
-class Item(models.Model):
-    """Represents an item that can be procured."""
-    # manual ID
-    id = models.UUIDField(
-        primary_key=True, 
-        default=uuid.uuid4, 
-        editable=False,
-        help_text="Unique identifier for this item."
-    )
-    name = models.CharField(
-        max_length=255, 
-        unique=True,
-        help_text="Name of the item that can be procured."
-    )
-    description = models.TextField(
-        blank=True, 
-        null=True,
-        help_text="Detailed description of the item."
-    )
-
-    def __str__(self):
-        return str(self.name)
     
 
 class ProcurementMethod(models.Model):

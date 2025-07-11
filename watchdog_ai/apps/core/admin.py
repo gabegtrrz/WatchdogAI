@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Transaction, Item, ProcurementMethod
+from .models import Transaction, ProcurementMethod
 
 
 @admin.register(Transaction)
@@ -77,17 +77,6 @@ class TransactionAdmin(admin.ModelAdmin):
         }),
     )
 
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    """
-    Admin configuration for the Item model.
-    - Displays the name, ID, and a snippet of the description.
-    - Allows searching by name.
-    - Orders items alphabetically by name.
-    """
-    list_display = ('name', 'id', 'description')
-    search_fields = ('name', 'id__iexact') # search by name or for an exact UUID
-    ordering = ('name',)
 
 @admin.register(ProcurementMethod)
 class ProcurementMethodAdmin(admin.ModelAdmin):
