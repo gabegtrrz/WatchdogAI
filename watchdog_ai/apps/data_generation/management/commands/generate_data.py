@@ -43,7 +43,7 @@ class Command(BaseCommand):
         config_path = options['config_path']
 
         # --- 1. Load Configuration ---
-        self.stdout.write(self.style.HTTP_INFO("Loading configuration..."))
+        self.stdout.write("Loading configuration...")
         try:
             with open(config_path, 'r') as f:
                 # Safely load the YAML and extract the main configuration dictionary
@@ -65,11 +65,11 @@ class Command(BaseCommand):
             np.random.seed(random_state)
 
         # --- 3. Generate and Engineer Features ---
-        self.stdout.write(self.style.HTTP_INFO("Generating and engineering features..."))
+        self.stdout.write("Generating and engineering features...")
         df = self._generate_all_features(feature_rules, n_samples)
         
         # --- 4. Anomaly Injection ---
-        self.stdout.write(self.style.HTTP_INFO("Injecting anomalies..."))
+        self.stdout.write("Injecting anomalies...")
         df = self._inject_anomalies(df, anomaly_fraction, anomaly_rules)
 
         # --- 5. Save Output ---
@@ -79,7 +79,7 @@ class Command(BaseCommand):
         
         # Save the final DataFrame to a CSV file, without the pandas index
         df.to_csv(output_path, index=False)
-        self.stdout.write(self.style.SUCCESS(f"Data generation complete. File saved to: {output_path}"))
+        self.stdout.write(f"Data generation complete. File saved to: {output_path}")
 
     def _generate_all_features(self, feature_rules, n_samples):
         """
@@ -162,7 +162,7 @@ class Command(BaseCommand):
         # Determine the number of anomalies to create
         n_anomalies = int(len(df) * anomaly_fraction)
         if n_anomalies == 0:
-            self.stdout.write(self.style.WARNING("Anomaly fraction is too low, no anomalies will be injected."))
+            self.stdout.write("WARNING: Anomaly fraction is too low, no anomalies will be injected.")
             return df
 
         # Randomly select indices to turn into anomalies, without replacement
@@ -177,7 +177,7 @@ class Command(BaseCommand):
             rule_type = rule['type']
             
             if feature not in df.columns:
-                self.stdout.write(self.style.WARNING(f"Feature '{feature}' from anomaly rules not in generated data. Skipping."))
+                self.stdout.write(f"WARNING: Feature '{feature}' from anomaly rules not in generated data. Skipping.")
                 continue
 
             if rule_type == 'extreme_value':
@@ -195,6 +195,7 @@ class Command(BaseCommand):
     def _get_output_path(self, config_path):
         """
         Constructs a unique, informative output filename for the generated data.
+        The output will be placed in an 'output/' subfolder inside the same directory as the input config file.
         """
         # Get the base name of the config file (e.g., 'train_config' from '.../train_config.yml')
         config_basename = os.path.splitext(os.path.basename(config_path))[0]
@@ -202,8 +203,10 @@ class Command(BaseCommand):
         # Create a timestamp string in YYYY-MM-DD_HH-MM-SS format
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         
-        # Define the output directory at the project root
-        output_dir = os.path.join(os.getcwd(), 'data')
+        # Get the directory containing the config file
+        config_dir = os.path.dirname(os.path.abspath(config_path))
+        # Define the output directory as 'output/' inside the config's directory
+        output_dir = os.path.join(config_dir, 'output')
         
         # Combine parts to create the full, unique path
         return os.path.join(output_dir, f"{config_basename}_{timestamp}.csv") 
