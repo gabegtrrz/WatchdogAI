@@ -14,6 +14,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from .services import verify_blockchain_integrity
+from .models import IntegrityCheck
 from apps.core.models import Transaction
 
 logger = logging.getLogger(__name__)
@@ -45,17 +46,35 @@ class BlockchainIntegrityService:
         self.logger.info(f"Checking blockchain integrity before integrating {len(transactions)} transactions")
         
         integrity_valid = verify_blockchain_integrity()
+        transaction_ids = [getattr(tx, 'transaction_id', str(tx)) for tx in transactions]
+        
+        # Create integrity check record
+        integrity_check = IntegrityCheck.objects.create(
+            check_type='BEFORE',
+            integrity_valid=integrity_valid,
+            transaction_count=len(transactions),
+            transaction_ids=', '.join(transaction_ids),
+            alert_sent=False
+        )
         
         result = {
             'integrity_valid': integrity_valid,
-            'check_timestamp': timezone.now(),
+            'check_timestamp': integrity_check.timestamp,
             'transaction_count': len(transactions),
-            'alert_sent': False
+            'alert_sent': False,
+            'check_id': integrity_check.id
         }
         
         if not integrity_valid:
             self.logger.error("Blockchain integrity compromised before integration")
-            self._send_integrity_alert("BEFORE", transactions, "Blockchain integrity check failed before transaction integration")
+            error_message = "Blockchain integrity check failed before transaction integration"
+            self._send_integrity_alert("BEFORE", transactions, error_message)
+            
+            # Update record with alert status and error
+            integrity_check.alert_sent = True
+            integrity_check.error_message = error_message
+            integrity_check.save()
+            
             result['alert_sent'] = True
         
         return result
@@ -74,18 +93,37 @@ class BlockchainIntegrityService:
         self.logger.info(f"Checking blockchain integrity after integrating {len(transactions)} transactions")
         
         integrity_valid = verify_blockchain_integrity()
+        transaction_ids = [getattr(tx, 'transaction_id', str(tx)) for tx in transactions]
+        
+        # Create integrity check record
+        integrity_check = IntegrityCheck.objects.create(
+            check_type='AFTER',
+            integrity_valid=integrity_valid,
+            transaction_count=len(transactions),
+            transaction_ids=', '.join(transaction_ids),
+            integration_success=integration_success,
+            alert_sent=False
+        )
         
         result = {
             'integrity_valid': integrity_valid,
-            'check_timestamp': timezone.now(),
+            'check_timestamp': integrity_check.timestamp,
             'transaction_count': len(transactions),
             'integration_success': integration_success,
-            'alert_sent': False
+            'alert_sent': False,
+            'check_id': integrity_check.id
         }
         
         if not integrity_valid:
             self.logger.error("Blockchain integrity compromised after integration")
-            self._send_integrity_alert(check_type="AFTER", transactions=transactions, error_message="Blockchain integrity check failed after transaction integration")
+            error_message = "Blockchain integrity check failed after transaction integration"
+            self._send_integrity_alert("AFTER", transactions, error_message)
+            
+            # Update record with alert status and error
+            integrity_check.alert_sent = True
+            integrity_check.error_message = error_message
+            integrity_check.save()
+            
             result['alert_sent'] = True
         
         return result
