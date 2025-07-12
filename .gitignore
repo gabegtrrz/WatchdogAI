@@ -18,8 +18,6 @@ venv/
 # Ignore paper draft
 resource/
 
-# scraper outputs
-# scraper_output/
 
 # all py cache
 *.pyc
@@ -27,7 +25,6 @@ __pycache__/
 .vscode/
 *.log
 
-api_key.py
 
 *.sqlite3# Ignore log files
 *.log
@@ -35,21 +32,11 @@ api_key.py
 # Ignore environment variables
 .env
 
+# docu draft
+docu/
 # Ignore env
 venv/
 
-# Ignore paper draft
-resource/
 
-# scraper outputs
-# scraper_output/
-
-# all py cache
-*.pyc
-__pycache__/
-.vscode/
-*.log
-
-api_key.py
-
+# Ignore sqlite3 database
 *.sqlite3
