@@ -274,7 +274,10 @@ class Command(BaseCommand):
         # Determine output directory
         config_dir = os.path.dirname(os.path.abspath(config_path))
         output_folder_name = config.get('output_folder', 'generated_data')
-        output_dir = os.path.join(config_dir, output_folder_name)
+        
+        # Create timestamp for unique subfolder
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        output_dir = os.path.join(config_dir, output_folder_name, str(timestamp))
         os.makedirs(output_dir, exist_ok=True)
 
         # Define file paths
