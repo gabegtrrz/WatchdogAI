@@ -97,6 +97,56 @@ class WeekendActivity:
         record['notice_of_award_date'] = weekend_date - datetime.timedelta(days=1) # A Friday or Saturday
         return record
 
+class InsufficientBiddingPeriod:
+    """
+    Scenario: The period between the bid invitation and the submission deadline
+    is less than the legally required minimum (e.g., 7 days), discouraging
+    fair competition.
+    """
+    name = "Insufficient Bidding Period"
+    weight = 0.4 # A very common and important anomaly to detect
+
+    @staticmethod
+    def apply(record):
+        # This modification directly violates the 7-day rule.
+        short_period = np.random.randint(1, 6) # 1 to 6 days
+        record['bid_submission_deadline'] = record['bid_opening_date']
+        record['invitation_to_bid_posting_date'] = record['bid_submission_deadline'] - datetime.timedelta(days=short_period)
+        return record
+
+class DelayedAwardNotice:
+    """
+    Scenario: The Notice of Award is issued much later than the legal
+    timeframe after bid opening, suggesting possible irregularities or delays.
+    """
+    name = "Delayed Award Notice"
+    weight = 0.2
+
+    @staticmethod
+    def apply(record):
+        # This violates the typical 7-day period for issuing an award.
+        long_delay = np.random.randint(15, 45) # 15 to 45 days late
+        record['notice_of_award_date'] = record['bid_opening_date'] + datetime.timedelta(days=long_delay)
+        # All subsequent dates must be pushed forward to maintain logical sequence.
+        record['contract_signing_date'] = record['notice_of_award_date'] + datetime.timedelta(days=np.random.randint(1, 10))
+        record['transaction_date'] = record['contract_signing_date'] + datetime.timedelta(days=np.random.randint(1, 15))
+        return record
+
+class PrematureContractSigning:
+    """
+    Scenario: The contract is signed before the Notice of Award is even issued,
+    a clear sign of a pre-arranged or rigged deal.
+    """
+    name = "Premature Contract Signing"
+    weight = 0.2
+
+    @staticmethod
+    def apply(record):
+        # This makes the timeline logically impossible.
+        record['contract_signing_date'] = record['notice_of_award_date'] - datetime.timedelta(days=np.random.randint(1, 5))
+        return record
+
+
 # --- Master list of all available anomaly blueprints ---
 # The generator command will import this list to find available scenarios.
 ANOMALY_BLUEPRINTS = [
@@ -105,4 +155,7 @@ ANOMALY_BLUEPRINTS = [
     EndOfYearRush,
     CompressedTimeline,
     WeekendActivity,
+    InsufficientBiddingPeriod,
+    DelayedAwardNotice,
+    PrematureContractSigning,
 ] 

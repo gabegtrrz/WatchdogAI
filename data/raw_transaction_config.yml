@@ -52,4 +52,7 @@ data_generator:
     - "Unusual Bulk Order"
     - "End of Year Rush"
     - "Compressed Timeline"
-    - "Weekend Activity" 
+    - "Weekend Activity"
+    - "Insufficient Bidding Period"
+    - "Delayed Award Notice"
+    - "Premature Contract Signing" 
