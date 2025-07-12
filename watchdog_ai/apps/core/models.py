@@ -69,13 +69,7 @@ class Transaction(models.Model):
         blank=True,
         help_text="Detailed description of the project."
     )
-    approved_budget = models.DecimalField(
-        max_digits=15,
-        decimal_places=4,
-        null=True,
-        blank=True,
-        help_text="Approved Budget for the Contract (ABC)."
-    )
+    
 
     # --- Item Details ---
     item_name = models.CharField(
@@ -105,6 +99,13 @@ class Transaction(models.Model):
         blank=True,
         help_text="Average price per unit across similar transactions (if available)."
     ) 
+    approved_budget = models.DecimalField(
+        max_digits=15,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        help_text="Approved Budget for the Contract (ABC)."
+    )
 
     # --- Procurement Method ---
     procurement_method = models.ForeignKey(
