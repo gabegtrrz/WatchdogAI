@@ -164,6 +164,9 @@ class Command(BaseCommand):
         df['unit_purchase_price'] = df['unit_purchase_price'].round(4).abs()
         df['quantity'] = df['quantity'].round().abs().clip(lower=1).astype(int)
 
+        # --- Calculate total_purchase_price ---
+        df['total_purchase_price'] = (df['quantity'] * df['unit_purchase_price']).round(4)
+
         # --- Handle average_price based on configuration ---
         average_price_config = config.get('average_price', {})
         average_price_mode = average_price_config.get('mode', 'none')
@@ -204,7 +207,7 @@ class Command(BaseCommand):
         if 'average_price' in df.columns:
             primary_mask = df['average_price'].notna()
             if primary_mask.sum() > 0:
-                df.loc[primary_mask, 'approved_budget'] = (df.loc[primary_mask, 'average_price'] * (1 + budget_markup[primary_mask])).round(2)
+                df.loc[primary_mask, 'approved_budget'] = (df.loc[primary_mask, 'average_price'] * df.loc[primary_mask, 'quantity'] * (1 + budget_markup[primary_mask])).round(2)
 
         # Backup source: unit_purchase_price, for all records where approved_budget is still NaN
         backup_mask = df['approved_budget'].isna()
@@ -212,7 +215,7 @@ class Command(BaseCommand):
             unit_price_mask = df['unit_purchase_price'].notna()
             valid_backup_mask = backup_mask & unit_price_mask
             if valid_backup_mask.sum() > 0:
-                df.loc[valid_backup_mask, 'approved_budget'] = (df.loc[valid_backup_mask, 'unit_purchase_price'] * (1 + budget_markup[valid_backup_mask])).round(2)
+                df.loc[valid_backup_mask, 'approved_budget'] = (df.loc[valid_backup_mask, 'unit_purchase_price'] * df.loc[valid_backup_mask, 'quantity'] * (1 + budget_markup[valid_backup_mask])).round(2)
         
         # If still no approved_budget values, set to NaN
         if df['approved_budget'].isna().all():
@@ -244,7 +247,7 @@ class Command(BaseCommand):
         today = timezone.now().date()
         
         # Check if we already have scraped prices for today
-        existing_prices = ItemAveragePrice.objects.filter(date=today).count()
+        existing_prices = ItemAveragePrice.objects.filter(date=today).count() # type: ignore
         
         if existing_prices == 0:
             self.stdout.write("No scraped prices found for today. Running scraping command...")
@@ -264,9 +267,9 @@ class Command(BaseCommand):
                 self.stdout.write(output)
                 
                 # Check if any prices were actually scraped
-                scraped_count = ItemAveragePrice.objects.filter(date=today).count()
+                scraped_count = ItemAveragePrice.objects.filter(date=today).count() # type: ignore
                 if scraped_count == 0:
-                    self.stdout.write(self.style.WARNING(
+                    self.stdout.write(self.style.WARNING( # type: ignore
                         "WARNING: Scraping completed but no prices were found. "
                         "This could be due to network issues, API limits, or items not found on the platform. "
                         "Proceeding with blank average_price values."
@@ -275,7 +278,7 @@ class Command(BaseCommand):
                     self.stdout.write(f"Successfully scraped {scraped_count} prices.")
                     
             except Exception as e:
-                self.stdout.write(self.style.ERROR(
+                self.stdout.write(self.style.ERROR( # type: ignore
                     f"ERROR: Failed to run scraping command: {e}. "
                     "Proceeding with blank average_price values."
                 ))
@@ -309,7 +312,7 @@ class Command(BaseCommand):
         
         # Query the database for scraped prices (case-insensitive matching)
         # Create a case-insensitive mapping for matching
-        scraped_prices = ItemAveragePrice.objects.filter(
+        scraped_prices = ItemAveragePrice.objects.filter( # type: ignore
             date=today
         ).values('item_name', 'average_price')
         
@@ -343,13 +346,13 @@ class Command(BaseCommand):
         self.stdout.write(f"  - Missing prices (set to blank): {missing_count}")
         
         if found_count == 0:
-            self.stdout.write(self.style.WARNING(
+            self.stdout.write(self.style.WARNING( # type: ignore
                 "WARNING: No scraped prices found for any items. "
                 "All average_price values will be blank. "
                 "This is normal if scraping failed or items are not available on the platform."
             ))
         elif missing_count > 0:
-            self.stdout.write(self.style.WARNING(
+            self.stdout.write(self.style.WARNING( # type: ignore
                 f"WARNING: {missing_count} items had no scraped prices and will be blank. "
                 "This is normal for some items that may not be available on the platform."
             ))
@@ -428,6 +431,7 @@ class Command(BaseCommand):
             
             # --- Pricing ---
             'unit_purchase_price',
+            # 'total_purchase_price',
             'average_price',
             'approved_budget',
             

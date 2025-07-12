@@ -54,7 +54,13 @@ data_generator:
   # FIELD GENERATION RULES
   # ============================================================================
   # Defines how each column in the output CSV is created.
-  # IMPORTANT: unit_purchase_price is ALWAYS required as fallback for approved_budget calculation.
+  # IMPORTANT: unit_purchase_price is ALWAYS required as a fallback for calculations.
+  #
+  # NOTE: The following fields are calculated automatically and should NOT be
+  #       included in the field_rules below:
+  #       - total_purchase_price (quantity * unit_purchase_price)
+  #       - approved_budget (derived from average_price or unit_purchase_price)
+  #
   # average_price: Include for 'yaml' mode, omit for 'scrape' mode.
   
   field_rules:
@@ -83,8 +89,8 @@ data_generator:
     }
     
     # Unit and average prices
-    # unit_purchase_price: ALWAYS include as fallback (required for approved_budget calculation)
-    # average_price: Include for 'yaml' mode, omit for 'scrape' mode
+    # unit_purchase_price: ALWAYS include as fallback.
+    # average_price: Include for 'yaml' mode, omit for 'scrape' mode.
     unit_purchase_price: { 
       type: 'log-normal', 
       mean: 5.3, 
