@@ -36,6 +36,9 @@ data_generator:
     
     # invoice_number and payment_receipt_number are generated automatically
     
+    # `transaction_date` is the only date field that needs to be configured.
+    # The other five procurement timeline dates (e.g., bid_opening_date) are
+    # generated automatically based on `transaction_date` and legal timelines.
     transaction_date: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
 
   # ----------------------------------------------------------------------------
@@ -47,4 +50,6 @@ data_generator:
   active_anomalies:
     - "Suspicious Overpricing"
     - "Unusual Bulk Order"
-    - "End of Year Rush" 
+    - "End of Year Rush"
+    - "Compressed Timeline"
+    - "Weekend Activity" 

@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from django.core.management.base import BaseCommand, CommandError
 from faker import Faker
-from data_generation.anomaly_definitions import ANOMALY_BLUEPRINTS # Import the blueprints
+from watchdog_ai.apps.data_generation.anomaly_definitions import ANOMALY_BLUEPRINTS 
 
 class Command(BaseCommand):
     """
@@ -125,6 +125,34 @@ class Command(BaseCommand):
         df['invoice_number'] = [f"INV-{uuid.uuid4().hex[:8].upper()}" for _ in range(n_samples)]
         df['payment_receipt_number'] = [f"RCPT-{uuid.uuid4().hex[:10].upper()}" for _ in range(n_samples)]
 
+        # --- Generate Procedural Procurement Timeline Dates ---
+        # These are generated based on the transaction_date and legal timelines.
+        timeline = {
+            'invitation_to_bid_posting_date': [],
+            'bid_submission_deadline': [],
+            'bid_opening_date': [],
+            'notice_of_award_date': [],
+            'contract_signing_date': [],
+        }
+
+        for date in df['transaction_date']:
+            # Work backwards from the transaction_date to ensure a logical sequence.
+            contract_signing_date = date - datetime.timedelta(days=np.random.randint(1, 15))
+            notice_of_award_date = contract_signing_date - datetime.timedelta(days=np.random.randint(1, 10))
+            bid_opening_date = notice_of_award_date - datetime.timedelta(days=np.random.randint(1, 7))
+            bid_submission_deadline = bid_opening_date - datetime.timedelta(days=np.random.randint(0, 2)) # Can be same day or shortly before
+            invitation_to_bid_posting_date = bid_submission_deadline - datetime.timedelta(days=np.random.randint(7, 21)) # Must be at least 7 days prior
+
+            timeline['contract_signing_date'].append(contract_signing_date)
+            timeline['notice_of_award_date'].append(notice_of_award_date)
+            timeline['bid_opening_date'].append(bid_opening_date)
+            timeline['bid_submission_deadline'].append(bid_submission_deadline)
+            timeline['invitation_to_bid_posting_date'].append(invitation_to_bid_posting_date)
+
+        # Add the new date columns to the DataFrame
+        for col, dates in timeline.items():
+            df[col] = dates
+
         # --- Calculate approved_budget as 15-22% above average_price ---
         if 'average_price' in df.columns:
             # Generate random percentage between 15% and 22%
@@ -132,8 +160,9 @@ class Command(BaseCommand):
             df['approved_budget'] = (df['average_price'] * (1 + budget_markup)).round(2)
 
         # --- Data Cleaning & Type Enforcement ---
-        df['approved_budget'] = df['approved_budget'].clip(lower=0)
-        df['unit_purchase_price'] = df['unit_purchase_price'].round(2).clip(lower=0)
+        if 'approved_budget' in df.columns: # Check if approved_budget was generated
+            df['approved_budget'] = df['approved_budget'].clip(lower=0)
+        df['unit_purchase_price'] = df['unit_purchase_price'].round(4).clip(lower=0)
         df['average_price'] = df['average_price'].round(2).clip(lower=0)
         df['quantity'] = df['quantity'].round().clip(lower=1).astype(int)
 

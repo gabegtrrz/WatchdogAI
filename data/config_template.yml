@@ -54,6 +54,9 @@ data_generator:
     procurement_officer: { type: 'faker', provider: 'name' } # Generates a random name.
 
     # --- Dates ---
+    # `transaction_date` is the only date field that needs to be configured.
+    # The other five procurement timeline dates (e.g., bid_opening_date) are
+    # generated automatically based on `transaction_date` and legal timelines.
     transaction_date: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
 
   # ----------------------------------------------------------------------------
@@ -65,4 +68,6 @@ data_generator:
   active_anomalies:
     - "Suspicious Overpricing"
     - "Unusual Bulk Order"
-    - "End of Year Rush" 
+    - "End of Year Rush"
+    - "Compressed Timeline"
+    - "Weekend Activity" 

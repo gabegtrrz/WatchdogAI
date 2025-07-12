@@ -1,5 +1,6 @@
 # watchdog_ai/apps/data_generation/anomaly_definitions.py
 import numpy as np
+import datetime
 
 # ---------------------------------------------------
 # Anomaly Blueprint Definitions
@@ -59,6 +60,42 @@ class EndOfYearRush:
         record['project_description'] = 'URGENT - Use remaining 2024 budget'
         return record
 
+class CompressedTimeline:
+    """
+    Scenario: The entire procurement timeline is unnaturally short,
+    suggesting the winning bidder was pre-selected.
+    """
+    name = "Compressed Timeline"
+    weight = 0.35 # High chance, as this is a common anomaly pattern
+
+    @staticmethod
+    def apply(record):
+        # All key events happen within a single week
+        record['contract_signing_date'] = record['transaction_date'] - datetime.timedelta(days=1)
+        record['notice_of_award_date'] = record['contract_signing_date'] - datetime.timedelta(days=1)
+        record['bid_opening_date'] = record['notice_of_award_date'] - datetime.timedelta(days=1)
+        record['bid_submission_deadline'] = record['bid_opening_date']
+        record['invitation_to_bid_posting_date'] = record['bid_submission_deadline'] - datetime.timedelta(days=2) # Violates 7-day rule
+        return record
+
+class WeekendActivity:
+    """
+    Scenario: Key procurement events occur on a weekend, which is highly
+    irregular for official government/business processes.
+    """
+    name = "Weekend Activity"
+    weight = 0.25 # A more specific, but important, anomaly
+
+    @staticmethod
+    def apply(record):
+        # Find the most recent Saturday from the transaction date
+        transaction_date = record['transaction_date']
+        weekend_date = transaction_date - datetime.timedelta(days=(transaction_date.weekday() + 2) % 7)
+        
+        # Set key dates to this weekend
+        record['contract_signing_date'] = weekend_date
+        record['notice_of_award_date'] = weekend_date - datetime.timedelta(days=1) # A Friday or Saturday
+        return record
 
 # --- Master list of all available anomaly blueprints ---
 # The generator command will import this list to find available scenarios.
@@ -66,4 +103,6 @@ ANOMALY_BLUEPRINTS = [
     SuspiciousOverpricing,
     UnusualBulkOrder,
     EndOfYearRush,
+    CompressedTimeline,
+    WeekendActivity,
 ] 
