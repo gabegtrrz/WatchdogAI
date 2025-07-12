@@ -1,5 +1,14 @@
-# Configuration for generating data WITH average_price from scraped data
+# -------------------------------------------------------------
+# CONFIGURATION FOR GENERATING DATA WITH SCRAPED AVERAGE PRICES
+# -------------------------------------------------------------
+#
+# Demonstrates the 'scrape' mode for average_price.
+# Scraping runs automatically when no cached prices exist.
+#
+# -------------------------------------------------------------
+
 data_generator:
+  # --- Main Configuration ---
   n_samples: 500
   random_state: 42
   anomaly_fraction: 0.03
@@ -12,7 +21,7 @@ data_generator:
 
   # --- Average Price Configuration ---
   # Mode: 'scrape' - Get average_price from scraped data in ItemAveragePrice model
-  # Note: Run 'python manage.py scrape_average_prices <this_config.yml>' first
+  # Note: Scraping runs automatically when no cached prices exist
   average_price:
     mode: 'scrape'
     # Unit price variation configuration
@@ -26,12 +35,11 @@ data_generator:
     end_user_unit: { type: 'fixed', value: 'DEPED - Division of City Schools' }
     project_description: { type: 'faker', provider: 'catch_phrase' }
     
-    # Note: average_price and unit_purchase_price are NOT included in field_rules when mode is 'scrape'
-    # average_price will be populated from the ItemAveragePrice model
-    # unit_purchase_price will be derived from average_price with realistic variation
-    
+    # IMPORTANT: unit_purchase_price MUST be included as fallback for approved_budget calculation
+    # average_price is NOT included - will be populated from scraped data
     quantity: { type: 'log-normal', mean: 3, std_dev: 1 }
-    # approved_budget will be calculated as 15-22% above average_price (from scraped data)
+    unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }  # REQUIRED FALLBACK
+    # approved_budget will be calculated as 15-22% above average_price (from scraped data) or unit_purchase_price (fallback)
 
     procurement_method_name: { 
        type: 'categorical', 

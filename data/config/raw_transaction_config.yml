@@ -1,5 +1,14 @@
-# Configuration for generating raw transaction data
+# ----------------------------------------------------------------------------
+# CONFIGURATION FOR GENERATING RAW TRANSACTION DATA WITH YAML PRICES
+# ----------------------------------------------------------------------------
+#
+# This configuration demonstrates the 'yaml' mode for average_price.
+# Both average_price and unit_purchase_price are defined in field_rules.
+#
+# ----------------------------------------------------------------------------
+
 data_generator:
+  # --- Main Configuration ---
   n_samples: 500
   random_state: 42
   anomaly_fraction: 0.03
@@ -30,7 +39,7 @@ data_generator:
     project_description: { type: 'faker', provider: 'catch_phrase' }
     
     # item_name is sourced from the item_source_file
-  # !!! MAKE SURE TO USE LOG NORMAL FOR PRICE FIELDS to ensure positive values
+    # !!! MAKE SURE TO USE LOG NORMAL FOR PRICE FIELDS to ensure positive values
     
     quantity: { type: 'log-normal', mean: 3, std_dev: 1 }
     unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }

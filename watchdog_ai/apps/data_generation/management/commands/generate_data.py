@@ -189,6 +189,7 @@ class Command(BaseCommand):
             df = self._derive_unit_price_from_average_price(df, average_price_config)
         elif average_price_mode == 'scrape':
             # Automatically run scraping if needed, then get average prices and derive unit_purchase_price
+            # Note: unit_purchase_price should still be defined in field_rules as fallback
             df = self._handle_scrape_mode(df, items, average_price_config)
         else:
             self.stdout.write(f"WARNING: Unknown average_price mode '{average_price_mode}'. Skipping average_price generation.")
@@ -196,22 +197,26 @@ class Command(BaseCommand):
                 df = df.drop('average_price', axis=1)
 
         # --- Calculate approved_budget with fallback to unit_purchase_price ---
-        if 'unit_purchase_price' in df.columns:
-            budget_markup = np.random.uniform(0.15, 0.22, size=n_samples)
-            df['approved_budget'] = np.nan
+        budget_markup = np.random.uniform(0.15, 0.22, size=n_samples)
+        df['approved_budget'] = np.nan
 
-            # Primary source: average_price, if it exists and is not null
-            if 'average_price' in df.columns:
-                primary_mask = df['average_price'].notna()
-                if primary_mask.sum() > 0:
-                    df.loc[primary_mask, 'approved_budget'] = (df.loc[primary_mask, 'average_price'] * (1 + budget_markup[primary_mask])).round(2)
+        # Primary source: average_price, if it exists and is not null
+        if 'average_price' in df.columns:
+            primary_mask = df['average_price'].notna()
+            if primary_mask.sum() > 0:
+                df.loc[primary_mask, 'approved_budget'] = (df.loc[primary_mask, 'average_price'] * (1 + budget_markup[primary_mask])).round(2)
 
-            # Backup source: unit_purchase_price, for all records where approved_budget is still NaN
-            backup_mask = df['approved_budget'].isna()
-            if backup_mask.sum() > 0:
-                df.loc[backup_mask, 'approved_budget'] = (df.loc[backup_mask, 'unit_purchase_price'] * (1 + budget_markup[backup_mask])).round(2)
-        else:
-            self.stdout.write(self.style.WARNING("WARNING: 'unit_purchase_price' not found. Skipping 'approved_budget' calculation.")) # type: ignore
+        # Backup source: unit_purchase_price, for all records where approved_budget is still NaN
+        backup_mask = df['approved_budget'].isna()
+        if backup_mask.sum() > 0 and 'unit_purchase_price' in df.columns:
+            unit_price_mask = df['unit_purchase_price'].notna()
+            valid_backup_mask = backup_mask & unit_price_mask
+            if valid_backup_mask.sum() > 0:
+                df.loc[valid_backup_mask, 'approved_budget'] = (df.loc[valid_backup_mask, 'unit_purchase_price'] * (1 + budget_markup[valid_backup_mask])).round(2)
+        
+        # If still no approved_budget values, set to NaN
+        if df['approved_budget'].isna().all():
+            self.stdout.write(self.style.WARNING("WARNING: No valid average_price or unit_purchase_price found. approved_budget will be blank.")) # type: ignore
 
         # --- Final safety check: ensure all price fields are positive (only for non-empty values) ---
         price_fields = ['unit_purchase_price', 'average_price', 'approved_budget']
@@ -220,6 +225,9 @@ class Command(BaseCommand):
                 non_empty_mask = df[field].notna()
                 if non_empty_mask.sum() > 0:
                     df.loc[non_empty_mask, field] = df.loc[non_empty_mask, field].abs()
+            else:
+                # If field doesn't exist, create it as NaN (for scrape mode)
+                df[field] = np.nan
 
         df = self._rearrange_columns(df)
 
@@ -324,6 +332,7 @@ class Command(BaseCommand):
                 average_prices.append(np.nan)
                 missing_count += 1
         
+        # Ensure average_price column exists and set values
         df['average_price'] = average_prices
         
         self.stdout.write(f"  - Found scraped prices: {found_count}")
@@ -346,8 +355,7 @@ class Command(BaseCommand):
     def _derive_unit_price_from_average_price(self, df, average_price_config):
         """
         Derives unit_purchase_price from average_price with configurable variation.
-        Adds realistic variation to make unit prices slightly different from average prices.
-        Robustly handles cases where no average_price values exist.
+        Uses field_rules fallback when average_price is not available.
         """
         self.stdout.write("Deriving unit_purchase_price from average_price...")
         
@@ -356,13 +364,18 @@ class Command(BaseCommand):
         min_factor = variation_config.get('min_factor', 0.85)  # Default ±15%
         max_factor = variation_config.get('max_factor', 1.15)
         
+        # Ensure unit_purchase_price column exists (from field_rules fallback)
+        if 'unit_purchase_price' not in df.columns:
+            self.stdout.write("  - ERROR: unit_purchase_price not found in field_rules. This is required for fallback.")
+            df['unit_purchase_price'] = np.nan
+            return df
+        
         # Only process records that have average_price
         valid_mask = df['average_price'].notna()
         
         if valid_mask.sum() == 0:
-            self.stdout.write("  - No valid average_price found. All unit_purchase_price values will be blank.")
-            # Set all unit_purchase_price to NaN when no average_price exists
-            df['unit_purchase_price'] = np.nan
+            self.stdout.write("  - No valid average_price found. Using field_rules fallback for unit_purchase_price.")
+            # Keep the existing unit_purchase_price from field_rules as fallback
             return df
         
         # Generate unit prices based on average_price with configurable variation
@@ -374,17 +387,15 @@ class Command(BaseCommand):
         # Calculate unit prices with variation
         unit_prices = valid_average_prices * variation_factor
         
-        # Update unit_purchase_price for valid records
+        # Update unit_purchase_price for valid records (derived from average_price)
         df.loc[valid_mask, 'unit_purchase_price'] = unit_prices.round(4)
         
-        # For records without average_price, set unit_purchase_price to NaN
-        invalid_mask = ~valid_mask
-        if invalid_mask.sum() > 0:
-            df.loc[invalid_mask, 'unit_purchase_price'] = np.nan
+        # For records without average_price, keep the field_rules fallback
+        # (unit_purchase_price already exists from field_rules)
         
         variation_percent = int((max_factor - min_factor) * 50)  # Calculate percentage for display
-        self.stdout.write(f"  - Derived unit_purchase_price for {valid_mask.sum()} records")
-        self.stdout.write(f"  - Set unit_purchase_price to blank for {invalid_mask.sum()} records (no average_price)")
+        self.stdout.write(f"  - Derived unit_purchase_price from average_price for {valid_mask.sum()} records")
+        self.stdout.write(f"  - Used field_rules fallback for {len(df) - valid_mask.sum()} records (no average_price)")
         self.stdout.write(f"  - Variation range: ±{variation_percent}% from average_price (min: {min_factor}, max: {max_factor})")
         
         return df

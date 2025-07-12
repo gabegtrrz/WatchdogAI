@@ -1,11 +1,11 @@
 # ----------------------------------------------------------------------------
-# CONFIGURATION FOR GENERATING NORMAL (NON-ANOMALOUS) DATA
+# CONFIGURATION FOR GENERATING NORMAL (NON-ANOMALOUS) DATA WITH YAML PRICES
 # ----------------------------------------------------------------------------
 #
 # This configuration is designed to generate a dataset containing ONLY NORMAL
-# transactions. This is useful for training unsupervised models like
-# Isolation Forest, which learn the profile of normal data in order to
-# later identify deviations.
+# transactions using YAML-generated average prices. This is useful for training 
+# unsupervised models like Isolation Forest, which learn the profile of normal 
+# data in order to later identify deviations.
 #
 # The key is `anomaly_fraction: 0.0`.
 #
@@ -42,6 +42,8 @@ data_generator:
 
     # !!! MAKE SURE TO USE LOG NORMAL FOR PRICE FIELDS to ensure positive values
     quantity: { type: 'log-normal', mean: 3, std_dev: 1 }
+    
+    # Both average_price and unit_purchase_price defined for YAML mode
     unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }
     average_price: { type: 'log-normal', mean: 5.35, std_dev: 0.25 }
 
@@ -65,5 +67,5 @@ data_generator:
     transaction_date: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
 
   # --- Anomaly Generation ---
-  # This section is ignored when anomaly_fraction is 0.0, so tis left empty.
+  # This section is ignored when anomaly_fraction is 0.0, so it's left empty.
   active_anomalies: [] 
