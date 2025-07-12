@@ -14,7 +14,7 @@
 data_generator:
   # --- Main Configuration ---
   n_samples: 500
-  random_state: 42
+  random_state: 7
   anomaly_fraction: 0.00
   
   # --- Output Configuration ---

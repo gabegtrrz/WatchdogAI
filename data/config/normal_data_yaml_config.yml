@@ -14,7 +14,7 @@
 data_generator:
   # --- Main Configuration ---
   n_samples: 25000        
-  random_state: 42          # Use a fixed state for reproducible training data.
+  random_state: 7          # Use a fixed state for reproducible training data.
   anomaly_fraction: 0.0    # Set to 0.0 so no anomalies are injected.
   
   # --- Output & Source Files ---

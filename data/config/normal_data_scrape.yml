@@ -13,12 +13,12 @@
 
 data_generator:
   # --- Main Configuration ---
-  n_samples: 100        
-  random_state: 42          # Use a fixed state for reproducible training data.
+  n_samples: 2000        
+  random_state: 7          # Use a fixed state for reproducible training data.
   anomaly_fraction: 0.0    # Set to 0.0 so no anomalies are injected.
   
   # --- Output & Source Files ---
-  output_folder: "iforest_training_data" # Descriptive output folder.
+  output_folder: "normal_data_scraped" # Descriptive output folder.
   item_source_file: "data/lab_equipment.txt"
 
   # --- Average Price Configuration ---

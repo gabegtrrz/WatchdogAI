@@ -18,7 +18,7 @@ data_generator:
   # ============================================================================
   
   n_samples: 5000         # Number of records (rows) to generate
-  random_state: 42        # Seed for reproducibility (same seed = same output)
+  random_state: 7         # Seed for reproducibility (same seed = same output)
   anomaly_fraction: 0.03  # Percentage of records to modify into anomalies (3%)
   
   # ============================================================================
