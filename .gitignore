@@ -40,3 +40,6 @@ venv/
 
 # Ignore sqlite3 database
 *.sqlite3
+
+# ignore deprecated
+deprecated/
