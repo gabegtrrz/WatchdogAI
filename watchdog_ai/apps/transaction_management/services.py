@@ -169,56 +169,120 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
         else:
             cleaned_row_data['payment_receipt_number'] = str(raw_payment_receipt_number).strip()
 
-        # --- Validate optional fields ---
+        # --- Validate additional required fields ---
         
         # --- Validate 'transaction_id' (optional, auto-generated if not provided) ---
         raw_transaction_id = row.get('transaction_id')
         if not pd.isna(raw_transaction_id) and str(raw_transaction_id).strip() != '':
             cleaned_row_data['transaction_id'] = str(raw_transaction_id).strip()
 
-        # --- Validate 'project_name' (optional) ---
+        # --- Validate 'project_name' (required) ---
         raw_project_name = row.get('project_name')
-        if not pd.isna(raw_project_name) and str(raw_project_name).strip() != '':
+        if pd.isna(raw_project_name) or str(raw_project_name).strip() == '':
+            errors_in_row.append({'field': 'project_name', 'error': 'Project name is required and cannot be blank.'})
+        else:
             cleaned_row_data['project_name'] = str(raw_project_name).strip()
 
-        # --- Validate 'end_user_unit' (optional) ---
+        # --- Validate 'end_user_unit' (required) ---
         raw_end_user_unit = row.get('end_user_unit')
-        if not pd.isna(raw_end_user_unit) and str(raw_end_user_unit).strip() != '':
+        if pd.isna(raw_end_user_unit) or str(raw_end_user_unit).strip() == '':
+            errors_in_row.append({'field': 'end_user_unit', 'error': 'End user unit is required and cannot be blank.'})
+        else:
             cleaned_row_data['end_user_unit'] = str(raw_end_user_unit).strip()
 
-        # --- Validate 'project_description' (optional) ---
+        # --- Validate 'project_description' (required) ---
         raw_project_description = row.get('project_description')
-        if not pd.isna(raw_project_description) and str(raw_project_description).strip() != '':
+        if pd.isna(raw_project_description) or str(raw_project_description).strip() == '':
+            errors_in_row.append({'field': 'project_description', 'error': 'Project description is required and cannot be blank.'})
+        else:
             cleaned_row_data['project_description'] = str(raw_project_description).strip()
 
-        # --- Validate 'approved_budget' (optional, but must be positive if provided) ---
+        # --- Validate 'approved_budget' (required, must be positive) ---
         raw_approved_budget = row.get('approved_budget')
-        if not pd.isna(raw_approved_budget) and str(raw_approved_budget).strip() != '':
+        if pd.isna(raw_approved_budget) or str(raw_approved_budget).strip() == '':
+            errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget is required and cannot be blank.'})
+        else:
             try:
                 approved_budget = Decimal(str(raw_approved_budget))
                 if approved_budget <= 0:
-                    errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget must be a positive number if provided.'})
+                    errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget must be a positive number.'})
                 else:
                     cleaned_row_data['approved_budget'] = approved_budget
             except InvalidOperation:
-                errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget must be a valid number if provided.'})
+                errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget must be a valid number.'})
 
-        # --- Validate 'average_price' (optional, but must be positive if provided) ---
+        # --- Validate 'average_price' (required, must be positive) ---
         raw_average_price = row.get('average_price')
-        if not pd.isna(raw_average_price) and str(raw_average_price).strip() != '':
+        if pd.isna(raw_average_price) or str(raw_average_price).strip() == '':
+            errors_in_row.append({'field': 'average_price', 'error': 'Average price is required and cannot be blank.'})
+        else:
             try:
                 average_price = Decimal(str(raw_average_price))
                 if average_price <= 0:
-                    errors_in_row.append({'field': 'average_price', 'error': 'Average price must be a positive number if provided.'})
+                    errors_in_row.append({'field': 'average_price', 'error': 'Average price must be a positive number.'})
                 else:
                     cleaned_row_data['average_price'] = average_price
             except InvalidOperation:
-                errors_in_row.append({'field': 'average_price', 'error': 'Average price must be a valid number if provided.'})
+                errors_in_row.append({'field': 'average_price', 'error': 'Average price must be a valid number.'})
 
-        # --- Validate 'procurement_officer' (optional) ---
+        # --- Validate 'procurement_officer' (required) ---
         raw_procurement_officer = row.get('procurement_officer')
-        if not pd.isna(raw_procurement_officer) and str(raw_procurement_officer).strip() != '':
+        if pd.isna(raw_procurement_officer) or str(raw_procurement_officer).strip() == '':
+            errors_in_row.append({'field': 'procurement_officer', 'error': 'Procurement officer is required and cannot be blank.'})
+        else:
             cleaned_row_data['procurement_officer'] = str(raw_procurement_officer).strip()
+
+        # --- Validate required date fields ---
+        
+        # --- Validate 'invitation_to_bid_posting_date' (required) ---
+        raw_invitation_date = row.get('invitation_to_bid_posting_date')
+        if pd.isna(raw_invitation_date) or str(raw_invitation_date).strip() == '':
+            errors_in_row.append({'field': 'invitation_to_bid_posting_date', 'error': 'Invitation to bid posting date is required and cannot be blank.'})
+        else:
+            try:
+                cleaned_row_data['invitation_to_bid_posting_date'] = pd.to_datetime(raw_invitation_date).date()
+            except (ValueError, TypeError):
+                errors_in_row.append({'field': 'invitation_to_bid_posting_date', 'error': 'Invitation to bid posting date must be in a recognizable format (e.g., YYYY-MM-DD).'})
+
+        # --- Validate 'bid_submission_deadline' (required) ---
+        raw_bid_deadline = row.get('bid_submission_deadline')
+        if pd.isna(raw_bid_deadline) or str(raw_bid_deadline).strip() == '':
+            errors_in_row.append({'field': 'bid_submission_deadline', 'error': 'Bid submission deadline is required and cannot be blank.'})
+        else:
+            try:
+                cleaned_row_data['bid_submission_deadline'] = pd.to_datetime(raw_bid_deadline).date()
+            except (ValueError, TypeError):
+                errors_in_row.append({'field': 'bid_submission_deadline', 'error': 'Bid submission deadline must be in a recognizable format (e.g., YYYY-MM-DD).'})
+
+        # --- Validate 'bid_opening_date' (required) ---
+        raw_bid_opening = row.get('bid_opening_date')
+        if pd.isna(raw_bid_opening) or str(raw_bid_opening).strip() == '':
+            errors_in_row.append({'field': 'bid_opening_date', 'error': 'Bid opening date is required and cannot be blank.'})
+        else:
+            try:
+                cleaned_row_data['bid_opening_date'] = pd.to_datetime(raw_bid_opening).date()
+            except (ValueError, TypeError):
+                errors_in_row.append({'field': 'bid_opening_date', 'error': 'Bid opening date must be in a recognizable format (e.g., YYYY-MM-DD).'})
+
+        # --- Validate 'notice_of_award_date' (required) ---
+        raw_award_date = row.get('notice_of_award_date')
+        if pd.isna(raw_award_date) or str(raw_award_date).strip() == '':
+            errors_in_row.append({'field': 'notice_of_award_date', 'error': 'Notice of award date is required and cannot be blank.'})
+        else:
+            try:
+                cleaned_row_data['notice_of_award_date'] = pd.to_datetime(raw_award_date).date()
+            except (ValueError, TypeError):
+                errors_in_row.append({'field': 'notice_of_award_date', 'error': 'Notice of award date must be in a recognizable format (e.g., YYYY-MM-DD).'})
+
+        # --- Validate 'contract_signing_date' (required) ---
+        raw_contract_date = row.get('contract_signing_date')
+        if pd.isna(raw_contract_date) or str(raw_contract_date).strip() == '':
+            errors_in_row.append({'field': 'contract_signing_date', 'error': 'Contract signing date is required and cannot be blank.'})
+        else:
+            try:
+                cleaned_row_data['contract_signing_date'] = pd.to_datetime(raw_contract_date).date()
+            except (ValueError, TypeError):
+                errors_in_row.append({'field': 'contract_signing_date', 'error': 'Contract signing date must be in a recognizable format (e.g., YYYY-MM-DD).'})
 
         if errors_in_row:
             validation_errors.append({'row': row_num, 'errors': errors_in_row})
