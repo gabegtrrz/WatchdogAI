@@ -156,18 +156,23 @@ class Command(BaseCommand):
         for col, dates in timeline.items():
             df[col] = dates
 
+        # --- Data Cleaning & Type Enforcement (BEFORE derived calculations) ---
+        # Convert negative values to positive for price fields
+        df['unit_purchase_price'] = df['unit_purchase_price'].round(4).abs()
+        df['average_price'] = df['average_price'].round(2).abs()
+        df['quantity'] = df['quantity'].round().abs().clip(lower=1).astype(int)
+
         # --- Calculate approved_budget as 15-22% above average_price ---
         if 'average_price' in df.columns:
             # Generate random percentage between 15% and 22%
             budget_markup = np.random.uniform(0.15, 0.22, size=n_samples)
             df['approved_budget'] = (df['average_price'] * (1 + budget_markup)).round(2)
 
-        # --- Data Cleaning & Type Enforcement ---
-        if 'approved_budget' in df.columns: # Check if approved_budget was generated
-            df['approved_budget'] = df['approved_budget'].clip(lower=0)
-        df['unit_purchase_price'] = df['unit_purchase_price'].round(4).clip(lower=0)
-        df['average_price'] = df['average_price'].round(2).clip(lower=0)
-        df['quantity'] = df['quantity'].round().clip(lower=1).astype(int)
+        # --- Final safety check: ensure all price fields are positive ---
+        price_fields = ['unit_purchase_price', 'average_price', 'approved_budget']
+        for field in price_fields:
+            if field in df.columns:
+                df[field] = df[field].abs()
 
         df = self._rearrange_columns(df)
 

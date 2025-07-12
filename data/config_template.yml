@@ -44,9 +44,10 @@ data_generator:
 
     # --- Pricing & Quantity ---
     # `approved_budget` is calculated automatically as 15-22% above `average_price`.
+    # !!! MAKE SURE TO USE LOG NORMAL FOR PRICE FIELDS to ensure positive values
     quantity: { type: 'log-normal', mean: 3, std_dev: 1 } # `log-normal` is good for values that can't be negative.
-    unit_purchase_price: { type: 'normal', mean: 150, std_dev: 45 } # `normal` (bell curve) distribution.
-    average_price: { type: 'normal', mean: 155, std_dev: 40 }
+    unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }
+    average_price: { type: 'log-normal', mean: 5.35, std_dev: 0.25 }
 
     # --- Procurement & Supplier ---
     # Procurement methods with realistic frequency weights based on Philippine procurement practices:

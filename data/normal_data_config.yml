@@ -31,11 +31,10 @@ data_generator:
 
     project_description: { type: 'faker', provider: 'catch_phrase' }
 
+    # !!! MAKE SURE TO USE LOG NORMAL FOR PRICE FIELDS to ensure positive values
     quantity: { type: 'log-normal', mean: 3, std_dev: 1 }
-
-    unit_purchase_price: { type: 'normal', mean: 150, std_dev: 45 }
-
-    average_price: { type: 'normal', mean: 155, std_dev: 40 }
+    unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }
+    average_price: { type: 'log-normal', mean: 5.35, std_dev: 0.25 }
 
     procurement_method_name: { 
        type: 'categorical', 
