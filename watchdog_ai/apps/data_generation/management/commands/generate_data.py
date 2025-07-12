@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from django.core.management.base import BaseCommand, CommandError
 from faker import Faker
-from watchdog_ai.apps.data_generation.anomaly_definitions import ANOMALY_BLUEPRINTS 
+from apps.data_generation.anomaly_definitions import ANOMALY_BLUEPRINTS 
 
 class Command(BaseCommand):
     """
