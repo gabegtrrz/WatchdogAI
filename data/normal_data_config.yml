@@ -37,7 +37,18 @@ data_generator:
 
     average_price: { type: 'normal', mean: 155, std_dev: 40 }
 
-    procurement_method: { type: 'categorical', values: ['Competitive Bidding', 'Negotiated Procurement', 'Negotiated Procurement', 'Repeat Order', 'Negotiated Procurement', 'Direct Contracting'], weights: [0.675, 0.225, 0.075, 0.03, 0.005, 0.005] }
+    procurement_method_name: { 
+       type: 'categorical', 
+       values: [
+           'Competitive Bidding', 
+           'Negotiated Procurement (Small Value Procurement)', 
+           'Negotiated Procurement (Agency-to-Agency)', 
+           'Repeat Order', 
+           'Negotiated Procurement (Two Failed Biddings)', 
+           'Direct Contracting'
+       ], 
+       weights: [0.66, 0.225, 0.075, 0.03, 0.005, 0.005] 
+   }
 
     supplier: { type: 'categorical', values: ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D'], weights: [0.4, 0.3, 0.2, 0.1] }
 

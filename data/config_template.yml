@@ -50,14 +50,29 @@ data_generator:
 
     # --- Procurement & Supplier ---
     # Procurement methods with realistic frequency weights based on Philippine procurement practices:
-    # - Competitive Bidding: 67.5% (standard method for most planned projects)
+    # - Competitive Bidding: 66% (standard method for most planned projects)
     # - Negotiated Procurement (Small Value): 22.5% (routine consumables, minor equipment)
     # - Negotiated Procurement (Agency-to-Agency): 7.5% (common-use supplies from PS-DBM)
     # - Repeat Order: 3% (additional units of previously procured items)
     # - Negotiated Procurement (Two Failed Biddings): 0.5% (rare contingency)
     # - Direct Contracting: 0.5% (very rare, proprietary items only)
-    procurement_method: { type: 'categorical', values: ['Competitive Bidding', 'Negotiated Procurement (Small Value Procurement)', 'Negotiated Procurement (Agency-to-Agency)', 'Repeat Order', 'Negotiated Procurement (Two Failed Biddings)', 'Direct Contracting'], weights: [0.675, 0.225, 0.075, 0.03, 0.005, 0.005] }
+    procurement_method_name: { 
+       type: 'categorical', 
+       values: [
+           'Competitive Bidding', 
+           'Negotiated Procurement (Small Value Procurement)', 
+           'Negotiated Procurement (Agency-to-Agency)', 
+           'Repeat Order', 
+           'Negotiated Procurement (Two Failed Biddings)', 
+           'Direct Contracting'
+       ], 
+       weights: [0.66, 0.225, 0.075, 0.03, 0.005, 0.005] 
+   }
+    
+    # --- Supplier ---
     supplier: { type: 'categorical', values: ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D'], weights: [0.4, 0.3, 0.2, 0.1] } # `weights` are optional.
+    
+    # --- Procurement Officer ---
     procurement_officer: { type: 'categorical', values: ['Jodi Marie Sta. Maria', 'Coco Martin Dela Cruz', 'Bea Alonzo Valera', 'Liza Soberano Reyes', 'Carlo Aquino Santos', 'Regine Velasquez Alcasid', 'John Lloyd Cruz Miranda', 'Anne Curtis Smith', 'Piolo Pascual Go', 'Nadine Lustre Panganiban'] }
 
     # --- Dates ---
