@@ -18,11 +18,10 @@ class Command(BaseCommand):
         # Define the procurement methods
         procurement_methods = [
             'Competitive Bidding',
-            'Negotiated Procurement',
             'Negotiated Procurement (Small Value Procurement)',
             'Negotiated Procurement (Agency-to-Agency)',
-            'Negotiated Procurement (Two Failed Biddings)',
             'Repeat Order',
+            'Negotiated Procurement (Two Failed Biddings)',
             'Direct Contracting'
         ]
         

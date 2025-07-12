@@ -28,7 +28,7 @@ class SuspiciousOverpricing:
         # Use np.random for more realistic, non-uniform anomalies.
         record['unit_purchase_price'] *= np.random.uniform(7.5, 12.5)
         record['supplier'] = 'Premium Imports LLC'
-        record['procurement_method'] = 'Direct Contracting' # Avoids competitive bidding
+        record['procurement_method_name'] = 'Direct Contracting' # Avoids competitive bidding
         return record
 
 class UnusualBulkOrder:
