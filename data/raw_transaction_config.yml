@@ -1,0 +1,46 @@
+# Configuration for generating raw transaction data
+data_generator:
+  n_samples: 5000
+  random_state: 42
+  anomaly_fraction: 0.03
+  
+  # --- Output Configuration ---
+  # Defines the sub-folder where the output files will be saved.
+  # This folder will be created inside the directory of this config file.
+  output_folder: "generated_data" 
+  
+  # --- Source for Item Descriptions ---
+  # Path is relative to the project root.
+  item_source_file: "data/lab_equipment.txt"
+
+  # --- Rules for Generating Raw Transaction Fields ---
+  # These rules map directly to the fields in the Transaction model.
+  field_rules:
+    project_name: { type: 'categorical', values: ['AghamYaman Labs Project', 'DepEd Lingap Labs Project', 'DepEd Likha-Agham Project'] }
+    end_user_unit: { type: 'fixed', value: 'DEPED - Division of City Schools' }
+    project_description: { type: 'faker', provider: 'catch_phrase' }
+    
+    # item_name is sourced from the item_source_file
+    
+    quantity: { type: 'log-normal', mean: 3, std_dev: 1 }
+    unit_purchase_price: { type: 'normal', mean: 150, std_dev: 45 }
+    average_price: { type: 'normal', mean: 155, std_dev: 40 }
+    # approved_budget will be calculated as 15-22% above average_price
+
+    procurement_method: { type: 'categorical', values: ['Public Bidding', 'Direct Contracting', 'Shopping', 'Limited Source Bidding'] }
+    
+    # We'll use a simple, weighted list for suppliers.
+    supplier: { type: 'categorical', values: ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D'], weights: [0.4, 0.3, 0.2, 0.1] }
+    
+    procurement_officer: { type: 'faker', provider: 'name' }
+    
+    # invoice_number and payment_receipt_number are generated automatically
+    
+    transaction_date: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
+
+  # --- Rules for Injecting Anomalies into Raw Fields ---
+  anomaly_rules:
+    - { field: 'unit_purchase_price', type: 'extreme_value', factor: 15.0 }
+    - { field: 'quantity', type: 'extreme_value', factor: 20.0 }
+    - { field: 'supplier', type: 'fixed_value', value: 'Ultra-Tech Solutions Inc.' } # A rare, potentially suspicious supplier
+    - { field: 'approved_budget', type: 'extreme_value', factor: 0.05 } # Unusually low budget 
