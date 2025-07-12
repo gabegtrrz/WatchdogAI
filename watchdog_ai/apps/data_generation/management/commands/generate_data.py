@@ -307,15 +307,17 @@ class Command(BaseCommand):
         # Get all unique items in the DataFrame
         unique_items = df['item_name'].unique()
         
-        # Query the database for scraped prices
+        # Query the database for scraped prices (case-insensitive matching)
+        # Create a case-insensitive mapping for matching
         scraped_prices = ItemAveragePrice.objects.filter(
-            item_name__in=unique_items,
             date=today
         ).values('item_name', 'average_price')
         
-        # Create the mapping
+        # Create the mapping with case-insensitive keys
+        item_price_map = {}
         for price_record in scraped_prices:
-            item_price_map[price_record['item_name']] = price_record['average_price']
+            # Store with uppercase key for case-insensitive matching
+            item_price_map[price_record['item_name'].upper()] = price_record['average_price']
         
         # Track statistics
         found_count = 0
@@ -324,8 +326,10 @@ class Command(BaseCommand):
         # Apply prices to the DataFrame
         average_prices = []
         for item_name in df['item_name']:
-            if item_name in item_price_map:
-                average_prices.append(float(item_price_map[item_name]))
+            # Convert to uppercase for case-insensitive matching
+            item_name_upper = item_name.upper()
+            if item_name_upper in item_price_map:
+                average_prices.append(float(item_price_map[item_name_upper]))
                 found_count += 1
             else:
                 # Set to NaN (blank) if no scraped price is available
