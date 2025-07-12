@@ -144,6 +144,33 @@ class Transaction(models.Model):
         help_text="Payment receipt number for this transaction."
     )
 
+    # --- Procurement Timeline ---
+    invitation_to_bid_posting_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date the Invitation to Bid was posted, announcing the procurement to attract bidders."
+    )
+    bid_submission_deadline = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Deadline for bidders to submit their proposals."
+    )
+    bid_opening_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date when bids were publicly opened and reviewed."
+    )
+    notice_of_award_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date the Notice of Award was issued to the winning bidder."
+    )
+    contract_signing_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date the formal agreement (contract) was signed between the procuring entity and the supplier."
+    )
+
     # --- Timestamps ---
     transaction_date = models.DateField(
         null=False, 
@@ -172,7 +199,7 @@ class Transaction(models.Model):
         help_text="Error message if blockchain integration failed."
     )
     blockchain_retry_count = models.IntegerField(
-        default=0,
+        default=0, # type: ignore
         help_text="Number of times blockchain integration has been retried."
     )
     last_blockchain_attempt = models.DateTimeField(
@@ -211,6 +238,11 @@ class Transaction(models.Model):
             'procurement_officer': self.procurement_officer,
             'invoice_number': self.invoice_number,
             'payment_receipt_number': self.payment_receipt_number,
+            'invitation_to_bid_posting_date': str(self.invitation_to_bid_posting_date) if self.invitation_to_bid_posting_date else None,
+            'bid_submission_deadline': str(self.bid_submission_deadline) if self.bid_submission_deadline else None,
+            'bid_opening_date': str(self.bid_opening_date) if self.bid_opening_date else None,
+            'notice_of_award_date': str(self.notice_of_award_date) if self.notice_of_award_date else None,
+            'contract_signing_date': str(self.contract_signing_date) if self.contract_signing_date else None,
             'transaction_date': str(self.transaction_date),
             'created_at': str(self.created_at) if self.created_at else None, # included created_at for full data representation, more secure if altered
         }
