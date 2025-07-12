@@ -159,20 +159,45 @@ class Command(BaseCommand):
         # --- Data Cleaning & Type Enforcement (BEFORE derived calculations) ---
         # Convert negative values to positive for price fields
         df['unit_purchase_price'] = df['unit_purchase_price'].round(4).abs()
-        df['average_price'] = df['average_price'].round(2).abs()
         df['quantity'] = df['quantity'].round().abs().clip(lower=1).astype(int)
 
-        # --- Calculate approved_budget as 15-22% above average_price ---
+        # --- Handle average_price with possibility of empty values ---
         if 'average_price' in df.columns:
-            # Generate random percentage between 15% and 22%
-            budget_markup = np.random.uniform(0.15, 0.22, size=n_samples)
-            df['approved_budget'] = (df['average_price'] * (1 + budget_markup)).round(2)
+            # Allow some records to have empty average_price (randomly set ~10% to NaN)
+            empty_fraction = 0.1
+            empty_indices = np.random.choice(df.index, size=int(n_samples * empty_fraction), replace=False)
+            df.loc[empty_indices, 'average_price'] = np.nan
+            
+            # For non-empty values, ensure they are positive and rounded
+            non_empty_mask = df['average_price'].notna()
+            if non_empty_mask.any():
+                df.loc[non_empty_mask, 'average_price'] = df.loc[non_empty_mask, 'average_price'].round(2).abs()
 
-        # --- Final safety check: ensure all price fields are positive ---
+        # --- Calculate approved_budget with fallback to unit_purchase_price ---
+        if 'unit_purchase_price' in df.columns:
+            budget_markup = np.random.uniform(0.15, 0.22, size=n_samples)
+            df['approved_budget'] = np.nan
+
+            # Primary source: average_price, if it exists and is not null
+            if 'average_price' in df.columns:
+                primary_mask = df['average_price'].notna()
+                if primary_mask.any():
+                    df.loc[primary_mask, 'approved_budget'] = (df.loc[primary_mask, 'average_price'] * (1 + budget_markup[primary_mask])).round(2)
+
+            # Backup source: unit_purchase_price, for all records where approved_budget is still NaN
+            backup_mask = df['approved_budget'].isna()
+            if backup_mask.any():
+                df.loc[backup_mask, 'approved_budget'] = (df.loc[backup_mask, 'unit_purchase_price'] * (1 + budget_markup[backup_mask])).round(2)
+        else:
+            self.stdout.write(self.style.WARNING("WARNING: 'unit_purchase_price' not found. Skipping 'approved_budget' calculation.")) # type: ignore
+
+        # --- Final safety check: ensure all price fields are positive (only for non-empty values) ---
         price_fields = ['unit_purchase_price', 'average_price', 'approved_budget']
         for field in price_fields:
             if field in df.columns:
-                df[field] = df[field].abs()
+                non_empty_mask = df[field].notna()
+                if non_empty_mask.any():
+                    df.loc[non_empty_mask, field] = df.loc[non_empty_mask, field].abs()
 
         df = self._rearrange_columns(df)
 

@@ -1,0 +1,2 @@
+data enrichment is currently commented out in transaction_management/views.py.
+This is done for dev testing other components.
