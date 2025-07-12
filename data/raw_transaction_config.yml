@@ -38,9 +38,13 @@ data_generator:
     
     transaction_date: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
 
-  # --- Rules for Injecting Anomalies into Raw Fields ---
-  anomaly_rules:
-    - { field: 'unit_purchase_price', type: 'extreme_value', factor: 15.0 }
-    - { field: 'quantity', type: 'extreme_value', factor: 20.0 }
-    - { field: 'supplier', type: 'fixed_value', value: 'Ultra-Tech Solutions Inc.' } # A rare, potentially suspicious supplier
-    - { field: 'approved_budget', type: 'extreme_value', factor: 0.05 } # Unusually low budget 
+  # ----------------------------------------------------------------------------
+  # --- Anomaly Generation ---
+  # This section defines which anomaly scenarios to use. The logic for each
+  # scenario is defined as a Python class in `anomaly_definitions.py`.
+  # The weights are taken from the class definitions in that file.
+  # ----------------------------------------------------------------------------
+  active_anomalies:
+    - "Suspicious Overpricing"
+    - "Unusual Bulk Order"
+    - "End of Year Rush" 

@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from django.core.management.base import BaseCommand, CommandError
 from faker import Faker
+from data_generation.anomaly_definitions import ANOMALY_BLUEPRINTS # Import the blueprints
 
 class Command(BaseCommand):
     """
@@ -139,63 +140,37 @@ class Command(BaseCommand):
         return df
 
     def _inject_anomalies(self, df, config):
-        """Adds an 'is_anomaly' column and injects anomalies based on rules."""
+        """Applies anomaly blueprints to a fraction of the DataFrame."""
         df['is_anomaly'] = 0
         n_anomalies = int(len(df) * config['anomaly_fraction'])
-        if n_anomalies <= 0:
-            self.stdout.write("Anomaly fraction is too low; no anomalies will be injected.")
+        if n_anomalies == 0:
+            self.stdout.write("Anomaly fraction is zero; no anomalies will be injected.")
             return df
 
+        # --- Filter to only use blueprints listed in the YAML config ---
+        active_blueprint_names = config.get('active_anomalies', [])
+        active_blueprints = [bp for bp in ANOMALY_BLUEPRINTS if bp.name in active_blueprint_names]
+        
+        if not active_blueprints:
+            self.stdout.write("No active anomaly blueprints found in config. Skipping injection.")
+            return df
+
+        # --- Normalize weights of active blueprints so they sum to 1 ---
+        total_weight = sum(bp.weight for bp in active_blueprints)
+        probabilities = [bp.weight / total_weight for bp in active_blueprints]
+
+        # --- Select anomaly indices and apply blueprints ---
         anomaly_indices = np.random.choice(df.index, size=n_anomalies, replace=False)
         df.loc[anomaly_indices, 'is_anomaly'] = 1
 
-        anomaly_rules = config.get('anomaly_rules', [])
-        if not anomaly_rules:
-            self.stdout.write("No anomaly rules found in configuration.")
-            return df
-
-        for rule in anomaly_rules:
-            # Handle both 'feature' and 'field' keys for backward compatibility
-            field_name = rule.get('field') or rule.get('feature')
-            if not field_name:
-                self.stdout.write("WARNING: Anomaly rule missing 'field' or 'feature' key. Skipping rule.")
-                continue
+        # For each selected anomaly, randomly choose a blueprint and apply it
+        for idx in anomaly_indices:
+            # Choose a blueprint based on the normalized weights
+            chosen_blueprint = np.random.choice(active_blueprints, p=probabilities)
             
-            if field_name not in df.columns:
-                self.stdout.write(f"WARNING: Field '{field_name}' from anomaly rules not found in data. Skipping.")
-                continue
-            
-            rule_type = rule.get('type')
-            if not rule_type:
-                self.stdout.write(f"WARNING: Anomaly rule for '{field_name}' missing 'type'. Skipping.")
-                continue
+            # Apply the logic from the chosen blueprint's class
+            df.loc[idx] = chosen_blueprint.apply(df.loc[idx])
 
-            # Apply the anomaly rule to a subset of the anomaly indices
-            subset_size = max(1, int(len(anomaly_indices) / len(anomaly_rules)))
-            subset_anomaly_indices = np.random.choice(anomaly_indices, size=subset_size, replace=False)
-
-            try:
-                if rule_type == 'extreme_value':
-                    factor = rule.get('factor')
-                    if factor is None:
-                        self.stdout.write(f"WARNING: 'extreme_value' rule for '{field_name}' missing 'factor'. Skipping.")
-                        continue
-                    df.loc[subset_anomaly_indices, field_name] *= factor
-                
-                elif rule_type == 'fixed_value':
-                    value = rule.get('value')
-                    if value is None:
-                        self.stdout.write(f"WARNING: 'fixed_value' rule for '{field_name}' missing 'value'. Skipping.")
-                        continue
-                    df.loc[subset_anomaly_indices, field_name] = value
-                
-                else:
-                    self.stdout.write(f"WARNING: Unknown anomaly rule type '{rule_type}' for '{field_name}'. Skipping.")
-                    
-            except Exception as e:
-                self.stdout.write(f"WARNING: Error applying anomaly rule to '{field_name}': {e}. Skipping.")
-                continue
-        
         return df
 
     def _save_output_files(self, df_raw, df_labeled, config_path, config):

@@ -57,18 +57,12 @@ data_generator:
     transaction_date: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
 
   # ----------------------------------------------------------------------------
-  # --- Anomaly Injection Rules ---
-  # These rules modify a percentage of normal records to make them anomalous.
+  # --- Anomaly Generation ---
+  # This section defines which anomaly scenarios to use. The logic for each
+  # scenario is defined as a Python class in `anomaly_definitions.py`.
+  # The weights are taken from the class definitions in that file.
   # ----------------------------------------------------------------------------
-  anomaly_rules:
-    # Example 1: Make the quantity unusually high.
-    - { field: 'quantity', type: 'extreme_value', factor: 20.0 }
-
-    # Example 2: Make the unit price extremely high.
-    - { field: 'unit_purchase_price', type: 'extreme_value', factor: 15.0 }
-
-    # Example 3: Force a transaction to use a specific, rare supplier.
-    - { field: 'supplier', type: 'fixed_value', value: 'Anomalous Supplier Inc.' }
-
-    # Example 4: Make the approved budget unusually low compared to the average price.
-    - { field: 'approved_budget', type: 'extreme_value', factor: 0.05 } 
+  active_anomalies:
+    - "Suspicious Overpricing"
+    - "Unusual Bulk Order"
+    - "End of Year Rush" 
