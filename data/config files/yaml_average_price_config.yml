@@ -1,0 +1,62 @@
+# Configuration for generating data WITH average_price from YAML rules
+data_generator:
+  n_samples: 500
+  random_state: 42
+  anomaly_fraction: 0.03
+  
+  # --- Output Configuration ---
+  output_folder: "generated_data_yaml_avg_price" 
+  
+  # --- Source for Item Descriptions ---
+  item_source_file: "data/lab_equipment.txt"
+
+  # --- Average Price Configuration ---
+  # Mode: 'yaml' - Use YAML field_rules to generate average_price
+  average_price:
+    mode: 'yaml'
+    # Unit price variation configuration
+    unit_price_variation:
+      min_factor: 0.85  # Unit price can be 85% of average price
+      max_factor: 1.15  # Unit price can be 115% of average price (default ±15%)
+
+  # --- Rules for Generating Raw Transaction Fields ---
+  field_rules:
+    project_name: { type: 'categorical', values: ['AghamYaman Labs Project', 'DepEd Lingap Labs Project', 'DepEd Likha-Agham Project'] }
+    end_user_unit: { type: 'fixed', value: 'DEPED - Division of City Schools' }
+    project_description: { type: 'faker', provider: 'catch_phrase' }
+    
+    # average_price is included in field_rules when mode is 'yaml'
+    quantity: { type: 'log-normal', mean: 3, std_dev: 1 }
+    unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }
+    average_price: { type: 'log-normal', mean: 5.35, std_dev: 0.25 }
+    # approved_budget will be calculated as 15-22% above average_price
+
+    procurement_method_name: { 
+       type: 'categorical', 
+       values: [
+           'Competitive Bidding', 
+           'Negotiated Procurement (Small Value Procurement)', 
+           'Negotiated Procurement (Agency-to-Agency)', 
+           'Repeat Order', 
+           'Negotiated Procurement (Two Failed Biddings)', 
+           'Direct Contracting'
+       ], 
+       weights: [0.66, 0.225, 0.075, 0.03, 0.005, 0.005] 
+   }
+    
+    supplier: { type: 'categorical', values: ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D'], weights: [0.4, 0.3, 0.2, 0.1] }
+    
+    procurement_officer: { type: 'categorical', values: ['Jodi Marie Sta. Maria', 'Coco Martin Dela Cruz', 'Bea Alonzo Valera', 'Liza Soberano Reyes', 'Carlo Aquino Santos', 'Regine Velasquez Alcasid', 'John Lloyd Cruz Miranda', 'Anne Curtis Smith', 'Piolo Pascual Go', 'Nadine Lustre Panganiban'] }
+    
+    transaction_date: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
+
+  # --- Anomaly Generation ---
+  active_anomalies:
+    - "Suspicious Overpricing"
+    - "Unusual Bulk Order"
+    - "End of Year Rush"
+    - "Compressed Timeline"
+    - "Weekend Activity"
+    - "Insufficient Bidding Period"
+    - "Delayed Award Notice"
+    - "Premature Contract Signing" 
