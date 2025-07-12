@@ -88,6 +88,7 @@ class Command(BaseCommand):
 
         # Pre-generate choices for fields that use it to avoid redundant Faker calls
         pre_generated_choices = {}
+        
         for field, rule in field_rules.items():
             rule_type = rule.get('type')
             try:
@@ -201,7 +202,7 @@ class Command(BaseCommand):
             
             
             # --- Procurement Process ---
-            'procurement_method',
+            'procurement_method_name',
             'supplier',
             'procurement_officer',
             
@@ -261,7 +262,10 @@ class Command(BaseCommand):
             chosen_blueprint = np.random.choice(active_blueprints, p=probabilities)
             
             # Apply the logic from the chosen blueprint's class
-            df.loc[idx] = chosen_blueprint.apply(df.loc[idx])
+            # Get the record as a copy, modify it, then assign back
+            record = df.loc[idx].copy()
+            modified_record = chosen_blueprint.apply(record)
+            df.loc[idx] = modified_record
 
         return df
 
