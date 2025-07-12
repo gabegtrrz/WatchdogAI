@@ -211,19 +211,6 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
             except InvalidOperation:
                 errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget must be a valid number.'})
 
-        # --- Validate 'average_price' (required, must be positive) ---
-        raw_average_price = row.get('average_price')
-        if pd.isna(raw_average_price) or str(raw_average_price).strip() == '':
-            errors_in_row.append({'field': 'average_price', 'error': 'Average price is required and cannot be blank.'})
-        else:
-            try:
-                average_price = Decimal(str(raw_average_price))
-                if average_price <= 0:
-                    errors_in_row.append({'field': 'average_price', 'error': 'Average price must be a positive number.'})
-                else:
-                    cleaned_row_data['average_price'] = average_price
-            except InvalidOperation:
-                errors_in_row.append({'field': 'average_price', 'error': 'Average price must be a valid number.'})
 
         # --- Validate 'procurement_officer' (required) ---
         raw_procurement_officer = row.get('procurement_officer')
