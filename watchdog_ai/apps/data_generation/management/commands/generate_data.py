@@ -41,7 +41,7 @@ class Command(BaseCommand):
         config_path = options['config_path']
 
         # --- 1. Load Configuration & Items ---
-        self.stdout.write(self.style.SUCCESS("Loading configuration..."))
+        self.stdout.write(self.style.SUCCESS("Loading configuration..."))  # type: ignore
         config, items = self._load_config_and_items(config_path)
 
         # --- 2. Initialize & Generate ---
@@ -53,11 +53,11 @@ class Command(BaseCommand):
 
             Faker.seed(random_state)
 
-        self.stdout.write(self.style.SUCCESS("Generating raw transaction data..."))
+        self.stdout.write(self.style.SUCCESS("Generating raw transaction data..."))  # type: ignore
         df = self._generate_raw_transactions(config, items, n_samples)
 
         # --- 3. Inject Anomalies ---
-        self.stdout.write(self.style.SUCCESS("Injecting anomalies..."))
+        self.stdout.write(self.style.SUCCESS("Injecting anomalies..."))  # type: ignore
         df_with_labels = self._inject_anomalies(df.copy(), config)
 
         # --- 4. Save Outputs ---
@@ -72,10 +72,12 @@ class Command(BaseCommand):
             raise CommandError(f"Could not load or parse configuration file: {e}")
 
         try:
-            with open(config['item_source_file'], 'r') as f:
+            with open(config['item_source_file'], 'r', encoding='utf-8') as f:
                 items = [line.strip() for line in f if line.strip()]
         except FileNotFoundError:
             raise CommandError(f"Item source file not found at: {config['item_source_file']}")
+        except UnicodeDecodeError as e:
+            raise CommandError(f"Error reading item source file encoding: {e}. Please ensure the file is UTF-8 encoded.")
         
         return config, items
 
@@ -277,8 +279,8 @@ class Command(BaseCommand):
 
         # Save raw data (without the is_anomaly column)
         df_raw.to_csv(raw_path, index=False)
-        self.stdout.write(self.style.SUCCESS(f"Successfully saved raw data to: {raw_path}"))
+        self.stdout.write(self.style.SUCCESS(f"Successfully saved raw data to: {raw_path}"))  # type: ignore
 
         # Save labeled data
         df_labeled.to_csv(labeled_path, index=False)
-        self.stdout.write(self.style.SUCCESS(f"Successfully saved labeled data to: {labeled_path}")) 
+        self.stdout.write(self.style.SUCCESS(f"Successfully saved labeled data to: {labeled_path}"))  # type: ignore 
