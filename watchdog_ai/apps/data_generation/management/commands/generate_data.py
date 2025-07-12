@@ -14,6 +14,12 @@ class Command(BaseCommand):
     This command reads a YAML configuration file to produce realistic transaction
     data suitable for database population and for training a separate feature
     engineering component. It does NOT perform feature engineering itself.
+
+    -----------------
+    Usage:
+    python manage.py generate_data <path_to_config.yml>
+    -----------------
+
     """
     help = 'Generates simulated raw procurement transaction data from a YAML configuration file.'
 

@@ -1,0 +1,61 @@
+# ----------------------------------------------------------------------------
+# TEMPLATE FOR PROCUREMENT DATA GENERATOR
+# ----------------------------------------------------------------------------
+#
+# Instructions:
+# 1. Copy this file to a new name (e.g., `my_dataset_config.yml`).
+# 2. Edit the parameters below to define your desired dataset.
+# 3. Run the generator with: `python manage.py generate_data path/to/your_config.yml`
+#
+# ----------------------------------------------------------------------------
+
+data_generator:
+  # --- Main Configuration ---
+  n_samples: 5000         # Number of records (rows) to generate.
+  random_state: 42          # Seed for reproducibility. Use a different number for a different dataset.
+  anomaly_fraction: 0.03    # Percentage of records to modify into anomalies (e.g., 0.03 = 3%).
+  
+  # --- Output & Source Files ---
+  output_folder: "generated_data" # Name of the sub-folder where the output CSVs will be saved.
+  item_source_file: "data/lab_equipment.txt" # Path to a text file containing one item name per line.
+
+  # ----------------------------------------------------------------------------
+  # --- Field Generation Rules ---
+  # Defines how each column in the output CSV is created.
+  # ----------------------------------------------------------------------------
+  field_rules:
+    # --- Project Information ---
+    project_name: { type: 'categorical', values: ['AghamYaman Labs Project', 'DepEd Lingap Labs Project', 'DepEd Likha-Agham Project'] }
+    end_user_unit: { type: 'fixed', value: 'DEPED - Division of City Schools' }
+    project_description: { type: 'faker', provider: 'catch_phrase' } # Generates a random "business-speak" phrase.
+
+    # --- Pricing & Quantity ---
+    # `approved_budget` is calculated automatically as 15-22% above `average_price`.
+    quantity: { type: 'log-normal', mean: 3, std_dev: 1 } # `log-normal` is good for values that can't be negative.
+    unit_purchase_price: { type: 'normal', mean: 150, std_dev: 45 } # `normal` (bell curve) distribution.
+    average_price: { type: 'normal', mean: 155, std_dev: 40 }
+
+    # --- Procurement & Supplier ---
+    procurement_method: { type: 'categorical', values: ['Public Bidding', 'Direct Contracting', 'Shopping', 'Limited Source Bidding'] }
+    supplier: { type: 'categorical', values: ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D'], weights: [0.4, 0.3, 0.2, 0.1] } # `weights` are optional.
+    procurement_officer: { type: 'faker', provider: 'name' } # Generates a random name.
+
+    # --- Dates ---
+    transaction_date: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
+
+  # ----------------------------------------------------------------------------
+  # --- Anomaly Injection Rules ---
+  # These rules modify a percentage of normal records to make them anomalous.
+  # ----------------------------------------------------------------------------
+  anomaly_rules:
+    # Example 1: Make the quantity unusually high.
+    - { field: 'quantity', type: 'extreme_value', factor: 20.0 }
+
+    # Example 2: Make the unit price extremely high.
+    - { field: 'unit_purchase_price', type: 'extreme_value', factor: 15.0 }
+
+    # Example 3: Force a transaction to use a specific, rare supplier.
+    - { field: 'supplier', type: 'fixed_value', value: 'Anomalous Supplier Inc.' }
+
+    # Example 4: Make the approved budget unusually low compared to the average price.
+    - { field: 'approved_budget', type: 'extreme_value', factor: 0.05 } 
