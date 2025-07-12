@@ -51,7 +51,7 @@ data_generator:
     # --- Procurement & Supplier ---
     procurement_method: { type: 'categorical', values: ['Public Bidding', 'Direct Contracting', 'Shopping', 'Limited Source Bidding'] }
     supplier: { type: 'categorical', values: ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D'], weights: [0.4, 0.3, 0.2, 0.1] } # `weights` are optional.
-    procurement_officer: { type: 'faker', provider: 'name' } # Generates a random name.
+    procurement_officer: { type: 'categorical', values: ['Jodi Marie Sta. Maria', 'Coco Martin Dela Cruz', 'Bea Alonzo Valera', 'Liza Soberano Reyes', 'Carlo Aquino Santos', 'Regine Velasquez Alcasid', 'John Lloyd Cruz Miranda', 'Anne Curtis Smith', 'Piolo Pascual Go', 'Nadine Lustre Panganiban'] }
 
     # --- Dates ---
     # `transaction_date` is the only date field that needs to be configured.
@@ -73,4 +73,4 @@ data_generator:
     - "Weekend Activity"
     - "Insufficient Bidding Period"
     - "Delayed Award Notice"
-    - "Premature Contract Signing" 
+    - "Premature Contract Signing"
