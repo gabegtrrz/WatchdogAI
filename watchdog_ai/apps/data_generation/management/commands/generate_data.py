@@ -166,7 +166,68 @@ class Command(BaseCommand):
         df['average_price'] = df['average_price'].round(2).clip(lower=0)
         df['quantity'] = df['quantity'].round().clip(lower=1).astype(int)
 
+        df = self._rearrange_columns(df)
+
         return df
+
+    def _rearrange_columns(self, df):
+        """
+        Arranges DataFrame columns in a logical, readable order.
+        Follows the natural flow of a procurement transaction.
+        """
+        # Define the desired column order
+        column_order = [
+            # --- Transaction Identification ---
+            'transaction_id',
+            'transaction_date',
+            'invoice_number',
+            'payment_receipt_number',
+            
+            # --- Project Information ---
+            'project_name',
+            'end_user_unit', 
+            'project_description',
+            
+            # --- Item Details ---
+            'item_name',
+            'quantity',
+            
+            # --- Pricing ---
+            'unit_purchase_price',
+            'average_price',
+            'approved_budget',
+            
+            
+            # --- Procurement Process ---
+            'procurement_method',
+            'supplier',
+            'procurement_officer',
+            
+            # --- Procurement Timeline (Chronological) ---
+            'invitation_to_bid_posting_date',
+            'bid_opening_date',
+            'bid_submission_deadline',
+            'notice_of_award_date',
+            'contract_signing_date',
+            
+            # --- System Fields ---
+            'created_at',
+            'blockchain_status',
+            'blockchain_error',
+            'blockchain_retry_count',
+            'last_blockchain_attempt'
+        ]
+        
+        # Get existing columns that are actually in the DataFrame
+        existing_columns = [col for col in column_order if col in df.columns]
+        
+        # Add any remaining columns that weren't in the predefined order
+        remaining_columns = [col for col in df.columns if col not in existing_columns]
+        
+        # Combine and reorder
+        final_column_order = existing_columns + remaining_columns
+        
+        return df[final_column_order]
 
     def _inject_anomalies(self, df, config):
         """Applies anomaly blueprints to a fraction of the DataFrame."""
