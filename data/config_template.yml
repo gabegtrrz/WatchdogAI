@@ -8,11 +8,24 @@
 # 3. Run the generator with: `python manage.py generate_data path/to/your_config.yml`
 #
 # ----------------------------------------------------------------------------
+# -----------------
+# Example YAML Configuration (`config.yml`):
+# -----------------
+
+
+
 
 data_generator:
   # --- Main Configuration ---
   n_samples: 5000         # Number of records (rows) to generate.
-  random_state: 42          # Seed for reproducibility. Use a different number for a different dataset.
+  random_state: 42          
+    # Seed for reproducibility.
+
+    # Same random_state = Same output (reproducible results)
+    # Different random_state = Different output (new dataset)
+    # Using different random_state values guarantees that there is no data leakage between training and testing sets.
+
+
   anomaly_fraction: 0.03    # Percentage of records to modify into anomalies (e.g., 0.03 = 3%).
   
   # --- Output & Source Files ---

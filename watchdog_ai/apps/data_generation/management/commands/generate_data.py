@@ -47,7 +47,9 @@ class Command(BaseCommand):
         n_samples = config['n_samples']
         random_state = config.get('random_state')
         if random_state:
-            np.random.seed(random_state)
+            np.random.seed(random_state) # setting the starting point (the seed) for NumPy's internal pseudo-random number generator.
+
+
             Faker.seed(random_state)
 
         self.stdout.write(self.style.SUCCESS("Generating raw transaction data..."))
