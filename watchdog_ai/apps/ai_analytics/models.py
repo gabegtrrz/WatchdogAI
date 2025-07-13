@@ -145,7 +145,7 @@ class AnomalyReport(models.Model):
     def save(self, *args, **kwargs):
         """Ensure transaction_id is set from the related transaction if available."""
         if self.transaction and not self.transaction_id:
-            self.transaction_id = str(self.transaction_id)
+            self.transaction_id = self.transaction.transaction_id
         super().save(*args, **kwargs)
     
     @property
