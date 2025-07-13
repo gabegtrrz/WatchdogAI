@@ -113,7 +113,8 @@ class Command(BaseCommand):
                 elif rule_type == 'date_range':
                     start = datetime.date.fromisoformat(rule['start_date'])
                     end = datetime.date.fromisoformat(rule['end_date'])
-                    data[field] = [self.faker.date_between(start_date=start, end_date=end) for _ in range(n_samples)]
+                    # Generate office day dates (Monday to Friday) for normal transactions
+                    data[field] = self._generate_office_day_dates(start, end, n_samples)
                 elif rule_type == 'fixed':
                     # For fields that should have the same value for all records
                     data[field] = [rule['value'] for _ in range(n_samples)]
@@ -236,6 +237,37 @@ class Command(BaseCommand):
 
         return df
 
+    def _generate_office_day_dates(self, start_date, end_date, n_samples):
+        """
+        Generates random dates that fall on office days (Monday to Friday).
+        
+        Args:
+            start_date: Start date for the range
+            end_date: End date for the range
+            n_samples: Number of dates to generate
+            
+        Returns:
+            List of datetime.date objects that fall on weekdays
+        """
+        # Generate all possible dates in the range
+        all_dates = []
+        current_date = start_date
+        while current_date <= end_date:
+            # Check if it's a weekday (Monday=0, Sunday=6)
+            if current_date.weekday() < 5:  # Monday to Friday
+                all_dates.append(current_date)
+            current_date += datetime.timedelta(days=1)
+        
+        if not all_dates:
+            # Fallback: if no weekdays in range, use any date
+            current_date = start_date
+            while current_date <= end_date:
+                all_dates.append(current_date)
+                current_date += datetime.timedelta(days=1)
+        
+        # Randomly select from available office days
+        return np.random.choice(all_dates, size=n_samples, replace=True)
+
     def _handle_scrape_mode(self, df, items, average_price_config):
         """
         Handles scrape mode by automatically running scraping if needed and processing results.
@@ -341,6 +373,18 @@ class Command(BaseCommand):
         
         # Ensure average_price column exists and set values
         df['average_price'] = average_prices
+        
+        if found_count > 0:
+            # Get indices of records with found prices
+            found_indices = [i for i, price in enumerate(average_prices) if not pd.isna(price)]
+            if found_indices:
+                blank_count = int(len(found_indices) * 0.10)
+                if blank_count > 0:
+                    blank_indices = np.random.choice(found_indices, size=blank_count, replace=False)
+                    for idx in blank_indices:
+                        df.loc[idx, 'average_price'] = np.nan
+                        found_count -= 1
+                        missing_count += 1
         
         self.stdout.write(f"  - Found scraped prices: {found_count}")
         self.stdout.write(f"  - Missing prices (set to blank): {missing_count}")
