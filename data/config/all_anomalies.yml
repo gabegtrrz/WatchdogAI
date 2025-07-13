@@ -11,12 +11,12 @@ data_generator:
   # --- Main Configuration ---
   n_samples: 500
   random_state: 7
-  anomaly_fraction: 0.03
+  anomaly_fraction: 0.30
   
   # --- Output Configuration ---
   # Defines the sub-folder where the output files will be saved.
   # This folder will be created inside the directory of this config file.
-  output_folder: "generated_data" 
+  output_folder: "anomalous_data" 
   
   # --- Source for Item Descriptions ---
   # Path is relative to the project root.
