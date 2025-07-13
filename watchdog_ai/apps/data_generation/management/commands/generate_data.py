@@ -178,8 +178,8 @@ class Command(BaseCommand):
         elif average_price_mode == 'yaml':
             # Use YAML configuration rules (existing behavior)
             if 'average_price' in df.columns:
-                # Allow some records to have empty average_price (randomly set ~10% to NaN)
-                empty_fraction = 0.1
+                # Allow some records to have empty average_price (randomly set ~25% to NaN for normal data)
+                empty_fraction = 0.20  # Increased from 0.1 to 0.25 for more realistic normal data
                 empty_indices = np.random.choice(df.index, size=int(n_samples * empty_fraction), replace=False)
                 df.loc[empty_indices, 'average_price'] = np.nan
                 
