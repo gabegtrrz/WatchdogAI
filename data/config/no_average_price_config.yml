@@ -26,8 +26,32 @@ data_generator:
 
   # --- Rules for Generating Raw Transaction Fields ---
   field_rules:
-    project_name: { type: 'categorical', values: ['AghamYaman Labs Project', 'DepEd Lingap Labs Project', 'DepEd Likha-Agham Project'] }
-    end_user_unit: { type: 'fixed', value: 'DEPED - Division of City Schools' }
+    project_name: { 
+      type: 'categorical', 
+      values: [
+        'AghamYaman Labs Project', 'DepEd Lingap Labs Project', 'DepEd Likha-Agham Project',
+        'Science Lab Enhancement Program', 'Laboratory Equipment Modernization', 'STEM Lab Development Initiative',
+        'Chemistry Lab Upgrade Project', 'Physics Lab Equipment Procurement', 'Biology Lab Enhancement Program',
+        'Science Education Modernization', 'Lab Safety Equipment Project', 'Science Equipment Replacement Program',
+        'STEM Learning Center Development', 'Laboratory Infrastructure Upgrade', 'Science Lab Renovation Project'
+      ] 
+    }
+    
+    end_user_unit: { 
+      type: 'categorical', 
+      values: [
+        'DEPED - Division of City Schools',
+        'DEPED - Division of Provincial Schools',
+        'DEPED - Science and Technology Education Center',
+        'DEPED - Regional Science High School',
+        'DEPED - National Science High School',
+        'DEPED - Special Science Elementary School',
+        'DEPED - Science and Technology School',
+        'DEPED - Laboratory School',
+        'DEPED - Science Education Center',
+        'DEPED - STEM Learning Center'
+      ] 
+    }
     project_description: { type: 'faker', provider: 'catch_phrase' }
     
     # Note: average_price is NOT included in field_rules when mode is 'none'
@@ -49,7 +73,7 @@ data_generator:
        weights: [0.66, 0.225, 0.075, 0.03, 0.005, 0.005] 
    }
     
-    supplier: { type: 'categorical', values: ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D'], weights: [0.4, 0.3, 0.2, 0.1] }
+    supplier: { type: 'faker', provider: 'company' }
     
     procurement_officer: { type: 'categorical', values: ['Jodi Marie Sta. Maria', 'Coco Martin Dela Cruz', 'Bea Alonzo Valera', 'Liza Soberano Reyes', 'Carlo Aquino Santos', 'Regine Velasquez Alcasid', 'John Lloyd Cruz Miranda', 'Anne Curtis Smith', 'Piolo Pascual Go', 'Nadine Lustre Panganiban'] }
     
