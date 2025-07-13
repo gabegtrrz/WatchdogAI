@@ -6,7 +6,9 @@ import pandas as pd
 import numpy as np
 from django.core.management.base import BaseCommand, CommandError
 from faker import Faker
-from apps.data_generation.anomaly_definitions import ANOMALY_BLUEPRINTS 
+from apps.data_generation.anomaly_definitions import ANOMALY_BLUEPRINTS
+from apps.data_augmentation.models import ItemAveragePrice
+from django.utils import timezone 
 
 class Command(BaseCommand):
     """
@@ -39,6 +41,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Main execution logic for the command."""
         config_path = options['config_path']
+        self.config_path = config_path  # Store for use in scrape mode
 
         # --- 1. Load Configuration & Items ---
         self.stdout.write(self.style.SUCCESS("Loading configuration..."))  # type: ignore
@@ -161,46 +164,247 @@ class Command(BaseCommand):
         df['unit_purchase_price'] = df['unit_purchase_price'].round(4).abs()
         df['quantity'] = df['quantity'].round().abs().clip(lower=1).astype(int)
 
-        # --- Handle average_price with possibility of empty values ---
-        if 'average_price' in df.columns:
-            # Allow some records to have empty average_price (randomly set ~10% to NaN)
-            empty_fraction = 0.1
-            empty_indices = np.random.choice(df.index, size=int(n_samples * empty_fraction), replace=False)
-            df.loc[empty_indices, 'average_price'] = np.nan
+        # --- Calculate total_purchase_price ---
+        df['total_purchase_price'] = (df['quantity'] * df['unit_purchase_price']).round(4)
+
+        # --- Handle average_price based on configuration ---
+        average_price_config = config.get('average_price', {})
+        average_price_mode = average_price_config.get('mode', 'none')
+        
+        if average_price_mode == 'none':
+            # Remove average_price column if it exists
+            if 'average_price' in df.columns:
+                df = df.drop('average_price', axis=1)
+        elif average_price_mode == 'yaml':
+            # Use YAML configuration rules (existing behavior)
+            if 'average_price' in df.columns:
+                # Allow some records to have empty average_price (randomly set ~10% to NaN)
+                empty_fraction = 0.1
+                empty_indices = np.random.choice(df.index, size=int(n_samples * empty_fraction), replace=False)
+                df.loc[empty_indices, 'average_price'] = np.nan
+                
+                # For non-empty values, ensure they are positive and rounded
+                non_empty_mask = df['average_price'].notna()
+                if non_empty_mask.sum() > 0:
+                    df.loc[non_empty_mask, 'average_price'] = df.loc[non_empty_mask, 'average_price'].round(2).abs()
             
-            # For non-empty values, ensure they are positive and rounded
-            non_empty_mask = df['average_price'].notna()
-            if non_empty_mask.any():
-                df.loc[non_empty_mask, 'average_price'] = df.loc[non_empty_mask, 'average_price'].round(2).abs()
+            # Derive unit_purchase_price from average_price for yaml mode
+            df = self._derive_unit_price_from_average_price(df, average_price_config)
+        elif average_price_mode == 'scrape':
+            # Automatically run scraping if needed, then get average prices and derive unit_purchase_price
+            # Note: unit_purchase_price should still be defined in field_rules as fallback
+            df = self._handle_scrape_mode(df, items, average_price_config)
+        else:
+            self.stdout.write(f"WARNING: Unknown average_price mode '{average_price_mode}'. Skipping average_price generation.")
+            if 'average_price' in df.columns:
+                df = df.drop('average_price', axis=1)
 
         # --- Calculate approved_budget with fallback to unit_purchase_price ---
-        if 'unit_purchase_price' in df.columns:
-            budget_markup = np.random.uniform(0.15, 0.22, size=n_samples)
-            df['approved_budget'] = np.nan
+        budget_markup = np.random.uniform(0.15, 0.22, size=n_samples)
+        df['approved_budget'] = np.nan
 
-            # Primary source: average_price, if it exists and is not null
-            if 'average_price' in df.columns:
-                primary_mask = df['average_price'].notna()
-                if primary_mask.any():
-                    df.loc[primary_mask, 'approved_budget'] = (df.loc[primary_mask, 'average_price'] * (1 + budget_markup[primary_mask])).round(2)
+        # Primary source: average_price, if it exists and is not null
+        if 'average_price' in df.columns:
+            primary_mask = df['average_price'].notna()
+            if primary_mask.sum() > 0:
+                df.loc[primary_mask, 'approved_budget'] = (df.loc[primary_mask, 'average_price'] * df.loc[primary_mask, 'quantity'] * (1 + budget_markup[primary_mask])).round(2)
 
-            # Backup source: unit_purchase_price, for all records where approved_budget is still NaN
-            backup_mask = df['approved_budget'].isna()
-            if backup_mask.any():
-                df.loc[backup_mask, 'approved_budget'] = (df.loc[backup_mask, 'unit_purchase_price'] * (1 + budget_markup[backup_mask])).round(2)
-        else:
-            self.stdout.write(self.style.WARNING("WARNING: 'unit_purchase_price' not found. Skipping 'approved_budget' calculation.")) # type: ignore
+        # Backup source: unit_purchase_price, for all records where approved_budget is still NaN
+        backup_mask = df['approved_budget'].isna()
+        if backup_mask.sum() > 0 and 'unit_purchase_price' in df.columns:
+            unit_price_mask = df['unit_purchase_price'].notna()
+            valid_backup_mask = backup_mask & unit_price_mask
+            if valid_backup_mask.sum() > 0:
+                df.loc[valid_backup_mask, 'approved_budget'] = (df.loc[valid_backup_mask, 'unit_purchase_price'] * df.loc[valid_backup_mask, 'quantity'] * (1 + budget_markup[valid_backup_mask])).round(2)
+        
+        # If still no approved_budget values, set to NaN
+        if df['approved_budget'].isna().all():
+            self.stdout.write(self.style.WARNING("WARNING: No valid average_price or unit_purchase_price found. approved_budget will be blank.")) # type: ignore
 
         # --- Final safety check: ensure all price fields are positive (only for non-empty values) ---
         price_fields = ['unit_purchase_price', 'average_price', 'approved_budget']
         for field in price_fields:
             if field in df.columns:
                 non_empty_mask = df[field].notna()
-                if non_empty_mask.any():
+                if non_empty_mask.sum() > 0:
                     df.loc[non_empty_mask, field] = df.loc[non_empty_mask, field].abs()
+            else:
+                # If field doesn't exist, create it as NaN (for scrape mode)
+                df[field] = np.nan
 
         df = self._rearrange_columns(df)
 
+        return df
+
+    def _handle_scrape_mode(self, df, items, average_price_config):
+        """
+        Handles scrape mode by automatically running scraping if needed and processing results.
+        Robustly handles cases where scraping returns no results.
+        """
+        self.stdout.write("Handling scrape mode...")
+        
+        # Get today's date for caching
+        today = timezone.now().date()
+        
+        # Check if we already have scraped prices for today
+        existing_prices = ItemAveragePrice.objects.filter(date=today).count() # type: ignore
+        
+        if existing_prices == 0:
+            self.stdout.write("No scraped prices found for today. Running scraping command...")
+            
+            # Import the scrape command
+            from django.core.management import call_command
+            from io import StringIO
+            
+            try:
+                # Capture the output of the scrape command
+                out = StringIO()
+                call_command('scrape_average_prices', self.config_path, stdout=out, stderr=out)
+                
+                # Check if scraping was successful
+                output = out.getvalue()
+                self.stdout.write("Scraping completed. Output:")
+                self.stdout.write(output)
+                
+                # Check if any prices were actually scraped
+                scraped_count = ItemAveragePrice.objects.filter(date=today).count() # type: ignore
+                if scraped_count == 0:
+                    self.stdout.write(self.style.WARNING( # type: ignore
+                        "WARNING: Scraping completed but no prices were found. "
+                        "This could be due to network issues, API limits, or items not found on the platform. "
+                        "Proceeding with blank average_price values."
+                    ))
+                else:
+                    self.stdout.write(f"Successfully scraped {scraped_count} prices.")
+                    
+            except Exception as e:
+                self.stdout.write(self.style.ERROR( # type: ignore
+                    f"ERROR: Failed to run scraping command: {e}. "
+                    "Proceeding with blank average_price values."
+                ))
+        else:
+            self.stdout.write(f"Found {existing_prices} existing scraped prices for today.")
+        
+        # Get average prices from scraped data (handles cases with no results)
+        df = self._get_average_prices_from_scraped_data(df, items)
+        
+        # Derive unit_purchase_price from average_price
+        df = self._derive_unit_price_from_average_price(df, average_price_config)
+        
+        return df
+
+    def _get_average_prices_from_scraped_data(self, df, items):
+        """
+        Gets average prices from the ItemAveragePrice model for items in the DataFrame.
+        Sets average_price to NaN (blank) if no scraped price is available.
+        Robustly handles cases where no scraped prices exist.
+        """
+        self.stdout.write("Getting average prices from scraped data...")
+        
+        # Get today's date for caching
+        today = timezone.now().date()
+        
+        # Create a mapping of item names to their scraped prices
+        item_price_map = {}
+        
+        # Get all unique items in the DataFrame
+        unique_items = df['item_name'].unique()
+        
+        # Query the database for scraped prices (case-insensitive matching)
+        # Create a case-insensitive mapping for matching
+        scraped_prices = ItemAveragePrice.objects.filter( # type: ignore
+            date=today
+        ).values('item_name', 'average_price')
+        
+        # Create the mapping with case-insensitive keys
+        item_price_map = {}
+        for price_record in scraped_prices:
+            # Store with uppercase key for case-insensitive matching
+            item_price_map[price_record['item_name'].upper()] = price_record['average_price']
+        
+        # Track statistics
+        found_count = 0
+        missing_count = 0
+        
+        # Apply prices to the DataFrame
+        average_prices = []
+        for item_name in df['item_name']:
+            # Convert to uppercase for case-insensitive matching
+            item_name_upper = item_name.upper()
+            if item_name_upper in item_price_map:
+                average_prices.append(float(item_price_map[item_name_upper]))
+                found_count += 1
+            else:
+                # Set to NaN (blank) if no scraped price is available
+                average_prices.append(np.nan)
+                missing_count += 1
+        
+        # Ensure average_price column exists and set values
+        df['average_price'] = average_prices
+        
+        self.stdout.write(f"  - Found scraped prices: {found_count}")
+        self.stdout.write(f"  - Missing prices (set to blank): {missing_count}")
+        
+        if found_count == 0:
+            self.stdout.write(self.style.WARNING( # type: ignore
+                "WARNING: No scraped prices found for any items. "
+                "All average_price values will be blank. "
+                "This is normal if scraping failed or items are not available on the platform."
+            ))
+        elif missing_count > 0:
+            self.stdout.write(self.style.WARNING( # type: ignore
+                f"WARNING: {missing_count} items had no scraped prices and will be blank. "
+                "This is normal for some items that may not be available on the platform."
+            ))
+        
+        return df
+
+    def _derive_unit_price_from_average_price(self, df, average_price_config):
+        """
+        Derives unit_purchase_price from average_price with configurable variation.
+        Uses field_rules fallback when average_price is not available.
+        """
+        self.stdout.write("Deriving unit_purchase_price from average_price...")
+        
+        # Get variation configuration from YAML
+        variation_config = average_price_config.get('unit_price_variation', {})
+        min_factor = variation_config.get('min_factor', 0.85)  # Default ±15%
+        max_factor = variation_config.get('max_factor', 1.15)
+        
+        # Ensure unit_purchase_price column exists (from field_rules fallback)
+        if 'unit_purchase_price' not in df.columns:
+            self.stdout.write("  - ERROR: unit_purchase_price not found in field_rules. This is required for fallback.")
+            df['unit_purchase_price'] = np.nan
+            return df
+        
+        # Only process records that have average_price
+        valid_mask = df['average_price'].notna()
+        
+        if valid_mask.sum() == 0:
+            self.stdout.write("  - No valid average_price found. Using field_rules fallback for unit_purchase_price.")
+            # Keep the existing unit_purchase_price from field_rules as fallback
+            return df
+        
+        # Generate unit prices based on average_price with configurable variation
+        variation_factor = np.random.uniform(min_factor, max_factor, size=valid_mask.sum())
+        
+        # Get the average prices for valid records
+        valid_average_prices = df.loc[valid_mask, 'average_price'].values
+        
+        # Calculate unit prices with variation
+        unit_prices = valid_average_prices * variation_factor
+        
+        # Update unit_purchase_price for valid records (derived from average_price)
+        df.loc[valid_mask, 'unit_purchase_price'] = unit_prices.round(4)
+        
+        # For records without average_price, keep the field_rules fallback
+        # (unit_purchase_price already exists from field_rules)
+        
+        variation_percent = int((max_factor - min_factor) * 50)  # Calculate percentage for display
+        self.stdout.write(f"  - Derived unit_purchase_price from average_price for {valid_mask.sum()} records")
+        self.stdout.write(f"  - Used field_rules fallback for {len(df) - valid_mask.sum()} records (no average_price)")
+        self.stdout.write(f"  - Variation range: ±{variation_percent}% from average_price (min: {min_factor}, max: {max_factor})")
+        
         return df
 
     def _rearrange_columns(self, df):
@@ -227,6 +431,7 @@ class Command(BaseCommand):
             
             # --- Pricing ---
             'unit_purchase_price',
+            # 'total_purchase_price',
             'average_price',
             'approved_budget',
             

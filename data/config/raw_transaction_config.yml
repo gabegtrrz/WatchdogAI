@@ -1,7 +1,16 @@
-# Configuration for generating raw transaction data
+# ----------------------------------------------------------------------------
+# CONFIGURATION FOR GENERATING RAW TRANSACTION DATA WITH YAML PRICES
+# ----------------------------------------------------------------------------
+#
+# This configuration demonstrates the 'yaml' mode for average_price.
+# Both average_price and unit_purchase_price are defined in field_rules.
+#
+# ----------------------------------------------------------------------------
+
 data_generator:
+  # --- Main Configuration ---
   n_samples: 500
-  random_state: 42
+  random_state: 7
   anomaly_fraction: 0.03
   
   # --- Output Configuration ---
@@ -13,15 +22,48 @@ data_generator:
   # Path is relative to the project root.
   item_source_file: "data/lab_equipment.txt"
 
+  # --- Average Price Configuration ---
+  # Mode: 'yaml' - Use YAML field_rules to generate average_price (default behavior)
+  average_price:
+    mode: 'yaml'
+    # Unit price variation configuration
+    unit_price_variation:
+      min_factor: 0.85  # Unit price can be 85% of average price
+      max_factor: 1.15  # Unit price can be 115% of average price (default ±15%)
+
   # --- Rules for Generating Raw Transaction Fields ---
   # These rules map directly to the fields in the Transaction model.
   field_rules:
-    project_name: { type: 'categorical', values: ['AghamYaman Labs Project', 'DepEd Lingap Labs Project', 'DepEd Likha-Agham Project'] }
-    end_user_unit: { type: 'fixed', value: 'DEPED - Division of City Schools' }
+    project_name: { 
+      type: 'categorical', 
+      values: [
+        'AghamYaman Labs Project', 'DepEd Lingap Labs Project', 'DepEd Likha-Agham Project',
+        'Science Lab Enhancement Program', 'Laboratory Equipment Modernization', 'STEM Lab Development Initiative',
+        'Chemistry Lab Upgrade Project', 'Physics Lab Equipment Procurement', 'Biology Lab Enhancement Program',
+        'Science Education Modernization', 'Lab Safety Equipment Project', 'Science Equipment Replacement Program',
+        'STEM Learning Center Development', 'Laboratory Infrastructure Upgrade', 'Science Lab Renovation Project'
+      ] 
+    }
+    
+    end_user_unit: { 
+      type: 'categorical', 
+      values: [
+        'DEPED - Division of City Schools',
+        'DEPED - Division of Provincial Schools',
+        'DEPED - Science and Technology Education Center',
+        'DEPED - Regional Science High School',
+        'DEPED - National Science High School',
+        'DEPED - Special Science Elementary School',
+        'DEPED - Science and Technology School',
+        'DEPED - Laboratory School',
+        'DEPED - Science Education Center',
+        'DEPED - STEM Learning Center'
+      ] 
+    }
     project_description: { type: 'faker', provider: 'catch_phrase' }
     
     # item_name is sourced from the item_source_file
-  # !!! MAKE SURE TO USE LOG NORMAL FOR PRICE FIELDS to ensure positive values
+    # !!! MAKE SURE TO USE LOG NORMAL FOR PRICE FIELDS to ensure positive values
     
     quantity: { type: 'log-normal', mean: 3, std_dev: 1 }
     unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }
@@ -41,8 +83,8 @@ data_generator:
        weights: [0.66, 0.225, 0.075, 0.03, 0.005, 0.005] 
    }
     
-    # We'll use a simple, weighted list for suppliers.
-    supplier: { type: 'categorical', values: ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D'], weights: [0.4, 0.3, 0.2, 0.1] }
+    # Generate realistic business names for suppliers
+    supplier: { type: 'faker', provider: 'company' }
     
     procurement_officer: { type: 'categorical', values: ['Jodi Marie Sta. Maria', 'Coco Martin Dela Cruz', 'Bea Alonzo Valera', 'Liza Soberano Reyes', 'Carlo Aquino Santos', 'Regine Velasquez Alcasid', 'John Lloyd Cruz Miranda', 'Anne Curtis Smith', 'Piolo Pascual Go', 'Nadine Lustre Panganiban'] }
     

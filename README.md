@@ -6,28 +6,30 @@ This Django application analyzes procurement transactions for anomalies and reco
 
 ### 30% Includes:
 
-* **Data Generation:** generating simulated data for training the Isolation Forest Model
-* **Web Scraping Module:** scraping item prices from external sources (Amazon), retrieving average price for each item, mechanism for checking if it's up-to-date; and running the scraper if not up-to-date, storing this in JSON format
-* **Initial Simulated Blockchain Module:** an initial implementation of the simulated blockchain, along with its data_structure, its integration as a Django Model for ORM, and its internal services.
-* **Initial Implementation of Transaction Verification and Blockchain Integration Services** 
-* **Inital User Interface:** Providing a view of the Blockchain Ledger, Generated Transactions, and an interface for uploading transactions into the program. (with proper user message capabilities).
+- **Data Generation:** generating simulated data for training the Isolation Forest Model
+- **Web Scraping Module:** scraping item prices from external sources (Amazon), retrieving average price for each item, mechanism for checking if it's up-to-date; and running the scraper if not up-to-date, storing this in JSON format
+- **Initial Simulated Blockchain Module:** an initial implementation of the simulated blockchain, along with its data_structure, its integration as a Django Model for ORM, and its internal services.
+- **Initial Implementation of Transaction Verification and Blockchain Integration Services**
+- **Inital User Interface:** Providing a view of the Blockchain Ledger, Generated Transactions, and an interface for uploading transactions into the program. (with proper user message capabilities).
 
 ## Prerequisites
 
-* **Python:** Version 3.10 or higher recommended (based on project documentation).
-* **pip:** Python package installer.
-* **virtualenv** (Recommended): To create isolated Python environments.
-* **Git**
-  
+- **Python:** Version 3.10 or higher recommended (based on project documentation).
+- **pip:** Python package installer.
+- **virtualenv** (Recommended): To create isolated Python environments.
+- **Git**
+
 ## Setup Instructions
 
 1.  **Clone the Repository:**
+
     ```bash
     git clone https://github.com/gabegtrrz/WatchdogAI.git
-    cd watchdog_ai 
+    cd watchdog_ai
     ```
-    
-    *(If you already have the `watchdog_ai` folder, just navigate into it)*
+
+    _(If you already have the `watchdog_ai` folder, just navigate into it)_
+
     ```bash
     cd path/to/watchdog_ai
     ```
@@ -41,23 +43,22 @@ This Django application analyzes procurement transactions for anomalies and reco
 
     # For macOS/Linux
     python3 -m venv venv
-    source venv/bin/activate 
+    source venv/bin/activate
     ```
 
-4.  **Install Dependencies:**
-  make sure currently in directory containing requirements.txt
-   
+3.  **Install Dependencies:**
+    make sure currently in directory containing requirements.txt
+
     ```bash
-    pip install -r requirements.txt 
+    pip install -r requirements.txt
     ```
-    
 
-5.  **Apply Database Migrations:**
-   
+4.  **Apply Database Migrations:**
+
     This sets up the database tables defined in `viewer/models.py` including `BlockchainTransactionData`.
 
-     Change directory to `watchdog_ai`
-    
+    Change directory to `watchdog_ai`
+
     ```bash
     python manage.py migrate
     ```
@@ -65,6 +66,7 @@ This Django application analyzes procurement transactions for anomalies and reco
 ## Running the Application
 
 1.  **Start the Development Server:**
+
     ```bash
     python manage.py runserver
     ```
@@ -75,33 +77,55 @@ This Django application analyzes procurement transactions for anomalies and reco
 ## How to Interact
 
 1.  **Upload Transaction Data:**
-    * Navigate to the upload page.
-    * Click the "Choose File" button and select your procurement transaction CSV file.
-      
-    * **Required CSV Columns:** The file must contain the columns: `transaction_id`, `item_name`, `quantity`, `procurement_method`, `unit_price`, `average_price`, `supplier`, `procurement_officer`, `transaction_date`.
-    * (A sample file is provided. It's located in `transaction_sample/` folder.
-    * Click the "Upload" button.
-    * Upon successful upload, the transactions will be processed and added to the blockchain ledger. You should see a success message.
+
+    - Navigate to the upload page.
+    - Click the "Choose File" button and select your procurement transaction CSV file.
+    - **Required CSV Columns:** The file must contain the columns: `transaction_id`, `item_name`, `quantity`, `procurement_method`, `unit_price`, `average_price`, `supplier`, `procurement_officer`, `transaction_date`.
+    - (A sample file is provided. It's located in `transaction_sample/` folder.
+    - Click the "Upload" button.
+    - Upon successful upload, the transactions will be processed and added to the blockchain ledger. You should see a success message.
 
 2.  **View Blockchain Ledger:**
-    * Navigate to the blockchain view page.
-    * This page displays the immutable records stored in the `BlockchainTransactionData` table, ordered by block number.
+
+    - Navigate to the blockchain view page.
+    - This page displays the immutable records stored in the `BlockchainTransactionData` table, ordered by block number.
 
 3.  **Generate Simulated Data (via Terminal):**
-    * The project includes a utility for generating sample data.
-    * Open your terminal/command prompt.
-    * Make sure your virtual environment is activated.
-    * Navigate to the `data_utils` directory:
-        ```bash
-        cd watchdog_ai/data_utils 
-        ```
-    * Run the generation script:
-        ```bash
-        python generate_data.py
-        ```
-    * **Output:** Check the script's output messages. Generated CSV files are likely saved within the `watchdog_ai/data_utils/transactions_folder/` directory. You can then upload these generated files via the web interface.
+
+    - The project includes a Django management command for generating sample data with three different average_price modes.
+    - Open your terminal/command prompt.
+    - Make sure your virtual environment is activated.
+    - Navigate to the project root directory:
+      ```bash
+      cd watchdog_ai
+      ```
+
+    **Option A: No Average Price**
+
+    ```bash
+    python manage.py generate_data data/no_average_price_config.yml
+    ```
+
+    **Option B: YAML-Based Average Price (Default)**
+
+    ```bash
+    python manage.py generate_data data/yaml_average_price_config.yml
+    ```
+
+    **Option C: Scraped Average Price (Real Prices) - AUTOMATED**
+
+    ```bash
+    # Single command - scraping runs automatically if needed
+    python manage.py generate_data data/scrape_average_price_config.yml
+    ```
+
+    - **Output:** Generated CSV files are saved in timestamped folders within the `data/` directory. You can then upload these generated files via the web interface.
+    - **Note:** Items without scraped prices will have blank `average_price` values.
+    - **Note:** `unit_purchase_price` is derived from `average_price` with configurable variation.
+    - **Note:** Scraping runs automatically when no cached prices exist for today.
+    - **Documentation:** See `data/AVERAGE_PRICE_USAGE.md` for detailed configuration options.
 
 ## Output Locations
 
-* **Blockchain Data:** Viewed directly in the web application at `/blockchain/`.
-* **Generated Sample Data:** Saved as CSV files in the `watchdog_ai/data_utils/transactions_folder/` directory.
+- **Blockchain Data:** Viewed directly in the web application at `/blockchain/`.
+- **Generated Sample Data:** Saved as CSV files in the `watchdog_ai/data_utils/transactions_folder/` directory.

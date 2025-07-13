@@ -92,6 +92,13 @@ class Transaction(models.Model):
         blank=False,
         help_text="Price per unit of the item being procured."
     )
+    total_purchase_price = models.DecimalField(
+        max_digits=20,
+        decimal_places=4,
+        null=True, # can be null if price or quantity are null
+        blank=True,
+        help_text="Total price for the transaction (quantity * unit_purchase_price)."
+    )
     average_price = models.DecimalField(
         max_digits=15,
         decimal_places=4,
@@ -145,7 +152,7 @@ class Transaction(models.Model):
         help_text="Payment receipt number for this transaction."
     )
 
-    # --- Procurement Timeline ---
+    # --- Procurement Timeline ---CRIT
     invitation_to_bid_posting_date = models.DateField(
         null=True,
         blank=True,
@@ -217,6 +224,15 @@ class Transaction(models.Model):
     def __str__(self):
         return f"Transaction {self.transaction_id} for {self.item_name} ({self.quantity} units)"
 
+    @property
+    def calculated_total_purchase_price(self):
+        """
+        Calculates the total purchase price from quantity and unit price.
+        """
+        if self.quantity is not None and self.unit_purchase_price is not None:
+            return self.quantity * self.unit_purchase_price
+        return None
+        
     def to_dict(self):
         """
         Converts the Transaction object to a dictionary for hashing purposes.
@@ -232,6 +248,7 @@ class Transaction(models.Model):
             'quantity': self.quantity,
             # converting decimal to string for consistent hashing
             'unit_purchase_price': str(self.unit_purchase_price), 
+            'total_purchase_price': str(self.total_purchase_price) if self.total_purchase_price is not None else None,
             'average_price': str(self.average_price) if self.average_price is not None else None,
             # 'procurement_method': self.procurement_method,
             'procurement_method': self.procurement_method.name,
@@ -269,6 +286,9 @@ class Transaction(models.Model):
         # Generate a unique transaction_id if one isn't provided
         if not self.transaction_id:
             self.transaction_id = uuid.uuid4().hex[:32]
+
+        # Calculate total_purchase_price before saving
+        self.total_purchase_price = self.calculated_total_purchase_price
 
         # ensures validation runs on every save.
         self.full_clean()

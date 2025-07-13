@@ -43,3 +43,20 @@ venv/
 
 # ignore deprecated
 deprecated/
+
+# --- Generated Data Files ---
+# Ignore generated CSV files from data generation
+data/generated_data/
+data/*/generated_data/
+data/*/generated_data/*/
+data/*/generated_data/*/*.csv
+
+
+# Ignore scraped data directories
+data/*/normal_data_scraped/
+data/*/iforest_training_data/
+data/*/normal_blank_average/
+
+# Ignore all CSV files in data subdirectories (generated data)
+data/**/*.csv
+
