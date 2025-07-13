@@ -18,13 +18,11 @@ def get_transaction_dataframe():
     """
     Fetches all transactions and converts them into a pandas DataFrame.
     
-    Extracts raw transaction data from the database and structures it
-    for preprocessing. Serves as the data extraction layer
-    between the database and the preprocessing pipeline.
+    Extracts raw transaction data from the database and structures it for preprocessing.
+    Serves as data extraction layer between the database and the preprocessing pipeline.
     
     Returns:
-        pd.DataFrame: Raw transaction data with all necessary columns
-                     for preprocessing and feature engineering.
+        pd.DataFrame: Raw transaction data with all necessary columns for preprocessing and feature engineering.
                      Indexed by transaction_id for easy identification.
     
     Database Fields Extracted:
@@ -84,11 +82,12 @@ def clean_raw_data(df: pd.DataFrame):
     df.rename(columns={'procurement_method__name': 'procurement_method'}, inplace=True)
 
 # --- B. Missing Value Imputation ---
-    # Handle missing numerical values by imputing with median values
+    # Handle missing numerical values by imputing with MEDIAN values
         # Missing values in numerical features can occur due to data entry errors
-        # or incomplete records. Using median imputation preserves the data
-        # distribution while ensuring all numerical features have complete values.
-        # This is a conservative approach that doesn't introduce artificial patterns.
+        # or incomplete records. Using MEDIAN imputation preserves data distribution while ensuring all numerical features have complete values. robust to outliers.
+
+        # This conservative approach doesn't introduce artificial patterns.
+
     numerical_features = ['quantity', 'unit_purchase_price', 'total_purchase_price', 'approved_budget']
     for col in numerical_features:
         if df[col].isnull().any():
@@ -96,11 +95,9 @@ def clean_raw_data(df: pd.DataFrame):
             df[col].fillna(median_val, inplace=True)
 
 # --- C. Data Type Conversion ---
-    # Convert all date columns to datetime objects for temporal analysis
-        # Date columns are essential for detecting timing-based anomalies
-        # such as end-of-year rush spending or suspicious procurement timing.
-        # Using errors='coerce' handles invalid date formats gracefully
-        # by converting them to NaT (Not a Time) rather than failing.
+    # Convert all date columns to datetime objects for analysis
+        # essential for detecting timing-based anomalies such as end-of-year rush spending or suspicious procurement timing.
+        # Using errors='coerce' handles invalid date formats gracefully by converting them to NaT (Not a Time) rather than failing.
     date_features = [
         'transaction_date', 'invitation_to_bid_posting_date', 'bid_submission_deadline',
         'bid_opening_date', 'notice_of_award_date', 'contract_signing_date'
