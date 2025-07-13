@@ -39,13 +39,22 @@ def create_model_features(df: pd.DataFrame):
     # Targets: 'EndOfYearRush', 'WeekendActivity', 'CompressedTimeline', 'BackdatedDocuments'
 
     # Day of week features
+        # Help detect suspicious timing patterns in procurement activities.
     df['contract_signing_dayofweek'] = df['contract_signing_date'].dt.dayofweek
     df['bid_opening_dayofweek'] = df['bid_opening_date'].dt.dayofweek
     
     # Month feature
+        # Identifies seasonal patterns and end-of-year rush spending.
+        # High activity in December (month 12) might indicate budget exhaustion,
+        # while unusual activity in off-peak months could suggest irregular procurement timing.
     df['transaction_month'] = df['transaction_date'].dt.month
     
     # Timeline duration features
+        # I observed procurement processes are defined with procurement guidlines such as those in GPPB IRR. The same principles apply to public and private procurement and can be reafactored to appropriate procurement guidelines but this should be robust enough to handle different procurement guidelines.
+        
+        # These features measure the efficiency and transparency of procurement processes.
+        # Unusually short timelines might indicate rushed or non-competitive processes,
+        # while excessively long timelines could suggest bureaucratic delays or manipulation.
     df['bidding_period_days'] = (df['bid_submission_deadline'] - df['invitation_to_bid_posting_date']).dt.days
     df['award_decision_days'] = (df['notice_of_award_date'] - df['bid_opening_date']).dt.days
     df['contract_signing_days'] = (df['contract_signing_date'] - df['notice_of_award_date']).dt.days
@@ -54,8 +63,12 @@ def create_model_features(df: pd.DataFrame):
 # --- B. Price & Budget Features ---
     # Targets: 'BidCeilingCollusion', 'PriceExceedsBudget'
 
-    # Budget utilization ratio: values > 1 indicate budget overruns
-   
+    # Budget utilization ratio
+        # This feature measures how much of the approved budget is actually spent.
+        # Values > 1 indicate budget overruns, which could signal poor planning,
+        # scope creep, or intentional budget manipulation. Values close to 1 suggest
+        # efficient budget utilization, while very low values might indicate
+        # conservative estimates or last-minute changes.
     safe_budget = df['approved_budget'].replace(0, np.nan) # Avoid division by zero
     df['budget_utilization_ratio'] = df['total_purchase_price'] / safe_budget
 
@@ -63,26 +76,34 @@ def create_model_features(df: pd.DataFrame):
     # Features help detect 'FictitiousWinner', 'FavoredSupplier', and 'SuspiciousOverpricing'
     
     # Supplier frequency
-        # direct measure of how often an organization engages with a particular supplier, normalized across the entire dataset -- useful for understanding supplier relationships and collusion
+        # Direct measure of how often an organization engages with a particular supplier, normalized across the entire dataset. 
+        # This is useful for understanding supplier relationships and detecting potential collusion or favoritism.
+        # High frequency suppliers might indicate legitimate preferred partnerships, but could also signal collusion if combined with suspicious pricing patterns.
     supplier_freq_map = df['supplier'].value_counts(normalize=True).to_dict()
         # .value_counts() counts the occurrences of each unique value in the 'supplier' column.
         # normalize=True: returns the frequency of each supplier as a percentage of the total number of suppliers.
         # to_dict(): converts the Series to a dictionary (key: supplier, value: frequency)
 
-        # Supplier frequency: map the supplier frequency to the supplier column
+        # Map the supplier frequency to each transaction
     df['supplier_frequency'] = df['supplier'].map(supplier_freq_map)
         
     
-    # Price per supplier frequency:
-        # A high value in price_per_supplier_freq indicates that the unit_purchase_price is high relative to how frequently that supplier is used. 
-        # This is the red flag: if an organization repeatedly buys from a supplier (high frequency) but consistently pays high prices, it might suggest a lack of competitive bidding, a sole-source situation with unfavorable terms, or potential collusion where frequent suppliers exploit their relationship.
-
-        # A low value would suggest either a low unit_purchase_price or a very high supplier_frequency (or both), which would generally be a good sign (e.g., getting good deals from preferred supplers)
-    epsilon = 1e-6  # small value to prevent division by zero
+    # Price per supplier frequency
+        # Combines pricing with supplier relationship strengt.
+        # A high value indicates that the unit_purchase_price is 
+        # high relative to how frequently that supplier is used.
+        # This is a red flag: if an organization repeatedly buys from a supplier (high frequency) but consistently pays high prices, it might suggest a lack of competitive bidding, a sole-source situation with unfavorable terms, or potential collusion where frequent suppliers exploit their relationship. 
+        
+        # A low value would suggest either a low unit_purchase_price or a very high supplier_frequency (or both), which would generally be a good sign (e.g., getting good deals from preferred suppliers)
+    epsilon = 1e-6  # Small value to prevent division by zero
     df['price_per_supplier_freq'] = df['unit_purchase_price'] / (df['supplier_frequency'] + epsilon)
 
 # --- Final Imputation & Cleanup ---
     # Handle missing values in engineered features by imputing with median values
+        # Missing values in engineered features can occur due to data quality issues
+        # or edge cases in the feature engineering process. Using median imputation
+        # preserves the distribution of the data while ensuring all features have
+        # complete values for model training.
     engineered_features = [
         'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
         'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
@@ -99,13 +120,16 @@ def create_model_features(df: pd.DataFrame):
     # Convert categorical procurement methods to numerical features
     df_processed = pd.get_dummies(df, columns=['procurement_method'], prefix=['procurement_method'], dummy_na=True)
 
-    # --- Final Feature Set ---
+# --- Final Feature ~Set ---
     # Combine base numerical features with engineered features and one-hot encoded columns
     base_numerical_features = ['quantity', 'unit_purchase_price', 'total_purchase_price', 'approved_budget']
     one_hot_cols = [col for col in df_processed.columns if 'procurement_method_' in col]
     final_feature_columns = base_numerical_features + engineered_features + one_hot_cols
     
     # Ensure all columns exist in the final DataFrame
+        # Safety check prevents errors if any expected columns are missing
+        # from the processed DataFrame, which could happen due to data quality issues
+        # or changes in the source data structure.
     final_feature_columns = [col for col in final_feature_columns if col in df_processed.columns]
     df_final = df_processed[final_feature_columns].copy()
 
