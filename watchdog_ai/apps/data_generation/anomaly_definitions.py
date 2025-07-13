@@ -8,9 +8,11 @@ import pandas as pd
 # ---------------------------------------------------
 # Each class in this file represents a blueprint for an anomaly scenario.
 #
-# `name`: The user-facing name, used in the YAML config.
-# `weight`: The probability of this anomaly type being chosen. Weights across all active blueprints will be normalized.
-# `apply(record)`: A static method that takes a single transaction record (a pandas Series) and modifies it in place to be anomalous.
+#   `name`: The user-facing name, used in the YAML config.
+#   `weight`: The probability of this anomaly type being chosen. Weights across all active blueprints will be normalized.
+#   `apply(record)`: A static method that takes a single transaction record (a pandas Series) and modifies it in place to be anomalous.
+# 
+#   !! Items shall be from data/lab_equipment.txt file alone.
 # ---------------------------------------------------
 # GOAL: To use these to test the effectiveness of the anomaly detection (iforest) model.
 # 

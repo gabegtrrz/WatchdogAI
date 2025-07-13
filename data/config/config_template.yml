@@ -9,6 +9,7 @@
 # 1. Copy this file to a new name (e.g., `my_dataset_config.yml`)
 # 2. Edit the parameters below to define your desired dataset
 # 3. Run the generator: `python manage.py generate_data path/to/your_config.yml`
+# Items shall be from data/lab_equipment.txt file alone.
 #
 # ----------------------------------------------------------------------------
 
