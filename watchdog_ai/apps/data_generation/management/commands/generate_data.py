@@ -219,7 +219,7 @@ class Command(BaseCommand):
                 df.loc[valid_backup_mask, 'approved_budget'] = (df.loc[valid_backup_mask, 'unit_purchase_price'] * df.loc[valid_backup_mask, 'quantity'] * (1 + budget_markup[valid_backup_mask])).round(2)
         
         # If still no approved_budget values, set to NaN
-        if df['approved_budget'].isna().all():
+        if bool(df['approved_budget'].isna().all()):
             self.stdout.write(self.style.WARNING("WARNING: No valid average_price or unit_purchase_price found. approved_budget will be blank.")) # type: ignore
 
         # --- Final safety check: ensure all price fields are positive (only for non-empty values) ---
