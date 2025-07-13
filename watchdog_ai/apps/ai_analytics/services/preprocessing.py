@@ -6,13 +6,16 @@ Designed to be generic and reusable across different
 anomaly detection approaches.
 
 Performs three main preprocessing steps:
-1. Data extraction - fetching raw transaction data from the database
+1. Data extraction - fetching raw transaction data from the database or CSV file
 2. Basic cleaning - handling missing values and data type conversions
 3. Data validation - ensuring data quality for downstream processing
 """
 import pandas as pd
 import numpy as np
 from apps.core.models import Transaction
+from typing import Union, Optional
+from pathlib import Path
+from apps.transaction_management.services import process_transaction_csv
 
 def get_transaction_dataframe():
     """
@@ -59,6 +62,76 @@ def get_transaction_dataframe():
     df.set_index('transaction_id', inplace=True)
     return df
 
+def get_transaction_dataframe_from_csv(csv_path: Union[str, Path]) -> pd.DataFrame:
+    """
+    Processes a CSV file and converts it into a pandas DataFrame for preprocessing.
+    
+    Uses the existing process_transaction_csv function to validate and clean the data,then converts the validated data into a DataFrame format compatible with the preprocessing pipeline.
+    
+    Args:
+        csv_path: Path to the CSV file to process
+        
+    Returns:
+        pd.DataFrame: Raw transaction data with all necessary columns for preprocessing and feature engineering.
+                     Indexed by transaction_id for easy identification.
+                     
+    Raises:
+        FileNotFoundError: If the CSV file doesn't exist
+        ValueError: If the CSV file contains validation errors
+    """
+    csv_path = Path(csv_path)
+    if not csv_path.exists():
+        raise FileNotFoundError(f"CSV file not found: {csv_path}")
+    
+    # Read the CSV file as a file stream
+    with open(csv_path, 'rb') as file_stream:
+        # Use the existing CSV processing function
+        valid_data, validation_errors = process_transaction_csv(file_stream)
+    
+    # Check for validation errors
+    if validation_errors:
+        error_messages = []
+        for error in validation_errors:
+            if 'row' in error:
+                error_messages.append(f"Row {error['row']}: {error['errors']}")
+            else:
+                error_messages.append(f"{error['type']}: {error['message']}")
+        raise ValueError(f"CSV validation failed:\n" + "\n".join(error_messages))
+    
+    if not valid_data:
+        raise ValueError("No valid data found in CSV file")
+    
+    # Convert the validated data to DataFrame
+    df = pd.DataFrame.from_records(valid_data)
+    
+    # Set transaction_id as index if it exists, otherwise create one
+    df.index = range(len(df))
+    
+    # Ensure procurement_method is properly formatted for consistency
+    if 'procurement_method' in df.columns and df['procurement_method'].dtype == 'object':
+        # Convert procurement method objects to their names
+        df['procurement_method__name'] = df['procurement_method'].apply(
+            lambda x: x.name if hasattr(x, 'name') else str(x)
+        )
+        df.drop('procurement_method', axis=1, inplace=True)
+    
+    return df
+
+def get_dataframe(source: Optional[Union[str, Path]] = None) -> pd.DataFrame:
+    """
+    Unified function to get transaction data from either database or CSV file.
+    
+    Args:
+        source: Optional path to CSV file. If None, fetches from database.
+        
+    Returns:
+        pd.DataFrame: Raw transaction data ready for preprocessing
+    """
+    if source is None:
+        return get_transaction_dataframe()
+    else:
+        return get_transaction_dataframe_from_csv(source)
+
 def clean_raw_data(df: pd.DataFrame):
     """
     Performs initial cleaning and type conversion on the raw DataFrame.
@@ -66,7 +139,7 @@ def clean_raw_data(df: pd.DataFrame):
     Applies basic data quality improvements to prepare the dataset for feature engineering. Includes handling missing values, converting data types, and ensuring data consistency.
     
     Args:
-        df (pd.DataFrame): Raw transaction data from get_transaction_dataframe()
+        df (pd.DataFrame): Raw transaction data from get_transaction_dataframe() or get_transaction_dataframe_from_csv()
     
     Returns:
         pd.DataFrame: Cleaned and preprocessed data ready for feature engineering
@@ -103,6 +176,7 @@ def clean_raw_data(df: pd.DataFrame):
         'bid_opening_date', 'notice_of_award_date', 'contract_signing_date'
     ]
     for col in date_features:
-        df[col] = pd.to_datetime(df[col], errors='coerce')
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
 
     return df
