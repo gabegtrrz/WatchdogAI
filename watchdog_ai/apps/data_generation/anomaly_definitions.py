@@ -1,20 +1,18 @@
 # watchdog_ai/apps/data_generation/anomaly_definitions.py
 import numpy as np
 import datetime
+import pandas as pd
 
 # ---------------------------------------------------
 # Anomaly Blueprint Definitions
 # ---------------------------------------------------
 # Each class in this file represents a blueprint for an anomaly scenario.
-
-    # `name`: The user-facing name, used in the YAML config.
-
-    # `weight`: The probability of this anomaly type being chosen. Weights across all active blueprints will be normalized.
-    
-    # `apply(record)`: A static method that takes a single transaction record (a pandas Series) and modifies it in place to be anomalous.
+#
+# `name`: The user-facing name, used in the YAML config.
+# `weight`: The probability of this anomaly type being chosen. Weights across all active blueprints will be normalized.
+# `apply(record)`: A static method that takes a single transaction record (a pandas Series) and modifies it in place to be anomalous.
 # ---------------------------------------------------
 # GOAL: To use these to test the effectiveness of the anomaly detection (iforest) model.
-# 
 # 
 # ============================================================================
 # TYPE 1: PRICING & BIDDING ANOMALIES
@@ -30,12 +28,24 @@ class SuspiciousOverpricing:
 
     @staticmethod
     def apply(record):
+        # Ensure we have valid price data
+        if pd.isna(record.get('unit_purchase_price')) or record.get('unit_purchase_price', 0) <= 0:
+            return record
+            
         record['unit_purchase_price'] *= np.random.uniform(7.5, 12.5)
+        
         # Recalculate total price to maintain consistency
         if 'quantity' in record and record['quantity'] > 0:
             record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
+        
         record['supplier'] = 'Premium Imports LLC'
-        record['procurement_method_name'] = 'Direct Contracting'
+        
+        # Handle both field name variations
+        if 'procurement_method_name' in record:
+            record['procurement_method_name'] = 'Direct Contracting'
+        elif 'procurement_method' in record:
+            record['procurement_method'] = 'Direct Contracting'
+            
         record['project_description'] = 'URGENT - Item required immediately, no time for competitive process.'
         return record
 
@@ -50,14 +60,18 @@ class BidCeilingCollusion:
 
     @staticmethod
     def apply(record):
-        if record['approved_budget'] and record['approved_budget'] > 0:
-            # Set total price to 98% - 99.9% of the approved budget
-            collusion_factor = np.random.uniform(0.98, 0.999)
-            total_price = record['approved_budget'] * collusion_factor
-            record['total_purchase_price'] = total_price
-            # Update unit price based on the manipulated total price
-            if record['quantity'] > 0:
-                record['unit_purchase_price'] = total_price / record['quantity']
+        approved_budget = record.get('approved_budget')
+        if pd.isna(approved_budget) or approved_budget <= 0:
+            return record
+            
+        # Set total price to 98% - 99.9% of the approved budget
+        collusion_factor = np.random.uniform(0.98, 0.999)
+        total_price = approved_budget * collusion_factor
+        record['total_purchase_price'] = total_price
+        
+        # Update unit price based on the manipulated total price
+        if record.get('quantity', 0) > 0:
+            record['unit_purchase_price'] = total_price / record['quantity']
         return record
 
 class PriceExceedsBudget:
@@ -71,14 +85,18 @@ class PriceExceedsBudget:
 
     @staticmethod
     def apply(record):
-        if record['approved_budget'] and record['approved_budget'] > 0:
-            # Set total price to be 120% - 180% of the approved budget
-            escalation_factor = np.random.uniform(1.2, 1.8)
-            total_price = record['approved_budget'] * escalation_factor
-            record['total_purchase_price'] = total_price
-            # Update unit price accordingly
-            if record['quantity'] > 0:
-                record['unit_purchase_price'] = total_price / record['quantity']
+        approved_budget = record.get('approved_budget')
+        if pd.isna(approved_budget) or approved_budget <= 0:
+            return record
+            
+        # Set total price to be 120% - 180% of the approved budget
+        escalation_factor = np.random.uniform(1.2, 1.8)
+        total_price = approved_budget * escalation_factor
+        record['total_purchase_price'] = total_price
+        
+        # Update unit price accordingly
+        if record.get('quantity', 0) > 0:
+            record['unit_purchase_price'] = total_price / record['quantity']
         return record
 
 # ============================================================================
@@ -95,10 +113,16 @@ class UnusualBulkOrder:
 
     @staticmethod
     def apply(record):
+        # Ensure we have valid quantity
+        if pd.isna(record.get('quantity')) or record.get('quantity', 0) <= 0:
+            return record
+            
         record['quantity'] *= np.random.randint(20, 35)
+        
         # Recalculate total price to maintain consistency
         if 'unit_purchase_price' in record and record['unit_purchase_price'] > 0:
             record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
+        
         record['project_name'] = 'Special Unbudgeted Project'
         record['project_description'] = 'Procurement for unlisted special activities and contingencies.'
         return record
@@ -119,12 +143,18 @@ class ContractSplitting:
         total_price = np.random.uniform(950000, 999000)
         record['total_purchase_price'] = total_price
         
-        if record['quantity'] > 0:
+        if record.get('quantity', 0) > 0:
             record['unit_purchase_price'] = total_price / record['quantity']
         
         record['approved_budget'] = total_price * np.random.uniform(1.0, 1.05)
-        record['procurement_method_name'] = 'Negotiated Procurement (Small Value Procurement)'
-        record['project_name'] = f"{record['project_name']} (Phase {np.random.randint(1, 5)})"
+        
+        # Handle both field name variations
+        if 'procurement_method_name' in record:
+            record['procurement_method_name'] = 'Negotiated Procurement (Small Value Procurement)'
+        elif 'procurement_method' in record:
+            record['procurement_method'] = 'Negotiated Procurement (Small Value Procurement)'
+            
+        record['project_name'] = f"{record.get('project_name', 'Project')} (Phase {np.random.randint(1, 5)})"
         record['project_description'] = "Component of a larger project, procured separately to expedite."
         return record
 
@@ -142,9 +172,14 @@ class EndOfYearRush:
 
     @staticmethod
     def apply(record):
+        # Ensure we have a valid transaction date
+        if pd.isna(record.get('transaction_date')):
+            return record
+            
         # Force a suspicious date at the very end of the fiscal year
         end_of_year = record['transaction_date'].replace(month=12, day=np.random.randint(28, 31))
         record['transaction_date'] = end_of_year
+        
         # Make other dates suspiciously close
         record['contract_signing_date'] = end_of_year - datetime.timedelta(days=1)
         record['notice_of_award_date'] = end_of_year - datetime.timedelta(days=2)
@@ -161,12 +196,17 @@ class CompressedTimeline:
 
     @staticmethod
     def apply(record):
+        # Ensure we have a valid transaction date
+        if pd.isna(record.get('transaction_date')):
+            return record
+            
         # All key events happen within an unnaturally short period
         start_date = record['transaction_date'] - datetime.timedelta(days=np.random.randint(5, 8))
         record['contract_signing_date'] = start_date + datetime.timedelta(days=2)
         record['notice_of_award_date'] = start_date + datetime.timedelta(days=1)
         record['bid_opening_date'] = start_date
         record['bid_submission_deadline'] = start_date
+        
         # Invitation posted only 1-2 days before deadline, violating 7-day rule
         record['invitation_to_bid_posting_date'] = start_date - datetime.timedelta(days=np.random.randint(1, 2))
         return record
@@ -184,7 +224,8 @@ class BackdatedDocuments:
     def apply(record):
         # Swap dates to create a logical impossibility.
         # This makes it appear that the bid opening happened before the invitation was posted.
-        if 'bid_opening_date' in record and 'invitation_to_bid_posting_date' in record:
+        if ('bid_opening_date' in record and 'invitation_to_bid_posting_date' in record and
+            not pd.isna(record['bid_opening_date']) and not pd.isna(record['invitation_to_bid_posting_date'])):
             record['bid_opening_date'], record['invitation_to_bid_posting_date'] = \
                 record['invitation_to_bid_posting_date'], record['bid_opening_date']
         return record
@@ -199,6 +240,10 @@ class WeekendActivity:
 
     @staticmethod
     def apply(record):
+        # Ensure we have a valid transaction date
+        if pd.isna(record.get('transaction_date')):
+            return record
+            
         # Find the most recent Saturday from the transaction date
         transaction_date = record['transaction_date']
         days_since_saturday = (transaction_date.weekday() - 5) % 7
@@ -213,7 +258,7 @@ class WeekendActivity:
 class InsufficientBiddingPeriod:
     """
     Scenario: The period between the bid invitation and the submission deadline
-    is less than the legally required minimum (e.g., 7 days), discouraging
+    is less than the legally required minimum (7 days), discouraging
     fair competition.
     """
     name = "Insufficient Bidding Period"
@@ -221,6 +266,10 @@ class InsufficientBiddingPeriod:
 
     @staticmethod
     def apply(record):
+        # Ensure we have valid dates
+        if pd.isna(record.get('bid_opening_date')):
+            return record
+            
         # Explicitly violate the standard 7-day minimum bidding period
         short_period = np.random.randint(1, 6) # 1 to 5 days
         record['bid_submission_deadline'] = record['bid_opening_date']
@@ -237,10 +286,15 @@ class DelayedAwardNotice:
 
     @staticmethod
     def apply(record):
-        # Violates the typical timeframe for issuing an award (e.g., 7-15 days)
+        # Ensure we have a valid bid opening date
+        if pd.isna(record.get('bid_opening_date')):
+            return record
+            
+        # Violates the typical timeframe for issuing an award (7-15 days)
         long_delay = np.random.randint(30, 90) # 1 to 3 months late
         award_date = record['bid_opening_date'] + datetime.timedelta(days=long_delay)
         record['notice_of_award_date'] = award_date
+        
         # All subsequent dates must be pushed forward
         record['contract_signing_date'] = award_date + datetime.timedelta(days=np.random.randint(5, 15))
         record['transaction_date'] = record['contract_signing_date'] + datetime.timedelta(days=np.random.randint(5, 20))
@@ -256,6 +310,10 @@ class PrematureContractSigning:
 
     @staticmethod
     def apply(record):
+        # Ensure we have a valid notice of award date
+        if pd.isna(record.get('notice_of_award_date')):
+            return record
+            
         # This makes the timeline logically impossible and suggests a rigged deal
         record['contract_signing_date'] = record['notice_of_award_date'] - datetime.timedelta(days=np.random.randint(1, 10))
         return record
@@ -275,7 +333,12 @@ class UnjustifiedDirectContracting:
 
     @staticmethod
     def apply(record):
-        record['procurement_method_name'] = 'Direct Contracting'
+        # Handle both field name variations
+        if 'procurement_method_name' in record:
+            record['procurement_method_name'] = 'Direct Contracting'
+        elif 'procurement_method' in record:
+            record['procurement_method'] = 'Direct Contracting'
+            
         record['item_name'] = np.random.choice([
             'Beaker – Low Form Griffin, 250 mL, Borosilicate Glass 3.3, with spout and printed graduations',
             'Graduated Cylinder – 100 mL capacity, Class B, Polypropylene, with hexagonal base and molded graduations',
@@ -308,13 +371,21 @@ class FavoredSupplier:
     @staticmethod
     def apply(record):
         record['supplier'] = 'VIP General Merchandise'
-        record['procurement_method_name'] = np.random.choice(
-            ['Direct Contracting', 'Negotiated Procurement (Small Value Procurement)'],
-            p=[0.5, 0.5]
-        )
+        
+        # Handle both field name variations
+        if 'procurement_method_name' in record:
+            record['procurement_method_name'] = np.random.choice(
+                ['Direct Contracting', 'Negotiated Procurement (Small Value Procurement)'],
+                p=[0.5, 0.5]
+            )
+        elif 'procurement_method' in record:
+            record['procurement_method'] = np.random.choice(
+                ['Direct Contracting', 'Negotiated Procurement (Small Value Procurement)'],
+                p=[0.5, 0.5]
+            )
+            
         record['procurement_officer'] = 'John Lloyd Cruz Miranda' # A specific officer for correlation
         return record
-
 
 class FictitiousWinner:
     """
@@ -331,7 +402,13 @@ class FictitiousWinner:
         second_part = np.random.choice(['Solutions', 'Enterprises', 'Trading', 'Ventures', 'Group', 'Logistics'])
         suffix = np.random.choice(['Inc.', 'LLC', 'Corp.'])
         record['supplier'] = f'{first_part} {second_part} {suffix}'
-        record['procurement_method_name'] = 'Negotiated Procurement (Small Value Procurement)'
+        
+        # Handle both field name variations
+        if 'procurement_method_name' in record:
+            record['procurement_method_name'] = 'Negotiated Procurement (Small Value Procurement)'
+        elif 'procurement_method' in record:
+            record['procurement_method'] = 'Negotiated Procurement (Small Value Procurement)'
+            
         record['project_description'] = 'Services rendered for confidential internal project.'
         return record
 
@@ -349,11 +426,165 @@ class SupplierMonopoly(BidCeilingCollusion):
     def apply(record):
         # Inherit the price manipulation from BidCeilingCollusion
         record = BidCeilingCollusion.apply(record)
+        
         # Set a specific supplier and ensure the method appears legitimate
         record['supplier'] = 'Dominant Office Supplies Co.'
-        record['procurement_method_name'] = 'Competitive Bidding'
+        
+        # Handle both field name variations
+        if 'procurement_method_name' in record:
+            record['procurement_method_name'] = 'Competitive Bidding'
+        elif 'procurement_method' in record:
+            record['procurement_method'] = 'Competitive Bidding'
+            
         return record
 
+
+class BudgetManipulation:
+    """
+    Scenario: The approved budget is artificially inflated to justify
+    higher contract prices, creating a false sense of value.
+    """
+    name = "Budget Manipulation"
+    weight = 0.25
+
+    @staticmethod
+    def apply(record):
+        # Ensure we have valid price data
+        if pd.isna(record.get('unit_purchase_price')) or record.get('unit_purchase_price', 0) <= 0:
+            return record
+            
+        # Inflate the approved budget significantly
+        inflation_factor = np.random.uniform(1.5, 2.5)
+        record['approved_budget'] = record['unit_purchase_price'] * record.get('quantity', 1) * inflation_factor
+        
+        # Update total purchase price to be close to the inflated budget
+        budget_utilization = np.random.uniform(0.85, 0.95)
+        record['total_purchase_price'] = record['approved_budget'] * budget_utilization
+        
+        record['project_description'] = 'Budget allocation based on comprehensive market analysis and future requirements.'
+        return record
+
+class ExpeditedProcurement:
+    """
+    Scenario: The entire procurement process is unnaturally rushed,
+    with all key events happening within an extremely short timeframe.
+    This suggests pre-selection of the winning bidder.
+    """
+    name = "Expedited Procurement"
+    weight = 0.25
+
+    @staticmethod
+    def apply(record):
+        # Ensure we have a valid transaction date
+        if pd.isna(record.get('transaction_date')):
+            return record
+            
+        # Create an extremely compressed timeline
+        base_date = record['transaction_date']
+        
+        # All events happen within 3-5 days
+        compressed_period = np.random.randint(3, 6)
+        record['invitation_to_bid_posting_date'] = base_date - datetime.timedelta(days=compressed_period)
+        record['bid_submission_deadline'] = base_date - datetime.timedelta(days=2)
+        record['bid_opening_date'] = base_date - datetime.timedelta(days=1)
+        record['notice_of_award_date'] = base_date
+        record['contract_signing_date'] = base_date + datetime.timedelta(days=1)
+        
+        record['project_description'] = 'URGENT - Expedited procurement due to critical operational requirements.'
+        return record
+
+class IrregularTimelineSequence:
+    """
+    Scenario: Procurement timeline events occur in a logically impossible
+    sequence, such as contract signing before bid opening or award notice
+    before bid submission deadline.
+    """
+    name = "Irregular Timeline Sequence"
+    weight = 0.15
+
+    @staticmethod
+    def apply(record):
+        # Ensure we have valid dates
+        if pd.isna(record.get('transaction_date')):
+            return record
+            
+        base_date = record['transaction_date']
+        
+        # Create impossible timeline sequence
+        record['contract_signing_date'] = base_date - datetime.timedelta(days=10)
+        record['notice_of_award_date'] = base_date - datetime.timedelta(days=15)
+        record['bid_opening_date'] = base_date - datetime.timedelta(days=20)
+        record['bid_submission_deadline'] = base_date - datetime.timedelta(days=25)
+        record['invitation_to_bid_posting_date'] = base_date - datetime.timedelta(days=30)
+        
+        record['project_description'] = 'Special procurement arrangement with modified timeline.'
+        return record
+
+class MultipleTimelineViolations:
+    """
+    Scenario: Multiple timeline violations occur simultaneously, indicating
+    a systematic disregard for procurement regulations.
+    """
+    name = "Multiple Timeline Violations"
+    weight = 0.2
+
+    @staticmethod
+    def apply(record):
+        # Ensure we have a valid transaction date
+        if pd.isna(record.get('transaction_date')):
+            return record
+            
+        # Create multiple timeline violations
+        base_date = record['transaction_date']
+        
+        # 1. Insufficient bidding period (less than 7 days)
+        short_period = np.random.randint(2, 5)
+        record['invitation_to_bid_posting_date'] = base_date - datetime.timedelta(days=short_period)
+        record['bid_submission_deadline'] = base_date - datetime.timedelta(days=1)
+        record['bid_opening_date'] = base_date - datetime.timedelta(days=1)
+        
+        # 2. Delayed award notice (beyond 7-15 days)
+        long_delay = np.random.randint(20, 45)
+        record['notice_of_award_date'] = record['bid_opening_date'] + datetime.timedelta(days=long_delay)
+        
+        # 3. Contract signing before award notice
+        record['contract_signing_date'] = record['notice_of_award_date'] - datetime.timedelta(days=np.random.randint(1, 5))
+        
+        record['project_description'] = 'Expedited procurement due to urgent operational requirements.'
+        return record
+
+class MethodMisuse:
+    """
+    Scenario: Procurement methods are used inappropriately, such as using
+    Small Value Procurement for high-value items or Direct Contracting for
+    common goods.
+    """
+    name = "Method Misuse"
+    weight = 0.2
+
+    @staticmethod
+    def apply(record):
+        # Randomly choose an inappropriate method for the context
+        inappropriate_methods = [
+            'Direct Contracting',  # For common goods
+            'Negotiated Procurement (Small Value Procurement)',  # For high-value items
+            'Repeat Order'  # For new items
+        ]
+        
+        # Handle both field name variations
+        if 'procurement_method_name' in record:
+            record['procurement_method_name'] = np.random.choice(inappropriate_methods)
+        elif 'procurement_method' in record:
+            record['procurement_method'] = np.random.choice(inappropriate_methods)
+            
+        # Inflate quantity or price to make the method choice suspicious
+        if record.get('quantity', 0) > 0:
+            record['quantity'] *= np.random.randint(5, 15)
+            if 'unit_purchase_price' in record and record['unit_purchase_price'] > 0:
+                record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
+        
+        record['project_description'] = 'Special procurement arrangement due to unique requirements.'
+        return record
 
 # --- Master list of all available anomaly blueprints ---
 # The generator command will import this list to find available scenarios.
@@ -362,6 +593,7 @@ ANOMALY_BLUEPRINTS = [
     SuspiciousOverpricing,
     BidCeilingCollusion,
     PriceExceedsBudget,
+    BudgetManipulation,
     # Quantity & Scope
     UnusualBulkOrder,
     ContractSplitting,
@@ -373,9 +605,13 @@ ANOMALY_BLUEPRINTS = [
     DelayedAwardNotice,
     PrematureContractSigning,
     BackdatedDocuments,
+    ExpeditedProcurement,
+    IrregularTimelineSequence,
+    MultipleTimelineViolations,
     # Supplier & Method
     UnjustifiedDirectContracting,
     FavoredSupplier,
     FictitiousWinner,
     SupplierMonopoly,
+    MethodMisuse,
 ] 
