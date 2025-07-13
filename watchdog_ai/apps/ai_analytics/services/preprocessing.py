@@ -1,17 +1,14 @@
 """
-Preprocessing Service for Anomaly Detection
+Handles initial, generic preprocessing of transaction data before
+feature engineering. Focuses on data quality and preparation rather than anomaly-specific transformations.
 
-Handles the initial, generic preprocessing of transaction data before
-feature engineering. Focuses on data quality and preparation rather than
-anomaly-specific transformations.
+Designed to be generic and reusable across different
+anomaly detection approaches.
 
 Performs three main preprocessing steps:
 1. Data extraction - fetching raw transaction data from the database
 2. Basic cleaning - handling missing values and data type conversions
 3. Data validation - ensuring data quality for downstream processing
-
-Designed to be generic and reusable across different
-anomaly detection approaches.
 """
 import pandas as pd
 import numpy as np
