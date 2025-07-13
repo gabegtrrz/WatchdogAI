@@ -13,7 +13,7 @@ class AnomalyReport(models.Model):
     """
     
     # --- Core Relationship ---
-    transaction = models.ForeignKey(
+    related_transaction = models.ForeignKey(
         Transaction,
         on_delete=models.SET_NULL,
         related_name='anomaly_report',
@@ -144,8 +144,8 @@ class AnomalyReport(models.Model):
     
     def save(self, *args, **kwargs):
         """Ensure transaction_id is set from the related transaction if available."""
-        if self.transaction and not self.transaction_id:
-            self.transaction_id = self.transaction.transaction_id
+        if self.related_transaction and not self.transaction_id:
+            self.transaction_id = self.related_transaction.transaction_id
         super().save(*args, **kwargs)
     
     @property

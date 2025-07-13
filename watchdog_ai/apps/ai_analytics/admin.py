@@ -24,9 +24,9 @@ class AnomalyReportAdmin(admin.ModelAdmin):
     ]
     
     search_fields = [
-        'transaction__transaction_id',
-        'transaction__item_name',
-        'transaction__supplier',
+        'related_transaction__transaction_id',
+        'related_transaction__item_name',
+        'related_transaction__supplier',
     ]
     
     readonly_fields = [
@@ -38,7 +38,7 @@ class AnomalyReportAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Transaction Information', {
-            'fields': ('transaction',)
+            'fields': ('related_transaction',)
         }),
         ('Anomaly Detection Results', {
             'fields': (
@@ -77,5 +77,5 @@ class AnomalyReportAdmin(admin.ModelAdmin):
     
     def transaction_id(self, obj):
         """Display transaction ID for better readability."""
-        return obj.transaction.transaction_id if obj.transaction else "N/A"
+        return obj.related_transaction.transaction_id if obj.related_transaction else "N/A"
     transaction_id.short_description = "Transaction ID"
