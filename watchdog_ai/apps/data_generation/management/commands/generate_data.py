@@ -38,10 +38,17 @@ class Command(BaseCommand):
             help='The path to the YAML configuration file for data generation.'
         )
 
+        parser.add_argument(
+            '--training-data',
+            action='store_true',
+            help='If specified, includes the total_purchase_price column for training data.'
+        )
+
     def handle(self, *args, **options):
         """Main execution logic for the command."""
         config_path = options['config_path']
         self.config_path = config_path  # Store for use in scrape mode
+        is_training_data = options['training_data']
 
         # --- 1. Load Configuration & Items ---
         self.stdout.write(self.style.SUCCESS("Loading configuration..."))  # type: ignore
@@ -64,7 +71,7 @@ class Command(BaseCommand):
         df_with_labels = self._inject_anomalies(df.copy(), config)
 
         # --- 4. Save Outputs ---
-        self._save_output_files(df, df_with_labels, config_path, config)
+        self._save_output_files(df, df_with_labels, config_path, config, is_training_data)
 
     def _load_config_and_items(self, config_path):
         """Loads the main YAML config and the item list from its source file."""
@@ -475,7 +482,7 @@ class Command(BaseCommand):
             
             # --- Pricing ---
             'unit_purchase_price',
-            # 'total_purchase_price',
+            'total_purchase_price',
             'average_price',
             'approved_budget',
             
@@ -548,7 +555,7 @@ class Command(BaseCommand):
 
         return df
 
-    def _save_output_files(self, df_raw, df_labeled, config_path, config):
+    def _save_output_files(self, df_raw, df_labeled, config_path, config, is_training_data=False):
         """Saves the two required CSV files to the specified output folder."""
         # Determine output directory
         output_folder_path = config.get('output_folder_path', 'generated_data')
@@ -561,6 +568,13 @@ class Command(BaseCommand):
         # Define file paths
         raw_path = os.path.join(output_dir, 'transactions.csv')
         labeled_path = os.path.join(output_dir, 'transactions_with_labels.csv')
+
+        # Conditionally remove the 'total_purchase_price' column
+        if not is_training_data:
+            if 'total_purchase_price' in df_raw.columns:
+                df_raw = df_raw.drop(columns=['total_purchase_price'])
+            if 'total_purchase_price' in df_labeled.columns:
+                df_labeled = df_labeled.drop(columns=['total_purchase_price'])
 
         # Save raw data (without the is_anomaly column)
         df_raw.to_csv(raw_path, index=False)
