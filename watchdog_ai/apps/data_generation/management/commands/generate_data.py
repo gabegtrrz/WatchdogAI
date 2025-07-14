@@ -551,12 +551,11 @@ class Command(BaseCommand):
     def _save_output_files(self, df_raw, df_labeled, config_path, config):
         """Saves the two required CSV files to the specified output folder."""
         # Determine output directory
-        config_dir = os.path.dirname(os.path.abspath(config_path))
-        output_folder_name = config.get('output_folder', 'generated_data')
+        output_folder_path = config.get('output_folder_path', 'generated_data')
         
         # Create timestamp for unique subfolder
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        output_dir = os.path.join(config_dir, output_folder_name, str(timestamp))
+        output_dir = os.path.join(output_folder_path, str(timestamp))
         os.makedirs(output_dir, exist_ok=True)
 
         # Define file paths

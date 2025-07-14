@@ -26,7 +26,7 @@ data_generator:
   # OUTPUT & SOURCE FILES
   # ============================================================================
   
-  output_folder: "generated_data"           # Sub-folder where CSV files will be saved
+  output_folder_path: "generated_data"      # Path where CSV files will be saved (absolute)
   item_source_file: "data/lab_equipment.txt" # Text file with one item name per line
   
   # ============================================================================

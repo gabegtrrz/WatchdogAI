@@ -18,7 +18,7 @@ data_generator:
   anomaly_fraction: 0.00
   
   # --- Output Configuration ---
-  output_folder: "generated_data_no_avg_price" 
+  output_folder_path: "generated_data_no_avg_price" 
   
   # --- Source for Item Descriptions ---
   item_source_file: "data/lab_equipment.txt"

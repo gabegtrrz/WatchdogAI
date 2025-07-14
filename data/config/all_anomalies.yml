@@ -16,7 +16,7 @@ data_generator:
   # --- Output Configuration ---
   # Defines the sub-folder where the output files will be saved.
   # This folder will be created inside the directory of this config file.
-  output_folder: "anomalous_data" 
+  output_folder_path: "anomalous_data" 
   
   # --- Source for Item Descriptions ---
   # Path is relative to the project root.
