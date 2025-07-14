@@ -38,6 +38,7 @@ data_generator:
     mode: 'scrape'  # Options: 'none', 'yaml', 'scrape'
     
     # Unit price variation configuration (applies to 'yaml' and 'scrape' modes)
+
     # unit_purchase_price will be derived from average_price with this variation
     unit_price_variation:
       min_factor: 0.80  # Unit price can be 85% of average price
@@ -48,9 +49,10 @@ data_generator:
     # - Wide range (±20%): min_factor: 0.80, max_factor: 1.20
     # - Default range (±15%): min_factor: 0.85, max_factor: 1.15
   
-  # ============================================================================
+  # ============================
   # APPROVED BUDGET CONFIGURATION
-  # ============================================================================
+  # ============================
+
   # Defines how the approved_budget is calculated.
   # The budget is derived from either average_price (if available) or unit_purchase_price (Cannot be blank), and is marked up by a random factor within the specified range below.
   # 
@@ -69,12 +71,11 @@ data_generator:
   # IMPORTANT: unit_purchase_price is ALWAYS required as a fallback for calculations.
   #
   # NOTE: The following fields are calculated automatically and should NOT be included in the field_rules below:
-  #       - total_purchase_price (quantity * unit_purchase_price)
-  #       - approved_budget (derived from average_price or unit_purchase_price)
-  #
+
   # average_price: Include for 'yaml' mode, omit for 'scrape' mode.
   
   field_rules:
+
     # --- Project Information ---
     project_name: { 
       type: 'categorical', 
