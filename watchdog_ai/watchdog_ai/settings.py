@@ -166,6 +166,9 @@ STATICFILES_DIRS = [
     # BASE_DIR / "viewer/static",  # Old static for viewer app
 ]
 
+# Where collectstatic will put all static files for production
+STATIC_ROOT = BASE_DIR / 'static'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

@@ -17,13 +17,17 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from apps.users import views as user_views
 
 urlpatterns = [
     # Admin URL
     path("admin/", admin.site.urls),
+    
+    # Home page
+    path('', user_views.home, name='home'),
 
-    # Include the transaction_management app's URLs. The root path ('/') is handled within this app.
-    path('', include('apps.transaction_management.urls')),
+    # Include the transaction_management app's URLs under the 'transactions' namespace
+    path('transactions/', include('apps.transaction_management.urls')),
     
     # Include blockchain integration URLs for API endpoints
     path('blockchain/', include('apps.blockchain.urls')),
