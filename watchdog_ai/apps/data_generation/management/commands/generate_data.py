@@ -207,8 +207,13 @@ class Command(BaseCommand):
             if 'average_price' in df.columns:
                 df = df.drop('average_price', axis=1)
 
-        # --- Calculate approved_budget with fallback to unit_purchase_price ---
-        budget_markup = np.random.uniform(0.15, 0.22, size=n_samples)
+        # --- Calculate approved_budget from average_price with fallback to unit_purchase_price ---
+        budget_config = config.get('approved_budget', {})
+        markup_config = budget_config.get('markup', {})
+        min_markup = markup_config.get('min', 0.15)
+        max_markup = markup_config.get('max', 0.22)
+        
+        budget_markup = np.random.uniform(min_markup, max_markup, size=n_samples)
         df['approved_budget'] = np.nan
 
         # Primary source: average_price, if it exists and is not null
