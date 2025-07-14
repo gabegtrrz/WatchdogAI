@@ -31,6 +31,19 @@ data_generator:
       min_factor: 0.85  # Unit price can be 85% of average price
       max_factor: 1.15  # Unit price can be 115% of average price (default ±15%)
 
+  # ============================================================================
+  # APPROVED BUDGET CONFIGURATION
+  # ============================================================================
+  # Defines how the approved_budget is calculated.
+  # The budget is derived from either average_price (if available) or unit_purchase_price (Cannot be blank), and is marked up by a random factor within the specified range below.
+  # 
+  # Formula: approved_budget = (base_price * quantity) * (1 + random_markup)
+  
+  approved_budget:
+    markup:
+      min: 0.15  # Default: 15% minimum markup
+      max: 0.22  # Default: 22% maximum markup
+
   # --- Rules for Generating Raw Transaction Fields ---
   # These rules map directly to the fields in the Transaction model.
   field_rules:
