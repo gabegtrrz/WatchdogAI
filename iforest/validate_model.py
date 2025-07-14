@@ -31,7 +31,7 @@ def load_model():
 
 def load_normal_data():
     """Load normal transaction data for testing."""
-    csv_path = 'data/normal_data_scraped/2025-07-13_23-31-05/transactions.csv'
+    csv_path = 'data/normal_data_scraped/transactions.csv'
     
     if not os.path.exists(csv_path):
         print(f"❌ Data file not found: {csv_path}")
