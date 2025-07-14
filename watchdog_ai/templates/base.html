@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Your Application{% endblock %}</title>
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for a clean, professional look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa; /* Light background for minimalism */
+            color: #343a40; /* Darker text for readability */
+        }
+        /* Ensure the body takes full viewport height for centering */
+        html, body {
+            height: 100%;
+        }
+        .container-fluid-full-height {
+            min-height: 100vh; /* Minimum viewport height */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px; /* Add some padding */
+        }
+        .card-custom {
+            background-color: #ffffff;
+            border-radius: 1rem; /* Rounded corners for the card */
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08); /* Subtle shadow */
+            padding: 3rem; /* Generous padding inside the card */
+            max-width: 700px; /* Max width for content */
+            width: 100%; /* Ensure it takes full width up to max-width */
+        }
+        .btn-custom {
+            padding: 1rem 2.5rem; /* Larger padding for buttons */
+            font-size: 1.25rem; /* Larger font size for buttons */
+            border-radius: 0.75rem; /* More rounded buttons */
+            transition: all 0.3s ease; /* Smooth transition for hover effects */
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px); /* Slight lift on hover */
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+        }
+        /* Responsive font size for welcome text */
+        .display-welcome {
+            font-size: calc(1.75rem + 1.5vw); /* Responsive font size */
+            font-weight: 700; /* Bold welcome text */
+            margin-bottom: 2rem; /* Space below welcome text */
+        }
+        @media (max-width: 576px) {
+            .display-welcome {
+                font-size: 2.25rem; /* Smaller on very small screens */
+            }
+            .btn-custom {
+                font-size: 1rem;
+                padding: 0.75rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid-full-height">
+        {% block content %}
+        <!-- Content will be injected here by child templates -->
+        {% endblock %}
+    </div>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
