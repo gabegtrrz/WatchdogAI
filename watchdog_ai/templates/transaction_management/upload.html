@@ -75,41 +75,15 @@
                 </form>
             </div>
             <div class="card-footer text-muted">
-                <div class="row">
-                    <div class="col-md-8">
-                        <p class="mb-2"><strong>Required CSV Columns:</strong></p>
-                        <ul class="list-unstyled">
-                            <li><code>item_name</code> - Name or description of the item being procured</li>
-                            <li><code>quantity</code> - Number of units of the item being procured</li>
-                            <li><code>unit_purchase_price</code> - Price per unit of the item being procured</li>
-                            <li><code>transaction_date</code> - Date when the transaction was completed (YYYY-MM-DD)</li>
-                            <li><code>procurement_method_name</code> - Method used for procurement (e.g., Public Bidding, Direct Contracting)</li>
-                            <li><code>supplier</code> - Supplier or vendor for this transaction</li>
-                            <li><code>invoice_number</code> - Invoice number for this transaction</li>
-                            <li><code>payment_receipt_number</code> - Payment receipt number for this transaction</li>
-                            <li><code>project_name</code> - Name of the project for this procurement transaction</li>
-                            <li><code>end_user_unit</code> - End user unit or department for this procurement</li>
-                            <li><code>project_description</code> - Detailed description of the project</li>
-                            <li><code>approved_budget</code> - Approved Budget for the Contract (ABC)</li>
-                            <li><code>procurement_officer</code> - Name of the procurement officer responsible</li>
-                            <li><code>invitation_to_bid_posting_date</code> - Date the Invitation to Bid was posted (YYYY-MM-DD)</li>
-                            <li><code>bid_submission_deadline</code> - Deadline for bidders to submit proposals (YYYY-MM-DD)</li>
-                            <li><code>bid_opening_date</code> - Date when bids were publicly opened (YYYY-MM-DD)</li>
-                            <li><code>notice_of_award_date</code> - Date the Notice of Award was issued (YYYY-MM-DD)</li>
-                            <li><code>contract_signing_date</code> - Date the formal agreement was signed (YYYY-MM-DD)</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4">
-                        <p class="mb-2"><strong>Optional CSV Columns:</strong></p>
-                        <ul class="list-unstyled">
-                            <li><code>transaction_id</code> - Unique identifier (auto-generated if not provided)</li>
-                        </ul>
-                    </div>
-                </div>
-                <hr>
-                <small class="text-muted">
-                    <strong>Note:</strong> All date fields should be in YYYY-MM-DD format. All fields are required except transaction_id and average_price.
-                </small>
+                <p class="mb-1"><strong>Required CSV Columns:</strong></p>
+                <code>item_name</code>,
+                <code>quantity</code>,
+                <code>unit_purchase_price</code>,
+                <code>transaction_date</code>,
+                <code>procurement_method_name</code>,
+                <code>supplier</code>,
+                <code>invoice_number</code>,
+                <code>payment_receipt_number</code>
             </div>
         </div>
     </div>
