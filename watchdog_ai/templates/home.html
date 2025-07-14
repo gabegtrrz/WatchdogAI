@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %} Home {% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: url('{% static 'backgrounds/gradient_background.jpg' %}') no-repeat center center fixed;
+        background-size: cover;
+        min-height: 100vh;
+        position: relative;
+    }
+    .card-custom {
+        background: rgba(255,255,255,0.7); /* More transparent for better background visibility */
+        border-radius: 1.2rem;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+        padding: 2.5rem 2rem 2rem 2rem;
+        margin-top: 7vh;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+        position: relative;
+        z-index: 1;
+    }
+    .display-welcome {
+        font-weight: 700;
+        font-size: 2.2rem;
+        margin-bottom: 1.2rem;
+    }
+    .btn-custom {
+        font-size: 1.1rem;
+        padding: 0.85rem 1.5rem;
+        border-radius: 0.7rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        transition: transform 0.08s;
+    }
+    .btn-custom:hover {
+        transform: translateY(-2px) scale(1.03);
+    }
+</style>
+<div class="card-custom text-center">
+    <h1 class="display-welcome text-primary">Welcome.</h1>
+    <p class="lead mb-5">Please select your user type to proceed.</p>
+    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-3 col-10 col-sm-8 col-md-10 mx-auto">
+        <!-- Button for Procurement Officer -->
+        <a href="{% url 'transaction-upload-ui' %}" class="btn btn-primary btn-lg btn-custom">
+            Procurement Officer
+        </a>
+        <!-- Button for Stakeholder/Auditor -->
+        <a href="#" class="btn btn-outline-secondary btn-lg btn-custom">
+            Stakeholder / Auditor
+        </a>
+    </div>
+</div>
+{% endblock %}
