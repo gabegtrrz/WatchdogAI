@@ -175,15 +175,15 @@ class Command(BaseCommand):
         self.stdout.write('Training Isolation Forest model...')
         
         # Convert contamination to float if it's a numeric string, otherwise keep as 'auto'
-        if contamination != 'auto':
+        if contamination == 'auto':
+            contamination = 'auto'
+        else:
             try:
-                contamination = contamination
+                contamination = float(contamination)
             except ValueError:
                 self.stderr.write(f'Invalid contamination value: {contamination}. Using "auto".')
                 contamination = 'auto'
 
-        else:
-            contamination = 'auto'
         
         model = IsolationForest(
             contamination=contamination, 
