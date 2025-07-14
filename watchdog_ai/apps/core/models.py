@@ -56,12 +56,14 @@ class Transaction(models.Model):
         max_length=255,
         null=True,
         blank=True,
+        db_index=True,
         help_text="Name of the project for this procurement transaction."
     )
     end_user_unit = models.CharField(
         max_length=100,
         null=True,
         blank=True,
+        db_index=True,
         help_text="End user unit or department for this procurement."
     )
     project_description = models.TextField(
@@ -76,6 +78,7 @@ class Transaction(models.Model):
         max_length=255,
         null=False,
         blank=False,
+        db_index=True,
         help_text="Name or description of the item being procured."
     )
     quantity = models.IntegerField(
@@ -129,12 +132,14 @@ class Transaction(models.Model):
         max_length=100,
         null=False,
         blank=False,
+        db_index=True,
         help_text="Supplier or vendor for this transaction."
     )
     procurement_officer = models.CharField(
         max_length=100,
         null=True,
         blank=True,
+        db_index=True,
         help_text="Name of the procurement officer responsible for this transaction."
     )
 
@@ -143,12 +148,14 @@ class Transaction(models.Model):
         max_length=100,
         null=False,
         blank=False,
+        db_index=True,
         help_text="Invoice number for this transaction."
     )
     payment_receipt_number = models.CharField(
         max_length=100,
         null=False,
         blank=False,
+        db_index=True,
         help_text="Payment receipt number for this transaction."
     )
 
@@ -199,6 +206,7 @@ class Transaction(models.Model):
             ('failed', 'Blockchain Integration Failed'),
         ],
         default='pending',
+        db_index=True,
         help_text="Status of blockchain integration for this transaction."
     )
     blockchain_error = models.TextField(
@@ -303,6 +311,7 @@ class ProcurementMethod(models.Model):
     name = models.CharField(
         max_length=255, 
         unique=True,
+        db_index=True,
         help_text="Name of the procurement method (e.g., Public Bidding, Direct Contracting)."
     )
 
