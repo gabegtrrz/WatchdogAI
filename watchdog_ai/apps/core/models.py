@@ -288,7 +288,7 @@ class Transaction(models.Model):
             self.transaction_id = uuid.uuid4().hex[:32]
 
         # Calculate total_purchase_price before saving
-        self.total_purchase_price = self.calculated_total_purchase_price
+        # self.total_purchase_price = self.calculated_total_purchase_price
 
         # ensures validation runs on every save.
         self.full_clean()
