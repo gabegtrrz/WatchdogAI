@@ -1,5 +1,5 @@
 """
-Management command to train the Isolation Forest model with research-grade evaluation.
+Management command to train the Isolation Forest model with research evaluation.
 """
 import os
 import joblib
@@ -27,7 +27,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '--contamination',
-            type=float,
+            type=str,
             default='auto',
             help='Contamination parameter for Isolation Forest (float or "auto")'
         )
@@ -87,12 +87,13 @@ class Command(BaseCommand):
             self._research_mode_training(df_processed, training_columns, options['contamination_range'])
         else:
             # Standard training
-            self._standard_training(df_processed, training_columns, options['contamination'])
+            self._standard_training(df_processed, training_columns, contamination= options['contamination'])
 
     def _research_mode_training(self, df_processed, training_columns, contamination_range):
         """Research mode with cross-validation and multiple contamination values."""
         self.stdout.write('Running research mode with cross-validation...')
         
+        # Initialize research results dictionary
         research_results = {
             'training_date': datetime.now().isoformat(),
             'dataset_info': {
@@ -118,7 +119,7 @@ class Command(BaseCommand):
             )
             
             # Cross-validation for anomaly detection
-            # Note: For real research, you'd need labeled data
+            # Note: need labeled data for research
             # This is a simplified version
             try:
                 # Get anomaly scores for evaluation
@@ -173,15 +174,27 @@ class Command(BaseCommand):
         """Standard training mode."""
         self.stdout.write('Training Isolation Forest model...')
         
+        # Convert contamination to float if it's a numeric string, otherwise keep as 'auto'
+        if contamination != 'auto':
+            try:
+                contamination = contamination
+            except ValueError:
+                self.stderr.write(f'Invalid contamination value: {contamination}. Using "auto".')
+                contamination = 'auto'
+
+        else:
+            contamination = 'auto'
+        
         model = IsolationForest(
             contamination=contamination, 
             random_state=42,
             n_estimators=100
         )
+
         model.fit(df_processed)
         self.stdout.write('Model training complete.')
 
-        # Save the model and training columns
+        ### Save model and training columns
         self.stdout.write(f'Saving model to {MODEL_PATH}')
         joblib.dump(model, MODEL_PATH)
         
