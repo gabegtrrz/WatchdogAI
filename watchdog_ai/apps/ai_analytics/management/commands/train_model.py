@@ -15,7 +15,7 @@ import numpy as np
 from apps.ai_analytics.services import preprocessing, feature_engineering
 
 # Define the path to store the trained model
-MODEL_DIR = os.path.join(settings.BASE_DIR, 'watchdog_ai', 'apps', 'ai_analytics', 'model_files')
+MODEL_DIR = os.path.join(settings.BASE_DIR, 'apps', 'ai_analytics', 'model_files')
 MODEL_PATH = os.path.join(MODEL_DIR, 'isolation_forest.joblib')
 COLUMNS_PATH = os.path.join(MODEL_DIR, 'training_columns.joblib')
 RESEARCH_LOG_PATH = os.path.join(MODEL_DIR, 'research_log.json')
