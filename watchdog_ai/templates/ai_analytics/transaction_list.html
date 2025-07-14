@@ -1,0 +1,101 @@
+
+{% extends 'base.html' %}
+{% block title %}Transaction List{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="my-4">Transaction List</h1>
+
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            Filters
+        </div>
+        <div class="card-body">
+            <form method="get">
+                <div class="row">
+                    {% for field in filter.form %}
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'transaction_list' %}" class="btn btn-secondary">Clear</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transaction Table -->
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Project Name</th>
+                        <th>Item Name</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total Price</th>
+                        <th>Procurement Method</th>
+                        <th>Supplier</th>
+                        <th>Transaction Date</th>
+                        <th>Block Index</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td>{{ transaction.transaction_id }}</td>
+                        <td>{{ transaction.project_name }}</td>
+                        <td>{{ transaction.item_name }}</td>
+                        <td>{{ transaction.quantity }}</td>
+                        <td>{{ transaction.unit_purchase_price }}</td>
+                        <td>{{ transaction.total_purchase_price }}</td>
+                        <td>{{ transaction.procurement_method.name }}</td>
+                        <td>{{ transaction.supplier }}</td>
+                        <td>{{ transaction.transaction_date }}</td>
+                        <td>{{ transaction.block.index|default:"N/A" }}</td>
+                        <td>{{ transaction.get_blockchain_status_display }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center">No transactions found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if transactions.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{{ request.GET.urlencode }}&page=1">&laquo; First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ transactions.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">Page {{ transactions.number }} of {{ transactions.paginator.num_pages }}.</span>
+            </li>
+
+            {% if transactions.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ transactions.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ transactions.paginator.num_pages }}">Last &raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}

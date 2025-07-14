@@ -69,6 +69,7 @@ INSTALLED_APPS = [
 
     # 3rd Party Apps
     'rest_framework',
+    'django_filters',
 
     # My Apps
     'apps.transaction_management.apps.TransactionManagementConfig',
