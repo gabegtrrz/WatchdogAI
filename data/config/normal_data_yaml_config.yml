@@ -18,7 +18,7 @@ data_generator:
   anomaly_fraction: 0.0    # Set to 0.0 so no anomalies are injected.
   
   # --- Output & Source Files ---
-  output_folder_path: "iforest_training_data" # Descriptive output folder.
+  output_folder_path: "data/iforest_training_data" # Descriptive output folder.
   item_source_file: "data/lab_equipment.txt"
 
   # --- Average Price Configuration ---
