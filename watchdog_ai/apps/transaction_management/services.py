@@ -211,6 +211,13 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
             except InvalidOperation:
                 errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget must be a valid number.'})
 
+        # --- Calculate 'total_purchase_price' from quantity and unit_purchase_price ---
+        if 'quantity' in cleaned_row_data and 'unit_purchase_price' in cleaned_row_data:
+            try:
+                total_purchase_price = cleaned_row_data['quantity'] * cleaned_row_data['unit_purchase_price']
+                cleaned_row_data['total_purchase_price'] = total_purchase_price
+            except (TypeError, ValueError) as e:
+                errors_in_row.append({'field': 'total_purchase_price', 'error': f'Could not calculate total purchase price: {str(e)}'})
 
         # --- Validate 'procurement_officer' (required) ---
         raw_procurement_officer = row.get('procurement_officer')
