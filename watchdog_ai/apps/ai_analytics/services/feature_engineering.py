@@ -35,6 +35,13 @@ def create_model_features(df: pd.DataFrame):
         B. Price & Budget Features: Detect financial irregularities and budget violations
         C. Categorical & Interaction Features: Detect supplier favoritism and collusion
     """
+    # Convert decimal columns to float for calculation
+    # This prevents 'unsupported operand' errors when dividing Decimal types by floats
+    decimal_columns = ['approved_budget', 'total_purchase_price', 'unit_purchase_price']
+    for col in decimal_columns:
+        if col in df.columns:
+            df[col] = df[col].astype(float)
+            
 # --- A. Date-Based Features ---
     # Targets: 'EndOfYearRush', 'WeekendActivity', 'CompressedTimeline', 'BackdatedDocuments'
 
