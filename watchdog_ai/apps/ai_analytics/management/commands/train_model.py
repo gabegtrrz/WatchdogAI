@@ -249,7 +249,7 @@ class Command(BaseCommand):
                             return obj
                     
                     serializable_results = convert_numpy_types(research_results)
-                    json.dump(serializable_results, f, indent=2)
+                    f.write(json.dumps(serializable_results) + '\n')
             
             self.stdout.write(f'Research results saved to {RESEARCH_LOG_PATH}')
             self.stdout.write('Research mode training complete.')
