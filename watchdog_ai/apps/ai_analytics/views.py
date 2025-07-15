@@ -1,13 +1,19 @@
 
 from django.views.generic import ListView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 import json
 import numpy as np
 from sklearn.ensemble import IsolationForest
 from apps.core.models import Transaction
 from .filters import TransactionFilter
+from django.urls import reverse
+from celery.result import AsyncResult
+
+from watchdog_ai.core.models import AnalysisReport
+from .forms import AnalysisConfigurationForm
+from .tasks import perform_anomaly_detection
 
 class TransactionListView(ListView):
     """
@@ -92,28 +98,106 @@ class TransactionListView(ListView):
         
         return context
 
-def analysis_configuration_view(request):
+@require_POST
+def select_transactions(request):
     """
-    Renders the analysis configuration page.
+    Receives selected transaction IDs and stores them in the session.
     """
-    return render(request, 'ai_analytics/analysis_configuration.html')
+    transaction_ids = request.POST.getlist('transaction_ids[]')
+    # Convert IDs to integers for safety
+    transaction_ids = [int(id) for id in transaction_ids]
+    request.session['selected_transaction_ids'] = transaction_ids
+    return redirect('analysis_configuration')
 
-def run_analysis_view(request):
+def analysis_configuration(request):
     """
-    Runs the anomaly detection analysis.
+    Displays the analysis configuration form.
+    """
+    transaction_ids = request.session.get('selected_transaction_ids', [])
+    if not transaction_ids:
+        # Redirect if no transactions were selected
+        return redirect('transaction_list')
 
-    This view takes a POST request with transaction IDs and a contamination
-    percentage, runs an Isolation Forest model, and returns the results
-    as JSON.
+    if request.method == 'POST':
+        form = AnalysisConfigurationForm(request.POST)
+        if form.is_valid():
+            # This logic is now handled by run_analysis view via fetch
+            pass
+    else:
+        form = AnalysisConfigurationForm(initial={
+            'transaction_ids': json.dumps(transaction_ids)
+        })
+
+    return render(request, 'ai_analytics/analysis_configuration.html', {
+        'form': form,
+        'transaction_count': len(transaction_ids)
+    })
+
+@require_POST
+def run_analysis(request):
     """
+    Initiates the asynchronous analysis task via a fetch request.
+    """
+    try:
+        data = json.loads(request.body)
+        contamination = data.get('contamination')
+        transaction_ids = data.get('transaction_ids')
+
+        # Basic validation
+        if not all([contamination, transaction_ids]):
+             return JsonResponse({'success': False, 'error': 'Missing parameters.'}, status=400)
+
+        task = perform_anomaly_detection.delay(transaction_ids, float(contamination))
+        return JsonResponse({'success': True, 'task_id': task.id})
+    except (json.JSONDecodeError, TypeError, ValueError) as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+def get_task_status(request, task_id):
+    """
+    Pollable endpoint to check the status of a Celery task.
+    """
+    task_result = AsyncResult(task_id)
+    result = {
+        'task_id': task_id,
+        'status': task_result.status,
+    }
+    if task_result.ready():
+        # If task is finished, include the result
+        task_output = task_result.get()
+        result['result'] = task_output
+        # Provide a URL to the results page
+        if task_output.get('status') == 'Completed':
+            analysis_run_id = task_output.get('analysis_run_id')
+            if analysis_run_id:
+                result['redirect_url'] = reverse('analysis_results', args=[analysis_run_id])
+
+    return JsonResponse(result)
+
+def analysis_results(request, analysis_run_id):
+    """
+    Displays the results of a specific analysis run.
+    """
+    anomalous_reports = AnalysisReport.objects.filter(
+        analysis_run_id=analysis_run_id,
+        is_anomaly=True
+    ).select_related('transaction').order_by('-anomaly_score')
     
+    return render(request, 'ai_analytics/analysis_results.html', {
+        'reports': anomalous_reports,
+        'analysis_run_id': analysis_run_id
+    })
 
-def analysis_results_view(request):
+def analysis_report_detail(request, report_id):
     """
-    Displays the anomaly detection results.
-
-    This view retrieves the analysis results from the session and renders
-    them in a template. If no results are found, it redirects to the
-    transaction list.
+    Displays the detailed report for a single transaction analysis.
     """
+    report = get_object_or_404(AnalysisReport.objects.select_related('transaction'), pk=report_id)
+    
+    # SHAP values are stored as a JSON string in the model
+    shap_values_data = json.loads(report.shap_values) if report.shap_values else None
+    
+    return render(request, 'ai_analytics/analysis_report_detail.html', {
+        'report': report,
+        'shap_values_data': shap_values_data
+    })
     
