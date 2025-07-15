@@ -32,7 +32,7 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
 
     Returns:
         A tuple containing two lists:
-        1. A list of validated and cleaned data dictionaries ready for creation.
+        1. A list of validated and cleaned data dictionaries ready for creation. 
         2. A list of structured error dictionaries if validation fails.
     """
     try:
@@ -277,6 +277,10 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
                 cleaned_row_data['contract_signing_date'] = pd.to_datetime(raw_contract_date).date()
             except (ValueError, TypeError):
                 errors_in_row.append({'field': 'contract_signing_date', 'error': 'Contract signing date must be in a recognizable format (e.g., YYYY-MM-DD).'})
+
+        # --- Validate 'is_anomaly' (optional) ---
+        if row.get('is_anomaly') is not None:
+            cleaned_row_data['is_anomaly'] = row.get('is_anomaly')
 
         if errors_in_row:
             validation_errors.append({'row': row_num, 'errors': errors_in_row})

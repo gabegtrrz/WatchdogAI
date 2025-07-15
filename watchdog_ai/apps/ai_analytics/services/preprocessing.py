@@ -139,7 +139,7 @@ def clean_raw_data(df: pd.DataFrame):
     Applies basic data quality improvements to prepare the dataset for feature engineering. Includes handling missing values, converting data types, and ensuring data consistency.
     
     Args:
-        df (pd.DataFrame): Raw transaction data from get_transaction_dataframe() or get_transaction_dataframe_from_csv()
+        df (pd.DataFrame): Raw transaction data from get_dataframe()
     
     Returns:
         pd.DataFrame: Cleaned and preprocessed data ready for feature engineering

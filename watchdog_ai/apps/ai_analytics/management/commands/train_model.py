@@ -56,7 +56,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        self.stdout.write('Starting model training with research evaluation...')
+        self.stdout.write('Starting model training...')
 
         
 
@@ -111,6 +111,7 @@ class Command(BaseCommand):
             # Standard training
             self._standard_training(df_processed, training_columns, contamination= options['contamination'])
 
+    # def _research_mode_training(self, df_processed, training_columns, contamination_range, labeled_data_path):
     def _research_mode_training(self, df_processed, training_columns, contamination_range, labeled_data_path):
         """Research mode with cross-validation and multiple contamination values."""
         self.stdout.write('Running research mode with cross-validation...')
@@ -235,7 +236,23 @@ class Command(BaseCommand):
             
             # Save research log
             with open(RESEARCH_LOG_PATH, 'w') as f:
-                json.dump(research_results, f, indent=2)
+            # Convert numpy types to native Python types for JSON serialization
+                    def convert_numpy_types(obj):
+                        if isinstance(obj, np.integer):
+                            return int(obj)
+                        elif isinstance(obj, np.floating):
+                            return float(obj)
+                        elif isinstance(obj, np.ndarray):
+                            return obj.tolist()
+                        elif isinstance(obj, dict):
+                            return {key: convert_numpy_types(value) for key, value in obj.items()}
+                        elif isinstance(obj, list):
+                            return [convert_numpy_types(item) for item in obj]
+                        else:
+                            return obj
+                    
+                    serializable_results = convert_numpy_types(research_results)
+                    json.dump(serializable_results, f, indent=2)
             
             self.stdout.write(f'Research results saved to {RESEARCH_LOG_PATH}')
             self.stdout.write('Research mode training complete.')

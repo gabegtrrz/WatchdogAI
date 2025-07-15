@@ -13,6 +13,7 @@ Each feature is designed to target specific anomaly types in procurement data.
 """
 import pandas as pd
 import numpy as np
+import warnings
 
 def create_model_features(df: pd.DataFrame):
     """
@@ -34,6 +35,8 @@ def create_model_features(df: pd.DataFrame):
         A. Date-Based Features: Detect timing anomalies
         B. Price & Budget Features: Detect financial irregularities and budget violations
         C. Categorical & Interaction Features: Detect supplier favoritism and collusion
+
+    Note: We append to the original dataframe, df, and return the final dataframe, df_final, and the list of final feature column names, final_feature_columns.
     """
     # Convert decimal columns to float for calculation
     # This prevents 'unsupported operand' errors when dividing Decimal types by floats
@@ -124,20 +127,51 @@ def create_model_features(df: pd.DataFrame):
             df[col].fillna(median_val, inplace=True)
 
     # --- One-Hot Encoding ---
-    # Convert categorical procurement methods to numerical features
-    df_processed = pd.get_dummies(df, columns=['procurement_method'], prefix=['procurement_method'], dummy_na=True)
+    # get_dummies() converts categorical procurement methods to numerical features
+    df_processed = pd.get_dummies(
+        df,
+        columns=['procurement_method'], # specifies which column(s) to encode, if False: all columns with object or category dtype will be converted. Other dtypes will be left as is.
+        prefix=['procurement_method'],
+        dummy_na=True # include columns for missing values
+    )
 
-# --- Final Feature ~Set ---
+    # after one-hot encoding, each unique value in procurement_method becomes a new column named like procurement_method_<value> (e.g., procurement_method_Open_Bidding).
+
+# --- Final Feature Set ---
     # Combine base numerical features with engineered features and one-hot encoded columns
     base_numerical_features = ['quantity', 'unit_purchase_price', 'total_purchase_price', 'approved_budget']
     one_hot_cols = [col for col in df_processed.columns if 'procurement_method_' in col]
-    final_feature_columns = base_numerical_features + engineered_features + one_hot_cols
-    
-    # Ensure all columns exist in the final DataFrame
-        # Safety check prevents errors if any expected columns are missing
-        # from the processed DataFrame, which could happen due to data quality issues
-        # or changes in the source data structure.
-    final_feature_columns = [col for col in final_feature_columns if col in df_processed.columns]
+    # e.g.:
+        # one_hot_cols = [
+        #     'procurement_method_Open_Bidding',
+        #     'procurement_method_Direct_Contracting', 
+        #     'procurement_method_Limited_Source',
+        #     'procurement_method_Negotiated_Procurement',
+        #     'procurement_method_nan'
+        # ]
+        
+    expected_feature_columns = base_numerical_features + engineered_features + one_hot_cols
+
+    # Filter expected features to only those present in the dataframe
+    present_expected_features = [col for col in expected_feature_columns if col in df_processed.columns]
+
+    # Identify all numeric columns in the processed dataframe
+    all_numeric_features = df_processed.select_dtypes(include=np.number).columns.tolist()
+
+    # Find new, unexpected numeric columns
+    unexpected_new_features = sorted(list(set(all_numeric_features) - set(present_expected_features)))
+
+    if unexpected_new_features:
+        warnings.warn(
+            f"Unexpected numeric columns were found and will be included as features: {unexpected_new_features}. "
+            "This may be due to an updated data structure. Please verify these columns are suitable for the model.",
+            UserWarning
+        )
+
+    # Combine expected and unexpected features for the final feature set
+    final_feature_columns = present_expected_features + unexpected_new_features
+
+    # Safety check to ensure all columns exist, creating the final DataFrame
     df_final = df_processed[final_feature_columns].copy()
 
     return df_final, final_feature_columns
