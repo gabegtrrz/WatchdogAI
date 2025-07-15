@@ -16,8 +16,8 @@ data_generator:
   # ========================
   
   n_samples: 2000         # Number of records (rows) to generate
-  random_state: 77         # Seed for reproducibility (same seed = same output)
-  anomaly_fraction: 0.10
+  random_state: 7         # Seed for reproducibility (same seed = same output)
+  anomaly_fraction: 0.15
   
   # ============================
   # OUTPUT & SOURCE FILES
