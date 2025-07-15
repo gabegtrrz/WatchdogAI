@@ -219,6 +219,7 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th style="width: 50px;"></th>
                                     <th>Transaction ID</th>
                                     <th>Item Name</th>
                                     <th>Total Price</th>
@@ -229,8 +230,11 @@
                             </thead>
                             <tbody>
                                 {% for transaction in page_obj %}
-                                <tr class="align-middle">
-                                    <td><strong class="text-dark font-monospace">{{ transaction.transaction_id|truncatechars:15 }}</strong></td>
+                                <tr class="transaction-row align-middle" data-transaction-id="{{ transaction.id }}">
+                                    <td class="expand-icon text-center">
+                                        <span class="expand-toggle" style="font-size: 1.2rem; cursor: pointer; display: inline-block; padding: 0.25rem;">➕</span>
+                                    </td>
+                                    <td style="word-break: break-all; max-width: 200px;"><strong class="text-dark font-monospace">{{ transaction.transaction_id }}</strong></td>
                                     <td>{{ transaction.item_name }}</td>
                                     <td>₱{{ transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
                                     <td>{{ transaction.supplier }}</td>
@@ -241,9 +245,193 @@
                                         </span>
                                     </td>
                                 </tr>
+                                <tr class="transaction-details" data-transaction-id="{{ transaction.id }}" style="display: none;">
+                                    <td colspan="7" class="p-0">
+                                        <div class="transaction-details-content p-4 bg-light">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Project Information</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Project Name</small>
+                                                            <strong>{{ transaction.project_name|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">End User Unit</small>
+                                                            <strong>{{ transaction.end_user_unit|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% if transaction.project_description %}
+                                                    <div class="row mb-3">
+                                                        <div class="col-12">
+                                                            <small class="text-muted d-block">Project Description</small>
+                                                            <strong>{{ transaction.project_description|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-box me-2"></i>Item Details</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Item Name</small>
+                                                            <strong>{{ transaction.item_name|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Quantity</small>
+                                                            <strong>{{ transaction.quantity|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-money-bill-wave me-2"></i>Financial Details</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Unit Price</small>
+                                                            <strong>₱{{ transaction.unit_purchase_price|floatformat:2|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Total Price</small>
+                                                            <strong>₱{{ transaction.total_purchase_price|floatformat:2|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Average Price</small>
+                                                            <strong>₱{{ transaction.average_price|floatformat:2|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Approved Budget</small>
+                                                            <strong>₱{{ transaction.approved_budget|floatformat:2|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-handshake me-2"></i>Procurement Details</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Procurement Method</small>
+                                                            <strong>{{ transaction.procurement_method|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Supplier</small>
+                                                            <strong>{{ transaction.supplier|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Procurement Officer</small>
+                                                            <strong>{{ transaction.procurement_officer|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-calendar-alt me-2"></i>Procurement Timeline</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Invitation Posting</small>
+                                                            <strong>{{ transaction.invitation_to_bid_posting_date|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Bid Opening Date</small>
+                                                            <strong>{{ transaction.bid_opening_date|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Bid Submission Deadline</small>
+                                                            <strong>{{ transaction.bid_submission_deadline|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Notice of Award</small>
+                                                            <strong>{{ transaction.notice_of_award_date|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Contract Signing</small>
+                                                            <strong>{{ transaction.contract_signing_date|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Transaction Date</small>
+                                                            <strong>{{ transaction.transaction_date|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-receipt me-2"></i>Documentation</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Invoice Number</small>
+                                                            <strong>{{ transaction.invoice_number|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Payment Receipt</small>
+                                                            <strong>{{ transaction.payment_receipt_number|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% if transaction.block__index %}
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Block Index</small>
+                                                            <strong>{{ transaction.block__index }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-link me-2"></i>Blockchain Status</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Status</small>
+                                                            <span class="badge status-badge status-{{ transaction.blockchain_status }}">
+                                                                {{ transaction.get_blockchain_status_display }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Retry Count</small>
+                                                            <strong>{{ transaction.blockchain_retry_count|default:"0" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% if transaction.blockchain_error %}
+                                                    <div class="row mb-3">
+                                                        <div class="col-12">
+                                                            <small class="text-muted d-block">Error Message</small>
+                                                            <strong class="text-danger">{{ transaction.blockchain_error }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    {% if transaction.last_blockchain_attempt %}
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Last Attempt</small>
+                                                            <strong>{{ transaction.last_blockchain_attempt|date:"M d, Y H:i"|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-database me-2"></i>System Information</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block">Created At</small>
+                                                            <strong>{{ transaction.created_at|date:"M d, Y H:i"|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="6" class="text-center py-5">
+                                    <td colspan="7" class="text-center py-5">
                                         <div class="text-muted">
                                             <i class="fas fa-search fa-3x mb-3"></i>
                                             <h5 class="mb-1">No Transactions Found</h5>
@@ -376,6 +564,8 @@
     /* Table */
     .table > :not(caption) > * > * {
         padding: .9rem .9rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
     .table th {
         font-weight: 700;
@@ -387,6 +577,60 @@
 
     .table-hover tbody tr:hover {
         background-color: #f1f3ff;
+        color: var(--bs-dark);
+    }
+
+    /* Expandable Rows */
+    .transaction-row {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .transaction-row:hover {
+        background-color: #f1f3ff !important;
+    }
+
+    .expand-icon {
+        width: 50px;
+        text-align: center;
+    }
+
+    .expand-toggle {
+        transition: all 0.3s ease;
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: inline-block;
+        padding: 0.25rem;
+        user-select: none;
+    }
+
+    .transaction-row.expanded .expand-toggle {
+        transform: rotate(45deg);
+        transition: transform 0.3s ease;
+    }
+
+    .transaction-details {
+        background-color: #f8f9fc;
+    }
+
+    .transaction-details-content {
+        border-top: 1px solid #e3e6f0;
+        background-color: #f8f9fc;
+    }
+
+    .transaction-details-content h6 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .transaction-details-content small {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .transaction-details-content strong {
+        font-size: 0.85rem;
         color: var(--bs-dark);
     }
 
@@ -418,4 +662,35 @@
     .status-pending { background-color: var(--bs-warning); }
 
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle expandable rows
+    const transactionRows = document.querySelectorAll('.transaction-row');
+    
+    transactionRows.forEach(row => {
+        row.addEventListener('click', function() {
+            const transactionId = this.getAttribute('data-transaction-id');
+            const detailsRow = document.querySelector(`.transaction-details[data-transaction-id="${transactionId}"]`);
+            const toggleIcon = this.querySelector('.expand-toggle');
+            
+            // Toggle the expanded state
+            this.classList.toggle('expanded');
+            
+            // Toggle the details row visibility
+            if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
+                detailsRow.style.display = 'table-row';
+                // Keep plus emoji and rotate it to become minus
+                toggleIcon.textContent = '➕';
+                toggleIcon.style.transform = 'rotate(45deg)';
+            } else {
+                detailsRow.style.display = 'none';
+                // Reset rotation back to plus
+                toggleIcon.textContent = '➕';
+                toggleIcon.style.transform = 'rotate(0deg)';
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
