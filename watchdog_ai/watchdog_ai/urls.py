@@ -31,4 +31,7 @@ urlpatterns = [
     
     # Include blockchain integration URLs for API endpoints
     path('blockchain/', include('apps.blockchain.urls')),
+
+    # Include ai_analytics app's URLs
+    path('analytics/', include('apps.ai_analytics.urls')),
 ]
