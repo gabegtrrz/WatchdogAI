@@ -5,30 +5,27 @@ from apps.core.models import Transaction, ProcurementMethod
 
 class TransactionFilter(django_filters.FilterSet):
     """
-    A filter set for the Transaction model that allows filtering transactions
-    based on various fields. This class provides a comprehensive set of filters
-    for the Transaction model, including range filters for numeric and date fields,
-    and choice filters for fields with predefined options.
+    A filter set for the Transaction model, providing comprehensive filtering options for the UI.
+    It supports range-based filtering for numeric and date fields, and choice-based filtering for foreign keys.
     """
+    # --- Text Field Filters ---
+    transaction_id = django_filters.CharFilter(lookup_expr='icontains', label='Transaction ID')
+    project_name = django_filters.CharFilter(lookup_expr='icontains', label='Project Name')
+    end_user_unit = django_filters.CharFilter(lookup_expr='icontains', label='End User Unit')
+    item_name = django_filters.CharFilter(lookup_expr='icontains', label='Item Name')
+    supplier = django_filters.CharFilter(lookup_expr='icontains', label='Supplier')
+    procurement_officer = django_filters.CharFilter(lookup_expr='icontains', label='Procurement Officer')
+    invoice_number = django_filters.CharFilter(lookup_expr='icontains', label='Invoice Number')
+    payment_receipt_number = django_filters.CharFilter(lookup_expr='icontains', label='Payment Receipt Number')
     
-    # Filter for the block index, accessed through the block foreign key.
-    # This allows filtering transactions by the index of the block they belong to.
-    block__index = django_filters.NumberFilter(
-        field_name='block__index',
-        label='Block Index'
-    )
-
-    # A range filter for the quantity field, allowing filtering by a min and max value.
-    quantity = django_filters.RangeFilter()
-    
-    # Range filters for all decimal fields to allow filtering by a min and max value.
+    # --- Numeric Range Filters ---
     unit_purchase_price = django_filters.RangeFilter()
     total_purchase_price = django_filters.RangeFilter()
+    quantity = django_filters.RangeFilter()
     average_price = django_filters.RangeFilter()
     approved_budget = django_filters.RangeFilter()
 
-    # Date range filters for all date fields.
-    # Uses a DateInput widget for a better user experience in the browser.
+    # --- Date Range Filter ---
     transaction_date = django_filters.DateFromToRangeFilter(
         widget=django_filters.widgets.RangeWidget(attrs={'type': 'date'})
     )
@@ -54,9 +51,15 @@ class TransactionFilter(django_filters.FilterSet):
         widget=django_filters.widgets.RangeWidget(attrs={'type': 'date'})
     )
 
-    # A choice filter for the procurement method, using a dropdown with all available methods.
+    # --- Foreign Key Filters ---
     procurement_method = django_filters.ModelChoiceFilter(
-        queryset=ProcurementMethod.objects.all()
+        queryset=ProcurementMethod.objects.all(),
+        field_name='procurement_method',
+        label='Procurement Method'
+    )
+    block__index = django_filters.NumberFilter(
+        field_name='block__index',
+        label='Block Index'
     )
 
     # A choice filter for the blockchain status, using the choices defined in the model.
@@ -75,6 +78,10 @@ class TransactionFilter(django_filters.FilterSet):
             'procurement_officer': ['icontains'],
             'invoice_number': ['icontains'],
             'payment_receipt_number': ['icontains'],
-            'blockchain_error': ['icontains'],
-            'blockchain_retry_count': ['exact'],
+            'unit_purchase_price': ['exact'],
+            'total_purchase_price': ['exact'],
+            'quantity': ['exact'],
+            'approved_budget': ['exact'],
+            'average_price': ['exact'],
+            'blockchain_status': ['exact'],
         }
