@@ -3,6 +3,7 @@ from django.views.generic import ListView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 import json
 import numpy as np
 from sklearn.ensemble import IsolationForest
@@ -11,7 +12,7 @@ from .filters import TransactionFilter
 from django.urls import reverse
 from celery.result import AsyncResult
 
-from watchdog_ai.core.models import AnalysisReport
+from apps.core.models import AnalysisReport
 from .forms import AnalysisConfigurationForm
 from .tasks import perform_anomaly_detection
 
@@ -101,12 +102,41 @@ class TransactionListView(ListView):
 @require_POST
 def select_transactions(request):
     """
-    Receives selected transaction IDs and stores them in the session.
+    Receives selected transaction IDs and handles both individual selections
+    and "select all minus deselected" scenarios.
     """
-    transaction_ids = request.POST.getlist('transaction_ids[]')
-    # Convert IDs to integers for safety
-    transaction_ids = [int(id) for id in transaction_ids]
+    # Check if this is a "select all" request
+    select_all = request.POST.get('select_all') == 'true'
+    deselected_ids = request.POST.getlist('deselected_ids[]')
+    
+    if select_all:
+        # Get all filtered transaction IDs
+        # We need to apply the same filters as the list view
+        queryset = Transaction.objects.all()
+        
+        # Create a mock request with GET parameters for filtering
+        # The filter parameters are sent as POST data with the same names as GET parameters
+        mock_get = request.POST.copy()
+        # Remove the select_all and deselected_ids parameters
+        if 'select_all' in mock_get:
+            del mock_get['select_all']
+        for key in list(mock_get.keys()):
+            if key.startswith('deselected_ids'):
+                del mock_get[key]
+        
+        filterset = TransactionFilter(mock_get, queryset=queryset)
+        all_filtered_ids = list(filterset.qs.values_list('id', flat=True))
+        
+        # Remove deselected IDs
+        deselected_ids = [int(id) for id in deselected_ids]
+        transaction_ids = [id for id in all_filtered_ids if id not in deselected_ids]
+    else:
+        # Individual selections
+        transaction_ids = request.POST.getlist('transaction_ids[]')
+        transaction_ids = [int(id) for id in transaction_ids]
+    
     request.session['selected_transaction_ids'] = transaction_ids
+    print(f"DEBUG: Stored {len(transaction_ids)} transaction IDs in session")
     return redirect('analysis_configuration')
 
 def analysis_configuration(request):
@@ -114,9 +144,20 @@ def analysis_configuration(request):
     Displays the analysis configuration form.
     """
     transaction_ids = request.session.get('selected_transaction_ids', [])
+    print(f"DEBUG: Retrieved {len(transaction_ids)} transaction IDs from session")
+    
     if not transaction_ids:
         # Redirect if no transactions were selected
         return redirect('transaction_list')
+
+    # Get the actual count of transactions (not just the IDs list length)
+    # This handles the case where we have all filtered transactions selected
+    if isinstance(transaction_ids, list) and len(transaction_ids) > 0:
+        # Check if this might be a "select all" scenario by looking at the count
+        # If we have a large number of IDs, it's likely select all
+        transaction_count = len(transaction_ids)
+    else:
+        transaction_count = 0
 
     if request.method == 'POST':
         form = AnalysisConfigurationForm(request.POST)
@@ -130,7 +171,7 @@ def analysis_configuration(request):
 
     return render(request, 'ai_analytics/analysis_configuration.html', {
         'form': form,
-        'transaction_count': len(transaction_ids)
+        'transaction_count': transaction_count
     })
 
 @require_POST

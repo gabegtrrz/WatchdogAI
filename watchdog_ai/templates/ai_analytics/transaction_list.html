@@ -5,179 +5,182 @@
 
 {% block content %}
 <div class="container-fluid">
-    <form id="transaction-selection-form" action="{% url 'select_transactions' %}" method="post">
-        {% csrf_token %}
-        <div class="row">
-            <div class="col-12">
-                <header class="d-flex justify-content-between align-items-center mb-4">
-                    <h1 class="h2 text-dark">Procurement Transactions</h1>
-                    <button type="submit" id="analyze-button" class="btn btn-primary" disabled>
-                        <i class="fas fa-flask-vial me-2"></i>Analyze Selected
-                    </button>
-                </header>
-
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-light border-bottom">
-                        <h5 class="mb-0 fw-bold"><i class="fas fa-filter me-2"></i>Filter Transactions</h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="get">
-                            <div class="row mb-3">
-                                <div class="col-12"><h6 class="text-secondary mb-3">Core Search</h6></div>
-                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                                    <div class="d-flex flex-column">
-                                        <label for="{{ filter.form.item_name.id_for_label }}" class="form-label mb-2">Item Name</label>
-                                        {{ filter.form.item_name }}
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                                    <div class="d-flex flex-column">
-                                        <label for="{{ filter.form.project_name.id_for_label }}" class="form-label mb-2">Project Name</label>
-                                        {{ filter.form.project_name }}
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                                    <div class="d-flex flex-column">
-                                        <label for="{{ filter.form.supplier.id_for_label }}" class="form-label mb-2">Supplier</label>
-                                        {{ filter.form.supplier }}
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                                    <div class="d-flex flex-column">
-                                        <label for="{{ filter.form.transaction_id.id_for_label }}" class="form-label mb-2">Transaction ID</label>
-                                        {{ filter.form.transaction_id }}
-                                    </div>
+    <div class="row">
+        <div class="col-12">
+            <!-- Filter Form: Now separate from the selection form -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-filter me-2"></i>Filter Transactions</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="filter-form">
+                        <div class="row mb-3">
+                            <div class="col-12"><h6 class="text-secondary mb-3">Core Search</h6></div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                <div class="d-flex flex-column">
+                                    <label for="{{ filter.form.item_name.id_for_label }}" class="form-label mb-2">Item Name</label>
+                                    {{ filter.form.item_name }}
                                 </div>
                             </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                <div class="d-flex flex-column">
+                                    <label for="{{ filter.form.project_name.id_for_label }}" class="form-label mb-2">Project Name</label>
+                                    {{ filter.form.project_name }}
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                <div class="d-flex flex-column">
+                                    <label for="{{ filter.form.supplier.id_for_label }}" class="form-label mb-2">Supplier</label>
+                                    {{ filter.form.supplier }}
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                <div class="d-flex flex-column">
+                                    <label for="{{ filter.form.transaction_id.id_for_label }}" class="form-label mb-2">Transaction ID</label>
+                                    {{ filter.form.transaction_id }}
+                                </div>
+                            </div>
+                        </div>
 
-                            <div class="accordion" id="advancedFilters">
-                                <div class="accordion-item border-0">
-                                    <h2 class="accordion-header" id="headingOne">
-                                        <button class="accordion-button bg-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                                            Advanced & Other Filters
-                                        </button>
-                                    </h2>
-                                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#advancedFilters">
-                                        <div class="accordion-body">
-                                            <div class="row mb-3 mt-3">
-                                                <div class="col-12"><h6 class="text-secondary mb-3">Financial</h6></div>
-                                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.total_purchase_price.id_for_label }}" class="form-label mb-2">Total Price</label>
-                                                        {{ filter.form.total_purchase_price }}
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.unit_purchase_price.id_for_label }}" class="form-label mb-2">Unit Price</label>
-                                                        {{ filter.form.unit_purchase_price }}
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.approved_budget.id_for_label }}" class="form-label mb-2">Approved Budget</label>
-                                                        {{ filter.form.approved_budget }}
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.quantity.id_for_label }}" class="form-label mb-2">Quantity</label>
-                                                        {{ filter.form.quantity }}
-                                                    </div>
+                        <div class="accordion" id="advancedFilters">
+                            <div class="accordion-item border-0">
+                                <h2 class="accordion-header" id="headingOne">
+                                    <button class="accordion-button bg-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                        Advanced Filters
+                                    </button>
+                                </h2>
+                                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#advancedFilters">
+                                    <div class="accordion-body">
+                                        <!-- All other filter inputs go here -->
+                                        <div class="row mb-3 mt-3">
+                                            <div class="col-12"><h6 class="text-secondary mb-3">Financial</h6></div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.total_purchase_price.id_for_label }}" class="form-label mb-2">Total Price</label>
+                                                    {{ filter.form.total_purchase_price }}
                                                 </div>
                                             </div>
-                                            <div class="row mb-3">
-                                                <div class="col-12"><h6 class="text-secondary mb-3">Dates</h6></div>
-                                                <div class="col-12 col-sm-6 col-md-4 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.transaction_date.id_for_label }}" class="form-label mb-2">Transaction Date</label>
-                                                        {{ filter.form.transaction_date }}
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-6 col-md-4 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.invitation_to_bid_posting_date.id_for_label }}" class="form-label mb-2">Invitation Posting</label>
-                                                        {{ filter.form.invitation_to_bid_posting_date }}
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-6 col-md-4 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.contract_signing_date.id_for_label }}" class="form-label mb-2">Contract Signing</label>
-                                                        {{ filter.form.contract_signing_date }}
-                                                    </div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.unit_purchase_price.id_for_label }}" class="form-label mb-2">Unit Price</label>
+                                                    {{ filter.form.unit_purchase_price }}
                                                 </div>
                                             </div>
-                                            <div class="row mb-3">
-                                                 <div class="col-12"><h6 class="text-secondary mb-3">Category</h6></div>
-                                                 <div class="col-12 col-sm-6 col-md-4 mb-3">
-                                                     <div class="d-flex flex-column">
-                                                         <label for="{{ filter.form.procurement_method.id_for_label }}" class="form-label mb-2">Procurement Method</label>
-                                                         {{ filter.form.procurement_method }}
-                                                     </div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.approved_budget.id_for_label }}" class="form-label mb-2">Approved Budget</label>
+                                                    {{ filter.form.approved_budget }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.quantity.id_for_label }}" class="form-label mb-2">Quantity</label>
+                                                    {{ filter.form.quantity }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-12"><h6 class="text-secondary mb-3">Dates</h6></div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.transaction_date.id_for_label }}" class="form-label mb-2">Transaction Date</label>
+                                                    {{ filter.form.transaction_date }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.invitation_to_bid_posting_date.id_for_label }}" class="form-label mb-2">Invitation Posting</label>
+                                                    {{ filter.form.invitation_to_bid_posting_date }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.contract_signing_date.id_for_label }}" class="form-label mb-2">Contract Signing</label>
+                                                    {{ filter.form.contract_signing_date }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                             <div class="col-12"><h6 class="text-secondary mb-3">Category</h6></div>
+                                             <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                 <div class="d-flex flex-column">
+                                                     <label for="{{ filter.form.procurement_method.id_for_label }}" class="form-label mb-2">Procurement Method</label>
+                                                     {{ filter.form.procurement_method }}
                                                  </div>
-                                                 <div class="col-12 col-sm-6 col-md-4 mb-3">
-                                                     <div class="d-flex flex-column">
-                                                         <label for="{{ filter.form.end_user_unit.id_for_label }}" class="form-label mb-2">End User Unit</label>
-                                                         {{ filter.form.end_user_unit }}
-                                                     </div>
+                                             </div>
+                                             <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                 <div class="d-flex flex-column">
+                                                     <label for="{{ filter.form.end_user_unit.id_for_label }}" class="form-label mb-2">End User Unit</label>
+                                                     {{ filter.form.end_user_unit }}
                                                  </div>
-                                                 <div class="col-12 col-sm-6 col-md-4 mb-3">
-                                                     <div class="d-flex flex-column">
-                                                         <label for="{{ filter.form.blockchain_status.id_for_label }}" class="form-label mb-2">Blockchain Status</label>
-                                                         {{ filter.form.blockchain_status }}
-                                                     </div>
+                                             </div>
+                                             <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                 <div class="d-flex flex-column">
+                                                     <label for="{{ filter.form.blockchain_status.id_for_label }}" class="form-label mb-2">Blockchain Status</label>
+                                                     {{ filter.form.blockchain_status }}
                                                  </div>
-                                            </div>
-                                            <div class="row mb-3">
-                                                <div class="col-12"><h6 class="text-secondary mb-3">Advanced Search</h6></div>
-                                                <div class="col-12 col-sm-6 col-md-4 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.procurement_officer.id_for_label }}" class="form-label mb-2">Procurement Officer</label>
-                                                        {{ filter.form.procurement_officer }}
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-6 col-md-4 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.invoice_number.id_for_label }}" class="form-label mb-2">Invoice Number</label>
-                                                        {{ filter.form.invoice_number }}
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 col-sm-6 col-md-4 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.payment_receipt_number.id_for_label }}" class="form-label mb-2">Payment Receipt</label>
-                                                        {{ filter.form.payment_receipt_number }}
-                                                    </div>
+                                             </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-12"><h6 class="text-secondary mb-3">Advanced Search</h6></div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.procurement_officer.id_for_label }}" class="form-label mb-2">Procurement Officer</label>
+                                                    {{ filter.form.procurement_officer }}
                                                 </div>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-12"><h6 class="text-secondary mb-3">Additional</h6></div>
-                                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.average_price.id_for_label }}" class="form-label mb-2">Average Price</label>
-                                                        {{ filter.form.average_price }}
-                                                    </div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.invoice_number.id_for_label }}" class="form-label mb-2">Invoice Number</label>
+                                                    {{ filter.form.invoice_number }}
                                                 </div>
-                                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                                                    <div class="d-flex flex-column">
-                                                        <label for="{{ filter.form.block__index.id_for_label }}" class="form-label mb-2">Block Index</label>
-                                                        {{ filter.form.block__index }}
-                                                    </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.payment_receipt_number.id_for_label }}" class="form-label mb-2">Payment Receipt</label>
+                                                    {{ filter.form.payment_receipt_number }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12"><h6 class="text-secondary mb-3">Additional</h6></div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.average_price.id_for_label }}" class="form-label mb-2">Average Price</label>
+                                                    {{ filter.form.average_price }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.block__index.id_for_label }}" class="form-label mb-2">Block Index</label>
+                                                    {{ filter.form.block__index }}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-primary me-2"><i class="fas fa-check me-1"></i> Apply Filters</button>
-                                    <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary"><i class="fas fa-times me-1"></i> Clear</a>
-                                </div>
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary me-2"><i class="fas fa-check me-1"></i> Apply Filters</button>
+                                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary"><i class="fas fa-times me-1"></i> Clear</a>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
+            </div>
+
+            <!-- Transaction Selection Form -->
+            <form id="transaction-selection-form" action="{% url 'select_transactions' %}" method="post">
+                {% csrf_token %}
+                <header class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h2 text-dark">Procurement Transactions</h1>
+                    <button type="submit" id="analyze-button" class="btn btn-primary" disabled>
+                        <i class="fas fa-flask-vial me-2"></i>Analyze Selected
+                    </button>
+                </header>
 
                 {% if request.GET %}
                 <div class="mb-4">
@@ -574,9 +577,9 @@
                     </div>
                     {% endif %}
                 </div>
-            </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 
 <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
@@ -807,69 +810,183 @@
     .status-failed { background-color: var(--bs-danger); }
     .status-pending { background-color: var(--bs-warning); }
 
+    /* Enhanced checkbox styling */
+    .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        margin-top: 0.1em;
+        border: 2px solid #6c757d;
+        border-radius: 0.25em;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+
+    .form-check-input:hover {
+        border-color: var(--bs-primary);
+        transform: scale(1.1);
+    }
+
+    .form-check-input:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+
+    /* Checkbox cell styling */
+    .checkbox-cell {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+        border-right: 1px solid #e3e6f0;
+    }
+
+    /* Header checkbox styling */
+    #select-all-page {
+        width: 1.3em;
+        height: 1.3em;
+        border: 2px solid #495057;
+        background-color: #fff;
+    }
+
+    #select-all-page:checked {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+
+    #select-all-page:hover {
+        border-color: var(--bs-primary);
+        transform: scale(1.1);
+    }
+
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const transactionRows = document.querySelectorAll('.transaction-row');
-    
     transactionRows.forEach(row => {
         row.addEventListener('click', function(e) {
             if (e.target.closest('.checkbox-cell')) return;
-
             const transactionId = this.getAttribute('data-transaction-id');
             const detailsRow = document.querySelector(`.transaction-details[data-transaction-id="${transactionId}"]`);
-            const toggleIcon = this.querySelector('.expand-toggle');
-            
             this.classList.toggle('expanded');
-            
-            if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
-                detailsRow.style.display = 'table-row';
-                toggleIcon.style.transform = 'rotate(45deg)';
-            } else {
-                detailsRow.style.display = 'none';
-                toggleIcon.style.transform = 'rotate(0deg)';
-            }
+            detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
         });
     });
 
     const selectAllCheckbox = document.getElementById('select-all-page');
     const transactionCheckboxes = document.querySelectorAll('.transaction-checkbox');
     const analyzeButton = document.getElementById('analyze-button');
+    const totalFilteredCount = {{ total_filtered_count }};
+    const form = document.getElementById('transaction-selection-form');
+    const filterForm = document.getElementById('filter-form');
+
+    filterForm.addEventListener('submit', function() {
+        sessionStorage.clear();
+    });
+
+    let selectAllMode = sessionStorage.getItem('selectAllMode') === 'true';
+    let selectedIds = new Set(JSON.parse(sessionStorage.getItem('selectedIds') || '[]'));
+    let deselectedIds = new Set(JSON.parse(sessionStorage.getItem('deselectedIds') || '[]'));
 
     function updateAnalyzeButtonState() {
-        const selectedCount = document.querySelectorAll('.transaction-checkbox:checked').length;
-        if (selectedCount > 0) {
-            analyzeButton.disabled = false;
-            analyzeButton.innerHTML = `<i class="fas fa-flask-vial me-2"></i>Analyze ${selectedCount} Transaction(s)`;
+        const count = selectAllMode ? totalFilteredCount - deselectedIds.size : selectedIds.size;
+        analyzeButton.disabled = count === 0;
+        analyzeButton.innerHTML = count > 0 ? `<i class="fas fa-flask-vial me-2"></i>Analyze ${count} Transaction(s)` : '<i class="fas fa-flask-vial me-2"></i>Analyze Selected';
+    }
+
+    function updateCheckboxStates() {
+        if (selectAllMode) {
+            selectAllCheckbox.checked = true;
+            transactionCheckboxes.forEach(cb => {
+                cb.checked = !deselectedIds.has(parseInt(cb.value));
+            });
         } else {
-            analyzeButton.disabled = true;
-            analyzeButton.innerHTML = `<i class="fas fa-flask-vial me-2"></i>Analyze Selected`;
+            transactionCheckboxes.forEach(cb => {
+                cb.checked = selectedIds.has(parseInt(cb.value));
+            });
+            selectAllCheckbox.checked = transactionCheckboxes.length > 0 && Array.from(transactionCheckboxes).every(cb => cb.checked);
         }
     }
 
     selectAllCheckbox.addEventListener('change', function() {
-        transactionCheckboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
+        selectAllMode = this.checked;
+        sessionStorage.setItem('selectAllMode', selectAllMode);
+        selectedIds.clear();
+        deselectedIds.clear();
+        sessionStorage.setItem('selectedIds', '[]');
+        sessionStorage.setItem('deselectedIds', '[]');
+        updateCheckboxStates();
         updateAnalyzeButtonState();
     });
 
     transactionCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            if (!this.checked) {
-                selectAllCheckbox.checked = false;
-            } else {
-                // Check if all are checked
-                if (document.querySelectorAll('.transaction-checkbox:checked').length === transactionCheckboxes.length) {
-                    selectAllCheckbox.checked = true;
+            const id = parseInt(this.value);
+            if (selectAllMode) {
+                if (this.checked) {
+                    deselectedIds.delete(id);
+                } else {
+                    deselectedIds.add(id);
                 }
+                sessionStorage.setItem('deselectedIds', JSON.stringify(Array.from(deselectedIds)));
+            } else {
+                if (this.checked) {
+                    selectedIds.add(id);
+                } else {
+                    selectedIds.delete(id);
+                }
+                sessionStorage.setItem('selectedIds', JSON.stringify(Array.from(selectedIds)));
             }
+            updateCheckboxStates();
             updateAnalyzeButtonState();
         });
     });
 
-    // Initial state check
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        this.querySelectorAll('input[type=hidden]').forEach(el => el.remove());
+
+        if (selectAllMode) {
+            const selectAllInput = document.createElement('input');
+            selectAllInput.type = 'hidden';
+            selectAllInput.name = 'select_all';
+            selectAllInput.value = 'true';
+            this.appendChild(selectAllInput);
+
+            deselectedIds.forEach(id => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'deselected_ids[]';
+                hiddenInput.value = id;
+                this.appendChild(hiddenInput);
+            });
+        } else {
+            selectedIds.forEach(id => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'transaction_ids[]';
+                hiddenInput.value = id;
+                this.appendChild(hiddenInput);
+            });
+        }
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        for (const [key, value] of urlParams) {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = key;
+            hiddenInput.value = value;
+            this.appendChild(hiddenInput);
+        }
+
+        this.submit();
+    });
+
+    updateCheckboxStates();
     updateAnalyzeButtonState();
 });
 </script>

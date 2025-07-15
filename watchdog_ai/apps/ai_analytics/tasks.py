@@ -1,6 +1,6 @@
 from celery import shared_task
 import uuid
-from watchdog_ai.core.models import Transaction, AnalysisReport
+from apps.core.models import Transaction, AnalysisReport
 from .services import anomaly_detection
 
 @shared_task

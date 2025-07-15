@@ -8,7 +8,7 @@ import pandas as pd
 import shap
 from . import preprocessing
 from . import feature_engineering
-from watchdog_ai.core.models import Transaction
+from apps.core.models import Transaction
 
 # Load model and columns at module level for efficiency
 MODEL_PATH = 'watchdog_ai/apps/ai_analytics/model_files/isolation_forest.joblib'
