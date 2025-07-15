@@ -59,8 +59,11 @@ class Command(BaseCommand):
 
         # 1. Get and preprocess data
         self.stdout.write('Fetching and preprocessing transaction data...')
-        try:
             # Step 1: Get raw data and clean it
+
+            # Determine if getting data from CSV or Database
+
+        try:
             csv_source = options.get('csv')
             if csv_source:
                 self.stdout.write(f'Using CSV source: {csv_source}')
@@ -72,15 +75,27 @@ class Command(BaseCommand):
             if df.empty:
                 self.stdout.write('No transaction data found to train the model.')
                 return
-            
-            cleaned_df = preprocessing.clean_raw_data(df)
-            
-            # Step 2: Engineer features
-            df_processed, training_columns = feature_engineering.create_model_features(cleaned_df)
-            self.stdout.write(f'Successfully processed {df_processed.shape[0]} transactions with {df_processed.shape[1]} features.')
         except Exception as e:
-            self.stderr.write(f'Error during data processing: {e}')
+            self.stderr.write(f'Error during data fetching: {e}')
             return
+        
+        try:
+            cleaned_df = preprocessing.clean_raw_data(df)
+        except Exception as e:
+            self.stderr.write(f'Error during data preprocessing: {e}')
+            return
+
+        
+        # Step 2: Engineer features
+
+        try:
+            df_processed, training_columns = feature_engineering.create_model_features(cleaned_df)
+        except Exception as e:
+            self.stderr.write(f'Error during feature engineering: {e}')
+            return
+
+        self.stdout.write(f'Successfully processed {df_processed.shape[0]} transactions with {df_processed.shape[1]} features.')
+
 
         # Research mode: Test multiple contamination values
         if options['research_mode']:
@@ -115,16 +130,21 @@ class Command(BaseCommand):
             model = IsolationForest(
                 contamination=contamination, 
                 random_state=42,
-                n_estimators=100
+                n_estimators=100 # Number of base estimators (or "itrees") in the ensemble
             )
             
-            # Cross-validation for anomaly detection
+            ### Cross-validation for anomaly detection
             # Note: need labeled data for research
             # This is a simplified version
             try:
                 # Get anomaly scores for evaluation
-                scores = model.fit_predict(df_processed)
-                anomaly_rate = np.mean(scores == -1)
+                scores = model.fit_predict(df_processed) #returns an array where:
+                #-1 indicates an anomaly (outlier)
+                #1 indicates normal data (inlier)
+
+
+                anomaly_rate = np.mean(scores == -1) 
+                # Computes what percentage of the data points were flagged as anomalies by the model.
                 
                 # Store results
                 research_results['contamination_analysis'][contamination] = {
