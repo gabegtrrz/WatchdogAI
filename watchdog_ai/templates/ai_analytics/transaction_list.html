@@ -229,12 +229,90 @@
                             <thead class="table-light">
                                 <tr>
                                     <th style="width: 50px;"></th>
-                                    <th>Transaction ID</th>
-                                    <th>Item Name</th>
-                                    <th>Total Price</th>
-                                    <th>Supplier</th>
-                                    <th>Transaction Date</th>
-                                    <th>Status</th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=transaction_id&order={% if current_sort == 'transaction_id' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Transaction ID
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'transaction_id' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(A-Z){% else %}(Z-A){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=item_name&order={% if current_sort == 'item_name' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Item Name
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'item_name' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(A-Z){% else %}(Z-A){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=total_purchase_price&order={% if current_sort == 'total_purchase_price' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Total Price
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'total_purchase_price' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(low-high){% else %}(high-low){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=supplier&order={% if current_sort == 'supplier' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Supplier
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'supplier' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(A-Z){% else %}(Z-A){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=transaction_date&order={% if current_sort == 'transaction_date' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Transaction Date
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'transaction_date' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(old-new){% else %}(new-old){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=blockchain_status&order={% if current_sort == 'blockchain_status' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Status
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'blockchain_status' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(A-Z){% else %}(Z-A){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -582,6 +660,53 @@
         font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: .05em;
+    }
+
+    /* Sortable headers */
+    .sortable-header {
+        transition: color 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    .sortable-header:hover {
+        color: var(--bs-primary) !important;
+        text-decoration: none;
+    }
+    
+    .sortable-header:focus {
+        outline: none;
+        color: var(--bs-primary) !important;
+    }
+    
+    .sort-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.7rem;
+        font-weight: 400;
+        margin-left: 0.5rem;
+    }
+    
+    .sort-text {
+        font-size: 0.65rem;
+        opacity: 0.8;
+    }
+    
+    .sort-icon {
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .sortable-header:hover .sort-indicator {
+        color: var(--bs-primary) !important;
+    }
+    
+    .sortable-header:hover .sort-icon {
+        transform: scale(1.1);
+        transition: transform 0.2s ease;
     }
 
     .table-hover tbody tr:hover {
