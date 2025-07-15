@@ -9,6 +9,9 @@
         <div class="col-12">
             <header class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h2 text-dark">Procurement Transactions</h1>
+                <button id="analyze-button" class="btn btn-primary" disabled>
+                    <i class="fas fa-flask-vial me-2"></i>Analyze Transactions
+                </button>
             </header>
 
             <div class="card shadow-sm mb-4">
@@ -228,6 +231,7 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th style="width: 30px;" class="text-center"><input class="form-check-input" type="checkbox" id="select-all"></th>
                                     <th style="width: 50px;"></th>
                                     <th>
                                         <a href="?{{ request.GET.urlencode }}&sort=transaction_id&order={% if current_sort == 'transaction_id' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
@@ -318,6 +322,7 @@
                             <tbody>
                                 {% for transaction in page_obj %}
                                 <tr class="transaction-row align-middle" data-transaction-id="{{ transaction.id }}">
+                                    <td class="text-center checkbox-cell"><input class="form-check-input transaction-checkbox" type="checkbox" data-transaction-id="{{ transaction.id }}"></td>
                                     <td class="expand-icon text-center">
                                         <span class="expand-toggle" style="font-size: 1.2rem; cursor: pointer; display: inline-block; padding: 0.25rem;">➕</span>
                                     </td>
@@ -333,7 +338,7 @@
                                     </td>
                                 </tr>
                                 <tr class="transaction-details" data-transaction-id="{{ transaction.id }}" style="display: none;">
-                                    <td colspan="7" class="p-0">
+                                    <td colspan="8" class="p-0">
                                         <div class="transaction-details-content p-4 bg-light">
                                             <div class="row">
                                                 <div class="col-12 col-lg-6">
@@ -799,32 +804,82 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle expandable rows
     const transactionRows = document.querySelectorAll('.transaction-row');
     
     transactionRows.forEach(row => {
-        row.addEventListener('click', function() {
+        row.addEventListener('click', function(e) {
+            if (e.target.closest('.checkbox-cell')) return;
+
             const transactionId = this.getAttribute('data-transaction-id');
             const detailsRow = document.querySelector(`.transaction-details[data-transaction-id="${transactionId}"]`);
             const toggleIcon = this.querySelector('.expand-toggle');
             
-            // Toggle the expanded state
             this.classList.toggle('expanded');
             
-            // Toggle the details row visibility
             if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
                 detailsRow.style.display = 'table-row';
-                // Keep plus emoji and rotate it to become minus
-                toggleIcon.textContent = '➕';
                 toggleIcon.style.transform = 'rotate(45deg)';
             } else {
                 detailsRow.style.display = 'none';
-                // Reset rotation back to plus
-                toggleIcon.textContent = '➕';
                 toggleIcon.style.transform = 'rotate(0deg)';
             }
         });
     });
+
+    const selectAllCheckbox = document.getElementById('select-all');
+    const transactionCheckboxes = document.querySelectorAll('.transaction-checkbox');
+    const analyzeButton = document.getElementById('analyze-button');
+
+    function updateAnalyzeButtonState() {
+        const selectedCount = document.querySelectorAll('.transaction-checkbox:checked').length;
+        if (selectedCount > 0) {
+            analyzeButton.disabled = false;
+            analyzeButton.innerHTML = `<i class="fas fa-flask-vial me-2"></i>Analyze ${selectedCount} Transaction(s)`;
+        } else {
+            analyzeButton.disabled = true;
+            analyzeButton.innerHTML = `<i class="fas fa-flask-vial me-2"></i>Analyze Transactions`;
+        }
+    }
+
+    selectAllCheckbox.addEventListener('change', function() {
+        transactionCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateAnalyzeButtonState();
+    });
+
+    transactionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            selectAllCheckbox.checked = Array.from(transactionCheckboxes).every(cb => cb.checked);
+            updateAnalyzeButtonState();
+        });
+    });
+
+    analyzeButton.addEventListener('click', function() {
+        const selectedTransactionIds = Array.from(document.querySelectorAll('.transaction-checkbox:checked'))
+            .map(cb => cb.getAttribute('data-transaction-id'));
+
+        if (selectedTransactionIds.length > 0) {
+            sessionStorage.setItem('selectedTransactionIds', JSON.stringify(selectedTransactionIds));
+            window.location.href = "{% url 'analysis_configuration' %}"; 
+        }
+    });
+
+    function applyPersistedSelection() {
+        const storedIdsString = sessionStorage.getItem('selectedTransactionIds');
+        const storedIds = storedIdsString ? JSON.parse(storedIdsString) : [];
+        if (storedIds.length > 0) {
+            transactionCheckboxes.forEach(checkbox => {
+                if (storedIds.includes(checkbox.getAttribute('data-transaction-id'))) {
+                    checkbox.checked = true;
+                }
+            });
+            selectAllCheckbox.checked = Array.from(transactionCheckboxes).every(cb => cb.checked);
+            updateAnalyzeButtonState();
+        }
+    }
+    
+    applyPersistedSelection();
 });
 </script>
 {% endblock %}
