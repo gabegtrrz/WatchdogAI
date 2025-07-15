@@ -56,6 +56,4 @@ data/*/normal_data_scraped/
 data/*/iforest_training_data/
 data/*/normal_blank_average/
 
-# Ignore all CSV files in data subdirectories (generated data)
-data/**/*.csv
 
