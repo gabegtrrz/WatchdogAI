@@ -1,12 +1,5 @@
 # -----------------
-# Training Data 1
-# 
-# 
-# Contains all anomalies
-# Actual Contamination: 0.01
-# average_price:
-    # mode: 'scrape'
-# 
+# Contains all configured anomaly types
 # -----------------
 
 
