@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analysis Results - Procurement Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <header class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 text-dark">Anomaly Detection Results</h1>
+                <a href="{% url 'transaction_list' %}" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-2"></i>Back to Transaction List</a>
+            </header>
+
+            <!-- Analysis Summary -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2"></i>Analysis Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="stat-box">
+                                <h6 class="text-muted">Total Transactions Analyzed</h6>
+                                <h3 class="fw-bold display-6">{{ results.total_transactions }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-box">
+                                <h6 class="text-muted">Anomalies Detected</h6>
+                                <h3 class="fw-bold display-6 text-danger">{{ results.anomalies_detected }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-box">
+                                <h6 class="text-muted">Contamination Factor</h6>
+                                <h3 class="fw-bold display-6">{{ results.contamination_factor|floatformat:2 }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Results -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-list-ul me-2"></i>Analyzed Transactions</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Item Name</th>
+                                    <th>Total Purchase Price</th>
+                                    <th>Supplier</th>
+                                    <th>Transaction Date</th>
+                                    <th class="text-center">Analysis Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tx in results.analyzed_transactions %}
+                                <tr class="{% if tx.is_anomaly %}table-danger{% endif %}">
+                                    <td><strong class="font-monospace">{{ tx.transaction_id }}</strong></td>
+                                    <td>{{ tx.item_name }}</td>
+                                    <td>₱{{ tx.total_purchase_price|floatformat:2 }}</td>
+                                    <td>{{ tx.supplier }}</td>
+                                    <td>{{ tx.transaction_date }}</td>
+                                    <td class="text-center">
+                                        {% if tx.is_anomaly %}
+                                            <span class="badge bg-danger">Anomaly</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Normal</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <p class="text-muted">No transaction data available.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-box {
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    background-color: #f8f9fc;
+    transition: transform 0.2s;
+}
+.stat-box:hover {
+    transform: translateY(-5px);
+}
+.table-danger, .table-danger > th, .table-danger > td {
+    --bs-table-bg-state: #f8d7da;
+    --bs-table-striped-bg: #e6c8ca;
+    color: #58151c;
+}
+</style>
+{% endblock %}

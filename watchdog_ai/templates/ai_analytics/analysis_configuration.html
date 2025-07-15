@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analysis Configuration - Procurement Analytics{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h4 class="mb-0 fw-bold"><i class="fas fa-flask-vial me-2"></i>Configure Anomaly Detection</h4>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted">You have selected <strong id="transaction-count">0</strong> transaction(s) for analysis. Please set the analysis parameters below.</p>
+                    
+                    <form id="analysis-form">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="contamination" class="form-label fs-5">Contamination Percentage</label>
+                            <input type="number" class="form-control form-control-lg" id="contamination" name="contamination" min="0.01" max="0.5" step="0.01" value="0.05" placeholder="% of expected anomalies">
+                            <div class="form-text">The proportion of outliers to detect in the dataset (between 0.01 and 0.5).</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary btn-lg"><i class="fas fa-arrow-left me-2"></i>Back to List</a>
+                            <button type="submit" id="begin-analysis" class="btn btn-primary btn-lg">Begin Analysis<i class="fas fa-arrow-right ms-2"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Modal -->
+<div class="modal fade" id="analysis-modal" tabindex="-1" aria-labelledby="analysisModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="analysisModalLabel">Analysis in Progress</h5>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mb-0">Analyzing transactions for anomalies...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectedIdsString = sessionStorage.getItem('selectedTransactionIds');
+    const selectedIds = selectedIdsString ? JSON.parse(selectedIdsString) : [];
+    
+    document.getElementById('transaction-count').textContent = selectedIds.length;
+
+    if (selectedIds.length === 0) {
+        document.getElementById('begin-analysis').disabled = true;
+    }
+
+    const analysisForm = document.getElementById('analysis-form');
+    const analysisModal = new bootstrap.Modal(document.getElementById('analysis-modal'), {
+        keyboard: false,
+        backdrop: 'static'
+    });
+
+    analysisForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        analysisModal.show();
+
+        const contamination = document.getElementById('contamination').value;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch("{% url 'run_analysis' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                transaction_ids: selectedIds,
+                contamination: contamination
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            } else {
+                analysisModal.hide();
+                alert('Error: ' + (data.error || 'An unknown error occurred.'));
+            }
+        })
+        .catch(error => {
+            analysisModal.hide();
+            console.error('Analysis error:', error);
+            alert('An unexpected error occurred during analysis.');
+        });
+    });
+});
+</script>
+{% endblock %}
