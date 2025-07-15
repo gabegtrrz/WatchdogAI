@@ -20,6 +20,58 @@ import pandas as pd
 # TYPE 1: PRICING & BIDDING ANOMALIES
 # ============================================================================
 
+class BudgetEfficiencyAnomaly:
+    """
+    Scenario: The budget efficiency score is manipulated through unusual
+    combinations of budget utilization and price deviation, creating
+    suspicious patterns that suggest budget manipulation or price collusion.
+    """
+    name = "Budget Efficiency Anomaly"
+    weight = 0.35
+
+    @staticmethod
+    def apply(record):
+        # Ensure we have valid budget and price data
+        if (pd.isna(record.get('approved_budget')) or record.get('approved_budget', 0) <= 0 or
+            pd.isna(record.get('total_purchase_price')) or record.get('total_purchase_price', 0) <= 0):
+            return record
+            
+        # Strategy 1: Over-utilization with minimal price deviation
+        # This creates a high budget efficiency score that suggests collusion
+        if np.random.random() < 0.5:
+            # Set total price to 95-99% of budget (high utilization)
+            utilization_rate = np.random.uniform(0.95, 0.99)
+            record['total_purchase_price'] = record['approved_budget'] * utilization_rate
+            
+            # Update unit price if quantity is available
+            if record.get('quantity', 0) > 0:
+                record['unit_purchase_price'] = record['total_purchase_price'] / record['quantity']
+            
+            record['supplier'] = 'Precision Budget Solutions Inc.'
+            record['project_description'] = 'Strategic procurement with optimal budget utilization.'
+            
+        # Strategy 2: Under-utilization with extreme price deviation
+        # This creates a very low budget efficiency score
+        else:
+            # Set total price to only 30-50% of budget (low utilization)
+            utilization_rate = np.random.uniform(0.30, 0.50)
+            record['total_purchase_price'] = record['approved_budget'] * utilization_rate
+            
+            # Update unit price if quantity is available
+            if record.get('quantity', 0) > 0:
+                record['unit_purchase_price'] = record['total_purchase_price'] / record['quantity']
+            
+            record['supplier'] = 'Budget Underutilization Co.'
+            record['project_description'] = 'Procurement with significant budget savings and market-based pricing.'
+        
+        # Handle both field name variations
+        if 'procurement_method_name' in record:
+            record['procurement_method_name'] = 'Direct Contracting'
+        elif 'procurement_method' in record:
+            record['procurement_method'] = 'Direct Contracting'
+            
+        return record
+
 class SuspiciousOverpricing:
     """
     Scenario: An item is grossly overpriced, and the transaction is pushed
@@ -596,6 +648,7 @@ ANOMALY_BLUEPRINTS = [
     BidCeilingCollusion,
     PriceExceedsBudget,
     BudgetManipulation,
+    BudgetEfficiencyAnomaly,
     # Quantity & Scope
     UnusualBulkOrder,
     ContractSplitting,

@@ -6,7 +6,7 @@ raw procurement data into meaningful features that help identify specific irregu
 
 The service creates three main categories of features:
 1. Date-based features - to detect timing anomalies
-2. Price & budget features - to detect financial irregularities  
+2. Price & budget features - to detect financial irregularities and budget violations
 3. Categorical & interaction features - to detect supplier-related anomalies
 
 Each feature is designed to target specific anomaly types in procurement data.
@@ -105,8 +105,53 @@ def create_model_features(df: pd.DataFrame):
         # This is a red flag: if an organization repeatedly buys from a supplier (high frequency) but consistently pays high prices, it might suggest a lack of competitive bidding, a sole-source situation with unfavorable terms, or potential collusion where frequent suppliers exploit their relationship. 
         
         # A low value would suggest either a low unit_purchase_price or a very high supplier_frequency (or both), which would generally be a good sign (e.g., getting good deals from preferred suppliers)
-    epsilon = 1e-6  # Small value to prevent division by zero
-    df['price_per_supplier_freq'] = df['unit_purchase_price'] / (df['supplier_frequency'] + epsilon)
+    # epsilon = 1e-6  # Small value to prevent division by zero
+    # df['price_per_supplier_freq'] = df['unit_purchase_price'] / (df['supplier_frequency'] + epsilon)
+
+    # # Price variance by supplier
+    #     # Measures how much the unit price varies for each supplier across transactions.
+    #     # High variance might indicate inconsistent pricing or potential price manipulation.
+    # supplier_price_stats = df.groupby('supplier')['unit_purchase_price'].agg(['mean', 'std']).fillna(0)
+    # df['price_variance_by_supplier'] = df['supplier'].map(supplier_price_stats['std'])
+
+    # Supplier concentration ratio
+        # Measures the proportion of total spending going to each supplier.
+        # High concentration might indicate favoritism or lack of competitive bidding.
+    # supplier_total_spending = df.groupby('supplier')['total_purchase_price'].sum()
+    # total_spending = df['total_purchase_price'].sum()
+    # supplier_concentration = supplier_total_spending / total_spending
+    # df['supplier_concentration_ratio'] = df['supplier'].map(supplier_concentration)
+
+    # Average price deviation
+        # Measures how much each transaction's unit price deviates from the average price for that supplier.
+        # Large deviations might indicate price manipulation or quality differences.
+    # df['price_deviation_from_supplier_avg'] = df['unit_purchase_price'] - df['supplier'].map(supplier_price_stats['mean'])
+
+    # Budget efficiency score
+        # Combines budget utilization with price efficiency.
+        # Values close to 1 indicate good budget utilization, while very high or low values might indicate issues.
+    df['budget_efficiency_score'] = (df['total_purchase_price'] / df['approved_budget']) * (1 / (1 + df['price_deviation_from_supplier_avg'].abs()))
+
+    # Timeline efficiency
+        # Measures how efficiently the procurement timeline is used.
+        # Very short timelines might indicate rushed processes, while very long ones might indicate delays.
+    df['timeline_efficiency'] = df['total_procurement_cycle_days'] / (df['bidding_period_days'] + df['award_decision_days'] + df['contract_signing_days'] + epsilon)
+
+    # Weekend activity indicator
+        # Binary feature indicating if any key procurement activity occurred on weekends.
+        # Weekend activity might indicate irregular or rushed processes.
+    df['weekend_activity'] = ((df['contract_signing_dayofweek'] >= 5) | 
+                              (df['bid_opening_dayofweek'] >= 5)).astype(int)
+
+    # # End of year rush indicator
+    #     # Binary feature indicating if the transaction occurred in the last quarter.
+    #     # End-of-year transactions might indicate budget exhaustion or rushed spending.
+    # df['end_of_year_rush'] = (df['transaction_month'].isin([10, 11, 12])).astype(int)
+
+    # Price per unit efficiency
+        # Measures how efficiently the budget is used per unit purchased.
+        # High values might indicate overpricing or low quantity purchases.
+    # df['price_per_unit_efficiency'] = df['unit_purchase_price'] / (df['total_purchase_price'] / df['quantity'] + epsilon)
 
 # --- D. Drop Transformed Source Columns ---
     # To keep the final feature set clean and relevant for the model, we drop the original
@@ -132,7 +177,8 @@ def create_model_features(df: pd.DataFrame):
     engineered_features = [
         'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
         'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
-        'budget_utilization_ratio', 'supplier_frequency', 'price_per_supplier_freq'
+        'budget_utilization_ratio', 'supplier_frequency', 'budget_efficiency_score', 
+        'timeline_efficiency', 'weekend_activity'
     ]
     
     # Impute missing values with median for each engineered feature

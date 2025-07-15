@@ -117,6 +117,7 @@ data_generator:
   active_anomalies:
     # --- Pricing & Bidding Anomalies ---
     - "Suspicious Overpricing"      # Grossly overpriced items with non-competitive methods
+    - "Budget Efficiency Anomaly"   # Unusual combinations of budget utilization and price deviation-
     - "Bid Ceiling Collusion"       # Final price suspiciously close to approved budget
     - "Price Exceeds Budget"        # Contract price significantly higher than approved budget
     - "Budget Manipulation"         # Artificially inflated approved budget
