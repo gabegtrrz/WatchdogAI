@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Anomaly Report: {{ report.transaction.transaction_id }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/shapjs@0.1.0/shap.min.js"></script>
+<style>
+    .shap-plot-container {
+        border: 1px solid #dee2e6;
+        border-radius: .375rem;
+        padding: 1.5rem;
+        background-color: #fff;
+    }
+    .explanation-text {
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Transaction Details Column -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0 fw-bold"><i class="fas fa-file-invoice-dollar me-2"></i>Transaction Details</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ report.transaction.item_name }}</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>Transaction ID:</strong> <span>{{ report.transaction.transaction_id }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>Total Price:</strong> <span>₱{{ report.transaction.total_purchase_price|floatformat:2 }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>Supplier:</strong> <span>{{ report.transaction.supplier_name }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>Anomaly Score:</strong> <span class="text-danger fw-bold">{{ report.anomaly_score|floatformat:4 }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anomaly Explanation Column -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0 fw-bold"><i class="fas fa-lightbulb me-2"></i>Anomaly Explanation</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3">Feature Contribution Plot</h5>
+                    <div id="shap-plot" class="shap-plot-container mb-4"></div>
+                    
+                    <h5 class="mb-3">Summary</h5>
+                    <p class="explanation-text">
+                        This transaction was flagged as an anomaly with a score of <strong>{{ report.anomaly_score|floatformat:4 }}</strong>.
+                        The plot above illustrates the features that pushed the model's prediction from the baseline towards this anomalous score.
+                        Features in <span class="text-primary">blue</span> decrease the score (making it more normal), while features in <span class="text-danger">red</span> increase the score (making it more anomalous).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="text-center mt-4">
+        <a href="{% url 'analysis_results' report.analysis_run_id %}" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Results</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const shapData = {{ shap_values_data|safe }};
+    if (shapData) {
+        const plotElement = document.getElementById('shap-plot');
+        const explanation = {
+            outNames: ["score"],
+            baseValue: shapData.base_values,
+            features: {},
+            link: "identity"
+        };
+
+        shapData.feature_names.forEach((name, i) => {
+            explanation.features[i] = {
+                name: name,
+                value: shapData.values[i],
+                effect: shapData.values[i]
+            };
+        });
+
+        SHAP.AdditiveForceVisualizer(plotElement, explanation);
+    }
+});
+</script>
+{% endblock %} 

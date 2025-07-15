@@ -12,19 +12,12 @@
                     <h4 class="mb-0 fw-bold"><i class="fas fa-flask-vial me-2"></i>Configure Anomaly Detection</h4>
                 </div>
                 <div class="card-body p-4">
-                    <p class="text-muted">You have selected <strong id="transaction-count">0</strong> transaction(s) for analysis. Please set the analysis parameters below.</p>
+                    <p class="text-muted">You have selected <strong id="transaction-count">{{ transaction_count }}</strong> transaction(s) for analysis. Please set the analysis parameters below.</p>
                     
                     <form id="analysis-form">
                         {% csrf_token %}
-                        <div class="mb-4">
-                            <label for="contamination" class="form-label fs-5">Contamination Percentage</label>
-                            <input type="number" class="form-control form-control-lg" id="contamination" name="contamination" min="0.01" max="0.5" step="0.01" value="0.05" placeholder="% of expected anomalies">
-                            <div class="form-text">The expected proportion of anomalies in the dataset. </div>
-                            <div class="form-text">
-                            (Choose between 0.01 and 0.5).</div>
-                        </div>
-
-                        <div class="d-flex justify-content-between">
+                        {{ form.as_p }}
+                        <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary btn-lg"><i class="fas fa-arrow-left me-2"></i>Back to List</a>
                             <button type="submit" id="begin-analysis" class="btn btn-primary btn-lg">Begin Analysis<i class="fas fa-arrow-right ms-2"></i></button>
                         </div>
@@ -46,7 +39,7 @@
                 <div class="spinner-border text-primary mb-3" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mb-0">Analyzing transactions for anomalies...</p>
+                <p id="modal-status-text" class="mb-0">Initializing analysis...</p>
             </div>
         </div>
     </div>
@@ -56,26 +49,20 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const selectedIdsString = sessionStorage.getItem('selectedTransactionIds');
-    const selectedIds = selectedIdsString ? JSON.parse(selectedIdsString) : [];
-    
-    document.getElementById('transaction-count').textContent = selectedIds.length;
-
-    if (selectedIds.length === 0) {
-        document.getElementById('begin-analysis').disabled = true;
-    }
-
     const analysisForm = document.getElementById('analysis-form');
     const analysisModal = new bootstrap.Modal(document.getElementById('analysis-modal'), {
         keyboard: false,
         backdrop: 'static'
     });
+    const statusText = document.getElementById('modal-status-text');
+    const transactionIds = JSON.parse({{ form.transaction_ids.value|safe }});
 
     analysisForm.addEventListener('submit', function(e) {
         e.preventDefault();
         analysisModal.show();
+        statusText.textContent = 'Starting analysis...';
 
-        const contamination = document.getElementById('contamination').value;
+        const contamination = document.getElementById('id_contamination').value;
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
         fetch("{% url 'run_analysis' %}", {
@@ -85,25 +72,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({
-                transaction_ids: selectedIds,
+                transaction_ids: transactionIds,
                 contamination: contamination
             })
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                window.location.href = data.redirect_url;
+            if (data.success && data.task_id) {
+                statusText.textContent = 'Analysis is running. Please wait...';
+                pollTaskStatus(data.task_id);
             } else {
                 analysisModal.hide();
-                alert('Error: ' + (data.error || 'An unknown error occurred.'));
+                alert('Error starting analysis: ' + (data.error || 'An unknown error occurred.'));
             }
         })
         .catch(error => {
             analysisModal.hide();
             console.error('Analysis error:', error);
-            alert('An unexpected error occurred during analysis.');
+            alert('An unexpected error occurred while starting the analysis.');
         });
     });
+
+    function pollTaskStatus(taskId) {
+        const interval = setInterval(() => {
+            fetch(`/ai-analytics/analysis/task-status/${taskId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'SUCCESS' || data.status === 'FAILURE') {
+                        clearInterval(interval);
+                        if (data.result && data.result.status === 'Completed' && data.redirect_url) {
+                            statusText.textContent = 'Analysis complete. Redirecting...';
+                            window.location.href = data.redirect_url;
+                        } else {
+                            analysisModal.hide();
+                            alert('Analysis failed or returned an unexpected result.');
+                        }
+                    } else if (data.status === 'PENDING') {
+                        statusText.textContent = 'Task is pending...';
+                    } else if (data.status === 'PROGRESS') {
+                        // You could add more detailed progress updates here
+                        statusText.textContent = 'Analysis in progress...';
+                    }
+                })
+                .catch(error => {
+                    clearInterval(interval);
+                    analysisModal.hide();
+                    console.error('Polling error:', error);
+                    alert('An error occurred while checking the analysis status.');
+                });
+        }, 3000); // Poll every 3 seconds
+    }
 });
 </script>
 {% endblock %}
