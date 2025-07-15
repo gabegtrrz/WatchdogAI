@@ -8,6 +8,10 @@ from pathlib import Path
 from .preprocessing import get_dataframe, clean_raw_data
 from .feature_engineering import create_model_features
 
+import joblib
+from pathlib import Path
+
+
 def prepare_data_for_anomaly_detection(source: Optional[Union[str, Path]] = None):
     """
     Complete pipeline that combines preprocessing and feature engineering.
@@ -34,11 +38,33 @@ def prepare_data_for_anomaly_detection(source: Optional[Union[str, Path]] = None
     
     return final_df, feature_columns
 
+
 def detect_anomalies(df: pd.DataFrame, feature_columns: list):
     """
-    Placeholder for anomaly detection logic.
-    This would use the prepared DataFrame and feature columns.
+    Detects anomalies using a pre-trained Isolation Forest model.
+
+    Args:
+        df: DataFrame with the data to analyze.
+        feature_columns: List of columns to use for anomaly detection.
+
+    Returns:
+        DataFrame with an added 'anomaly' column.
     """
-    # This is where your anomaly detection model would be applied
-    # For now, just return the prepared data
-    return df[feature_columns] 
+    # Construct path to the pre-trained model file.
+    model_path = Path(__file__).parent.parent / "model_files" / "isolation_forest.joblib"
+    feature_columns_path = Path(__file__).parent.parent / "model_files" / "training_columns.joblib"
+
+    # Load the pre-trained Isolation Forest model.
+    model = joblib.load(model_path)
+    loaded_columns = joblib.load(feature_columns_path)
+
+    
+
+    
+    # Predict anomalies. The model returns -1 for anomalies and 1 for normal instances.
+    predictions = model.predict(df[feature_columns])
+    
+    # Map predictions to a boolean 'anomaly' column.
+    df['anomaly'] = predictions == -1
+    
+    return df 
