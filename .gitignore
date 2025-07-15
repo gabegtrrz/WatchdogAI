@@ -58,4 +58,7 @@ data/*/normal_blank_average/
 
 
 # Ignore Model Files
-watchdog_ai\apps\ai_analytics\model_files\
+watchdog_ai/apps/ai_analytics/model_files/
+
+# Ignore joblib files (machine learning model files)
+*.joblib
