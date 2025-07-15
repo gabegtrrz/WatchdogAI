@@ -105,13 +105,13 @@ def create_model_features(df: pd.DataFrame):
         # This is a red flag: if an organization repeatedly buys from a supplier (high frequency) but consistently pays high prices, it might suggest a lack of competitive bidding, a sole-source situation with unfavorable terms, or potential collusion where frequent suppliers exploit their relationship. 
         
         # A low value would suggest either a low unit_purchase_price or a very high supplier_frequency (or both), which would generally be a good sign (e.g., getting good deals from preferred suppliers)
-    # epsilon = 1e-6  # Small value to prevent division by zero
-    # df['price_per_supplier_freq'] = df['unit_purchase_price'] / (df['supplier_frequency'] + epsilon)
+    epsilon = 1e-6  # Small value to prevent division by zero
+    df['price_per_supplier_freq'] = df['unit_purchase_price'] / (df['supplier_frequency'] + epsilon)
 
     # # Price variance by supplier
     #     # Measures how much the unit price varies for each supplier across transactions.
     #     # High variance might indicate inconsistent pricing or potential price manipulation.
-    # supplier_price_stats = df.groupby('supplier')['unit_purchase_price'].agg(['mean', 'std']).fillna(0)
+    supplier_price_stats = df.groupby('supplier')['unit_purchase_price'].agg(['mean', 'std']).fillna(0)
     # df['price_variance_by_supplier'] = df['supplier'].map(supplier_price_stats['std'])
 
     # Supplier concentration ratio
@@ -125,7 +125,7 @@ def create_model_features(df: pd.DataFrame):
     # Average price deviation
         # Measures how much each transaction's unit price deviates from the average price for that supplier.
         # Large deviations might indicate price manipulation or quality differences.
-    # df['price_deviation_from_supplier_avg'] = df['unit_purchase_price'] - df['supplier'].map(supplier_price_stats['mean'])
+    df['price_deviation_from_supplier_avg'] = df['unit_purchase_price'] - df['supplier'].map(supplier_price_stats['mean'])
 
     # Budget efficiency score
         # Combines budget utilization with price efficiency.
@@ -177,7 +177,8 @@ def create_model_features(df: pd.DataFrame):
     engineered_features = [
         'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
         'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
-        'budget_utilization_ratio', 'supplier_frequency', 'budget_efficiency_score', 
+        'budget_utilization_ratio',
+        'supplier_frequency', 'budget_efficiency_score', 
         'timeline_efficiency', 'weekend_activity'
     ]
     
