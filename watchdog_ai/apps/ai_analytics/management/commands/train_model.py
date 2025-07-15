@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.metrics import roc_auc_score, precision_recall_curve
+from sklearn.metrics import roc_auc_score, precision_recall_curve, precision_score, recall_score, f1_score, confusion_matrix
 import numpy as np
 
 from apps.ai_analytics.services import preprocessing, feature_engineering
@@ -47,6 +47,12 @@ class Command(BaseCommand):
             '--csv',
             type=str,
             help='Path to CSV file to use for training instead of database data'
+        )
+        parser.add_argument(
+            '--labeled-data-path',
+            type=str,
+            default='data/training_data/training_1/transactions_with_labels.csv',
+            help='Path to labeled data CSV file for research mode evaluation'
         )
 
     def handle(self, *args, **options):
@@ -99,14 +105,30 @@ class Command(BaseCommand):
 
         # Research mode: Test multiple contamination values
         if options['research_mode']:
-            self._research_mode_training(df_processed, training_columns, options['contamination_range'])
+            labeled_data_path = options['labeled_data_path']
+            self._research_mode_training(df_processed, training_columns, options['contamination_range'], labeled_data_path)
         else:
             # Standard training
             self._standard_training(df_processed, training_columns, contamination= options['contamination'])
 
-    def _research_mode_training(self, df_processed, training_columns, contamination_range):
+    def _research_mode_training(self, df_processed, training_columns, contamination_range, labeled_data_path):
         """Research mode with cross-validation and multiple contamination values."""
         self.stdout.write('Running research mode with cross-validation...')
+        
+        if not os.path.exists(labeled_data_path):
+            self.stderr.write(f'Labeled data not found at {labeled_data_path}')
+            return
+            
+        try:
+            labeled_df = preprocessing.get_dataframe(labeled_data_path)
+            # Get true labels (1 for anomaly, 0 for normal)
+            true_labels = labeled_df['is_anomaly'].values
+            # Convert to binary: 1 for anomaly, 0 for normal (applying for robustness)
+            true_labels_binary = (true_labels == 1).astype(int)
+
+        except Exception as e:
+            self.stderr.write(f'Error loading labeled data: {e}')
+            return
         
         # Initialize research results dictionary
         research_results = {
@@ -114,14 +136,17 @@ class Command(BaseCommand):
             'dataset_info': {
                 'sample_count': df_processed.shape[0],
                 'feature_count': df_processed.shape[1],
-                'feature_columns': training_columns
+                'feature_columns': training_columns,
+                'labeled_data_count': len(true_labels),
+                'true_anomalies': np.sum(true_labels_binary),
+                'true_normal': len(true_labels_binary) - np.sum(true_labels_binary)
             },
             'contamination_analysis': {},
             'best_model': None,
             'recommendations': []
         }
 
-        best_score = -1
+        best_f1_score = -1
         best_contamination = None
 
         for contamination in contamination_range:
@@ -133,22 +158,45 @@ class Command(BaseCommand):
                 n_estimators=100 # Number of base estimators (or "itrees") in the ensemble
             )
             
-            ### Cross-validation for anomaly detection
-            # Note: need labeled data for research
-            # This is a simplified version
             try:
-                # Get anomaly scores for evaluation
-                scores = model.fit_predict(df_processed) #returns an array where:
-                #-1 indicates an anomaly (outlier)
-                #1 indicates normal data (inlier)
+                # Get anomaly predictions for evaluation
+                scores = model.fit_predict(df_processed)
+                # returns an array where:
+                # -1 indicates an anomaly (outlier)
+                # 1 indicates normal data (inlier)
 
 
-                anomaly_rate = np.mean(scores == -1) 
-                # Computes what percentage of the data points were flagged as anomalies by the model.
+                # Convert scores to binary predictions: -1 (anomaly) -> 1, 1 (normal) -> 0
+                predicted_labels = (scores == -1).astype(int) #  returns a new numpy.ndarray filled with True or False values -> int (1 or 0)
+                
+                # Calculate metrics using true labels
+                
+                # Handle case where no anomalies are predicted
+                if np.sum(predicted_labels) == 0:
+                    precision = 0.0
+                    recall = 0.0
+                    f1 = 0.0
+                else:
+                    precision = precision_score(true_labels_binary, predicted_labels, zero_division='warn')
+                    # zero_division='warn' is used to handle the case where there are no anomalies predicted.
+                    # It sets the precision to 0.0 in such cases.
+                    # This is useful because precision is undefined when there are no predicted anomalies.
+                    
+                    recall = recall_score(true_labels_binary, predicted_labels, zero_division='warn')
+
+                    f1 = f1_score(true_labels_binary, predicted_labels, zero_division='warn')
+                
+                # Calculate confusion matrix
+                cm = confusion_matrix(true_labels_binary, predicted_labels)
                 
                 # Store results
                 research_results['contamination_analysis'][contamination] = {
-                    'anomaly_rate': anomaly_rate,
+                    'precision': precision,
+                    'recall': recall,
+                    'f1_score': f1,
+                    'predicted_anomalies': np.sum(predicted_labels),
+                    'predicted_normal': len(predicted_labels) - np.sum(predicted_labels),
+                    'confusion_matrix': cm.tolist(),
                     'model_config': {
                         'contamination': contamination,
                         'n_estimators': 100,
@@ -156,26 +204,17 @@ class Command(BaseCommand):
                     }
                 }
                 
-                # Track best performing model
-                if anomaly_rate > best_score:
-                    best_score = anomaly_rate
+                # Track best performing model based on F1-score
+                if f1 > best_f1_score:
+                    best_f1_score = f1
                     best_contamination = contamination
-
-                    '''
-                Problem:
-                This selects the contamination value that produces the highest anomaly rate, which is backwards. In anomaly detection, we typically want to minimize false positives while maintaining good detection capability.
-
-                Why it's wrong:
-                Higher anomaly rates often mean the model is being too sensitive and flagging normal data as anomalies
-                The goal is usually to find a contamination value that produces a reasonable, expected anomaly rate
-                    '''
                     
             except Exception as e:
                 self.stderr.write(f'Error testing contamination={contamination}: {e}')
 
         # Train final model with best contamination
         if best_contamination:
-            self.stdout.write(f'Best contamination value: {best_contamination}')
+            self.stdout.write(f'Best contamination value: {best_contamination} (F1-score: {best_f1_score:.4f})')
             final_model = IsolationForest(
                 contamination=best_contamination,
                 random_state=42,
@@ -189,7 +228,9 @@ class Command(BaseCommand):
             
             research_results['best_model'] = {
                 'contamination': best_contamination,
-                'anomaly_rate': best_score
+                'f1_score': best_f1_score,
+                'precision': research_results['contamination_analysis'][best_contamination]['precision'],
+                'recall': research_results['contamination_analysis'][best_contamination]['recall']
             }
             
             # Save research log
@@ -205,17 +246,17 @@ class Command(BaseCommand):
         
         # Convert contamination to float if it's a numeric string, otherwise keep as 'auto'
         if contamination == 'auto':
-            contamination = 'auto'
+            contamination_param = 'auto'
         else:
             try:
-                contamination = float(contamination)
+                contamination_param = float(contamination)
             except ValueError:
                 self.stderr.write(f'Invalid contamination value: {contamination}. Using "auto".')
-                contamination = 'auto'
+                contamination_param = 'auto'
 
         
         model = IsolationForest(
-            contamination=contamination, 
+            contamination=str(contamination_param), 
             random_state=42,
             n_estimators=100
         )
