@@ -49,10 +49,6 @@ deprecated/
 
 # --- Generated Data Files ---
 # Ignore generated CSV files from data generation
-data/generated_data/
-data/*/generated_data/
-data/*/generated_data/*/
-data/*/generated_data/*/*.csv
 
 
 # Ignore scraped data directories
