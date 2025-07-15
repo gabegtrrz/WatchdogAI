@@ -1,13 +1,13 @@
 
 from django.urls import path
-from .views import TransactionListView, analysis_configuration_view, run_analysis_view, analysis_results_view
+from . import views
 
 urlpatterns = [
-    path('transactions/', TransactionListView.as_view(), name='transaction_list'),
-
-    path('analysis/configure/', analysis_configuration_view, name='analysis_configuration'),
-
-    path('analysis/run/', run_analysis_view, name='run_analysis'),
-    
-    path('analysis/results/', analysis_results_view, name='analysis_results'),
+    path('transactions/', views.TransactionListView.as_view(), name='transaction_list'),
+    path('analysis/select-transactions/', views.select_transactions, name='select_transactions'),
+    path('analysis/configure/', views.analysis_configuration, name='analysis_configuration'),
+    path('analysis/run/', views.run_analysis, name='run_analysis'),
+    path('analysis/task-status/<str:task_id>/', views.get_task_status, name='get_task_status'),
+    path('analysis/results/<uuid:analysis_run_id>/', views.analysis_results, name='analysis_results'),
+    path('analysis/report/<int:report_id>/', views.analysis_report_detail, name='analysis_report_detail'),
 ]
