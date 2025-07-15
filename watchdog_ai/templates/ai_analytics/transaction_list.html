@@ -214,7 +214,7 @@
                         <i class="fas fa-list-ul me-2"></i>Results: <span class="text-primary">{{ page_obj.paginator.count }}</span> transactions
                     </h5>
                     <div class="text-muted small">
-                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ total_filtered_count }} total)
                     </div>
                 </div>
                 <!-- Mobile scroll notice -->
@@ -536,7 +536,37 @@
                         </table>
                     </div>
                 </div>
-                 <!-- Pagination disabled - showing all transactions -->
+                 {% if page_obj.has_other_pages %}
+                <div class="card-footer bg-light">
+                    <nav aria-label="Transaction pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page=1">&laquo; First</a></li>
+                                <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">Previous</a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">&laquo; First</span></li>
+                                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">Next</a></li>
+                                <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">Next</span></li>
+                                <li class="page-item disabled"><span class="page-link">Last &raquo;</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -801,8 +831,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const analyzeButton = document.getElementById('analyze-button');
 
     function updateAnalyzeButtonState() {
+        const selectAllFlag = sessionStorage.getItem('selectAllTransactions');
         const selectedCount = document.querySelectorAll('.transaction-checkbox:checked').length;
-        if (selectedCount > 0) {
+        const deselectedIds = JSON.parse(sessionStorage.getItem('deselectedTransactionIds') || '[]');
+        
+        if (selectAllFlag === 'true') {
+            // Show total count minus deselected when "Select All" is active
+            const totalCount = {{ total_filtered_count }};
+            const effectiveCount = totalCount - deselectedIds.length;
+            analyzeButton.disabled = false;
+            analyzeButton.innerHTML = `<i class="fas fa-flask-vial me-2"></i>Analyze ${effectiveCount} Transactions`;
+        } else if (selectedCount > 0) {
             analyzeButton.disabled = false;
             analyzeButton.innerHTML = `<i class="fas fa-flask-vial me-2"></i>Analyze ${selectedCount} Transaction(s)`;
         } else {
@@ -812,41 +851,111 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     selectAllCheckbox.addEventListener('change', function() {
-        transactionCheckboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
+        if (this.checked) {
+            // Select all transactions across all pages
+            sessionStorage.setItem('selectAllTransactions', 'true');
+            sessionStorage.removeItem('deselectedTransactionIds'); // Clear any deselected IDs
+            // Also check all visible checkboxes on current page
+            transactionCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        } else {
+            // Deselect all transactions
+            sessionStorage.removeItem('selectAllTransactions');
+            sessionStorage.removeItem('deselectedTransactionIds');
+            transactionCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
         updateAnalyzeButtonState();
     });
 
     transactionCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            selectAllCheckbox.checked = Array.from(transactionCheckboxes).every(cb => cb.checked);
+            const transactionId = this.getAttribute('data-transaction-id');
+            
+            if (!this.checked) {
+                // If unchecking, add to deselected list if "Select All" is active
+                const selectAllFlag = sessionStorage.getItem('selectAllTransactions');
+                if (selectAllFlag === 'true') {
+                    // Keep "Select All" active but track this deselection
+                    const deselectedIds = JSON.parse(sessionStorage.getItem('deselectedTransactionIds') || '[]');
+                    if (!deselectedIds.includes(transactionId)) {
+                        deselectedIds.push(transactionId);
+                        sessionStorage.setItem('deselectedTransactionIds', JSON.stringify(deselectedIds));
+                    }
+                } else {
+                    // Not in "Select All" mode, clear the flag
+                    sessionStorage.removeItem('selectAllTransactions');
+                    sessionStorage.removeItem('deselectedTransactionIds');
+                    selectAllCheckbox.checked = false;
+                }
+            } else {
+                // If checking, remove from deselected list if it was there
+                const deselectedIds = JSON.parse(sessionStorage.getItem('deselectedTransactionIds') || '[]');
+                const updatedDeselectedIds = deselectedIds.filter(id => id !== transactionId);
+                sessionStorage.setItem('deselectedTransactionIds', JSON.stringify(updatedDeselectedIds));
+                
+                // Check if all checkboxes are now checked (for non-select-all mode)
+                const selectAllFlag = sessionStorage.getItem('selectAllTransactions');
+                if (selectAllFlag !== 'true') {
+                    selectAllCheckbox.checked = Array.from(transactionCheckboxes).every(cb => cb.checked);
+                }
+            }
             updateAnalyzeButtonState();
         });
     });
 
     analyzeButton.addEventListener('click', function() {
-        const selectedTransactionIds = Array.from(document.querySelectorAll('.transaction-checkbox:checked'))
-            .map(cb => cb.getAttribute('data-transaction-id'));
-
-        if (selectedTransactionIds.length > 0) {
-            sessionStorage.setItem('selectedTransactionIds', JSON.stringify(selectedTransactionIds));
-            window.location.href = "{% url 'analysis_configuration' %}"; 
+        const selectAllFlag = sessionStorage.getItem('selectAllTransactions');
+        const deselectedIds = JSON.parse(sessionStorage.getItem('deselectedTransactionIds') || '[]');
+        
+        if (selectAllFlag === 'true') {
+            // If "Select All" is active, pass the deselected IDs to exclude them
+            const payload = deselectedIds.length > 0 ? 
+                { all_transactions: true, exclude_ids: deselectedIds } : 
+                ['ALL_TRANSACTIONS'];
+            sessionStorage.setItem('selectedTransactionIds', JSON.stringify(payload));
+        } else {
+            // Get only the currently selected checkboxes
+            const selectedTransactionIds = Array.from(document.querySelectorAll('.transaction-checkbox:checked'))
+                .map(cb => cb.getAttribute('data-transaction-id'));
+            
+            if (selectedTransactionIds.length > 0) {
+                sessionStorage.setItem('selectedTransactionIds', JSON.stringify(selectedTransactionIds));
+            } else {
+                return; // No transactions selected
+            }
         }
+        
+        window.location.href = "{% url 'analysis_configuration' %}"; 
     });
 
     function applyPersistedSelection() {
+        const selectAllFlag = sessionStorage.getItem('selectAllTransactions');
+        const deselectedIds = JSON.parse(sessionStorage.getItem('deselectedTransactionIds') || '[]');
         const storedIdsString = sessionStorage.getItem('selectedTransactionIds');
         const storedIds = storedIdsString ? JSON.parse(storedIdsString) : [];
-        if (storedIds.length > 0) {
+        
+        if (selectAllFlag === 'true') {
+            // If "Select All" is active, check the select all checkbox
+            selectAllCheckbox.checked = true;
+            // Check all visible checkboxes on current page, except deselected ones
+            transactionCheckboxes.forEach(checkbox => {
+                const transactionId = checkbox.getAttribute('data-transaction-id');
+                checkbox.checked = !deselectedIds.includes(transactionId);
+            });
+        } else if (storedIds.length > 0) {
+            // Check individual checkboxes that were previously selected
             transactionCheckboxes.forEach(checkbox => {
                 if (storedIds.includes(checkbox.getAttribute('data-transaction-id'))) {
                     checkbox.checked = true;
                 }
             });
             selectAllCheckbox.checked = Array.from(transactionCheckboxes).every(cb => cb.checked);
-            updateAnalyzeButtonState();
         }
+        
+        updateAnalyzeButtonState();
     }
     
     applyPersistedSelection();

@@ -11,14 +11,14 @@ from .filters import TransactionFilter
 
 class TransactionListView(ListView):
     """
-    A view that displays a list of transactions with filtering and sorting.
+    A view that displays a list of transactions with filtering, sorting, and pagination.
     This view uses the TransactionFilter to allow users to filter the transaction
     list based on various criteria, and supports sorting by different columns.
-    Server-side pagination has been disabled to show all transactions at once.
+    Pagination is enabled for performance, but "Select All" works across all pages.
     """
     model = Transaction
     template_name = 'ai_analytics/transaction_list.html'
-    # paginate_by = 25  # Removed to disable server-side pagination
+    paginate_by = 25  # Show 25 transactions per page
 
     def get_queryset(self):
         """
@@ -75,7 +75,7 @@ class TransactionListView(ListView):
         """
         Adds the filterset and sorting information to the template context.
         This method ensures that the filter form and sorting state are available in the template.
-        Since pagination is disabled, we create a mock paginator object for template compatibility.
+        Also provides data for cross-page selection functionality.
         """
         context = super().get_context_data(**kwargs)
         
@@ -86,35 +86,9 @@ class TransactionListView(ListView):
         context['current_sort'] = self.request.GET.get('sort', 'transaction_date')
         context['current_order'] = self.request.GET.get('order', 'desc')
         
-        # Since we're not using pagination, we need to create a mock paginator object
-        # for template compatibility
-        queryset = self.get_queryset()
-        
-        # Create a proper mock page object that's iterable
-        class MockPage:
-            def __init__(self, object_list, count):
-                self.object_list = object_list
-                self.paginator = MockPaginator(count)
-                self.number = 1
-                self.has_previous = False
-                self.has_next = False
-                self.previous_page_number = None
-                self.next_page_number = None
-                self.has_other_pages = False
-            
-            def __iter__(self):
-                return iter(self.object_list)
-            
-            def __len__(self):
-                return len(self.object_list)
-        
-        class MockPaginator:
-            def __init__(self, count):
-                self.count = count
-                self.num_pages = 1
-                self.page_range = [1]
-        
-        context['page_obj'] = MockPage(queryset, queryset.count())
+        # Get the total count of all filtered transactions (across all pages)
+        # This is used for the "Select All" functionality
+        context['total_filtered_count'] = self.filterset.qs.count()
         
         return context
 
