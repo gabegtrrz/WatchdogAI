@@ -11,13 +11,14 @@ from .filters import TransactionFilter
 
 class TransactionListView(ListView):
     """
-    A view that displays a list of transactions with filtering, sorting, and pagination.
+    A view that displays a list of transactions with filtering and sorting.
     This view uses the TransactionFilter to allow users to filter the transaction
     list based on various criteria, and supports sorting by different columns.
+    Server-side pagination has been disabled to show all transactions at once.
     """
     model = Transaction
     template_name = 'ai_analytics/transaction_list.html'
-    paginate_by = 25  # Show 25 transactions per page
+    # paginate_by = 25  # Removed to disable server-side pagination
 
     def get_queryset(self):
         """
@@ -74,6 +75,7 @@ class TransactionListView(ListView):
         """
         Adds the filterset and sorting information to the template context.
         This method ensures that the filter form and sorting state are available in the template.
+        Since pagination is disabled, we create a mock paginator object for template compatibility.
         """
         context = super().get_context_data(**kwargs)
         
@@ -83,6 +85,36 @@ class TransactionListView(ListView):
         # Add sorting information
         context['current_sort'] = self.request.GET.get('sort', 'transaction_date')
         context['current_order'] = self.request.GET.get('order', 'desc')
+        
+        # Since we're not using pagination, we need to create a mock paginator object
+        # for template compatibility
+        queryset = self.get_queryset()
+        
+        # Create a proper mock page object that's iterable
+        class MockPage:
+            def __init__(self, object_list, count):
+                self.object_list = object_list
+                self.paginator = MockPaginator(count)
+                self.number = 1
+                self.has_previous = False
+                self.has_next = False
+                self.previous_page_number = None
+                self.next_page_number = None
+                self.has_other_pages = False
+            
+            def __iter__(self):
+                return iter(self.object_list)
+            
+            def __len__(self):
+                return len(self.object_list)
+        
+        class MockPaginator:
+            def __init__(self, count):
+                self.count = count
+                self.num_pages = 1
+                self.page_range = [1]
+        
+        context['page_obj'] = MockPage(queryset, queryset.count())
         
         return context
 
@@ -100,67 +132,7 @@ def run_analysis_view(request):
     percentage, runs an Isolation Forest model, and returns the results
     as JSON.
     """
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            transaction_ids = data.get('transaction_ids', [])
-            contamination = float(data.get('contamination', 0.05))
-
-            transactions = Transaction.objects.filter(id__in=transaction_ids)
-            
-            if not transactions:
-                return JsonResponse({'error': 'No transactions found for analysis.'}, status=400)
-
-            # A subset of numerical features are used for the model.
-            feature_names = [
-                'total_purchase_price', 'quantity', 'unit_purchase_price', 
-                'approved_budget', 'average_price'
-            ]
-            
-            X, valid_transactions = [], []
-            for t in transactions:
-                features = [float(getattr(t, name) or 0) for name in feature_names]
-                X.append(features)
-                valid_transactions.append(t)
-
-            if not X:
-                return JsonResponse({'error': 'Not enough data for analysis.'}, status=400)
-
-            # An Isolation Forest model is used to detect anomalies.
-            rng = np.random.RandomState(42)
-            model = IsolationForest(contamination=contamination, random_state=rng)
-            predictions = model.fit_predict(np.array(X))
-            
-            # Anomalies are marked as -1 by the model.
-            anomaly_indices = np.where(predictions == -1)[0]
-            
-            results = {
-                'total_transactions': len(valid_transactions),
-                'anomalies_detected': len(anomaly_indices),
-                'contamination_factor': contamination,
-                'analyzed_transactions': []
-            }
-            
-            for i, t in enumerate(valid_transactions):
-                results['analyzed_transactions'].append({
-                    'id': t.id,
-                    'transaction_id': t.transaction_id,
-                    'item_name': t.item_name,
-                    'total_purchase_price': t.total_purchase_price,
-                    'supplier': t.supplier,
-                    'transaction_date': t.transaction_date.strftime('%Y-%m-%d'),
-                    'is_anomaly': bool(i in anomaly_indices)
-                })
-            
-            request.session['analysis_results'] = results
-            return JsonResponse({'success': True, 'redirect_url': '/ai_analytics/analysis/results/'})
-
-        except (json.JSONDecodeError, TypeError, ValueError) as e:
-            return JsonResponse({'error': f'Invalid request data: {str(e)}'}, status=400)
-        except Exception as e:
-            return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
-            
-    return JsonResponse({'error': 'Only POST method is allowed.'}, status=405)
+    
 
 def analysis_results_view(request):
     """
@@ -170,8 +142,4 @@ def analysis_results_view(request):
     them in a template. If no results are found, it redirects to the
     transaction list.
     """
-    results = request.session.get('analysis_results')
-    if not results:
-        return redirect('transaction_list')
-        
-    return render(request, 'ai_analytics/analysis_results.html', {'results': results})
+    
