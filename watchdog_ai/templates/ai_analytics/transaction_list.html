@@ -1,0 +1,830 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transaction List - Procurement Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <header class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 text-dark">Procurement Transactions</h1>
+            </header>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-filter me-2"></i>Filter Transactions</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get">
+                        <div class="row mb-3">
+                            <div class="col-12"><h6 class="text-secondary mb-3">Core Search</h6></div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                <div class="d-flex flex-column">
+                                    <label for="{{ filter.form.item_name.id_for_label }}" class="form-label mb-2">Item Name</label>
+                                    {{ filter.form.item_name }}
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                <div class="d-flex flex-column">
+                                    <label for="{{ filter.form.project_name.id_for_label }}" class="form-label mb-2">Project Name</label>
+                                    {{ filter.form.project_name }}
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                <div class="d-flex flex-column">
+                                    <label for="{{ filter.form.supplier.id_for_label }}" class="form-label mb-2">Supplier</label>
+                                    {{ filter.form.supplier }}
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                <div class="d-flex flex-column">
+                                    <label for="{{ filter.form.transaction_id.id_for_label }}" class="form-label mb-2">Transaction ID</label>
+                                    {{ filter.form.transaction_id }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion" id="advancedFilters">
+                            <div class="accordion-item border-0">
+                                <h2 class="accordion-header" id="headingOne">
+                                    <button class="accordion-button bg-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                        Advanced & Other Filters
+                                    </button>
+                                </h2>
+                                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#advancedFilters">
+                                    <div class="accordion-body">
+                                        <div class="row mb-3 mt-3">
+                                            <div class="col-12"><h6 class="text-secondary mb-3">Financial</h6></div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.total_purchase_price.id_for_label }}" class="form-label mb-2">Total Price</label>
+                                                    {{ filter.form.total_purchase_price }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.unit_purchase_price.id_for_label }}" class="form-label mb-2">Unit Price</label>
+                                                    {{ filter.form.unit_purchase_price }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.approved_budget.id_for_label }}" class="form-label mb-2">Approved Budget</label>
+                                                    {{ filter.form.approved_budget }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.quantity.id_for_label }}" class="form-label mb-2">Quantity</label>
+                                                    {{ filter.form.quantity }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-12"><h6 class="text-secondary mb-3">Dates</h6></div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.transaction_date.id_for_label }}" class="form-label mb-2">Transaction Date</label>
+                                                    {{ filter.form.transaction_date }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.invitation_to_bid_posting_date.id_for_label }}" class="form-label mb-2">Invitation Posting</label>
+                                                    {{ filter.form.invitation_to_bid_posting_date }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.contract_signing_date.id_for_label }}" class="form-label mb-2">Contract Signing</label>
+                                                    {{ filter.form.contract_signing_date }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                             <div class="col-12"><h6 class="text-secondary mb-3">Category</h6></div>
+                                             <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                 <div class="d-flex flex-column">
+                                                     <label for="{{ filter.form.procurement_method.id_for_label }}" class="form-label mb-2">Procurement Method</label>
+                                                     {{ filter.form.procurement_method }}
+                                                 </div>
+                                             </div>
+                                             <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                 <div class="d-flex flex-column">
+                                                     <label for="{{ filter.form.end_user_unit.id_for_label }}" class="form-label mb-2">End User Unit</label>
+                                                     {{ filter.form.end_user_unit }}
+                                                 </div>
+                                             </div>
+                                             <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                 <div class="d-flex flex-column">
+                                                     <label for="{{ filter.form.blockchain_status.id_for_label }}" class="form-label mb-2">Blockchain Status</label>
+                                                     {{ filter.form.blockchain_status }}
+                                                 </div>
+                                             </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-12"><h6 class="text-secondary mb-3">Advanced Search</h6></div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.procurement_officer.id_for_label }}" class="form-label mb-2">Procurement Officer</label>
+                                                    {{ filter.form.procurement_officer }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.invoice_number.id_for_label }}" class="form-label mb-2">Invoice Number</label>
+                                                    {{ filter.form.invoice_number }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.payment_receipt_number.id_for_label }}" class="form-label mb-2">Payment Receipt</label>
+                                                    {{ filter.form.payment_receipt_number }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12"><h6 class="text-secondary mb-3">Additional</h6></div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.average_price.id_for_label }}" class="form-label mb-2">Average Price</label>
+                                                    {{ filter.form.average_price }}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+                                                <div class="d-flex flex-column">
+                                                    <label for="{{ filter.form.block__index.id_for_label }}" class="form-label mb-2">Block Index</label>
+                                                    {{ filter.form.block__index }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary me-2"><i class="fas fa-check me-1"></i> Apply Filters</button>
+                                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary"><i class="fas fa-times me-1"></i> Clear</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if request.GET %}
+            <div class="mb-4">
+                <h6 class="text-dark mb-2">Applied Filters:</h6>
+                <div class="d-flex flex-wrap">
+                {% for field_name, field in filter.form.items %}
+                    {% if field.value %}
+                        {% if field_name == 'transaction_id' or field_name == 'project_name' or field_name == 'end_user_unit' or field_name == 'item_name' or field_name == 'supplier' or field_name == 'procurement_officer' or field_name == 'invoice_number' or field_name == 'payment_receipt_number' or field_name == 'procurement_method' or field_name == 'blockchain_status' or field_name == 'block__index' %}
+                            <span class="filter-badge">{{ field.label }}: {{ field.value }}</span>
+                        {% elif field_name == 'quantity' or field_name == 'unit_purchase_price' or field_name == 'total_purchase_price' or field_name == 'approved_budget' or field_name == 'average_price' %}
+                            {% if field.value.0 or field.value.1 %}
+                                <span class="filter-badge">{{ field.label }}:
+                                    {% if field.value.0 and field.value.1 %}{{ field.value.0 }} - {{ field.value.1 }}
+                                    {% elif field.value.0 %}{{ field.value.0 }}+
+                                    {% elif field.value.1 %}up to {{ field.value.1 }}{% endif %}
+                                </span>
+                            {% endif %}
+                        {% elif field_name == 'transaction_date' or field_name == 'invitation_to_bid_posting_date' or field_name == 'contract_signing_date' %}
+                             {% if field.value.0 or field.value.1 %}
+                                <span class="filter-badge">{{ field.label }}:
+                                    {% if field.value.0 and field.value.1 %}{{ field.value.0 }} to {{ field.value.1 }}
+                                    {% elif field.value.0 %}{{ field.value.0 }} onwards
+                                    {% elif field.value.1 %}until {{ field.value.1 }}{% endif %}
+                                </span>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm">
+                 <div class="card-header bg-light d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                    <h5 class="mb-2 mb-md-0 fw-bold">
+                        <i class="fas fa-list-ul me-2"></i>Results: <span class="text-primary">{{ page_obj.paginator.count }}</span> transactions
+                    </h5>
+                    <div class="text-muted small">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </div>
+                </div>
+                <!-- Mobile scroll notice -->
+                <div class="d-md-none p-3 bg-info bg-opacity-10 border-bottom">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-arrows-alt-h text-info me-2"></i>
+                        <small class="text-info mb-0">
+                            <strong>Mobile users:</strong> Scroll right to view all table columns
+                        </small>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 50px;"></th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=transaction_id&order={% if current_sort == 'transaction_id' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Transaction ID
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'transaction_id' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(A-Z){% else %}(Z-A){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=item_name&order={% if current_sort == 'item_name' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Item Name
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'item_name' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(A-Z){% else %}(Z-A){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=total_purchase_price&order={% if current_sort == 'total_purchase_price' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Total Price
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'total_purchase_price' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(low-high){% else %}(high-low){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=supplier&order={% if current_sort == 'supplier' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Supplier
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'supplier' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(A-Z){% else %}(Z-A){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=transaction_date&order={% if current_sort == 'transaction_date' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Transaction Date
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'transaction_date' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(old-new){% else %}(new-old){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{{ request.GET.urlencode }}&sort=blockchain_status&order={% if current_sort == 'blockchain_status' and current_order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark sortable-header">
+                                            Status
+                                            <span class="sort-indicator">
+                                                {% if current_sort == 'blockchain_status' %}
+                                                    <span class="sort-text">{% if current_order == 'asc' %}(A-Z){% else %}(Z-A){% endif %}</span>
+                                                    <span class="sort-icon">{% if current_order == 'asc' %}↑{% else %}↓{% endif %}</span>
+                                                {% else %}
+                                                    <span class="sort-text text-muted">(click to sort)</span>
+                                                    <span class="sort-icon text-muted">↕</span>
+                                                {% endif %}
+                                            </span>
+                                        </a>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in page_obj %}
+                                <tr class="transaction-row align-middle" data-transaction-id="{{ transaction.id }}">
+                                    <td class="expand-icon text-center">
+                                        <span class="expand-toggle" style="font-size: 1.2rem; cursor: pointer; display: inline-block; padding: 0.25rem;">➕</span>
+                                    </td>
+                                    <td style="word-break: break-all; max-width: 200px;"><strong class="text-dark font-monospace">{{ transaction.transaction_id }}</strong></td>
+                                    <td>{{ transaction.item_name }}</td>
+                                    <td>₱{{ transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
+                                    <td>{{ transaction.supplier }}</td>
+                                    <td>{{ transaction.transaction_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="badge status-badge status-{{ transaction.blockchain_status }}">
+                                            {{ transaction.get_blockchain_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="transaction-details" data-transaction-id="{{ transaction.id }}" style="display: none;">
+                                    <td colspan="7" class="p-0">
+                                        <div class="transaction-details-content p-4 bg-light">
+                                            <div class="row">
+                                                <div class="col-12 col-lg-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Project Information</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Project Name</small>
+                                                            <strong>{{ transaction.project_name|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">End User Unit</small>
+                                                            <strong>{{ transaction.end_user_unit|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% if transaction.project_description %}
+                                                    <div class="row mb-3">
+                                                        <div class="col-12">
+                                                            <small class="text-muted d-block">Project Description</small>
+                                                            <strong>{{ transaction.project_description|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-12 col-lg-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-box me-2"></i>Item Details</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Item Name</small>
+                                                            <strong>{{ transaction.item_name|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Quantity</small>
+                                                            <strong>{{ transaction.quantity|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12 col-lg-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-money-bill-wave me-2"></i>Financial Details</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Unit Price</small>
+                                                            <strong>₱{{ transaction.unit_purchase_price|floatformat:2|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Total Price</small>
+                                                            <strong>₱{{ transaction.total_purchase_price|floatformat:2|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Average Price</small>
+                                                            <strong>₱{{ transaction.average_price|floatformat:2|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Approved Budget</small>
+                                                            <strong>₱{{ transaction.approved_budget|floatformat:2|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 col-lg-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-handshake me-2"></i>Procurement Details</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Procurement Method</small>
+                                                            <strong>{{ transaction.procurement_method|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Supplier</small>
+                                                            <strong>{{ transaction.supplier|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Procurement Officer</small>
+                                                            <strong>{{ transaction.procurement_officer|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12 col-lg-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-calendar-alt me-2"></i>Procurement Timeline</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Invitation Posting</small>
+                                                            <strong>{{ transaction.invitation_to_bid_posting_date|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Bid Opening Date</small>
+                                                            <strong>{{ transaction.bid_opening_date|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Bid Submission Deadline</small>
+                                                            <strong>{{ transaction.bid_submission_deadline|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Notice of Award</small>
+                                                            <strong>{{ transaction.notice_of_award_date|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Contract Signing</small>
+                                                            <strong>{{ transaction.contract_signing_date|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Transaction Date</small>
+                                                            <strong>{{ transaction.transaction_date|date:"M d, Y"|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 col-lg-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-receipt me-2"></i>Documentation</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Invoice Number</small>
+                                                            <strong>{{ transaction.invoice_number|default:"-" }}</strong>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Payment Receipt</small>
+                                                            <strong>{{ transaction.payment_receipt_number|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% if transaction.block__index %}
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Block Index</small>
+                                                            <strong>{{ transaction.block__index }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12 col-lg-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-link me-2"></i>Blockchain Status</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Status</small>
+                                                            <span class="badge status-badge status-{{ transaction.blockchain_status }}">
+                                                                {{ transaction.get_blockchain_status_display }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Retry Count</small>
+                                                            <strong>{{ transaction.blockchain_retry_count|default:"0" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% if transaction.blockchain_error %}
+                                                    <div class="row mb-3">
+                                                        <div class="col-12">
+                                                            <small class="text-muted d-block">Error Message</small>
+                                                            <strong class="text-danger">{{ transaction.blockchain_error }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    {% if transaction.last_blockchain_attempt %}
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Last Attempt</small>
+                                                            <strong>{{ transaction.last_blockchain_attempt|date:"M d, Y H:i"|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-12 col-lg-6">
+                                                    <h6 class="text-primary mb-3"><i class="fas fa-database me-2"></i>System Information</h6>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-sm-6">
+                                                            <small class="text-muted d-block">Created At</small>
+                                                            <strong>{{ transaction.created_at|date:"M d, Y H:i"|default:"-" }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="fas fa-search fa-3x mb-3"></i>
+                                            <h5 class="mb-1">No Transactions Found</h5>
+                                            <p class="mb-0">Try adjusting the filters to find what you're looking for.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                 {% if page_obj.has_other_pages %}
+                <div class="card-footer bg-light">
+                    <nav aria-label="Transaction pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page=1">&laquo; First</a></li>
+                                <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">Previous</a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">&laquo; First</span></li>
+                                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">Next</a></li>
+                                <li class="page-item"><a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">Next</span></li>
+                                <li class="page-item disabled"><span class="page-link">Last &raquo;</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+<style>
+    :root {
+        --bs-primary-rgb: 78, 115, 223;
+        --bs-primary: rgb(var(--bs-primary-rgb));
+        --bs-secondary: #858796;
+        --bs-success: #1cc88a;
+        --bs-danger: #e74a3b;
+        --bs-warning: #f6c23e;
+        --bs-light: #f8f9fc;
+        --bs-dark: #5a5c69;
+        --font-family-sans-serif: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        --border-radius: 0.35rem;
+        --shadow-sm: 0 .125rem .25rem rgba(0,0,0,.075);
+    }
+
+    body {
+        background-color: var(--bs-light);
+        font-family: var(--font-family-sans-serif);
+    }
+
+    /* Form & Controls */
+    .form-label {
+        font-weight: 600;
+        font-size: .8rem;
+        color: var(--bs-dark);
+    }
+
+    .form-control, .form-select {
+        border-radius: var(--border-radius);
+        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    }
+
+    /* Buttons */
+    .btn {
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        transition: all .2s ease-in-out;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-primary {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+
+    /* Cards */
+    .card {
+        border: 1px solid #e3e6f0;
+        border-radius: var(--border-radius);
+    }
+
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .card-footer {
+        border-top: 1px solid #e3e6f0;
+    }
+
+    /* Accordion Customization */
+    .accordion-button {
+        font-weight: 600;
+    }
+    .accordion-button:not(.collapsed) {
+        color: var(--bs-primary);
+        background-color: #eaecf4;
+    }
+    .accordion-button:focus {
+        box-shadow: 0 0 0 .25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    .accordion-item {
+        background-color: transparent;
+    }
+
+    /* Table */
+    .table > :not(caption) > * > * {
+        padding: .9rem .9rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    .table th {
+        font-weight: 700;
+        color: var(--bs-dark);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    /* Sortable headers */
+    .sortable-header {
+        transition: color 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    .sortable-header:hover {
+        color: var(--bs-primary) !important;
+        text-decoration: none;
+    }
+    
+    .sortable-header:focus {
+        outline: none;
+        color: var(--bs-primary) !important;
+    }
+    
+    .sort-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.7rem;
+        font-weight: 400;
+        margin-left: 0.5rem;
+    }
+    
+    .sort-text {
+        font-size: 0.65rem;
+        opacity: 0.8;
+    }
+    
+    .sort-icon {
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .sortable-header:hover .sort-indicator {
+        color: var(--bs-primary) !important;
+    }
+    
+    .sortable-header:hover .sort-icon {
+        transform: scale(1.1);
+        transition: transform 0.2s ease;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f1f3ff;
+        color: var(--bs-dark);
+    }
+
+    /* Expandable Rows */
+    .transaction-row {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .transaction-row:hover {
+        background-color: #f1f3ff !important;
+    }
+
+    .expand-icon {
+        width: 50px;
+        text-align: center;
+    }
+
+    .expand-toggle {
+        transition: all 0.3s ease;
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: inline-block;
+        padding: 0.25rem;
+        user-select: none;
+    }
+
+    .transaction-row.expanded .expand-toggle {
+        transform: rotate(45deg);
+        transition: transform 0.3s ease;
+    }
+
+    .transaction-details {
+        background-color: #f8f9fc;
+    }
+
+    .transaction-details-content {
+        border-top: 1px solid #e3e6f0;
+        background-color: #f8f9fc;
+    }
+
+    .transaction-details-content h6 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .transaction-details-content small {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .transaction-details-content strong {
+        font-size: 0.85rem;
+        color: var(--bs-dark);
+    }
+
+    /* Badges */
+    .filter-badge {
+        display: inline-block;
+        padding: .4em .7em;
+        font-size: .8rem;
+        font-weight: 600;
+        line-height: 1;
+        color: var(--bs-dark);
+        background-color: #e3e6f0;
+        border-radius: var(--border-radius);
+        margin-right: .5rem;
+        margin-bottom: .5rem;
+    }
+    
+    .status-badge {
+        padding: .35em .65em;
+        font-size: .75rem;
+        font-weight: 700;
+        border-radius: var(--border-radius);
+        text-transform: capitalize;
+        color: #fff;
+    }
+
+    .status-integrated { background-color: var(--bs-success); }
+    .status-failed { background-color: var(--bs-danger); }
+    .status-pending { background-color: var(--bs-warning); }
+
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle expandable rows
+    const transactionRows = document.querySelectorAll('.transaction-row');
+    
+    transactionRows.forEach(row => {
+        row.addEventListener('click', function() {
+            const transactionId = this.getAttribute('data-transaction-id');
+            const detailsRow = document.querySelector(`.transaction-details[data-transaction-id="${transactionId}"]`);
+            const toggleIcon = this.querySelector('.expand-toggle');
+            
+            // Toggle the expanded state
+            this.classList.toggle('expanded');
+            
+            // Toggle the details row visibility
+            if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
+                detailsRow.style.display = 'table-row';
+                // Keep plus emoji and rotate it to become minus
+                toggleIcon.textContent = '➕';
+                toggleIcon.style.transform = 'rotate(45deg)';
+            } else {
+                detailsRow.style.display = 'none';
+                // Reset rotation back to plus
+                toggleIcon.textContent = '➕';
+                toggleIcon.style.transform = 'rotate(0deg)';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

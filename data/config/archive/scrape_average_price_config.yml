@@ -1,32 +1,33 @@
-# ----------------------------------------------------------------------------
-# CONFIGURATION FOR GENERATING NORMAL (NON-ANOMALOUS) DATA WITHOUT AVERAGE PRICE
-# ----------------------------------------------------------------------------
+# -------------------------------------------------------------
+# CONFIGURATION FOR GENERATING DATA WITH SCRAPED AVERAGE PRICES
+# -------------------------------------------------------------
 #
-# This configuration is designed to generate a dataset containing ONLY NORMAL
-# transactions without average_price column. This is useful for training 
-# unsupervised models like Isolation Forest, which learn the profile of normal 
-# data in order to later identify deviations.
+# Demonstrates the 'scrape' mode for average_price.
+# Scraping runs automatically when no cached prices exist.
 #
-# The key is `anomaly_fraction: 0.0`.
-#
-# ----------------------------------------------------------------------------
+# -------------------------------------------------------------
 
 data_generator:
   # --- Main Configuration ---
   n_samples: 500
   random_state: 7
-  anomaly_fraction: 0.00
+  anomaly_fraction: 0.03
   
   # --- Output Configuration ---
-  output_folder: "generated_data_no_avg_price" 
+  output_folder_path: "data/generated_data_scraped_avg_price" 
   
   # --- Source for Item Descriptions ---
   item_source_file: "data/lab_equipment.txt"
 
   # --- Average Price Configuration ---
-  # Mode: 'none' - No average_price column will be generated
+  # Mode: 'scrape' - Get average_price from scraped data in ItemAveragePrice model
+  # Note: Scraping runs automatically when no cached prices exist
   average_price:
-    mode: 'none'
+    mode: 'scrape'
+    # Unit price variation configuration
+    unit_price_variation:
+      min_factor: 0.85  # Unit price can be 85% of average price
+      max_factor: 1.15  # Unit price can be 115% of average price (default ±15%)
 
   # --- Rules for Generating Raw Transaction Fields ---
   field_rules:
@@ -58,12 +59,11 @@ data_generator:
     }
     project_description: { type: 'faker', provider: 'catch_phrase' }
     
-    # Note: average_price is NOT included in field_rules when mode is 'none'
-    # unit_purchase_price is ALWAYS required as fallback for approved_budget calculation
-    
+    # IMPORTANT: unit_purchase_price MUST be included as fallback for approved_budget calculation
+    # average_price is NOT included - will be populated from scraped data
     quantity: { type: 'log-normal', mean: 3, std_dev: 1 }
-    unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }
-    # approved_budget will be calculated as 15-22% above unit_purchase_price (no average_price fallback)
+    unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }  # REQUIRED FALLBACK
+    # approved_budget will be calculated as 15-22% above average_price (from scraped data) or unit_purchase_price (fallback)
 
     procurement_method_name: { 
        type: 'categorical', 
@@ -85,5 +85,12 @@ data_generator:
     transaction_date: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
 
   # --- Anomaly Generation ---
-  # This section is ignored when anomaly_fraction is 0.0, so it's left empty.
-  active_anomalies: []
+  active_anomalies:
+    - "Suspicious Overpricing"
+    - "Unusual Bulk Order"
+    - "End of Year Rush"
+    - "Compressed Timeline"
+    - "Weekend Activity"
+    - "Insufficient Bidding Period"
+    - "Delayed Award Notice"
+    - "Premature Contract Signing" 

@@ -1,9 +1,9 @@
 # ----------------------------------------------------------------------------
-# CONFIGURATION FOR GENERATING NORMAL (NON-ANOMALOUS) DATA WITH SCRAPED PRICES
+# CONFIGURATION FOR GENERATING NORMAL (NON-ANOMALOUS) DATA WITH YAML PRICES
 # ----------------------------------------------------------------------------
 #
 # This configuration is designed to generate a dataset containing ONLY NORMAL
-# transactions using scraped average prices. This is useful for training 
+# transactions using YAML-generated average prices. This is useful for training 
 # unsupervised models like Isolation Forest, which learn the profile of normal 
 # data in order to later identify deviations.
 #
@@ -13,19 +13,18 @@
 
 data_generator:
   # --- Main Configuration ---
-  n_samples: 2000        
+  n_samples: 25000        
   random_state: 7          # Use a fixed state for reproducible training data.
   anomaly_fraction: 0.0    # Set to 0.0 so no anomalies are injected.
   
   # --- Output & Source Files ---
-  output_folder: "normal_data_scraped" # Descriptive output folder.
+  output_folder_path: "data/iforest_training_data" # Descriptive output folder.
   item_source_file: "data/lab_equipment.txt"
 
   # --- Average Price Configuration ---
-  # Mode: 'scrape' - Get average_price from web-scraped data (AUTOMATED)
-  # Note: Scraping runs automatically when no cached prices exist
+  # Mode: 'yaml' - Use YAML field_rules to generate average_price (default behavior)
   average_price:
-    mode: 'scrape'
+    mode: 'yaml'
     # Unit price variation configuration
     unit_price_variation:
       min_factor: 0.85  # Unit price can be 85% of average price
@@ -67,9 +66,9 @@ data_generator:
     # !!! MAKE SURE TO USE LOG NORMAL FOR PRICE FIELDS to ensure positive values
     quantity: { type: 'log-normal', mean: 3, std_dev: 1 }
     
-    # IMPORTANT: unit_purchase_price MUST be included as fallback for approved_budget calculation
-    # average_price is NOT included - will be populated from scraped data
-    unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }  # REQUIRED FALLBACK
+    # Both average_price and unit_purchase_price defined for YAML mode
+    unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }
+    average_price: { type: 'log-normal', mean: 5.35, std_dev: 0.25 }
 
     procurement_method_name: { 
        type: 'categorical', 
