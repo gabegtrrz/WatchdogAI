@@ -105,23 +105,20 @@ class Command(BaseCommand):
 
         # Research mode: Test multiple contamination values
         if options['research_mode']:
-            labeled_data_path = options['labeled_data_path']
-            self._research_mode_training(df_processed, training_columns, options['contamination_range'], labeled_data_path)
+            self._research_mode_training(df_processed, training_columns, options['contamination_range'])
         else:
             # Standard training
             self._standard_training(df_processed, training_columns, contamination= options['contamination'])
 
-    # def _research_mode_training(self, df_processed, training_columns, contamination_range, labeled_data_path):
-    def _research_mode_training(self, df_processed, training_columns, contamination_range, labeled_data_path):
+    def _research_mode_training(self, df_processed, training_columns, contamination_range):
         """Research mode with cross-validation and multiple contamination values."""
         self.stdout.write('Running research mode with cross-validation...')
         
-        if not os.path.exists(labeled_data_path):
-            self.stderr.write(f'Labeled data not found at {labeled_data_path}')
-            return
             
         try:
-            labeled_df = preprocessing.get_dataframe(labeled_data_path)
+            labeled_df = df_processed
+            self.stdout.write(f'is_anomaly values starting from index 21: {labeled_df['is_anomaly'].values[21:]}...')
+            
             # Get true labels (1 for anomaly, 0 for normal)
             true_labels = labeled_df['is_anomaly'].values
             # Convert to binary: 1 for anomaly, 0 for normal (applying for robustness)
