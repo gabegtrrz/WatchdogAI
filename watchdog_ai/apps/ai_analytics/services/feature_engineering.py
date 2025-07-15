@@ -108,6 +108,21 @@ def create_model_features(df: pd.DataFrame):
     epsilon = 1e-6  # Small value to prevent division by zero
     df['price_per_supplier_freq'] = df['unit_purchase_price'] / (df['supplier_frequency'] + epsilon)
 
+# --- D. Drop Transformed Source Columns ---
+    # To keep the final feature set clean and relevant for the model, we drop the original
+    # columns that have already been transformed into engineered features. This prevents
+    # data leakage and reduces the dimensionality of the input data.
+    columns_to_drop = [
+        # Raw date columns are converted into duration and cyclical features.
+        'transaction_date', 'invitation_to_bid_posting_date', 'bid_submission_deadline',
+        'bid_opening_date', 'notice_of_award_date', 'contract_signing_date',
+        
+        # Raw categorical columns are encoded into numerical representations.
+        'supplier'
+    ]
+    df.drop(columns=columns_to_drop, inplace=True, errors='ignore')
+
+
 # --- Final Imputation & Cleanup ---
     # Handle missing values in engineered features by imputing with median values
         # Missing values in engineered features can occur due to data quality issues
