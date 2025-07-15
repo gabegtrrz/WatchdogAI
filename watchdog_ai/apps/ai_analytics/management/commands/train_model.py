@@ -232,7 +232,7 @@ class Command(BaseCommand):
             }
             
             # Save research log
-            with open(RESEARCH_LOG_PATH, 'w') as f:
+            with open(RESEARCH_LOG_PATH, 'a') as f:
             # Convert numpy types to native Python types for JSON serialization
                     def convert_numpy_types(obj):
                         if isinstance(obj, np.integer):

@@ -1,0 +1,241 @@
+{
+  "training_date": "2025-07-15T16:17:20.022750",
+  "dataset_info": {
+    "sample_count": 2000,
+    "feature_count": 22,
+    "feature_columns": [
+      "quantity",
+      "unit_purchase_price",
+      "total_purchase_price",
+      "approved_budget",
+      "contract_signing_dayofweek",
+      "bid_opening_dayofweek",
+      "transaction_month",
+      "bidding_period_days",
+      "award_decision_days",
+      "contract_signing_days",
+      "total_procurement_cycle_days",
+      "budget_utilization_ratio",
+      "supplier_frequency",
+      "price_per_supplier_freq",
+      "procurement_method_Competitive Bidding",
+      "procurement_method_Direct Contracting",
+      "procurement_method_Negotiated Procurement (Agency-to-Agency)",
+      "procurement_method_Negotiated Procurement (Small Value Procurement)",
+      "procurement_method_Negotiated Procurement (Two Failed Biddings)",
+      "procurement_method_Repeat Order",
+      "procurement_method_nan",
+      "is_anomaly"
+    ],
+    "labeled_data_count": 2000,
+    "true_anomalies": 300,
+    "true_normal": 1700
+  },
+  "contamination_analysis": {
+    "0.05": {
+      "precision": 0.93,
+      "recall": 0.31,
+      "f1_score": 0.465,
+      "predicted_anomalies": 100,
+      "predicted_normal": 1900,
+      "confusion_matrix": [
+        [
+          1693,
+          7
+        ],
+        [
+          207,
+          93
+        ]
+      ],
+      "model_config": {
+        "contamination": 0.05,
+        "n_estimators": 100,
+        "random_state": 42
+      }
+    },
+    "0.1": {
+      "precision": 0.785,
+      "recall": 0.5233333333333333,
+      "f1_score": 0.628,
+      "predicted_anomalies": 200,
+      "predicted_normal": 1800,
+      "confusion_matrix": [
+        [
+          1657,
+          43
+        ],
+        [
+          143,
+          157
+        ]
+      ],
+      "model_config": {
+        "contamination": 0.1,
+        "n_estimators": 100,
+        "random_state": 42
+      }
+    },
+    "0.12": {
+      "precision": 0.7291666666666666,
+      "recall": 0.5833333333333334,
+      "f1_score": 0.6481481481481481,
+      "predicted_anomalies": 240,
+      "predicted_normal": 1760,
+      "confusion_matrix": [
+        [
+          1635,
+          65
+        ],
+        [
+          125,
+          175
+        ]
+      ],
+      "model_config": {
+        "contamination": 0.12,
+        "n_estimators": 100,
+        "random_state": 42
+      }
+    },
+    "0.13": {
+      "precision": 0.6884615384615385,
+      "recall": 0.5966666666666667,
+      "f1_score": 0.6392857142857142,
+      "predicted_anomalies": 260,
+      "predicted_normal": 1740,
+      "confusion_matrix": [
+        [
+          1619,
+          81
+        ],
+        [
+          121,
+          179
+        ]
+      ],
+      "model_config": {
+        "contamination": 0.13,
+        "n_estimators": 100,
+        "random_state": 42
+      }
+    },
+    "0.15": {
+      "precision": 0.6466666666666666,
+      "recall": 0.6466666666666666,
+      "f1_score": 0.6466666666666666,
+      "predicted_anomalies": 300,
+      "predicted_normal": 1700,
+      "confusion_matrix": [
+        [
+          1594,
+          106
+        ],
+        [
+          106,
+          194
+        ]
+      ],
+      "model_config": {
+        "contamination": 0.15,
+        "n_estimators": 100,
+        "random_state": 42
+      }
+    },
+    "0.16": {
+      "precision": 0.625,
+      "recall": 0.6666666666666666,
+      "f1_score": 0.6451612903225806,
+      "predicted_anomalies": 320,
+      "predicted_normal": 1680,
+      "confusion_matrix": [
+        [
+          1580,
+          120
+        ],
+        [
+          100,
+          200
+        ]
+      ],
+      "model_config": {
+        "contamination": 0.16,
+        "n_estimators": 100,
+        "random_state": 42
+      }
+    },
+    "0.17": {
+      "precision": 0.611764705882353,
+      "recall": 0.6933333333333334,
+      "f1_score": 0.65,
+      "predicted_anomalies": 340,
+      "predicted_normal": 1660,
+      "confusion_matrix": [
+        [
+          1568,
+          132
+        ],
+        [
+          92,
+          208
+        ]
+      ],
+      "model_config": {
+        "contamination": 0.17,
+        "n_estimators": 100,
+        "random_state": 42
+      }
+    },
+    "0.19": {
+      "precision": 0.5657894736842105,
+      "recall": 0.7166666666666667,
+      "f1_score": 0.6323529411764706,
+      "predicted_anomalies": 380,
+      "predicted_normal": 1620,
+      "confusion_matrix": [
+        [
+          1535,
+          165
+        ],
+        [
+          85,
+          215
+        ]
+      ],
+      "model_config": {
+        "contamination": 0.19,
+        "n_estimators": 100,
+        "random_state": 42
+      }
+    },
+    "0.2": {
+      "precision": 0.545,
+      "recall": 0.7266666666666667,
+      "f1_score": 0.6228571428571429,
+      "predicted_anomalies": 400,
+      "predicted_normal": 1600,
+      "confusion_matrix": [
+        [
+          1518,
+          182
+        ],
+        [
+          82,
+          218
+        ]
+      ],
+      "model_config": {
+        "contamination": 0.2,
+        "n_estimators": 100,
+        "random_state": 42
+      }
+    }
+  },
+  "best_model": {
+    "contamination": 0.17,
+    "f1_score": 0.65,
+    "precision": 0.611764705882353,
+    "recall": 0.6933333333333334
+  },
+  "recommendations": []
+}
