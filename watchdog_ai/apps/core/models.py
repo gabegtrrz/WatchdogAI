@@ -371,6 +371,14 @@ class AnalysisReport(models.Model):
         help_text="The transaction this analysis report belongs to."
     )
     
+    # --- Analysis Run Grouping ---
+    analysis_run_id = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="UUID to group multiple analysis reports from the same analysis run."
+    )
+    
     # --- Anomaly Detection Results ---
     is_anomaly = models.BooleanField(
         default=False,
@@ -397,6 +405,13 @@ class AnalysisReport(models.Model):
         help_text="Contamination parameter used in the anomaly detection model."
     )
     
+    # --- Error Handling ---
+    error_message = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Error message if the analysis failed for this transaction."
+    )
+    
     # --- Timestamps ---
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -411,8 +426,8 @@ class AnalysisReport(models.Model):
         ordering = ['-created_at']
         verbose_name = "Analysis Report"
         verbose_name_plural = "Analysis Reports"
-        # Ensure one report per transaction (can be modified if multiple analyses needed)
-        unique_together = ['transaction']
+        # Remove unique_together constraint to allow multiple analyses per transaction
+        # unique_together = ['transaction']
     
     def __str__(self):
         return f"Analysis Report for Transaction {self.transaction.transaction_id} - {'Anomaly' if self.is_anomaly else 'Normal'}"
