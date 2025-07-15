@@ -160,6 +160,15 @@ class Command(BaseCommand):
                 if anomaly_rate > best_score:
                     best_score = anomaly_rate
                     best_contamination = contamination
+
+                    '''
+                Problem:
+                This selects the contamination value that produces the highest anomaly rate, which is backwards. In anomaly detection, we typically want to minimize false positives while maintaining good detection capability.
+
+                Why it's wrong:
+                Higher anomaly rates often mean the model is being too sensitive and flagging normal data as anomalies
+                The goal is usually to find a contamination value that produces a reasonable, expected anomaly rate
+                    '''
                     
             except Exception as e:
                 self.stderr.write(f'Error testing contamination={contamination}: {e}')
