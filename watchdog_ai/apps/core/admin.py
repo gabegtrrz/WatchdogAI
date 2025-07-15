@@ -1,5 +1,8 @@
 from django.contrib import admin
+from django.utils.html import format_html
+from django.contrib import messages
 from .models import Transaction, ProcurementMethod
+from apps.blockchain.integrity_service import integrity_service
 
 
 @admin.register(Transaction)
@@ -19,8 +22,9 @@ class TransactionAdmin(admin.ModelAdmin):
         'supplier',
         'transaction_date',
         'get_block_info',
+        'get_integrity_status',
     )
-    list_filter = ('transaction_date', 'supplier', 'procurement_method')
+    list_filter = ('transaction_date', 'supplier', 'procurement_method', 'blockchain_status')
     search_fields = (
         'transaction_id',
         'item_name',
@@ -38,6 +42,8 @@ class TransactionAdmin(admin.ModelAdmin):
     
     ordering = ('-created_at',)
 
+    actions = ['verify_integrity', 'generate_hashes']
+
     def get_block_info(self, obj):
         """Display block information in a more user-friendly format."""
         if obj.block:
@@ -45,6 +51,69 @@ class TransactionAdmin(admin.ModelAdmin):
         return "Not linked to block"
     get_block_info.short_description = 'Blockchain Block'  # type: ignore
     get_block_info.admin_order_field = 'block__index'  # type: ignore
+
+    def get_integrity_status(self, obj):
+        """Display transaction integrity status with color coding."""
+        if not obj.transaction_hash:
+            return format_html(
+                '<span style="color: orange;">⚠️ No Hash</span>'
+            )
+        elif obj.verify_transaction_integrity():
+            return format_html(
+                '<span style="color: green;">✅ Valid</span>'
+            )
+        else:
+            return format_html(
+                '<span style="color: red;">❌ Compromised</span>'
+            )
+    get_integrity_status.short_description = 'Integrity Status'  # type: ignore
+
+    def verify_integrity(self, request, queryset):
+        """Admin action to verify transaction integrity."""
+        integrity_results = integrity_service.verify_transaction_level_integrity(queryset)
+        
+        if integrity_results['compromised_transactions']:
+            messages.error(
+                request,
+                f"⚠️ {len(integrity_results['compromised_transactions'])} transactions are compromised!"
+            )
+        else:
+            messages.success(
+                request,
+                f"✅ All {len(integrity_results['valid_transactions'])} transactions are valid."
+            )
+        
+        if integrity_results['unhashed_transactions']:
+            messages.warning(
+                request,
+                f"⚠️ {len(integrity_results['unhashed_transactions'])} transactions don't have hashes."
+            )
+    
+    verify_integrity.short_description = "Verify transaction integrity"
+
+    def generate_hashes(self, request, queryset):
+        """Admin action to generate transaction hashes."""
+        unhashed_transactions = queryset.filter(transaction_hash__isnull=True)
+        
+        if not unhashed_transactions.exists():
+            messages.info(request, "All selected transactions already have hashes.")
+            return
+        
+        results = integrity_service.generate_transaction_hashes(unhashed_transactions)
+        
+        if results['hashes_generated'] > 0:
+            messages.success(
+                request,
+                f"✅ Generated hashes for {results['hashes_generated']} transactions."
+            )
+        
+        if results['errors']:
+            messages.error(
+                request,
+                f"❌ Encountered {len(results['errors'])} errors during hash generation."
+            )
+    
+    generate_hashes.short_description = "Generate transaction hashes"
 
     def get_readonly_fields(self, request, obj=None):
         """Dynamically sets fields as read-only for non-superusers."""
@@ -66,14 +135,24 @@ class TransactionAdmin(admin.ModelAdmin):
             'fields': ('transaction_id', 'item_name', 'quantity', 'transaction_date')
         }),
         ('Financials', {
-            'fields': ('unit_purchase_price', 'average_price')
+            'fields': ('unit_purchase_price', 'average_price', 'total_purchase_price', 'approved_budget')
         }),
         ('Procurement Details', {
-            'fields': ('supplier', 'procurement_officer', 'procurement_method')
+            'fields': ('supplier', 'procurement_officer', 'procurement_method', 'project_name', 'end_user_unit')
         }),
-        ('Blockchain Link', {
-            'fields': ('block',),
-            'description': 'Block ID (first figure) shows database primary key, Block name (second figure) shows blockchain index'
+        ('Timeline', {
+            'fields': (
+                'invitation_to_bid_posting_date', 'bid_submission_deadline', 'bid_opening_date',
+                'notice_of_award_date', 'contract_signing_date'
+            )
+        }),
+        ('Blockchain Integration', {
+            'fields': ('block', 'blockchain_status', 'blockchain_error', 'blockchain_retry_count'),
+            'description': 'Blockchain integration status and error tracking'
+        }),
+        ('Integrity Verification', {
+            'fields': ('transaction_hash', 'hash_created_at'),
+            'description': 'Transaction hash for integrity verification'
         }),
     )
 

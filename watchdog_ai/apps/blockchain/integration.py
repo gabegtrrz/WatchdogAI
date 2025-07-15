@@ -8,6 +8,7 @@ Key Processes:
 - Status Tracking: Tracks integration status for each transaction
 - Retry Mechanism: Allows retrying failed integrations
 - Error Reporting: Sends error reports to admin email
+- Transaction Hashing: Calculates and stores transaction hashes for integrity verification
 """
 
 import hashlib
@@ -67,6 +68,10 @@ class BlockchainIntegrationService:
             'integrity_checks': {
                 'before': None,
                 'after': None
+            },
+            'hash_generation': {
+                'hashes_generated': 0,
+                'errors': []
             }
         }
         
@@ -86,11 +91,20 @@ class BlockchainIntegrationService:
         
         try:
             with db_transaction.atomic():
-                # Step 1: Update transaction status to 'pending'
+                # Step 1: Calculate and store transaction hashes, update status to 'pending'
                 for transaction in transactions:
+                    # Generate transaction hash if not already present
+                    if not transaction.transaction_hash:
+                        transaction.transaction_hash = transaction.calculate_transaction_hash()
+                        result['hash_generation']['hashes_generated'] += 1
+                    
                     transaction.blockchain_status = 'pending'
                     transaction.last_blockchain_attempt = timezone.now()
-                    transaction.save(update_fields=['blockchain_status', 'last_blockchain_attempt'])
+                    transaction.save(update_fields=[ # only update the fields that are being updated
+                        'transaction_hash', 
+                        'blockchain_status', 
+                        'last_blockchain_attempt'
+                    ])
                 
                 # Step 2: Create new block with transactions
                 new_block = create_new_block(transactions)
@@ -288,3 +302,23 @@ def get_blockchain_status_summary():
     except Exception as e:
         logger.error(f"Error getting blockchain status summary: {str(e)}")
         return {'error': str(e)}
+
+
+def identify_tampered_transactions():
+    """
+    Identifies transactions that have been tampered with.
+    
+    Returns:
+        list: List of tampered transaction details
+    """
+    return integrity_service.identify_tampered_transactions()
+
+
+def generate_transaction_hashes():
+    """
+    Generates transaction hashes for transactions that don't have them.
+    
+    Returns:
+        dict: Generation results
+    """
+    return integrity_service.generate_transaction_hashes()

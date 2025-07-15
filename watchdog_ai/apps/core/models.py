@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
-
+import json
+import hashlib
 
 from django.core.exceptions import ValidationError
 import logging
@@ -224,6 +225,19 @@ class Transaction(models.Model):
         help_text="Timestamp of the last blockchain integration attempt."
     )
 
+    # --- Transaction Integrity Fields ---
+    transaction_hash = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="SHA-256 hash of this transaction's data for integrity verification."
+    )
+    hash_created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="When the transaction hash was created."
+    )
+
     class Meta:
         ordering = ['-transaction_date', 'transaction_id']
         verbose_name = "Transaction"
@@ -240,6 +254,30 @@ class Transaction(models.Model):
         if self.quantity is not None and self.unit_purchase_price is not None:
             return self.quantity * self.unit_purchase_price
         return None
+
+    def calculate_transaction_hash(self):
+        """
+        Calculate SHA-256 hash of transaction data for integrity verification.
+        
+        Returns:
+            str: SHA-256 hash of the transaction data
+        """
+        transaction_data = self.to_dict()
+        # Sort keys for consistent hashing
+        data_string = json.dumps(transaction_data, sort_keys=True, separators=(',', ':'))
+        return hashlib.sha256(data_string.encode('utf-8')).hexdigest()
+
+    def verify_transaction_integrity(self):
+        """
+        Verify if this transaction's data matches its stored hash.
+        
+        Returns:
+            bool: True if transaction data matches stored hash, False otherwise
+        """
+        if not self.transaction_hash:
+            return False
+        current_hash = self.calculate_transaction_hash()
+        return current_hash == self.transaction_hash
         
     def to_dict(self):
         """
