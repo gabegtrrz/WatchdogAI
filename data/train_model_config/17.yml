@@ -1,9 +1,10 @@
-# Research mode example configuration for training the Isolation Forest model
+# USAGE:
+# python watchdog_ai/manage.py train_model --config path/to/your/config.yml
 
 # Data source configuration
 data_source:
   # Use CSV file with labeled data for research mode
-  csv_path: "data/training_data/1/transactions_with_labels.csv"
+  csv_path: data\training_data\8\transactions_with_labels.csv
 
 # Model configuration
 model:
@@ -11,7 +12,7 @@ model:
   contamination_range: [0.01, 0.05, 0.10, 0.15, 0.20]
   
   # Isolation Forest parameters
-  n_estimators: 100
+  n_estimators: 150
   random_state: 42
   max_samples: "auto"
   bootstrap: false

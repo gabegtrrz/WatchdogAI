@@ -1,11 +1,11 @@
-# Train Model Configuration Template
-# This template defines the configuration for training the Isolation Forest model
+# USAGE
+# python watchdog_ai/manage.py train_model --config path/to/your/config.yml
 
 # Data source configuration
 data_source:
   # Optional: Path to CSV file to use instead of database
   # If not specified, will use database as data source
-  csv_path: null  # Example: "data/training_data/1/transactions.csv"
+  csv_path: null  # Example: data/training_data/1/transactions.csv
 
 # Model configuration
 model:
