@@ -50,7 +50,7 @@ def create_model_features(df: pd.DataFrame):
     """
     logger.info("Starting feature engineering process...")
     logger.debug(f"Input DataFrame shape: {df.shape}")
-    
+
     try:
         # Convert decimal columns to float for calculation
         # This prevents 'unsupported operand' errors when dividing Decimal types by floats
@@ -60,7 +60,7 @@ def create_model_features(df: pd.DataFrame):
             if col in df.columns:
                 df[col] = df[col].astype(float)
                 
-# --- A. Date-Based Features ---
+        # --- A. Date-Based Features ---
         # Targets: 'EndOfYearRush', 'WeekendActivity', 'CompressedTimeline', 'BackdatedDocuments'
         logger.debug("Creating date-based features...")
 
@@ -86,7 +86,7 @@ def create_model_features(df: pd.DataFrame):
         df['contract_signing_days'] = df.apply(lambda r: safe_date_diff(r['contract_signing_date'], r['notice_of_award_date']), axis=1)
         df['total_procurement_cycle_days'] = df.apply(lambda r: safe_date_diff(r['contract_signing_date'], r['invitation_to_bid_posting_date']), axis=1)
 
-# --- B. Price & Budget Features ---
+        # --- B. Price & Budget Features ---
         # Targets: 'BidCeilingCollusion', 'PriceExceedsBudget'
         logger.debug("Creating price and budget features...")
 
@@ -99,7 +99,7 @@ def create_model_features(df: pd.DataFrame):
         safe_budget = df['approved_budget'].replace(0, np.nan) # Avoid division by zero
         df['budget_utilization_ratio'] = df['total_purchase_price'] / safe_budget
 
-# --- C. Categorical & Interaction Features ---
+        # --- C. Categorical & Interaction Features ---
         # Features help detect 'FictitiousWinner', 'FavoredSupplier', and 'SuspiciousOverpricing'
         logger.debug("Creating categorical and interaction features...")
         
@@ -126,10 +126,12 @@ def create_model_features(df: pd.DataFrame):
         epsilon = 1e-6  # Small value to prevent division by zero
         df['price_per_supplier_freq'] = df['unit_purchase_price'] / (df['supplier_frequency'] + epsilon)
 
-        # # Price variance by supplier
-        #     # Measures how much the unit price varies for each supplier across transactions.
-        #     # High variance might indicate inconsistent pricing or potential price manipulation.
-        supplier_price_stats = df.groupby('supplier')['unit_purchase_price'].agg(['mean', 'std']).fillna(0)
+        # Price variance by supplier
+        # Measures how much the unit price varies for each supplier across transactions.
+        # High variance might indicate inconsistent pricing or potential price manipulation.
+        # Handle empty groups by filtering out suppliers with no valid price data
+        valid_supplier_prices = df[df['unit_purchase_price'].notna()].groupby('supplier')['unit_purchase_price']
+        supplier_price_stats = valid_supplier_prices.agg(['mean', 'std']).fillna(0)
         # df['price_variance_by_supplier'] = df['supplier'].map(supplier_price_stats['std'])
 
         # Supplier concentration ratio
@@ -143,7 +145,9 @@ def create_model_features(df: pd.DataFrame):
         # Average price deviation
         # Measures how much each transaction's unit price deviates from the average price for that supplier.
         # Large deviations might indicate price manipulation or quality differences.
-        df['price_deviation_from_supplier_avg'] = df['unit_purchase_price'] - df['supplier'].map(supplier_price_stats['mean'])
+        # Use safe mapping to handle suppliers not in the stats
+        supplier_mean_prices = supplier_price_stats['mean'].to_dict()
+        df['price_deviation_from_supplier_avg'] = df['unit_purchase_price'] - df['supplier'].map(supplier_mean_prices).fillna(0)
 
         # Budget efficiency score
         # Combines budget utilization with price efficiency.
@@ -171,7 +175,7 @@ def create_model_features(df: pd.DataFrame):
         # High values might indicate overpricing or low quantity purchases.
         # df['price_per_unit_efficiency'] = df['unit_purchase_price'] / (df['total_purchase_price'] / df['quantity'] + epsilon)
 
-# --- D. Drop Transformed Source Columns ---
+        # --- D. Drop Transformed Source Columns ---
         # To keep the final feature set clean and relevant for the model, we drop the original
         # columns that have already been transformed into engineered features. This prevents
         # data leakage and reduces the dimensionality of the input data.
@@ -185,7 +189,6 @@ def create_model_features(df: pd.DataFrame):
             'supplier'
         ]
         df.drop(columns=columns_to_drop, inplace=True, errors='ignore')
-
 
         # --- Final Imputation & Cleanup ---
         # Handle missing values in engineered features by imputing with median values
@@ -204,13 +207,13 @@ def create_model_features(df: pd.DataFrame):
         
         # Impute missing values with median for each engineered feature
         for col in engineered_features:
-            if col in df.columns and df[col].isnull().any():
+            if col in df.columns and df[col].isnull().sum() > 0:
                 missing_count = df[col].isnull().sum()
                 median_val = df[col].median()
                 df.fillna({col: median_val}, inplace=True)
                 logger.debug(f"Imputed {missing_count} missing values in {col} with median: {median_val}")
 
-    # --- One-Hot Encoding ---
+        # --- One-Hot Encoding ---
         # get_dummies() converts categorical procurement methods to numerical features
         logger.debug("Performing one-hot encoding...")
         df_processed = pd.get_dummies(
@@ -222,7 +225,7 @@ def create_model_features(df: pd.DataFrame):
 
         # after one-hot encoding, each unique value in procurement_method becomes a new column named like procurement_method_<value> (e.g., procurement_method_Open_Bidding).
 
-    # --- Final Feature Set ---
+        # --- Final Feature Set ---
         # Combine base numerical features with engineered features and one-hot encoded columns
         base_numerical_features = ['quantity', 'unit_purchase_price', 'total_purchase_price', 'approved_budget']
         one_hot_cols = [col for col in df_processed.columns if 'procurement_method_' in col]
@@ -257,7 +260,7 @@ def create_model_features(df: pd.DataFrame):
         final_feature_columns = present_expected_features + unexpected_new_features
 
         # Safety check to ensure all columns exist, creating the final DataFrame
-        df_final = df_processed[final_feature_columns].copy
+        df_final = df_processed[final_feature_columns].copy()
 
         logger.info("Feature engineering process completed successfully.")
         return df_final, final_feature_columns
