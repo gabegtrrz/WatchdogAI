@@ -67,4 +67,8 @@ data/evalutation/
 
 # Ignore training results
 data/training
+
+data/generation_config/
+data/
+
 *.joblib

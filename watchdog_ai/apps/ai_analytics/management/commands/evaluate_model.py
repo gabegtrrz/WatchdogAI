@@ -80,23 +80,15 @@ class Command(BaseCommand):
         evaluation_config = config.get('evaluation', {})
         output_format = evaluation_config.get('output_format', 'both')
         
-        # Setup evaluation log path with timestamp
+        # Setup evaluation log path - single file with results appended to top
         log_directory = evaluation_config.get('log_directory', 'data/evaluation_logs')
-        include_timestamp = evaluation_config.get('include_timestamp', True)
-        log_filename_format = evaluation_config.get('log_filename_format', 'evaluation_{timestamp}.json')
+        log_filename = evaluation_config.get('log_filename', 'evaluation_results.json')
         
         # Create log directory if it doesn't exist
         os.makedirs(log_directory, exist_ok=True)
         logger.info(f'Evaluation log directory ensured: {log_directory}')
         
-        # Generate evaluation log path with timestamp if requested
-        if include_timestamp:
-            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            filename = log_filename_format.format(timestamp=timestamp)
-        else:
-            filename = 'evaluation_results.json'
-        
-        evaluation_log_path = os.path.join(log_directory, filename)
+        evaluation_log_path = os.path.join(log_directory, log_filename)
         logger.info(f'Evaluation log path: {evaluation_log_path}')
 
         # Check if trained model exists
@@ -183,7 +175,7 @@ class Command(BaseCommand):
             return
 
         # Perform evaluation
-        evaluation_results = self._evaluate_model(model, df_processed, training_columns, config)
+        evaluation_results = self._evaluate_model(model, df_processed, training_columns, config, model_path)
         
         # Output results
         if output_format in ['json', 'both']:
@@ -217,7 +209,7 @@ class Command(BaseCommand):
         
         return True
 
-    def _evaluate_model(self, model, df_processed, training_columns, config=None):
+    def _evaluate_model(self, model, df_processed, training_columns, config=None, model_path=None):
         """Evaluate the trained model on labeled data."""
         logger.info('Evaluating trained model...')
         self.stdout.write('Evaluating trained model...')
@@ -301,6 +293,7 @@ class Command(BaseCommand):
             # Add model information
             model_info = {
                 'model_type': 'IsolationForest',
+                'model_path': model_path,  # Include model path
                 'contamination': model.contamination,
                 'n_estimators': model.n_estimators,
                 'max_samples': model.max_samples,
@@ -405,7 +398,7 @@ class Command(BaseCommand):
         return metrics
 
     def _save_evaluation_results(self, evaluation_results, evaluation_log_path):
-        """Save evaluation results to JSON file."""
+        """Save evaluation results to JSON file, appending to top."""
         try:
             # Convert numpy types to native Python types for JSON serialization
             def convert_numpy_types(obj):
@@ -424,11 +417,29 @@ class Command(BaseCommand):
             
             serializable_results = convert_numpy_types(evaluation_results)
             
-            with open(evaluation_log_path, 'w') as f:
-                json.dump(serializable_results, f, indent=2)
+            # Read existing results if file exists
+            existing_results = []
+            if os.path.exists(evaluation_log_path):
+                try:
+                    with open(evaluation_log_path, 'r') as f:
+                        existing_results = json.load(f)
+                    if not isinstance(existing_results, list):
+                        existing_results = [existing_results]
+                except (json.JSONDecodeError, FileNotFoundError):
+                    existing_results = []
             
-            logger.info(f'Evaluation results saved to {evaluation_log_path}')
-            self.stdout.write(f'Evaluation results saved to {evaluation_log_path}')
+            # Add timestamp to new result
+            serializable_results['evaluation_timestamp'] = datetime.now().isoformat()
+            
+            # Prepend new result to existing results
+            all_results = [serializable_results] + existing_results
+            
+            # Write all results back to file
+            with open(evaluation_log_path, 'w') as f:
+                json.dump(all_results, f, indent=2)
+            
+            logger.info(f'Evaluation results appended to top of {evaluation_log_path}')
+            self.stdout.write(f'Evaluation results appended to top of {evaluation_log_path}')
             
         except Exception as e:
             logger.error(f'Error saving evaluation results: {e}', exc_info=True)

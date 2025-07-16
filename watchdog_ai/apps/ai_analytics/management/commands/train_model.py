@@ -509,34 +509,9 @@ class Command(BaseCommand):
                 'research_log_saved_to': self.research_log_path
             }
             
-            # Save research log
+            # Save research log using the same mechanism as evaluate_model
             logger.info(f'Saving research results to {self.research_log_path}')
-            with open(self.research_log_path, 'a') as f:
-                # Convert numpy types to native Python types for JSON serialization
-                def convert_numpy_types(obj):
-                    if isinstance(obj, np.integer):
-                        return int(obj)
-                    elif isinstance(obj, np.floating):
-                        return float(obj)
-                    elif isinstance(obj, np.ndarray):
-                        return obj.tolist()
-                    elif isinstance(obj, dict):
-                        return {key: convert_numpy_types(value) for key, value in obj.items()}
-                    elif isinstance(obj, list):
-                        return [convert_numpy_types(item) for item in obj]
-                    else:
-                        return obj
-                
-                serializable_results = convert_numpy_types(research_results)
-                
-                                            # Write formatted JSON with proper indentation and spacing
-                json_output = json.dumps(serializable_results, indent=2, separators=(',', ': '))
-                f.write(json_output + '\n\n')
-                
-                # Add clear separator between JSON objects
-                f.write('=' * 80 + '\n')
-                f.write('END OF TRAINING RESULT\n')
-                f.write('=' * 80 + '\n\n')
+            self._save_training_results(research_results, self.research_log_path)
             
             logger.info(f'Research results saved to {self.research_log_path}')
             self.stdout.write(f'Research results saved to {self.research_log_path}')
@@ -616,29 +591,9 @@ class Command(BaseCommand):
             }
         }
         
-        # Save formatted results to research log
+        # Save formatted results to research log using the same mechanism as evaluate_model
         logger.info(f'Saving standard training results to {self.research_log_path}')
-        with open(self.research_log_path, 'a') as f:
-            # Convert numpy types to native Python types for JSON serialization
-            def convert_numpy_types(obj):
-                if isinstance(obj, np.integer):
-                    return int(obj)
-                elif isinstance(obj, np.floating):
-                    return float(obj)
-                elif isinstance(obj, np.ndarray):
-                    return obj.tolist()
-                elif isinstance(obj, dict):
-                    return {key: convert_numpy_types(value) for key, value in obj.items()}
-                elif isinstance(obj, list):
-                    return [convert_numpy_types(item) for item in obj]
-                else:
-                    return obj
-            
-            serializable_results = convert_numpy_types(standard_results)
-            
-            # Write formatted JSON with proper indentation and spacing
-            json_output = json.dumps(serializable_results, indent=2, separators=(',', ': '))
-            f.write(json_output + '\n\n')
+        self._save_training_results(standard_results, self.research_log_path)
 
         logger.info('Successfully trained and saved the model and column list.')
         self.stdout.write('Successfully trained and saved the model and column list.')
@@ -672,4 +627,52 @@ class Command(BaseCommand):
         # Remove None values to use sklearn defaults
         params = {k: v for k, v in params.items() if v is not None}
         
-        return params 
+        return params
+
+    def _save_training_results(self, training_results, training_log_path):
+        """Save training results to JSON file, appending to top."""
+        try:
+            # Convert numpy types to native Python types for JSON serialization
+            def convert_numpy_types(obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                elif isinstance(obj, dict):
+                    return {key: convert_numpy_types(value) for key, value in obj.items()}
+                elif isinstance(obj, list):
+                    return [convert_numpy_types(item) for item in obj]
+                else:
+                    return obj
+            
+            serializable_results = convert_numpy_types(training_results)
+            
+            # Read existing results if file exists
+            existing_results = []
+            if os.path.exists(training_log_path):
+                try:
+                    with open(training_log_path, 'r') as f:
+                        existing_results = json.load(f)
+                    if not isinstance(existing_results, list):
+                        existing_results = [existing_results]
+                except (json.JSONDecodeError, FileNotFoundError):
+                    existing_results = []
+            
+            # Add timestamp to new result
+            serializable_results['training_timestamp'] = datetime.now().isoformat()
+            
+            # Prepend new result to existing results
+            all_results = [serializable_results] + existing_results
+            
+            # Write all results back to file
+            with open(training_log_path, 'w') as f:
+                json.dump(all_results, f, indent=2)
+            
+            logger.info(f'Training results appended to top of {training_log_path}')
+            self.stdout.write(f'Training results appended to top of {training_log_path}')
+            
+        except Exception as e:
+            logger.error(f'Error saving training results: {e}', exc_info=True)
+            self.stderr.write(f'Error saving training results: {e}') 
