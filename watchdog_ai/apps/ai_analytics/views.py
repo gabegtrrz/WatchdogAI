@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # Rate limiting constants
 SELECT_RATE_LIMIT_SECONDS = 2  # Minimum seconds between selection requests
 SELECT_RATE_LIMIT_MAX_ATTEMPTS = 5  # Max attempts per time window
-SELECT_RATE_LIMIT_WINDOW = 60  # Time window in seconds for max attempts
+SELECT_RATE_LIMIT_WINDOW = 40  # Time window in seconds for max attempts
 
 # Analysis rate limiting (more restrictive due to resource intensity)
 ANALYSIS_RATE_LIMIT_MAX_ATTEMPTS = 2  # Max analysis attempts per time window
@@ -50,9 +50,16 @@ def check_rate_limit(request, action_name):
     attempts = cache.get(cache_key, 0)
     
     if attempts >= max_attempts:
-        # Get remaining time until reset
-        ttl = cache.ttl(cache_key)
-        return False, 0, ttl if ttl else window
+        # Try to get remaining time until reset
+        # Note: ttl() is not available in all cache backends (e.g., LocMemCache)
+        try:
+            ttl = cache.ttl(cache_key)
+            reset_time = ttl if ttl else window
+        except AttributeError:
+            # Fallback for cache backends that don't support ttl()
+            reset_time = window
+        
+        return False, 0, reset_time
     
     # Increment attempts
     cache.set(cache_key, attempts + 1, window)
@@ -170,57 +177,111 @@ def select_transactions(request):
     if rate_limit_response:
         return rate_limit_response
     
-    # Check if this is a "select all" request
-    select_all = request.POST.get('select_all') == 'true'
-    deselected_ids = request.POST.getlist('deselected_ids[]')
-    
-    if select_all:
-        # Get all filtered transaction IDs
-        # We need to apply the same filters as the list view
-        queryset = Transaction.objects.all()
+    try:
+        # Check if this is a "select all" request
+        select_all = request.POST.get('select_all') == 'true'
+        deselected_ids = request.POST.getlist('deselected_ids[]')
         
-        # Create a mock request with GET parameters for filtering
-        # The filter parameters are sent as POST data with the same names as GET parameters
-        mock_get = request.POST.copy()
-        # Remove the select_all and deselected_ids parameters
-        if 'select_all' in mock_get:
-            del mock_get['select_all']
-        for key in list(mock_get.keys()):
-            if key.startswith('deselected_ids'):
-                del mock_get[key]
+        if select_all:
+            # Get all filtered transaction IDs
+            # We need to apply the same filters as the list view
+            queryset = Transaction.objects.all()
+            
+            # Create a mock request with GET parameters for filtering
+            # The filter parameters are sent as POST data with the same names as GET parameters
+            mock_get = request.POST.copy()
+            # Remove the select_all and deselected_ids parameters
+            if 'select_all' in mock_get:
+                del mock_get['select_all']
+            for key in list(mock_get.keys()):
+                if key.startswith('deselected_ids'):
+                    del mock_get[key]
+            
+            filterset = TransactionFilter(mock_get, queryset=queryset)
+            all_filtered_ids = list(filterset.qs.values_list('id', flat=True))
+            
+            # Safely convert deselected IDs to integers
+            deselected_ids_int = []
+            for id_str in deselected_ids:
+                try:
+                    deselected_ids_int.append(int(id_str))
+                except (ValueError, TypeError):
+                    logger.warning(f"Invalid deselected ID format: {id_str}")
+                    continue
+            
+            # Remove deselected IDs from the filtered list
+            transaction_ids = [id for id in all_filtered_ids if id not in deselected_ids_int]
+            
+            logger.info(f"Select all mode: {len(all_filtered_ids)} total filtered, {len(deselected_ids_int)} deselected, {len(transaction_ids)} selected")
+        else:
+            # Individual selections
+            transaction_ids_raw = request.POST.getlist('transaction_ids[]')
+            transaction_ids = validate_transaction_db_ids(transaction_ids_raw)
+            
+            logger.info(f"Individual selection mode: {len(transaction_ids_raw)} submitted, {len(transaction_ids)} valid")
         
-        filterset = TransactionFilter(mock_get, queryset=queryset)
-        all_filtered_ids = list(filterset.qs.values_list('id', flat=True))
+        # Store in session only if we have valid transaction IDs
+        if transaction_ids:
+            request.session['selected_transaction_ids'] = transaction_ids
+            logger.info(f"Stored {len(transaction_ids)} transaction database IDs in session")
+        else:
+            # Clear any existing selection if no valid IDs
+            request.session.pop('selected_transaction_ids', None)
+            logger.warning("No valid transaction IDs found, clearing session selection")
         
-        # Remove deselected IDs
-        deselected_ids = [int(id) for id in deselected_ids]
-        transaction_ids = [id for id in all_filtered_ids if id not in deselected_ids]
-    else:
-        # Individual selections
-        transaction_ids = request.POST.getlist('transaction_ids[]')
-        transaction_ids = validate_transaction_db_ids(transaction_ids)
-    
-    request.session['selected_transaction_ids'] = transaction_ids
-    logger.info(f"Stored {len(transaction_ids)} transaction database IDs in session")
-    return redirect('analysis_configuration')
+        return redirect('analysis_configuration')
+        
+    except Exception as e:
+        logger.error(f"Error in select_transactions: {e}")
+        # Clear session on error to prevent stale data
+        request.session.pop('selected_transaction_ids', None)
+        return redirect('transaction_list')
 
 def validate_transaction_db_ids(ids):
-    """Validate transaction database IDs are valid integers and exist in database."""
+    """
+    Validate transaction database IDs are valid integers and exist in database.
+    Returns a list of valid integer IDs.
+    """
+    if not ids:
+        logger.info("No transaction IDs provided for validation")
+        return []
+    
     try:
-        valid_ids = [int(id) for id in ids if str(id).isdigit()]
-        if len(valid_ids) != len(ids):
-            logger.warning(f"Filtered out {len(ids) - len(valid_ids)} invalid transaction database IDs")
+        # Convert to integers, filtering out invalid values
+        valid_ids = []
+        invalid_count = 0
+        
+        for id_str in ids:
+            try:
+                if str(id_str).isdigit():
+                    valid_ids.append(int(id_str))
+                else:
+                    invalid_count += 1
+                    logger.debug(f"Invalid transaction ID format: {id_str}")
+            except (ValueError, TypeError):
+                invalid_count += 1
+                logger.debug(f"Failed to convert transaction ID: {id_str}")
+        
+        if invalid_count > 0:
+            logger.warning(f"Filtered out {invalid_count} invalid transaction database IDs")
+        
+        if not valid_ids:
+            logger.warning("No valid transaction IDs found after validation")
+            return []
         
         # Check if IDs exist in database
         existing_ids = set(Transaction.objects.filter(id__in=valid_ids).values_list('id', flat=True))
         missing_ids = set(valid_ids) - existing_ids
+        
         if missing_ids:
             logger.warning(f"Transaction database IDs not found in database: {missing_ids}")
             valid_ids = [id for id in valid_ids if id in existing_ids]
         
+        logger.info(f"Validation complete: {len(ids)} submitted, {len(valid_ids)} valid and existing")
         return valid_ids
-    except (ValueError, TypeError) as e:
-        logger.error(f"Invalid transaction database IDs: {e}")
+        
+    except Exception as e:
+        logger.error(f"Error validating transaction database IDs: {e}")
         return []
 
 def analysis_configuration(request):
@@ -228,20 +289,35 @@ def analysis_configuration(request):
     Displays the analysis configuration form.
     """
     transaction_ids = request.session.get('selected_transaction_ids', [])
-    print(f"DEBUG: Retrieved {len(transaction_ids)} transaction IDs from session")
+    logger.info(f"Retrieved {len(transaction_ids)} transaction IDs from session")
     
     if not transaction_ids:
         # Redirect if no transactions were selected
+        logger.warning("No transaction IDs found in session, redirecting to transaction list")
         return redirect('transaction_list')
 
-    # Get the actual count of transactions (not just the IDs list length)
-    # This handles the case where we have all filtered transactions selected
-    if isinstance(transaction_ids, list) and len(transaction_ids) > 0:
-        # Check if this might be a "select all" scenario by looking at the count
-        # If we have a large number of IDs, it's likely select all
+    # Validate that the stored IDs still exist in the database
+    try:
+        existing_count = Transaction.objects.filter(id__in=transaction_ids).count()
+        if existing_count != len(transaction_ids):
+            logger.warning(f"Session contains {len(transaction_ids)} IDs but only {existing_count} exist in database")
+            # Update session with only existing IDs
+            existing_ids = list(Transaction.objects.filter(id__in=transaction_ids).values_list('id', flat=True))
+            request.session['selected_transaction_ids'] = existing_ids
+            transaction_ids = existing_ids
+            
+            if not transaction_ids:
+                logger.warning("No valid transaction IDs remain, redirecting to transaction list")
+                return redirect('transaction_list')
+        
         transaction_count = len(transaction_ids)
-    else:
-        transaction_count = 0
+        logger.info(f"Configuration page loaded with {transaction_count} valid transactions")
+        
+    except Exception as e:
+        logger.error(f"Error validating session transaction IDs: {e}")
+        # Clear invalid session data
+        request.session.pop('selected_transaction_ids', None)
+        return redirect('transaction_list')
 
     if request.method == 'POST':
         form = AnalysisConfigurationForm(request.POST)
@@ -277,24 +353,51 @@ def run_analysis(request):
         if not all([contamination, transaction_ids]):
              return JsonResponse({'success': False, 'error': 'Missing parameters.'}, status=400)
 
-        # Validate transaction IDs exist
+        # Validate contamination value
         try:
-            transaction_count = Transaction.objects.filter(id__in=transaction_ids).count()
-            if transaction_count == 0:
+            contamination_float = float(contamination)
+            if not (0.0 <= contamination_float <= 1.0):
+                return JsonResponse({'success': False, 'error': 'Contamination must be between 0.0 and 1.0.'}, status=400)
+        except (ValueError, TypeError):
+            return JsonResponse({'success': False, 'error': 'Invalid contamination value.'}, status=400)
+
+        # Validate transaction IDs format and existence
+        try:
+            if not isinstance(transaction_ids, list):
+                return JsonResponse({'success': False, 'error': 'Transaction IDs must be a list.'}, status=400)
+            
+            # Validate and clean transaction IDs
+            valid_transaction_ids = validate_transaction_db_ids(transaction_ids)
+            
+            if not valid_transaction_ids:
                 return JsonResponse({'success': False, 'error': 'No valid transactions found.'}, status=400)
+            
+            # Double-check that all IDs exist in database
+            existing_count = Transaction.objects.filter(id__in=valid_transaction_ids).count()
+            if existing_count != len(valid_transaction_ids):
+                logger.warning(f"Analysis requested for {len(valid_transaction_ids)} IDs but only {existing_count} exist")
+                return JsonResponse({'success': False, 'error': 'Some transaction IDs are no longer valid.'}, status=400)
+                
+            logger.info(f"Starting analysis for {len(valid_transaction_ids)} transactions with contamination {contamination_float}")
+            
         except Exception as e:
+            logger.error(f"Error validating transaction IDs for analysis: {e}")
             return JsonResponse({'success': False, 'error': f'Error validating transactions: {str(e)}'}, status=400)
 
         # Start the Celery task
         try:
-            task = perform_anomaly_detection.delay(transaction_ids, float(contamination))
+            task = perform_anomaly_detection.delay(valid_transaction_ids, contamination_float)
+            logger.info(f"Analysis task started with ID: {task.id}")
             return JsonResponse({'success': True, 'task_id': task.id})
         except Exception as e:
+            logger.error(f"Error starting analysis task: {e}")
             return JsonResponse({'success': False, 'error': f'Error starting analysis task: {str(e)}'}, status=500)
             
     except (json.JSONDecodeError, TypeError, ValueError) as e:
+        logger.error(f"Invalid request data in run_analysis: {e}")
         return JsonResponse({'success': False, 'error': f'Invalid request data: {str(e)}'}, status=400)
     except Exception as e:
+        logger.error(f"Unexpected error in run_analysis: {e}")
         return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'}, status=500)
 
 def get_task_status(request, task_id):

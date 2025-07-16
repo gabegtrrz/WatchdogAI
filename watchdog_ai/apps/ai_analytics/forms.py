@@ -5,18 +5,17 @@ class AnalysisConfigurationForm(forms.Form):
     Validates the contamination parameter for the Isolation Forest model.
     """
     contamination = forms.FloatField(
-        min_value=0.01,
-        max_value=0.5,
-        required=True,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control form-control-lg',
-            'step': '0.01',
-            'placeholder': '% of expected anomalies'
-        }),
-        label="Contamination Percentage",
-        help_text="The expected proportion of anomalies in the dataset (between 0.01 and 0.5)."
+    min_value=0.01,
+    max_value=0.5,
+    required=True,
+    widget=forms.NumberInput(attrs={
+        'class': 'form-control form-control-lg',
+        'step': '0.01',
+        'placeholder': 'e.g., 0.05 for 5% anomalies'
+    }),
+    label="Expected Anomaly Percentage",
+    help_text="For this demo, enter '0.10'. Valid values, representing the expected proportion of anomalies in the dataset, range from 0.01 (1%) to 0.50 (50%)."
     )
-    transaction_ids = forms.CharField(widget=forms.HiddenInput())
 
     def clean_transaction_ids(self):
         """
