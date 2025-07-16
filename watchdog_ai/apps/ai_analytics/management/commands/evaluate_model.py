@@ -149,6 +149,22 @@ class Command(BaseCommand):
             self.stderr.write(f'Error during data fetching: {e}')
             return
         
+        # Extract labels from raw data before processing
+        logger.info('Extracting labels from raw data...')
+        try:
+            true_labels = preprocessing.extract_labels(df)
+            if true_labels is not None:
+                logger.info(f'Labels extracted successfully. Distribution: {np.bincount(true_labels)}')
+                self.stdout.write(f'Labels extracted successfully. Distribution: {np.bincount(true_labels)}')
+            else:
+                logger.warning('No anomaly labels found in raw data. Cannot perform supervised evaluation.')
+                self.stdout.write('No anomaly labels found in raw data. Cannot perform supervised evaluation.')
+                return
+        except Exception as e:
+            logger.error(f'Error extracting labels: {e}', exc_info=True)
+            self.stderr.write(f'Error extracting labels: {e}')
+            return
+
         try:
             logger.info('Cleaning raw data...')
             cleaned_df = preprocessing.clean_raw_data(df)
@@ -168,14 +184,8 @@ class Command(BaseCommand):
             self.stderr.write(f'Error during feature engineering: {e}')
             return
 
-        # Check if data has labels for evaluation
-        if 'is_anomaly' not in df_processed.columns:
-            logger.warning('No anomaly labels found in data. Cannot perform supervised evaluation.')
-            self.stdout.write('No anomaly labels found in data. Cannot perform supervised evaluation.')
-            return
-
-        # Perform evaluation
-        evaluation_results = self._evaluate_model(model, df_processed, training_columns, config, model_path)
+        # Perform evaluation with extracted labels
+        evaluation_results = self._evaluate_model(model, df_processed, training_columns, config, model_path, true_labels)
         
         # Output results
         if output_format in ['json', 'both']:
@@ -209,7 +219,7 @@ class Command(BaseCommand):
         
         return True
 
-    def _evaluate_model(self, model, df_processed, training_columns, config=None, model_path=None):
+    def _evaluate_model(self, model, df_processed, training_columns, config=None, model_path=None, true_labels=None):
         """Evaluate the trained model on labeled data."""
         logger.info('Evaluating trained model...')
         self.stdout.write('Evaluating trained model...')
@@ -218,10 +228,20 @@ class Command(BaseCommand):
             labeled_df = df_processed.copy()
             logger.info(f'Labeled data shape: {labeled_df.shape}')
             
-            # Get true labels (1 for anomaly, 0 for normal)
-            true_labels = labeled_df['is_anomaly'].values
-            true_labels_binary = (true_labels == 1).astype(int)
-            logger.info(f'True labels binary distribution: {np.bincount(true_labels_binary)}')
+            # Use extracted true labels if provided, otherwise try to get from processed data
+            if true_labels is not None:
+                true_labels_binary = true_labels
+                logger.info(f'Using extracted true labels. Distribution: {np.bincount(true_labels_binary)}')
+            else:
+                # Fallback: try to get labels from processed data
+                if 'is_anomaly' in labeled_df.columns:
+                    true_labels_raw = labeled_df['is_anomaly'].values
+                    true_labels_binary = (true_labels_raw == 1).astype(int)
+                    logger.info(f'True labels from processed data. Distribution: {np.bincount(true_labels_binary)}')
+                else:
+                    logger.error('No true labels provided and none found in processed data')
+                    self.stderr.write('No true labels provided and none found in processed data')
+                    return None
             
             # Get advanced configuration
             advanced_config = config.get('advanced', {}) if config else {}
@@ -234,8 +254,7 @@ class Command(BaseCommand):
             if config and 'model' in config:
                 contamination = config['model'].get('contamination', 'auto')
             
-            # Prepare features for prediction (drop label column)
-            features_df = labeled_df.drop('is_anomaly', axis=1)
+            features_df = labeled_df
             
             # Debug: Check what columns we have after dropping is_anomaly
             logger.info(f'Columns after dropping is_anomaly: {list(features_df.columns)}')
@@ -416,6 +435,12 @@ class Command(BaseCommand):
                     return obj
             
             serializable_results = convert_numpy_types(evaluation_results)
+            
+            # Safety check: ensure serializable_results is a dictionary
+            if serializable_results is None:
+                logger.error('Failed to convert evaluation results to serializable format')
+                self.stderr.write('Failed to convert evaluation results to serializable format')
+                return
             
             # Read existing results if file exists
             existing_results = []
