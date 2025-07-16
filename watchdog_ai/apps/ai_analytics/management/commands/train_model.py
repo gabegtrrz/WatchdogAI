@@ -117,7 +117,7 @@ class Command(BaseCommand):
             
         try:
             labeled_df = df_processed
-            self.stdout.write(f'is_anomaly values starting from index 21: {labeled_df['is_anomaly'].values[21:]}...')
+            self.stdout.write(f'is_anomaly values: {labeled_df['is_anomaly'].values[:10]}...')
             
             # Get true labels (1 for anomaly, 0 for normal)
             true_labels = labeled_df['is_anomaly'].values
