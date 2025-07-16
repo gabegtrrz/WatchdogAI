@@ -4,6 +4,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.core.cache import cache
 import json
 import numpy as np
 from sklearn.ensemble import IsolationForest
@@ -18,6 +19,60 @@ from .tasks import perform_anomaly_detection
 
 import logging
 logger = logging.getLogger(__name__)
+
+# Rate limiting constants
+SELECT_RATE_LIMIT_SECONDS = 2  # Minimum seconds between selection requests
+SELECT_RATE_LIMIT_MAX_ATTEMPTS = 5  # Max attempts per time window
+SELECT_RATE_LIMIT_WINDOW = 60  # Time window in seconds for max attempts
+
+# Analysis rate limiting (more restrictive due to resource intensity)
+ANALYSIS_RATE_LIMIT_MAX_ATTEMPTS = 2  # Max analysis attempts per time window
+ANALYSIS_RATE_LIMIT_WINDOW = 300  # 5 minutes window for analysis requests
+
+def check_rate_limit(request, action_name):
+    """
+    Check if user has exceeded rate limits for the given action.
+    Returns (is_allowed, remaining_attempts, reset_time)
+    """
+    # Create unique key for this user and action
+    user_id = getattr(request.user, 'id', 'anonymous')
+    cache_key = f"rate_limit_{action_name}_{user_id}"
+    
+    # Determine rate limits based on action
+    if action_name == 'run_analysis':
+        max_attempts = ANALYSIS_RATE_LIMIT_MAX_ATTEMPTS
+        window = ANALYSIS_RATE_LIMIT_WINDOW
+    else:
+        max_attempts = SELECT_RATE_LIMIT_MAX_ATTEMPTS
+        window = SELECT_RATE_LIMIT_WINDOW
+    
+    # Get current attempts
+    attempts = cache.get(cache_key, 0)
+    
+    if attempts >= max_attempts:
+        # Get remaining time until reset
+        ttl = cache.ttl(cache_key)
+        return False, 0, ttl if ttl else window
+    
+    # Increment attempts
+    cache.set(cache_key, attempts + 1, window)
+    return True, max_attempts - attempts - 1, window
+
+def apply_rate_limit(request, action_name):
+    """
+    Apply rate limiting and return appropriate response if limit exceeded.
+    """
+    is_allowed, remaining_attempts, reset_time = check_rate_limit(request, action_name)
+    
+    if not is_allowed:
+        logger.warning(f"Rate limit exceeded for user {getattr(request.user, 'id', 'anonymous')} on {action_name}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Too many requests. Please wait before trying again.',
+            'rate_limit_reset': reset_time
+        }, status=429)  # 429 Too Many Requests
+    
+    return None  # Continue with normal processing
 
 class TransactionListView(ListView):
     """
@@ -36,8 +91,9 @@ class TransactionListView(ListView):
         This method applies the filters from the TransactionFilter and sorting to the
         base queryset of all transactions.
         """
-        queryset = super().get_queryset().select_related('block', 'procurement_method')
-        self.filterset = TransactionFilter(self.request.GET, queryset=queryset)
+        queryset = super().get_queryset().select_related('block', 'procurement_method') #holds the complete, unfiltered set of transactions, with the related objects pre-fetched.
+
+        self.filterset = TransactionFilter(self.request.GET, queryset=queryset) #takes the unfiltered queryset and applies any filters present in self.request.GET. The resulting filtered queryset is now stored in the self.filterset.qs attribute. The original queryset variable is still unchanged
         
         # Apply sorting
         sort_by = self.request.GET.get('sort', '-transaction_date')  # Default sort by transaction date descending
@@ -69,6 +125,7 @@ class TransactionListView(ListView):
             'created_at': 'created_at',
         }
         
+        # Validate sort field to prevent injection
         if sort_by in allowed_sort_fields:
             sort_field = allowed_sort_fields[sort_by]
             if order == 'asc':
@@ -108,6 +165,11 @@ def select_transactions(request):
     Receives selected transaction IDs and handles both individual selections
     and "select all minus deselected" scenarios.
     """
+    # Apply rate limiting
+    rate_limit_response = apply_rate_limit(request, 'select_transactions')
+    if rate_limit_response:
+        return rate_limit_response
+    
     # Check if this is a "select all" request
     select_all = request.POST.get('select_all') == 'true'
     deselected_ids = request.POST.getlist('deselected_ids[]')
@@ -201,6 +263,11 @@ def run_analysis(request):
     """
     Initiates the asynchronous analysis task via a fetch request.
     """
+    # Apply rate limiting for analysis requests (more restrictive)
+    rate_limit_response = apply_rate_limit(request, 'run_analysis')
+    if rate_limit_response:
+        return rate_limit_response
+    
     try:
         data = json.loads(request.body)
         contamination = data.get('contamination')

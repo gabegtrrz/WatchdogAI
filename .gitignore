@@ -64,6 +64,8 @@ data/training/models/iforest.joblib
 # Ignore evaluation files
 data/evalutation/
 
+*tests!/
+
 
 # Ignore training results
 data/training
