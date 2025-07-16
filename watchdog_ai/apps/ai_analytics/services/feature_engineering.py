@@ -15,6 +15,12 @@ import pandas as pd
 import numpy as np
 import warnings
 
+def safe_date_diff(d1, d2):
+    """Safely calculates the difference in days between two dates, handling NaT."""
+    if pd.isna(d1) or pd.isna(d2):
+        return np.nan
+    return (d1 - d2).days
+
 def create_model_features(df: pd.DataFrame):
     """
     Engineers features from the preprocessed DataFrame for anomaly detection.
@@ -65,10 +71,10 @@ def create_model_features(df: pd.DataFrame):
         # These features measure the efficiency and transparency of procurement processes.
         # Unusually short timelines might indicate rushed or non-competitive processes,
         # while excessively long timelines could suggest bureaucratic delays or manipulation.
-    df['bidding_period_days'] = (df['bid_submission_deadline'] - df['invitation_to_bid_posting_date']).dt.days
-    df['award_decision_days'] = (df['notice_of_award_date'] - df['bid_opening_date']).dt.days
-    df['contract_signing_days'] = (df['contract_signing_date'] - df['notice_of_award_date']).dt.days
-    df['total_procurement_cycle_days'] = (df['contract_signing_date'] - df['invitation_to_bid_posting_date']).dt.days
+    df['bidding_period_days'] = df.apply(lambda r: safe_date_diff(r['bid_submission_deadline'], r['invitation_to_bid_posting_date']), axis=1)
+    df['award_decision_days'] = df.apply(lambda r: safe_date_diff(r['notice_of_award_date'], r['bid_opening_date']), axis=1)
+    df['contract_signing_days'] = df.apply(lambda r: safe_date_diff(r['contract_signing_date'], r['notice_of_award_date']), axis=1)
+    df['total_procurement_cycle_days'] = df.apply(lambda r: safe_date_diff(r['contract_signing_date'], r['invitation_to_bid_posting_date']), axis=1)
 
 # --- B. Price & Budget Features ---
     # Targets: 'BidCeilingCollusion', 'PriceExceedsBudget'
