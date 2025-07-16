@@ -275,6 +275,23 @@ class Command(BaseCommand):
                 cm = confusion_matrix(true_labels, predicted_labels)
                 logger.info(f'Confusion matrix for contamination={contamination}: {cm.tolist()}')
                 
+                # Interpret confusion matrix correctly:
+                # For labels [0, 1] where 0=normal, 1=anomaly:
+                # cm[0,0] = True Negatives (TN): predicted normal, actually normal
+                # cm[0,1] = False Positives (FP): predicted anomaly, actually normal  
+                # cm[1,0] = False Negatives (FN): predicted normal, actually anomaly
+                # cm[1,1] = True Positives (TP): predicted anomaly, actually anomaly
+                
+                # Extract confusion matrix values safely
+                if cm.shape == (2, 2):
+                    tn, fp, fn, tp = cm[0,0], cm[0,1], cm[1,0], cm[1,1]
+                else:
+                    # Handle edge cases where confusion matrix might not be 2x2
+                    tn = cm[0,0] if cm.shape[0] > 0 and cm.shape[1] > 0 else 0
+                    fp = cm[0,1] if cm.shape[0] > 0 and cm.shape[1] > 1 else 0
+                    fn = cm[1,0] if cm.shape[0] > 1 and cm.shape[1] > 0 else 0
+                    tp = cm[1,1] if cm.shape[0] > 1 and cm.shape[1] > 1 else 0
+                
                 # Store results
                 research_results['contamination_analysis'][contamination] = {
                     'precision': precision,
@@ -285,18 +302,28 @@ class Command(BaseCommand):
                     'true_anomalies': np.sum(true_labels),
                     'true_normal': len(true_labels) - np.sum(true_labels),
                     'confusion_matrix': cm.tolist(),
+                    'confusion_matrix_interpreted': {
+                        'true_negatives': int(tn),
+                        'false_positives': int(fp), 
+                        'false_negatives': int(fn),
+                        'true_positives': int(tp)
+                    },
                     'model_config': model_params
                 }
                 
-                # Log detailed anomaly information
+                # Log detailed anomaly information with correct interpretation
                 logger.info(f'Contamination {contamination} Results:')
                 logger.info(f'  - True anomalies: {np.sum(true_labels)}')
                 logger.info(f'  - Predicted anomalies: {np.sum(predicted_labels)}')
-                logger.info(f'  - True positives: {cm[1, 1] if cm.shape == (2, 2) else 0}')
-                logger.info(f'  - False positives: {cm[0, 1] if cm.shape == (2, 2) else 0}')
-                logger.info(f'  - False negatives: {cm[1, 0] if cm.shape == (2, 2) else 0}')
-                logger.info(f'  - True negatives: {cm[0, 0] if cm.shape == (2, 2) else 0}')
+                logger.info(f'  - True positives (TP): {tp} (predicted anomaly, actually anomaly)')
+                logger.info(f'  - False positives (FP): {fp} (predicted anomaly, actually normal)')
+                logger.info(f'  - False negatives (FN): {fn} (predicted normal, actually anomaly)')
+                logger.info(f'  - True negatives (TN): {tn} (predicted normal, actually normal)')
                 logger.info(f'  - Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}')
+                
+                # Verify confusion matrix interpretation
+                logger.info(f'  - Verification: TP+FN={tp+fn} (should equal true anomalies: {np.sum(true_labels)})')
+                logger.info(f'  - Verification: FP+TN={fp+tn} (should equal true normals: {len(true_labels)-np.sum(true_labels)})')
                 
                 # Track best performing model based on F1-score
                 if f1 > best_f1_score:
