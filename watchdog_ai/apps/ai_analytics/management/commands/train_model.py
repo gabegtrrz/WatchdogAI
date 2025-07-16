@@ -18,11 +18,11 @@ import pandas as pd
 
 from apps.ai_analytics.services import preprocessing, feature_engineering
 
-# Define the path to store the trained model
-MODEL_DIR = os.path.join(settings.BASE_DIR, 'apps', 'ai_analytics', 'model_files')
-MODEL_PATH = os.path.join(MODEL_DIR, 'isolation_forest.joblib')
-COLUMNS_PATH = os.path.join(MODEL_DIR, 'training_columns.joblib')
-RESEARCH_LOG_PATH = os.path.join(MODEL_DIR, 'research_log.json')
+# Define default paths to store the trained model
+DEFAULT_MODEL_DIR = os.path.join(settings.BASE_DIR, 'apps', 'ai_analytics', 'model_files')
+DEFAULT_MODEL_PATH = os.path.join(DEFAULT_MODEL_DIR, 'isolation_forest.joblib')
+DEFAULT_COLUMNS_PATH = os.path.join(DEFAULT_MODEL_DIR, 'training_columns.joblib')
+DEFAULT_RESEARCH_LOG_PATH = os.path.join(DEFAULT_MODEL_DIR, 'research_log.json')
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -59,9 +59,12 @@ class Command(BaseCommand):
         if not self._validate_config(config):
             return
 
-        # Ensure the model directory exists
-        os.makedirs(MODEL_DIR, exist_ok=True)
-        logger.info(f'Model directory ensured: {MODEL_DIR}')
+        # Get output paths from configuration or use defaults
+        self.model_dir, self.model_path, self.columns_path, self.research_log_path = self._get_output_paths(config)
+        
+        # Ensure all required directories exist
+        self._ensure_directories_exist()
+        logger.info(f'All output directories ensured')
 
         # 1. Get and preprocess data
         logger.info('Fetching and preprocessing transaction data...')
@@ -184,6 +187,118 @@ class Command(BaseCommand):
             return False
         
         return True
+
+    def _get_output_paths(self, config: dict) -> Tuple[str, str, str, str]:
+        """
+        Get output paths from configuration or use defaults.
+        
+        Args:
+            config: Configuration dictionary
+            
+        Returns:
+            Tuple of (model_dir, model_path, columns_path, research_log_path)
+        """
+        # Get output configuration section
+        output_config = config.get('output', {})
+        
+        # Get model directory (can be relative or absolute path)
+        model_dir = output_config.get('model_dir', DEFAULT_MODEL_DIR)
+        if not os.path.isabs(model_dir):
+            # If relative path, make it relative to BASE_DIR
+            model_dir = os.path.join(settings.BASE_DIR, model_dir)
+        
+        # Get individual file paths (can be relative to model_dir or absolute)
+        model_filename = output_config.get('model_filename', 'isolation_forest.joblib')
+        columns_filename = output_config.get('columns_filename', 'training_columns.joblib')
+        research_log_filename = output_config.get('research_log_filename', 'research_log.json')
+        
+        # Construct full paths
+        model_path = output_config.get('model_path')
+        if model_path:
+            if not os.path.isabs(model_path):
+                model_path = os.path.join(settings.BASE_DIR, model_path)
+        else:
+            model_path = os.path.join(model_dir, model_filename)
+        
+        columns_path = output_config.get('columns_path')
+        if columns_path:
+            if not os.path.isabs(columns_path):
+                columns_path = os.path.join(settings.BASE_DIR, columns_path)
+        else:
+            columns_path = os.path.join(model_dir, columns_filename)
+        
+        research_log_path = output_config.get('research_log_path')
+        if research_log_path:
+            if not os.path.isabs(research_log_path):
+                research_log_path = os.path.join(settings.BASE_DIR, research_log_path)
+        else:
+            research_log_path = os.path.join(model_dir, research_log_filename)
+        
+        logger.info(f'Output paths configured:')
+        logger.info(f'  Model directory: {model_dir}')
+        logger.info(f'  Model file: {model_path}')
+        logger.info(f'  Columns file: {columns_path}')
+        logger.info(f'  Research log: {research_log_path}')
+        
+        return model_dir, model_path, columns_path, research_log_path
+
+    def _validate_output_paths(self, model_dir: str, model_path: str, columns_path: str, research_log_path: str):
+        """
+        Validate that output paths are valid and accessible.
+        
+        Args:
+            model_dir: Directory for model files
+            model_path: Path to model file
+            columns_path: Path to columns file
+            research_log_path: Path to research log file
+        """
+        paths_to_check = [model_dir, os.path.dirname(model_path), 
+                         os.path.dirname(columns_path), os.path.dirname(research_log_path)]
+        
+        for path in paths_to_check:
+            if path and not os.path.exists(path):
+                logger.info(f'Directory will be created: {path}')
+            elif path:
+                logger.info(f'Directory already exists: {path}')
+        
+        # Check if we can write to the directories
+        for path in paths_to_check:
+            if path:
+                try:
+                    # Try to create a temporary file to test write permissions
+                    test_file = os.path.join(path, '.write_test')
+                    with open(test_file, 'w') as f:
+                        f.write('test')
+                    os.remove(test_file)
+                    logger.info(f'Write permissions confirmed for: {path}')
+                except Exception as e:
+                    logger.warning(f'Write permissions issue for {path}: {e}')
+                    self.stderr.write(f'Warning: Write permissions issue for {path}: {e}')
+
+    def _ensure_directories_exist(self):
+        """
+        Ensure all required directories exist for output files.
+        Creates parent directories as needed.
+        """
+        directories_to_create = set()
+        
+        # Add directories for all output files
+        directories_to_create.add(os.path.dirname(self.model_path))
+        directories_to_create.add(os.path.dirname(self.columns_path))
+        directories_to_create.add(os.path.dirname(self.research_log_path))
+        
+        # Create each directory
+        for directory in directories_to_create:
+            if directory and directory != '.':  # Skip empty directory names and current directory
+                try:
+                    os.makedirs(directory, exist_ok=True)
+                    logger.info(f'Ensured directory exists: {directory}')
+                    self.stdout.write(f'Created directory: {directory}')
+                except Exception as e:
+                    error_msg = f'Failed to create directory {directory}: {e}'
+                    logger.error(error_msg)
+                    self.stderr.write(error_msg)
+                    raise
 
     def _research_mode_training(self, df_processed, training_columns, contamination_range):
         """Research mode with cross-validation and multiple contamination values."""
@@ -368,10 +483,10 @@ class Command(BaseCommand):
             research_results['final_model_parameters'] = final_model_params
             
             # Save model and research results
-            logger.info(f'Saving final model to {MODEL_PATH}')
-            joblib.dump(final_model, MODEL_PATH)
-            logger.info(f'Saving training columns to {COLUMNS_PATH}')
-            joblib.dump(training_columns, COLUMNS_PATH)
+            logger.info(f'Saving final model to {self.model_path}')
+            joblib.dump(final_model, self.model_path)
+            logger.info(f'Saving training columns to {self.columns_path}')
+            joblib.dump(training_columns, self.columns_path)
             
             research_results['best_model'] = {
                 'contamination': best_contamination,
@@ -389,14 +504,14 @@ class Command(BaseCommand):
                 'best_contamination': best_contamination,
                 'best_f1_score': best_f1_score,
                 'training_completed_at': datetime.now().isoformat(),
-                'model_saved_to': MODEL_PATH,
-                'columns_saved_to': COLUMNS_PATH,
-                'research_log_saved_to': RESEARCH_LOG_PATH
+                'model_saved_to': self.model_path,
+                'columns_saved_to': self.columns_path,
+                'research_log_saved_to': self.research_log_path
             }
             
             # Save research log
-            logger.info(f'Saving research results to {RESEARCH_LOG_PATH}')
-            with open(RESEARCH_LOG_PATH, 'a') as f:
+            logger.info(f'Saving research results to {self.research_log_path}')
+            with open(self.research_log_path, 'a') as f:
                 # Convert numpy types to native Python types for JSON serialization
                 def convert_numpy_types(obj):
                     if isinstance(obj, np.integer):
@@ -423,8 +538,8 @@ class Command(BaseCommand):
                 f.write('END OF TRAINING RESULT\n')
                 f.write('=' * 80 + '\n\n')
             
-            logger.info(f'Research results saved to {RESEARCH_LOG_PATH}')
-            self.stdout.write(f'Research results saved to {RESEARCH_LOG_PATH}')
+            logger.info(f'Research results saved to {self.research_log_path}')
+            self.stdout.write(f'Research results saved to {self.research_log_path}')
             
             # Log final summary
             logger.info('Research Mode Complete - Final Summary:')
@@ -465,13 +580,13 @@ class Command(BaseCommand):
         self.stdout.write('Model training complete.')
 
         # Save model and training columns
-        logger.info(f'Saving model to {MODEL_PATH}')
-        self.stdout.write(f'Saving model to {MODEL_PATH}')
-        joblib.dump(model, MODEL_PATH)
+        logger.info(f'Saving model to {self.model_path}')
+        self.stdout.write(f'Saving model to {self.model_path}')
+        joblib.dump(model, self.model_path)
         
-        logger.info(f'Saving training columns to {COLUMNS_PATH}')
-        self.stdout.write(f'Saving training columns to {COLUMNS_PATH}')
-        joblib.dump(training_columns, COLUMNS_PATH)
+        logger.info(f'Saving training columns to {self.columns_path}')
+        self.stdout.write(f'Saving training columns to {self.columns_path}')
+        joblib.dump(training_columns, self.columns_path)
         
         # Save training results for standard mode
         try:
@@ -496,14 +611,14 @@ class Command(BaseCommand):
             'training_summary': {
                 'contamination_used': contamination,
                 'training_completed_at': datetime.now().isoformat(),
-                'model_saved_to': MODEL_PATH,
-                'columns_saved_to': COLUMNS_PATH
+                'model_saved_to': self.model_path,
+                'columns_saved_to': self.columns_path
             }
         }
         
         # Save formatted results to research log
-        logger.info(f'Saving standard training results to {RESEARCH_LOG_PATH}')
-        with open(RESEARCH_LOG_PATH, 'a') as f:
+        logger.info(f'Saving standard training results to {self.research_log_path}')
+        with open(self.research_log_path, 'a') as f:
             # Convert numpy types to native Python types for JSON serialization
             def convert_numpy_types(obj):
                 if isinstance(obj, np.integer):

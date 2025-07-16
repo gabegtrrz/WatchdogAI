@@ -31,6 +31,24 @@ training:
   # When true, will test multiple contamination values and select the best one
   research_mode: false   # Set to true for research mode
 
+# Output configuration (optional)
+# If not specified, uses default paths in apps/ai_analytics/model_files/
+output:
+  # Option 1: Specify a custom model directory (relative to BASE_DIR)
+  # model_dir: 'custom_models/anomaly_detection'
+  
+  # Option 2: Specify individual file names 
+  # (will be saved in model_dir)
+
+  # model_filename: 'isolation_forest_v2.joblib'
+  # columns_filename: 'training_columns_v2.joblib'
+  # research_log_filename: 'training_results_v2.json'
+  
+  # Option 3: Specify absolute paths for individual files
+  # model_path: '/absolute/path/to/model.joblib'
+  # columns_path: '/absolute/path/to/columns.joblib'
+  # research_log_path: '/absolute/path/to/results.json'
+
 # ------------------------------
 # Example configurations:
 
@@ -55,4 +73,10 @@ training:
 # data_source:
 #   csv_path: "data/training_data/1/transactions_with_labels.csv"
 # model:
-#   contamination: "auto" 
+#   contamination: "auto"
+
+# Using custom output paths:
+# output:
+#   model_dir: 'models/production'
+#   model_filename: 'production_model.joblib'
+#   research_log_filename: 'production_results.json' 
