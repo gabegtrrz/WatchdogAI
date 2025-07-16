@@ -13,7 +13,7 @@ Performs three main preprocessing steps:
 import pandas as pd
 import numpy as np
 import logging
-from apps.core.models import Transaction
+from django.apps import apps
 from typing import Union, Optional
 from pathlib import Path
 from apps.transaction_management.services import process_transaction_csv
@@ -49,6 +49,8 @@ def get_transaction_dataframe():
     """
     logger.info("Fetching transaction data from database...")
     try:
+        # Get the Transaction model dynamically to avoid import issues
+        Transaction = apps.get_model('core', 'Transaction')
         transactions = Transaction.objects.all().values(
             'transaction_id',
             'quantity',

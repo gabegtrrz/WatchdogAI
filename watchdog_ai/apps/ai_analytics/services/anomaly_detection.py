@@ -65,7 +65,7 @@ def generate_shap_values(model, final_df):
         base_values = explainer.expected_value
         if base_values is None:
             base_values = 0.5
-        elif hasattr(base_values, 'tolist') and callable(getattr(base_values, 'tolist', None)):
+        elif hasattr(base_values, 'tolist'):
             try:
                 base_values = base_values.tolist()
             except (AttributeError, TypeError):
@@ -275,7 +275,7 @@ def align_columns(df: pd.DataFrame, training_columns: list) -> pd.DataFrame:
             logger.debug(f"Added missing columns: {missing_columns}")
         
         # Ensure columns are in the same order as training data
-        aligned_df = df[training_columns]
+        aligned_df = df[training_columns].copy()
         logger.debug(f"Column alignment complete. Output shape: {aligned_df.shape}")
         return aligned_df
         
