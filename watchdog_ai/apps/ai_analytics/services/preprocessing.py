@@ -241,9 +241,7 @@ def extract_labels(df: pd.DataFrame):
             df: DataFrame that may contain 'is_anomaly' column
             
         Returns:
-            Tuple of (training_data, true_labels) where:
-            - training_data: DataFrame with 'is_anomaly' column removed
-            - true_labels: numpy array of binary labels (1 for anomaly, 0 for normal) or None
+            true_labels: numpy array of binary labels (1 for anomaly, 0 for normal) or None
         """
         df_copy = df.copy()
         true_labels = None
