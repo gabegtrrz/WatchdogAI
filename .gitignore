@@ -61,11 +61,9 @@ D:\Projects\WatchdogAI\data\training\models
 data/training/models/columns.joblib
 data/training/models/iforest.joblib
 
-# Ignore evaluation log files
-data/evalutation/log/
+# Ignore evaluation files
+data/evalutation/
 
-# Ignore evaluation results
-data/evalutation/results/
 
 # Ignore training results
 data/training
