@@ -136,11 +136,30 @@ def select_transactions(request):
     else:
         # Individual selections
         transaction_ids = request.POST.getlist('transaction_ids[]')
-        transaction_ids = [int(id) for id in transaction_ids]
+        transaction_ids = validate_transaction_db_ids(transaction_ids)
     
     request.session['selected_transaction_ids'] = transaction_ids
-    print(f"DEBUG: Stored {len(transaction_ids)} transaction IDs in session")
+    logger.info(f"Stored {len(transaction_ids)} transaction database IDs in session")
     return redirect('analysis_configuration')
+
+def validate_transaction_db_ids(ids):
+    """Validate transaction database IDs are valid integers and exist in database."""
+    try:
+        valid_ids = [int(id) for id in ids if str(id).isdigit()]
+        if len(valid_ids) != len(ids):
+            logger.warning(f"Filtered out {len(ids) - len(valid_ids)} invalid transaction database IDs")
+        
+        # Check if IDs exist in database
+        existing_ids = set(Transaction.objects.filter(id__in=valid_ids).values_list('id', flat=True))
+        missing_ids = set(valid_ids) - existing_ids
+        if missing_ids:
+            logger.warning(f"Transaction database IDs not found in database: {missing_ids}")
+            valid_ids = [id for id in valid_ids if id in existing_ids]
+        
+        return valid_ids
+    except (ValueError, TypeError) as e:
+        logger.error(f"Invalid transaction database IDs: {e}")
+        return []
 
 def analysis_configuration(request):
     """
@@ -213,7 +232,7 @@ def run_analysis(request):
 
 def get_task_status(request, task_id):
     """
-    Pollable endpoint to check the status of a Celery task.
+    Pollable endpoint to check the status of a Celery task with timeout and comprehensive error handling.
     """
     try:
         task_result = AsyncResult(task_id)
@@ -221,18 +240,28 @@ def get_task_status(request, task_id):
             'task_id': task_id,
             'status': task_result.status,
         }
+        
         if task_result.ready():
-            # If task is finished, include the result
-            task_output = task_result.get()
-            result['result'] = task_output
-            # Provide a URL to the results page
-            if task_output and isinstance(task_output, dict) and task_output.get('status') == 'Completed':
-                analysis_run_id = task_output.get('analysis_run_id')
-                if analysis_run_id:
-                    result['redirect_url'] = reverse('analysis_results', args=[analysis_run_id])
+            try:
+                task_output = task_result.get(timeout=5)  # 5 second timeout
+                result['result'] = task_output
+                # Provide a URL to the results page
+                if task_output and isinstance(task_output, dict) and task_output.get('status') == 'Completed':
+                    analysis_run_id = task_output.get('analysis_run_id')
+                    if analysis_run_id:
+                        result['redirect_url'] = reverse('analysis_results', args=[analysis_run_id])
+            except TimeoutError:
+                result['status'] = 'TIMEOUT'
+                result['error'] = 'Task result retrieval timed out'
+                logger.warning(f"Task {task_id} result retrieval timed out")
+            except Exception as e:
+                result['status'] = 'FAILURE'
+                result['error'] = f'Task result error: {str(e)}'
+                logger.error(f"Error retrieving task {task_id} result: {e}")
 
         return JsonResponse(result)
     except Exception as e:
+        logger.error(f"Task status check failed for {task_id}: {e}")
         return JsonResponse({
             'task_id': task_id,
             'status': 'FAILURE',

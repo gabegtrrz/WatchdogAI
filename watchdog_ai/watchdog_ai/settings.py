@@ -268,6 +268,14 @@ LOGGING = {
             'backupCount': 5,
             'formatter': 'detailed',
         },
+        'file_model_training': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'model_training.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
     },
     'loggers': {
         # Django framework logging
@@ -327,6 +335,13 @@ LOGGING = {
         # Data utilities logging
         'data_utils': {
             'handlers': ['console', 'file_transactions'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        
+        # Model training logging
+        'model_training': {
+            'handlers': ['console', 'file_model_training'],
             'level': 'DEBUG',
             'propagate': False,
         },
