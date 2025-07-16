@@ -16,6 +16,12 @@ from celery.result import AsyncResult
 from apps.core.models import AnalysisReport
 from .forms import AnalysisConfigurationForm
 from .tasks import perform_anomaly_detection
+from .services.validation import (
+    validate_transaction_db_ids,
+    validate_session_transaction_ids,
+    validate_analysis_parameters,
+    create_validation_error_response
+)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -237,52 +243,7 @@ def select_transactions(request):
         request.session.pop('selected_transaction_ids', None)
         return redirect('transaction_list')
 
-def validate_transaction_db_ids(ids):
-    """
-    Validate transaction database IDs are valid integers and exist in database.
-    Returns a list of valid integer IDs.
-    """
-    if not ids:
-        logger.info("No transaction IDs provided for validation")
-        return []
-    
-    try:
-        # Convert to integers, filtering out invalid values
-        valid_ids = []
-        invalid_count = 0
-        
-        for id_str in ids:
-            try:
-                if str(id_str).isdigit():
-                    valid_ids.append(int(id_str))
-                else:
-                    invalid_count += 1
-                    logger.debug(f"Invalid transaction ID format: {id_str}")
-            except (ValueError, TypeError):
-                invalid_count += 1
-                logger.debug(f"Failed to convert transaction ID: {id_str}")
-        
-        if invalid_count > 0:
-            logger.warning(f"Filtered out {invalid_count} invalid transaction database IDs")
-        
-        if not valid_ids:
-            logger.warning("No valid transaction IDs found after validation")
-            return []
-        
-        # Check if IDs exist in database
-        existing_ids = set(Transaction.objects.filter(id__in=valid_ids).values_list('id', flat=True))
-        missing_ids = set(valid_ids) - existing_ids
-        
-        if missing_ids:
-            logger.warning(f"Transaction database IDs not found in database: {missing_ids}")
-            valid_ids = [id for id in valid_ids if id in existing_ids]
-        
-        logger.info(f"Validation complete: {len(ids)} submitted, {len(valid_ids)} valid and existing")
-        return valid_ids
-        
-    except Exception as e:
-        logger.error(f"Error validating transaction database IDs: {e}")
-        return []
+
 
 def analysis_configuration(request):
     """
@@ -297,27 +258,19 @@ def analysis_configuration(request):
         return redirect('transaction_list')
 
     # Validate that the stored IDs still exist in the database
-    try:
-        existing_count = Transaction.objects.filter(id__in=transaction_ids).count()
-        if existing_count != len(transaction_ids):
-            logger.warning(f"Session contains {len(transaction_ids)} IDs but only {existing_count} exist in database")
-            # Update session with only existing IDs
-            existing_ids = list(Transaction.objects.filter(id__in=transaction_ids).values_list('id', flat=True))
-            request.session['selected_transaction_ids'] = existing_ids
-            transaction_ids = existing_ids
-            
-            if not transaction_ids:
-                logger.warning("No valid transaction IDs remain, redirecting to transaction list")
-                return redirect('transaction_list')
-        
-        transaction_count = len(transaction_ids)
-        logger.info(f"Configuration page loaded with {transaction_count} valid transactions")
-        
-    except Exception as e:
-        logger.error(f"Error validating session transaction IDs: {e}")
+    is_valid, valid_ids, error_message = validate_session_transaction_ids(transaction_ids)
+    
+    if not is_valid:
+        logger.warning(f"Session validation failed: {error_message}")
         # Clear invalid session data
         request.session.pop('selected_transaction_ids', None)
         return redirect('transaction_list')
+    
+    # Update session with validated IDs
+    request.session['selected_transaction_ids'] = valid_ids
+    transaction_ids = valid_ids
+    transaction_count = len(transaction_ids)
+    logger.info(f"Configuration page loaded with {transaction_count} valid transactions")
 
 # Analysis Configuration Form
     if request.method == 'POST':
@@ -354,45 +307,19 @@ def run_analysis(request):
     
     try:
         data = json.loads(request.body)
-        contamination = data.get('contamination')
-        transaction_ids = data.get('transaction_ids')
+        
+        # Validate all analysis parameters
+        is_valid, validated_data, error_message = validate_analysis_parameters(data)
+        
+        if not is_valid:
+            return create_validation_error_response(error_message)
+        
+        contamination_float = validated_data['contamination']
+        valid_transaction_ids = validated_data['transaction_ids']
+        
+        logger.info(f"Starting analysis for {len(valid_transaction_ids)} transactions with contamination {contamination_float}")
 
-    # Basic validation
-        if not all([contamination, transaction_ids]):
-             return JsonResponse({'success': False, 'error': 'Missing parameters.'}, status=400)
-
-    # Validate contamination value
-        try:
-            contamination_float = float(contamination)
-            if not (0.0 <= contamination_float <= 1.0):
-                return JsonResponse({'success': False, 'error': 'Contamination must be between 0.0 and 1.0.'}, status=400)
-        except (ValueError, TypeError):
-            return JsonResponse({'success': False, 'error': 'Invalid contamination value.'}, status=400)
-
-        # Validate transaction IDs format and existence
-        try:
-            if not isinstance(transaction_ids, list):
-                return JsonResponse({'success': False, 'error': 'Transaction IDs must be a list.'}, status=400)
-            
-            # Validate and clean transaction IDs
-            valid_transaction_ids = validate_transaction_db_ids(transaction_ids)
-            
-            if not valid_transaction_ids:
-                return JsonResponse({'success': False, 'error': 'No valid transactions found.'}, status=400)
-            
-            # Double-check that all IDs exist in database
-            existing_count = Transaction.objects.filter(id__in=valid_transaction_ids).count()
-            if existing_count != len(valid_transaction_ids):
-                logger.warning(f"Analysis requested for {len(valid_transaction_ids)} IDs but only {existing_count} exist")
-                return JsonResponse({'success': False, 'error': 'Some transaction IDs are no longer valid.'}, status=400)
-                
-            logger.info(f"Starting analysis for {len(valid_transaction_ids)} transactions with contamination {contamination_float}")
-            
-        except Exception as e:
-            logger.error(f"Error validating transaction IDs for analysis: {e}")
-            return JsonResponse({'success': False, 'error': f'Error validating transactions: {str(e)}'}, status=400)
-
-    # Start the Celery task (runs synchronously in development)
+    # Start anomaly detection
         try:
             task = perform_anomaly_detection.delay(valid_transaction_ids, contamination_float)
             logger.info(f"Analysis task started with ID: {task.id}")
