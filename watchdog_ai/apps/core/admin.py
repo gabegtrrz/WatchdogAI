@@ -12,6 +12,7 @@ class TransactionAdmin(admin.ModelAdmin):
     manual changes, as transactions should be immutable once created.
     """
     list_display = (
+        'id',
         'transaction_id',
         'item_name',
         'quantity',
@@ -24,7 +25,7 @@ class TransactionAdmin(admin.ModelAdmin):
         'get_block_info',
         'get_integrity_status',
     )
-    list_filter = ('transaction_date', 'supplier', 'procurement_method', 'blockchain_status')
+    list_filter = ('transaction_date', 'procurement_method', 'blockchain_status','supplier')
     search_fields = (
         'transaction_id',
         'item_name',
