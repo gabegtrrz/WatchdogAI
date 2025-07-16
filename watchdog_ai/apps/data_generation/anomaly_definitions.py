@@ -39,8 +39,8 @@ class BudgetEfficiencyAnomaly:
         # Strategy 1: Over-utilization with minimal price deviation
         # This creates a high budget efficiency score that suggests collusion
         if np.random.random() < 0.5:
-            # Set total price to 95-99% of budget (high utilization)
-            utilization_rate = np.random.uniform(0.95, 0.99)
+            # Set total price to 99.5-99.9% of budget (extreme utilization)
+            utilization_rate = np.random.uniform(0.97, 0.999)
             record['total_purchase_price'] = record['approved_budget'] * utilization_rate
             
             # Update unit price if quantity is available
@@ -53,8 +53,8 @@ class BudgetEfficiencyAnomaly:
         # Strategy 2: Under-utilization with extreme price deviation
         # This creates a very low budget efficiency score
         else:
-            # Set total price to only 30-50% of budget (low utilization)
-            utilization_rate = np.random.uniform(0.30, 0.50)
+            # Set total price to only 5-15% of budget 
+            utilization_rate = np.random.uniform(0.05, 0.20)
             record['total_purchase_price'] = record['approved_budget'] * utilization_rate
             
             # Update unit price if quantity is available
@@ -118,8 +118,8 @@ class BidCeilingCollusion:
         if pd.isna(approved_budget) or approved_budget <= 0:
             return record
             
-        # Set total price to 98% - 99.9% of the approved budget
-        collusion_factor = np.random.uniform(0.98, 0.999)
+        # Set total price to 99.5% - 99.95% of the approved budget 
+        collusion_factor = np.random.uniform(0.995, 0.9995)
         total_price = approved_budget * collusion_factor
         record['total_purchase_price'] = total_price
         
@@ -153,6 +153,45 @@ class PriceExceedsBudget:
             record['unit_purchase_price'] = total_price / record['quantity']
         return record
 
+class ExtremePriceAnomaly:
+    """
+    Scenario: Prices are so extreme they defy market reality - either
+    massively overpriced or suspiciously underpriced, suggesting
+    price manipulation or kickback schemes.
+    """
+    name = "Extreme Price Anomaly"
+    weight = 0.3
+
+    @staticmethod
+    def apply(record):
+        # Ensure we have valid price data
+        if pd.isna(record.get('unit_purchase_price')) or record.get('unit_purchase_price', 0) <= 0:
+            return record
+            
+        # 50% chance of extreme overpricing, 50% chance of suspicious underpricing
+        if np.random.random() < 0.5:
+            # Extreme overpricing: 100-500x multiplier
+            record['unit_purchase_price'] *= np.random.uniform(100.0, 500.0)
+            record['supplier'] = 'Luxury Premium Suppliers Ltd.'
+            record['project_description'] = 'Premium quality items with exceptional specifications.'
+        else:
+            # Suspicious underpricing: 0.01-0.1x multiplier (suggesting kickbacks)
+            record['unit_purchase_price'] *= np.random.uniform(0.01, 0.1)
+            record['supplier'] = 'Discount Wholesale Co.'
+            record['project_description'] = 'Bulk purchase with significant volume discounts.'
+        
+        # # Recalculate total price
+        # if 'quantity' in record and record['quantity'] > 0:
+        #     record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
+        
+        # Handle both field name variations
+        if 'procurement_method_name' in record:
+            record['procurement_method_name'] = 'Direct Contracting'
+        elif 'procurement_method' in record:
+            record['procurement_method'] = 'Direct Contracting'
+            
+        return record
+
 # ============================================================================
 # TYPE 2: QUANTITY & SCOPE ANOMALIES
 # ============================================================================
@@ -171,7 +210,8 @@ class UnusualBulkOrder:
         if pd.isna(record.get('quantity')) or record.get('quantity', 0) <= 0:
             return record
             
-        record['quantity'] *= np.random.randint(20, 35)
+        # Much more extreme quantity increase: 50-200x multiplier
+        record['quantity'] *= np.random.randint(50, 200)
         
         # Recalculate total price to maintain consistency
         if 'unit_purchase_price' in record and record['unit_purchase_price'] > 0:
@@ -192,9 +232,9 @@ class ContractSplitting:
 
     @staticmethod
     def apply(record):
-        # Assumes a Small Value Procurement threshold of ~1,000,000
-        # The total price is set just below this threshold
-        total_price = np.random.uniform(950000, 999000)
+        # Much wider range around the Small Value Procurement threshold
+        # The total price is set just below this threshold with more variation
+        total_price = np.random.uniform(800000, 999999)
         record['total_purchase_price'] = total_price
         
         if record.get('quantity', 0) > 0:
@@ -210,6 +250,32 @@ class ContractSplitting:
             
         record['project_name'] = f"{record.get('project_name', 'Project')} (Phase {np.random.randint(1, 5)})"
         record['project_description'] = "Component of a larger project, procured separately to expedite."
+        return record
+
+class MassiveQuantityAnomaly:
+    """
+    Scenario: Quantities so large they defy practical use, suggesting
+    either fraud, resale schemes, or budget padding.
+    """
+    name = "Massive Quantity Anomaly"
+    weight = 0.25
+
+    @staticmethod
+    def apply(record):
+        # Ensure we have valid quantity
+        if pd.isna(record.get('quantity')) or record.get('quantity', 0) <= 0:
+            return record
+            
+        # Extremely large quantities: 500-2000x multiplier
+        record['quantity'] *= np.random.randint(500, 2000)
+        
+        # Recalculate total price
+        if 'unit_purchase_price' in record and record['unit_purchase_price'] > 0:
+            record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
+        
+        record['project_name'] = 'Emergency Stockpile Project'
+        record['project_description'] = 'Critical supplies for extended emergency operations and contingencies.'
+        record['supplier'] = 'Bulk Supply Solutions Inc.'
         return record
 
 # ============================================================================
@@ -254,10 +320,10 @@ class CompressedTimeline:
         if pd.isna(record.get('transaction_date')):
             return record
             
-        # All key events happen within an unnaturally short period
-        start_date = record['transaction_date'] - datetime.timedelta(days=np.random.randint(5, 8))
-        record['contract_signing_date'] = start_date + datetime.timedelta(days=2)
-        record['notice_of_award_date'] = start_date + datetime.timedelta(days=1)
+        # All key events happen within an extremely short period (1-3 days)
+        start_date = record['transaction_date'] - datetime.timedelta(days=np.random.randint(1, 3))
+        record['contract_signing_date'] = start_date + datetime.timedelta(days=1)
+        record['notice_of_award_date'] = start_date
         record['bid_opening_date'] = start_date
         record['bid_submission_deadline'] = start_date
         
@@ -370,6 +436,32 @@ class PrematureContractSigning:
             
         # This makes the timeline logically impossible and suggests a rigged deal
         record['contract_signing_date'] = record['notice_of_award_date'] - datetime.timedelta(days=np.random.randint(1, 10))
+        return record
+
+class ImpossibleTimeline:
+    """
+    Scenario: Timeline events occur in a completely impossible sequence,
+    such as contract signing before bid invitation posting.
+    """
+    name = "Impossible Timeline"
+    weight = 0.15
+
+    @staticmethod
+    def apply(record):
+        # Ensure we have a valid transaction date
+        if pd.isna(record.get('transaction_date')):
+            return record
+            
+        base_date = record['transaction_date']
+        
+        # Create completely impossible timeline sequence
+        record['contract_signing_date'] = base_date - datetime.timedelta(days=30)
+        record['notice_of_award_date'] = base_date - datetime.timedelta(days=35)
+        record['bid_opening_date'] = base_date - datetime.timedelta(days=40)
+        record['bid_submission_deadline'] = base_date - datetime.timedelta(days=45)
+        record['invitation_to_bid_posting_date'] = base_date - datetime.timedelta(days=50)
+        
+        record['project_description'] = 'Special procurement arrangement with modified timeline.'
         return record
 
 # ============================================================================
@@ -508,7 +600,7 @@ class BudgetManipulation:
             return record
             
         # Inflate the approved budget significantly
-        inflation_factor = np.random.uniform(1.5, 2.5)
+        inflation_factor = np.random.uniform(3.0, 8.0)  # 3-8x inflation instead of 1.5-2.5x
         record['approved_budget'] = record['unit_purchase_price'] * record.get('quantity', 1) * inflation_factor
         
         # Update total purchase price to be close to the inflated budget
@@ -536,8 +628,8 @@ class ExpeditedProcurement:
         # Create an extremely compressed timeline
         base_date = record['transaction_date']
         
-        # All events happen within 3-5 days
-        compressed_period = np.random.randint(3, 6)
+        # All events happen within 1-2 days
+        compressed_period = np.random.randint(1, 3)
         record['invitation_to_bid_posting_date'] = base_date - datetime.timedelta(days=compressed_period)
         record['bid_submission_deadline'] = base_date - datetime.timedelta(days=2)
         record['bid_opening_date'] = base_date - datetime.timedelta(days=1)
@@ -554,7 +646,7 @@ class IrregularTimelineSequence:
     before bid submission deadline.
     """
     name = "Irregular Timeline Sequence"
-    weight = 0.15
+    weight = 0.10
 
     @staticmethod
     def apply(record):
@@ -592,13 +684,13 @@ class MultipleTimelineViolations:
         base_date = record['transaction_date']
         
         # 1. Insufficient bidding period (less than 7 days)
-        short_period = np.random.randint(2, 5)
+        short_period = np.random.randint(1, 3)  # 1-2 days instead of 2-5
         record['invitation_to_bid_posting_date'] = base_date - datetime.timedelta(days=short_period)
         record['bid_submission_deadline'] = base_date - datetime.timedelta(days=1)
         record['bid_opening_date'] = base_date - datetime.timedelta(days=1)
         
         # 2. Delayed award notice (beyond 7-15 days)
-        long_delay = np.random.randint(20, 45)
+        long_delay = np.random.randint(45, 120)  # 1.5-4 months late instead of 20-45 days
         record['notice_of_award_date'] = record['bid_opening_date'] + datetime.timedelta(days=long_delay)
         
         # 3. Contract signing before award notice
@@ -649,9 +741,11 @@ ANOMALY_BLUEPRINTS = [
     PriceExceedsBudget,
     BudgetManipulation,
     BudgetEfficiencyAnomaly,
+    ExtremePriceAnomaly,
     # Quantity & Scope
     UnusualBulkOrder,
     ContractSplitting,
+    MassiveQuantityAnomaly,
     # Timeline & Dates
     EndOfYearRush,
     CompressedTimeline,
@@ -663,6 +757,7 @@ ANOMALY_BLUEPRINTS = [
     ExpeditedProcurement,
     IrregularTimelineSequence,
     MultipleTimelineViolations,
+    ImpossibleTimeline,
     # Supplier & Method
     UnjustifiedDirectContracting,
     FavoredSupplier,
