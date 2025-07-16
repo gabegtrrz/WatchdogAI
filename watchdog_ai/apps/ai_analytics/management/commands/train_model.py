@@ -7,13 +7,14 @@ import json
 import logging
 import yaml
 from datetime import datetime
-from typing import Union, List
+from typing import Union, List, Tuple
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.metrics import roc_auc_score, precision_recall_curve, precision_score, recall_score, f1_score, confusion_matrix
 import numpy as np
+import pandas as pd
 
 from apps.ai_analytics.services import preprocessing, feature_engineering
 
@@ -126,6 +127,45 @@ class Command(BaseCommand):
             contamination = config.get('model', {}).get('contamination', 'auto')
             self._standard_training(df_processed, training_columns, contamination)
 
+    def _prepare_training_data(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray]:
+        """
+        Safely prepare training data by extracting labels and dropping 'is_anomaly' column.
+        
+        Args:
+            df: DataFrame that may contain 'is_anomaly' column
+            
+        Returns:
+            Tuple of (training_data, true_labels) where:
+            - training_data: DataFrame with 'is_anomaly' column removed
+            - true_labels: numpy array of binary labels (1 for anomaly, 0 for normal)
+        """
+        df_copy = df.copy()
+        true_labels = None
+        
+        # Check if 'is_anomaly' column exists
+        if 'is_anomaly' in df_copy.columns:
+            logger.info("'is_anomaly' column found in dataset")
+            
+            # Extract true labels before dropping the column
+            true_labels_raw = df_copy['is_anomaly'].values
+            # Convert to binary: 1 for anomaly, 0 for normal
+            true_labels = (true_labels_raw == 1).astype(int)
+            
+            # Drop 'is_anomaly' column to prevent data leakage
+            training_data = df_copy.drop('is_anomaly', axis=1)
+            logger.info(f"Dropped 'is_anomaly' column. Training data shape: {training_data.shape}")
+            
+            # Log label distribution
+            if true_labels is not None:
+                label_counts = np.bincount(true_labels)
+                logger.info(f"True labels distribution: Normal={label_counts[0]}, Anomalies={label_counts[1] if len(label_counts) > 1 else 0}")
+        else:
+            logger.info("'is_anomaly' column not found in dataset - proceeding with  training")
+            training_data = df_copy
+            true_labels = None
+        
+        return training_data, true_labels
+
     def _validate_config(self, config: dict) -> bool:
         """Validate the configuration structure."""
         required_sections = ['model', 'training']
@@ -151,36 +191,34 @@ class Command(BaseCommand):
         self.stdout.write('Running research mode with cross-validation...')
         
         try:
-            labeled_df = df_processed.copy()
-            logger.info(f'Labeled data shape: {labeled_df.shape}')
-            logger.info(f'is_anomaly values: {labeled_df["is_anomaly"].values[:10]}...')
-            self.stdout.write(f'is_anomaly values: {labeled_df["is_anomaly"].values[:10]}...')
+            # Prepare training data and extract labels
+            training_data, true_labels = self._prepare_training_data(df_processed) #drops 'is_anomaly' column
             
-            # Get true labels (1 for anomaly, 0 for normal)
-            true_labels = labeled_df['is_anomaly'].values
-            # Convert to binary: 1 for anomaly, 0 for normal (applying for robustness)
-            true_labels_binary = (true_labels == 1).astype(int)
-            logger.info(f'True labels binary distribution: {np.bincount(true_labels_binary)}')
+            # Validate that we have labels for research mode
+            if true_labels is None:
+                logger.error("Research mode requires labeled data with 'is_anomaly' column")
+                self.stderr.write("Research mode requires labeled data with 'is_anomaly' column")
+                return
             
-            # Drop 'is_anomaly' column from training data to prevent data leakage
-            training_data = labeled_df.drop('is_anomaly', axis=1)
-            logger.info(f'Training data shape after dropping is_anomaly: {training_data.shape}')
+            logger.info(f'Training data shape: {training_data.shape}')
+            logger.info(f'True labels shape: {true_labels.shape}')
+            logger.info(f'is_anomaly values (first 10): {true_labels[:10]}...')
 
         except Exception as e:
-            logger.error(f'Error loading labeled data: {e}', exc_info=True)
-            self.stderr.write(f'Error loading labeled data: {e}')
+            logger.error(f'Error preparing training data: {e}', exc_info=True)
+            self.stderr.write(f'Error preparing training data: {e}')
             return
         
         # Initialize research results dictionary
         research_results = {
             'training_date': datetime.now().isoformat(),
             'dataset_info': {
-                'sample_count': df_processed.shape[0],
-                'feature_count': df_processed.shape[1],
+                'sample_count': training_data.shape[0],
+                'feature_count': training_data.shape[1],
                 'feature_columns': training_columns,
                 'labeled_data_count': len(true_labels),
-                'true_anomalies': np.sum(true_labels_binary),
-                'true_normal': len(true_labels_binary) - np.sum(true_labels_binary)
+                'true_anomalies': np.sum(true_labels),
+                'true_normal': len(true_labels) - np.sum(true_labels)
             },
             'contamination_analysis': {},
             'best_model': None,
@@ -223,18 +261,18 @@ class Command(BaseCommand):
                     recall = 0.0
                     f1 = 0.0
                 else:
-                    precision = precision_score(true_labels_binary, predicted_labels, zero_division='warn')
+                    precision = precision_score(true_labels, predicted_labels, zero_division='warn')
                     # zero_division='warn' is used to handle the case where there are no anomalies predicted.
                     # It sets the precision to 0.0 in such cases.
                     # This is useful because precision is undefined when there are no predicted anomalies.
                     
-                    recall = recall_score(true_labels_binary, predicted_labels, zero_division='warn')
+                    recall = recall_score(true_labels, predicted_labels, zero_division='warn')
 
-                    f1 = f1_score(true_labels_binary, predicted_labels, zero_division='warn')
+                    f1 = f1_score(true_labels, predicted_labels, zero_division='warn')
                     logger.info(f'Metrics for contamination={contamination}: precision={precision:.4f}, recall={recall:.4f}, f1={f1:.4f}')
                 
                 # Calculate confusion matrix
-                cm = confusion_matrix(true_labels_binary, predicted_labels)
+                cm = confusion_matrix(true_labels, predicted_labels)
                 logger.info(f'Confusion matrix for contamination={contamination}: {cm.tolist()}')
                 
                 # Store results
@@ -244,15 +282,15 @@ class Command(BaseCommand):
                     'f1_score': f1,
                     'predicted_anomalies': np.sum(predicted_labels),
                     'predicted_normal': len(predicted_labels) - np.sum(predicted_labels),
-                    'true_anomalies': np.sum(true_labels_binary),
-                    'true_normal': len(true_labels_binary) - np.sum(true_labels_binary),
+                    'true_anomalies': np.sum(true_labels),
+                    'true_normal': len(true_labels) - np.sum(true_labels),
                     'confusion_matrix': cm.tolist(),
                     'model_config': model_params
                 }
                 
                 # Log detailed anomaly information
                 logger.info(f'Contamination {contamination} Results:')
-                logger.info(f'  - True anomalies: {np.sum(true_labels_binary)}')
+                logger.info(f'  - True anomalies: {np.sum(true_labels)}')
                 logger.info(f'  - Predicted anomalies: {np.sum(predicted_labels)}')
                 logger.info(f'  - True positives: {cm[1, 1] if cm.shape == (2, 2) else 0}')
                 logger.info(f'  - False positives: {cm[0, 1] if cm.shape == (2, 2) else 0}')
@@ -346,12 +384,15 @@ class Command(BaseCommand):
         logger.info('Training Isolation Forest model...')
         self.stdout.write('Training Isolation Forest model...')
         
-        # Drop 'is_anomaly' column if it exists to prevent data leakage
-        training_data = df_processed.copy()
-
-        if 'is_anomaly' in training_data.columns:
-            training_data = training_data.drop('is_anomaly', axis=1)
-            logger.info(f'Dropped is_anomaly column. Training data shape: {training_data.shape}')
+        try:
+            # Prepare training data (drops 'is_anomaly' if present)
+            training_data, _ = self._prepare_training_data(df_processed)
+            logger.info(f'Training data prepared. Shape: {training_data.shape}')
+            
+        except Exception as e:
+            logger.error(f'Error preparing training data: {e}', exc_info=True)
+            self.stderr.write(f'Error preparing training data: {e}')
+            return
         
         # Get model parameters from config
         model_params = self._get_model_parameters(contamination)
