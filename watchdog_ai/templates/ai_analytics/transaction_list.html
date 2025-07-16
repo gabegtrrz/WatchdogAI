@@ -948,7 +948,15 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        this.querySelectorAll('input[type=hidden]').forEach(el => el.remove());
+        // Preserve the CSRF token
+        const csrfToken = this.querySelector('input[name="csrfmiddlewaretoken"]');
+        
+        // Remove all hidden inputs except CSRF token
+        this.querySelectorAll('input[type=hidden]').forEach(el => {
+            if (el.name !== 'csrfmiddlewaretoken') {
+                el.remove();
+            }
+        });
 
         if (selectAllMode) {
             const selectAllInput = document.createElement('input');

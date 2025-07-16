@@ -49,21 +49,92 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Analysis configuration page loaded');
+    
     const analysisForm = document.getElementById('analysis-form');
-    const analysisModal = new bootstrap.Modal(document.getElementById('analysis-modal'), {
+    const analysisModal = document.getElementById('analysis-modal');
+    
+    if (!analysisForm) {
+        console.error('Analysis form not found');
+        return;
+    }
+    
+    if (!analysisModal) {
+        console.error('Analysis modal not found');
+        return;
+    }
+    
+    // Check if Bootstrap is available
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap is not loaded');
+        alert('Bootstrap is required for the analysis modal. Please refresh the page.');
+        return;
+    }
+    
+    const analysisModalInstance = new bootstrap.Modal(analysisModal, {
         keyboard: false,
         backdrop: 'static'
     });
     const statusText = document.getElementById('modal-status-text');
-    const transactionIds = JSON.parse({{ form.transaction_ids.value|safe }});
+    
+    // Get transaction IDs
+    const transactionIdsField = document.querySelector('input[name="transaction_ids"]');
+    if (!transactionIdsField) {
+        console.error('Transaction IDs field not found');
+        return;
+    }
+    
+    let transactionIds;
+    try {
+        transactionIds = JSON.parse(transactionIdsField.value);
+        console.log('Transaction IDs loaded:', transactionIds);
+    } catch (error) {
+        console.error('Error parsing transaction IDs:', error);
+        alert('Error loading transaction data. Please go back and try again.');
+        return;
+    }
 
     analysisForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        analysisModal.show();
+        console.log('Form submitted');
+        
+        // Show modal
+        try {
+            analysisModalInstance.show();
+            console.log('Modal shown');
+        } catch (error) {
+            console.error('Error showing modal:', error);
+            alert('Error showing analysis modal. Please try again.');
+            return;
+        }
+        
         statusText.textContent = 'Starting analysis...';
 
-        const contamination = document.getElementById('id_contamination').value;
+        // Get form data
+        const contaminationField = document.getElementById('id_contamination');
+        if (!contaminationField) {
+            console.error('Contamination field not found');
+            analysisModalInstance.hide();
+            alert('Contamination field not found. Please refresh the page.');
+            return;
+        }
+        
+        const contamination = contaminationField.value;
+        console.log('Contamination value:', contamination);
+        
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        if (!csrfToken) {
+            console.error('CSRF token not found');
+            analysisModalInstance.hide();
+            alert('CSRF token not found. Please refresh the page.');
+            return;
+        }
+
+        const requestData = {
+            transaction_ids: transactionIds,
+            contamination: contamination
+        };
+        console.log('Sending request data:', requestData);
 
         fetch("{% url 'run_analysis' %}", {
             method: 'POST',
@@ -71,54 +142,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken
             },
-            body: JSON.stringify({
-                transaction_ids: transactionIds,
-                contamination: contamination
-            })
+            body: JSON.stringify(requestData)
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
             if (data.success && data.task_id) {
                 statusText.textContent = 'Analysis is running. Please wait...';
                 pollTaskStatus(data.task_id);
             } else {
-                analysisModal.hide();
+                analysisModalInstance.hide();
                 alert('Error starting analysis: ' + (data.error || 'An unknown error occurred.'));
             }
         })
         .catch(error => {
-            analysisModal.hide();
             console.error('Analysis error:', error);
-            alert('An unexpected error occurred while starting the analysis.');
+            analysisModalInstance.hide();
+            alert('An unexpected error occurred while starting the analysis: ' + error.message);
         });
     });
 
     function pollTaskStatus(taskId) {
+        console.log('Starting to poll task status for:', taskId);
         const interval = setInterval(() => {
             fetch(`/ai-analytics/analysis/task-status/${taskId}/`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Task status response:', data);
                     if (data.status === 'SUCCESS' || data.status === 'FAILURE') {
                         clearInterval(interval);
                         if (data.result && data.result.status === 'Completed' && data.redirect_url) {
                             statusText.textContent = 'Analysis complete. Redirecting...';
+                            console.log('Redirecting to:', data.redirect_url);
                             window.location.href = data.redirect_url;
                         } else {
-                            analysisModal.hide();
+                            analysisModalInstance.hide();
                             alert('Analysis failed or returned an unexpected result.');
                         }
                     } else if (data.status === 'PENDING') {
                         statusText.textContent = 'Task is pending...';
                     } else if (data.status === 'PROGRESS') {
-                        // You could add more detailed progress updates here
                         statusText.textContent = 'Analysis in progress...';
                     }
                 })
                 .catch(error => {
                     clearInterval(interval);
-                    analysisModal.hide();
+                    analysisModalInstance.hide();
                     console.error('Polling error:', error);
-                    alert('An error occurred while checking the analysis status.');
+                    alert('An error occurred while checking the analysis status: ' + error.message);
                 });
         }, 3000); // Poll every 3 seconds
     }

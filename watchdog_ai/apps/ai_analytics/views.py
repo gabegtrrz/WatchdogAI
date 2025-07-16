@@ -188,31 +188,53 @@ def run_analysis(request):
         if not all([contamination, transaction_ids]):
              return JsonResponse({'success': False, 'error': 'Missing parameters.'}, status=400)
 
-        task = perform_anomaly_detection.delay(transaction_ids, float(contamination))
-        return JsonResponse({'success': True, 'task_id': task.id})
+        # Validate transaction IDs exist
+        try:
+            transaction_count = Transaction.objects.filter(id__in=transaction_ids).count()
+            if transaction_count == 0:
+                return JsonResponse({'success': False, 'error': 'No valid transactions found.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': f'Error validating transactions: {str(e)}'}, status=400)
+
+        # Start the Celery task
+        try:
+            task = perform_anomaly_detection.delay(transaction_ids, float(contamination))
+            return JsonResponse({'success': True, 'task_id': task.id})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': f'Error starting analysis task: {str(e)}'}, status=500)
+            
     except (json.JSONDecodeError, TypeError, ValueError) as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        return JsonResponse({'success': False, 'error': f'Invalid request data: {str(e)}'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'}, status=500)
 
 def get_task_status(request, task_id):
     """
     Pollable endpoint to check the status of a Celery task.
     """
-    task_result = AsyncResult(task_id)
-    result = {
-        'task_id': task_id,
-        'status': task_result.status,
-    }
-    if task_result.ready():
-        # If task is finished, include the result
-        task_output = task_result.get()
-        result['result'] = task_output
-        # Provide a URL to the results page
-        if task_output.get('status') == 'Completed':
-            analysis_run_id = task_output.get('analysis_run_id')
-            if analysis_run_id:
-                result['redirect_url'] = reverse('analysis_results', args=[analysis_run_id])
+    try:
+        task_result = AsyncResult(task_id)
+        result = {
+            'task_id': task_id,
+            'status': task_result.status,
+        }
+        if task_result.ready():
+            # If task is finished, include the result
+            task_output = task_result.get()
+            result['result'] = task_output
+            # Provide a URL to the results page
+            if task_output and isinstance(task_output, dict) and task_output.get('status') == 'Completed':
+                analysis_run_id = task_output.get('analysis_run_id')
+                if analysis_run_id:
+                    result['redirect_url'] = reverse('analysis_results', args=[analysis_run_id])
 
-    return JsonResponse(result)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({
+            'task_id': task_id,
+            'status': 'FAILURE',
+            'error': str(e)
+        }, status=500)
 
 def analysis_results(request, analysis_run_id):
     """
