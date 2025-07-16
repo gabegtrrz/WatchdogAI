@@ -189,7 +189,7 @@ def create_model_features(df: pd.DataFrame):
             'supplier'
         ]
         df.drop(columns=columns_to_drop, inplace=True, errors='ignore')
-
+        
         # --- Final Imputation & Cleanup ---
         # Handle missing values in engineered features by imputing with median values
         # Missing values in engineered features can occur due to data quality issues
@@ -201,8 +201,8 @@ def create_model_features(df: pd.DataFrame):
             'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
             'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
             'budget_utilization_ratio',
-            'supplier_frequency', 'budget_efficiency_score', 
-            'timeline_efficiency', 'weekend_activity'
+            'supplier_frequency',
+            'budget_efficiency_score', 'timeline_efficiency', 'weekend_activity'
         ]
         
         # Impute missing values with median for each engineered feature
@@ -226,8 +226,12 @@ def create_model_features(df: pd.DataFrame):
         # after one-hot encoding, each unique value in procurement_method becomes a new column named like procurement_method_<value> (e.g., procurement_method_Open_Bidding).
 
         # --- Final Feature Set ---
-        # Combine base numerical features with engineered features and one-hot encoded columns
-        base_numerical_features = ['quantity', 'unit_purchase_price', 'total_purchase_price', 'approved_budget']
+        # Combine include features that are relevant for iforest.
+
+        # !! Commented out features deemed irrelevant for iforest analysis.
+
+        # base_numerical_features = ['quantity', 'unit_purchase_price', 'total_purchase_price', 'approved_budget', 'average_price']
+
         one_hot_cols = [col for col in df_processed.columns if 'procurement_method_' in col]
         # e.g.:
             # one_hot_cols = [
@@ -238,7 +242,10 @@ def create_model_features(df: pd.DataFrame):
             #     'procurement_method_nan'
             # ]
             
-        expected_feature_columns = base_numerical_features + engineered_features + one_hot_cols
+        expected_feature_columns = (
+            engineered_features +
+            one_hot_cols
+        )
 
         # Filter expected features to only those present in the dataframe
         present_expected_features = [col for col in expected_feature_columns if col in df_processed.columns]
