@@ -207,7 +207,7 @@ def create_model_features(df: pd.DataFrame):
             if col in df.columns and df[col].isnull().any():
                 missing_count = df[col].isnull().sum()
                 median_val = df[col].median()
-                df[col].fillna(median_val, inplace=True)
+                df.fillna({col: median_val}, inplace=True)
                 logger.debug(f"Imputed {missing_count} missing values in {col} with median: {median_val}")
 
     # --- One-Hot Encoding ---
@@ -257,7 +257,7 @@ def create_model_features(df: pd.DataFrame):
         final_feature_columns = present_expected_features + unexpected_new_features
 
         # Safety check to ensure all columns exist, creating the final DataFrame
-        df_final = df_processed[final_feature_columns].copy()
+        df_final = df_processed[final_feature_columns].copy
 
         logger.info("Feature engineering process completed successfully.")
         return df_final, final_feature_columns

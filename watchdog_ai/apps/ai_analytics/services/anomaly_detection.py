@@ -65,8 +65,11 @@ def generate_shap_values(model, final_df):
         base_values = explainer.expected_value
         if base_values is None:
             base_values = 0.5
-        elif hasattr(base_values, 'tolist'):
-            base_values = base_values.tolist()
+        elif hasattr(base_values, 'tolist') and callable(getattr(base_values, 'tolist', None)):
+            try:
+                base_values = base_values.tolist()
+            except (AttributeError, TypeError):
+                base_values = 0.5
         elif isinstance(base_values, (list, tuple)):
             base_values = list(base_values)
         else:
@@ -137,7 +140,7 @@ def run_complete_analysis(transaction: Transaction, contamination_param: float) 
         logger.debug("Starting feature engineering...")
         step_start = time.time()
         features_df, feature_columns = feature_engineering.create_model_features(preprocessed_df)
-        logger.debug(f"Feature engineering complete. Features shape: {features_df.shape}, Feature columns: {len(feature_columns)}")
+        logger.debug(f"Feature engineering complete.Feature columns: {len(feature_columns)}")
         logger.debug(f"Feature engineering completed in {time.time() - step_start:.3f}s")
 
         # 4. Align columns with model's training columns
@@ -222,13 +225,13 @@ def model_to_dataframe(transaction: Transaction) -> pd.DataFrame:
             'procurement_officer': [transaction.procurement_officer or ''],
             'invoice_number': [transaction.invoice_number],
             'payment_receipt_number': [transaction.payment_receipt_number],
-            'transaction_date': [pd.to_datetime(transaction.transaction_date)],
+            'transaction_date': [pd.to_datetime(str(transaction.transaction_date))],
             'approved_budget': [safe_float_conversion(transaction.approved_budget, 'approved_budget')],
             # Add timeline fields
-            'invitation_to_bid_posting_date': [pd.to_datetime(transaction.invitation_to_bid_posting_date) if transaction.invitation_to_bid_posting_date else None],
-            'bid_submission_deadline': [pd.to_datetime(transaction.bid_submission_deadline) if transaction.bid_submission_deadline else None],
-            'bid_opening_date': [pd.to_datetime(transaction.bid_opening_date) if transaction.bid_opening_date else None],
-            'notice_of_award_date': [pd.to_datetime(transaction.notice_of_award_date) if transaction.notice_of_award_date else None],
+            'invitation_to_bid_posting_date': [pd.to_datetime(str(transaction.invitation_to_bid_posting_date)) if transaction.invitation_to_bid_posting_date else None],
+            'bid_submission_deadline': [pd.to_datetime(str(transaction.bid_submission_deadline)) if transaction.bid_submission_deadline else None],
+            'bid_opening_date': [pd.to_datetime(str(transaction.bid_opening_date)) if transaction.bid_opening_date else None],
+            'notice_of_award_date': [pd.to_datetime(str(transaction.notice_of_award_date)) if transaction.notice_of_award_date else None],
             'contract_signing_date': [pd.to_datetime(transaction.contract_signing_date) if transaction.contract_signing_date else None],
         }
         
@@ -242,7 +245,7 @@ def model_to_dataframe(transaction: Transaction) -> pd.DataFrame:
 
 def align_columns(df: pd.DataFrame, training_columns: list) -> pd.DataFrame:
     """Aligns DataFrame columns to match the model's training columns."""
-    logger.debug(f"Aligning columns. Input shape: {df.shape}, Training columns: {len(training_columns)}")
+    logger.debug(f"Aligning columns. Training columns: {len(training_columns)}")
     
     if not training_columns:
         logger.warning("No training columns provided, returning original dataframe")
@@ -250,6 +253,17 @@ def align_columns(df: pd.DataFrame, training_columns: list) -> pd.DataFrame:
         return df
     
     try:
+        # Log current columns for debugging
+        current_columns = df.columns.tolist()
+        logger.debug(f"Current DataFrame columns: {current_columns}")
+        logger.debug(f"Expected training columns: {training_columns}")
+        
+        # Find columns that exist in current data but not in training data
+        extra_columns = set(current_columns) - set(training_columns)
+        if extra_columns:
+            logger.warning(f"Removing extra columns not in training data: {extra_columns}")
+            df = df.drop(columns=list(extra_columns))
+        
         # Add missing columns with a default value of 0
         missing_columns = []
         for col in training_columns:
@@ -260,7 +274,7 @@ def align_columns(df: pd.DataFrame, training_columns: list) -> pd.DataFrame:
         if missing_columns:
             logger.debug(f"Added missing columns: {missing_columns}")
         
-        # Return the dataframe with columns in the same order as training
+        # Ensure columns are in the same order as training data
         aligned_df = df[training_columns]
         logger.debug(f"Column alignment complete. Output shape: {aligned_df.shape}")
         return aligned_df
