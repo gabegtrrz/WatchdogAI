@@ -16,6 +16,9 @@ from apps.core.models import AnalysisReport
 from .forms import AnalysisConfigurationForm
 from .tasks import perform_anomaly_detection
 
+import logging
+logger = logging.getLogger(__name__)
+
 class TransactionListView(ListView):
     """
     A view that displays a list of transactions with filtering, sorting, and pagination.
