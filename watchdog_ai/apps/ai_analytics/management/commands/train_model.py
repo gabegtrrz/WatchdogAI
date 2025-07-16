@@ -136,7 +136,7 @@ class Command(BaseCommand):
         self.stdout.write('Running research mode with cross-validation...')
         
         try:
-            labeled_df = df_processed
+            labeled_df = df_processed.copy()
             logger.info(f'Labeled data shape: {labeled_df.shape}')
             logger.info(f'is_anomaly values: {labeled_df['is_anomaly'].values[:10]}...')
             self.stdout.write(f'is_anomaly values: {labeled_df['is_anomaly'].values[:10]}...')
@@ -146,6 +146,10 @@ class Command(BaseCommand):
             # Convert to binary: 1 for anomaly, 0 for normal (applying for robustness)
             true_labels_binary = (true_labels == 1).astype(int)
             logger.info(f'True labels binary distribution: {np.bincount(true_labels_binary)}')
+            
+            # Drop 'is_anomaly' column from training data to prevent data leakage
+            training_data = labeled_df.drop('is_anomaly', axis=1)
+            logger.info(f'Training data shape after dropping is_anomaly: {training_data.shape}')
 
         except Exception as e:
             logger.error(f'Error loading labeled data: {e}', exc_info=True)
@@ -187,7 +191,7 @@ class Command(BaseCommand):
             try:
                 # Get anomaly predictions for evaluation
                 logger.info(f'Fitting and predicting with contamination={contamination}...')
-                scores = model.fit_predict(df_processed)
+                scores = model.fit_predict(training_data)
                 # returns an array where:
                 # -1 indicates an anomaly (outlier)
                 # 1 indicates normal data (inlier)
@@ -276,7 +280,7 @@ class Command(BaseCommand):
                 n_estimators=100
             )
             logger.info('Training final model with best contamination...')
-            final_model.fit(df_processed)
+            final_model.fit(training_data)
             
             # Save model and research results
             logger.info(f'Saving final model to {MODEL_PATH}')
@@ -334,6 +338,13 @@ class Command(BaseCommand):
         logger.info('Training Isolation Forest model...')
         self.stdout.write('Training Isolation Forest model...')
         
+        # Drop 'is_anomaly' column if it exists to prevent data leakage
+        training_data = df_processed.copy()
+        
+        if 'is_anomaly' in training_data.columns:
+            training_data = training_data.drop('is_anomaly', axis=1)
+            logger.info(f'Dropped is_anomaly column. Training data shape: {training_data.shape}')
+        
         # Convert contamination to float if it's a numeric string, otherwise keep as 'auto'
         if contamination == 'auto':
             contamination_param = 'auto'
@@ -356,7 +367,7 @@ class Command(BaseCommand):
         logger.info(f'IsolationForest model created with contamination={contamination_param}')
 
         logger.info('Fitting model to processed data...')
-        model.fit(df_processed)
+        model.fit(training_data)
         logger.info('Model training complete.')
         self.stdout.write('Model training complete.')
 
