@@ -127,7 +127,7 @@ class Command(BaseCommand):
             contamination = config.get('model', {}).get('contamination', 'auto')
             self._standard_training(df_processed, training_columns, contamination)
 
-    def _prepare_training_data(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray]:
+    def _prepare_training_data(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Union[np.ndarray, None]]:
         """
         Safely prepare training data by extracting labels and dropping 'is_anomaly' column.
         
@@ -137,7 +137,7 @@ class Command(BaseCommand):
         Returns:
             Tuple of (training_data, true_labels) where:
             - training_data: DataFrame with 'is_anomaly' column removed
-            - true_labels: numpy array of binary labels (1 for anomaly, 0 for normal)
+            - true_labels: numpy array of binary labels (1 for anomaly, 0 for normal) or None
         """
         df_copy = df.copy()
         true_labels = None
@@ -209,9 +209,18 @@ class Command(BaseCommand):
             self.stderr.write(f'Error preparing training data: {e}')
             return
         
+        # Load full configuration for inclusion in results
+        try:
+            with open(self.config_path, 'r') as f:
+                full_config = yaml.safe_load(f)
+        except Exception as e:
+            logger.warning(f'Could not load full configuration for results: {e}')
+            full_config = {}
+        
         # Initialize research results dictionary
         research_results = {
             'training_date': datetime.now().isoformat(),
+            'configuration': full_config,
             'dataset_info': {
                 'sample_count': training_data.shape[0],
                 'feature_count': training_data.shape[1],
@@ -355,6 +364,9 @@ class Command(BaseCommand):
             logger.info('Training final model with best contamination...')
             final_model.fit(training_data)
             
+            # Store final model parameters in results
+            research_results['final_model_parameters'] = final_model_params
+            
             # Save model and research results
             logger.info(f'Saving final model to {MODEL_PATH}')
             joblib.dump(final_model, MODEL_PATH)
@@ -370,26 +382,46 @@ class Command(BaseCommand):
                 'predicted_anomalies': research_results['contamination_analysis'][best_contamination]['predicted_anomalies']
             }
             
+            # Add training summary
+            research_results['training_summary'] = {
+                'total_contamination_values_tested': len(contamination_range),
+                'contamination_values_tested': contamination_range,
+                'best_contamination': best_contamination,
+                'best_f1_score': best_f1_score,
+                'training_completed_at': datetime.now().isoformat(),
+                'model_saved_to': MODEL_PATH,
+                'columns_saved_to': COLUMNS_PATH,
+                'research_log_saved_to': RESEARCH_LOG_PATH
+            }
+            
             # Save research log
             logger.info(f'Saving research results to {RESEARCH_LOG_PATH}')
             with open(RESEARCH_LOG_PATH, 'a') as f:
-            # Convert numpy types to native Python types for JSON serialization
-                    def convert_numpy_types(obj):
-                        if isinstance(obj, np.integer):
-                            return int(obj)
-                        elif isinstance(obj, np.floating):
-                            return float(obj)
-                        elif isinstance(obj, np.ndarray):
-                            return obj.tolist()
-                        elif isinstance(obj, dict):
-                            return {key: convert_numpy_types(value) for key, value in obj.items()}
-                        elif isinstance(obj, list):
-                            return [convert_numpy_types(item) for item in obj]
-                        else:
-                            return obj
-                    
-                    serializable_results = convert_numpy_types(research_results)
-                    f.write(json.dumps(serializable_results) + '\n')
+                # Convert numpy types to native Python types for JSON serialization
+                def convert_numpy_types(obj):
+                    if isinstance(obj, np.integer):
+                        return int(obj)
+                    elif isinstance(obj, np.floating):
+                        return float(obj)
+                    elif isinstance(obj, np.ndarray):
+                        return obj.tolist()
+                    elif isinstance(obj, dict):
+                        return {key: convert_numpy_types(value) for key, value in obj.items()}
+                    elif isinstance(obj, list):
+                        return [convert_numpy_types(item) for item in obj]
+                    else:
+                        return obj
+                
+                serializable_results = convert_numpy_types(research_results)
+                
+                                            # Write formatted JSON with proper indentation and spacing
+                json_output = json.dumps(serializable_results, indent=2, separators=(',', ': '))
+                f.write(json_output + '\n\n')
+                
+                # Add clear separator between JSON objects
+                f.write('=' * 80 + '\n')
+                f.write('END OF TRAINING RESULT\n')
+                f.write('=' * 80 + '\n\n')
             
             logger.info(f'Research results saved to {RESEARCH_LOG_PATH}')
             self.stdout.write(f'Research results saved to {RESEARCH_LOG_PATH}')
@@ -432,7 +464,7 @@ class Command(BaseCommand):
         logger.info('Model training complete.')
         self.stdout.write('Model training complete.')
 
-        ### Save model and training columns
+        # Save model and training columns
         logger.info(f'Saving model to {MODEL_PATH}')
         self.stdout.write(f'Saving model to {MODEL_PATH}')
         joblib.dump(model, MODEL_PATH)
@@ -440,6 +472,58 @@ class Command(BaseCommand):
         logger.info(f'Saving training columns to {COLUMNS_PATH}')
         self.stdout.write(f'Saving training columns to {COLUMNS_PATH}')
         joblib.dump(training_columns, COLUMNS_PATH)
+        
+        # Save training results for standard mode
+        try:
+            # Load full configuration for inclusion in results
+            with open(self.config_path, 'r') as f:
+                full_config = yaml.safe_load(f)
+        except Exception as e:
+            logger.warning(f'Could not load full configuration for results: {e}')
+            full_config = {}
+        
+        # Create standard training results
+        standard_results = {
+            'training_date': datetime.now().isoformat(),
+            'training_mode': 'standard',
+            'configuration': full_config,
+            'dataset_info': {
+                'sample_count': training_data.shape[0],
+                'feature_count': training_data.shape[1],
+                'feature_columns': training_columns
+            },
+            'model_parameters': model_params,
+            'training_summary': {
+                'contamination_used': contamination,
+                'training_completed_at': datetime.now().isoformat(),
+                'model_saved_to': MODEL_PATH,
+                'columns_saved_to': COLUMNS_PATH
+            }
+        }
+        
+        # Save formatted results to research log
+        logger.info(f'Saving standard training results to {RESEARCH_LOG_PATH}')
+        with open(RESEARCH_LOG_PATH, 'a') as f:
+            # Convert numpy types to native Python types for JSON serialization
+            def convert_numpy_types(obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                elif isinstance(obj, dict):
+                    return {key: convert_numpy_types(value) for key, value in obj.items()}
+                elif isinstance(obj, list):
+                    return [convert_numpy_types(item) for item in obj]
+                else:
+                    return obj
+            
+            serializable_results = convert_numpy_types(standard_results)
+            
+            # Write formatted JSON with proper indentation and spacing
+            json_output = json.dumps(serializable_results, indent=2, separators=(',', ': '))
+            f.write(json_output + '\n\n')
 
         logger.info('Successfully trained and saved the model and column list.')
         self.stdout.write('Successfully trained and saved the model and column list.')
