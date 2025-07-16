@@ -296,11 +296,24 @@ class EndOfYearRush:
         if pd.isna(record.get('transaction_date')):
             return record
             
-        # Force a suspicious date at the very end of the fiscal year
-        end_of_year = record['transaction_date'].replace(month=12, day=np.random.randint(28, 31))
+        # Robust date manipulation: Create a valid end-of-year date
+        original_date = record['transaction_date']
+        year = original_date.year
+        
+        # Create December date with valid day (28-31, but ensure it's valid for December)
+        # December always has 31 days, so any day 1-31 is valid
+        day = np.random.randint(28, 32)  # 28, 29, 30, or 31
+        
+        # Use try-except to handle any edge cases
+        try:
+            end_of_year = original_date.replace(month=12, day=day)
+        except ValueError:
+            # Fallback: use December 30th which is always valid
+            end_of_year = original_date.replace(month=12, day=30)
+        
         record['transaction_date'] = end_of_year
         
-        # Make other dates suspiciously close
+        # Make other dates suspiciously close using safe timedelta operations
         record['contract_signing_date'] = end_of_year - datetime.timedelta(days=1)
         record['notice_of_award_date'] = end_of_year - datetime.timedelta(days=2)
         record['project_description'] = 'URGENT - Use remaining fiscal year budget before expiration.'
@@ -364,15 +377,21 @@ class WeekendActivity:
         if pd.isna(record.get('transaction_date')):
             return record
             
-        # Find the most recent Saturday from the transaction date
+        # Robust weekend date calculation
         transaction_date = record['transaction_date']
+        
+        # Find the most recent Saturday from the transaction date
+        # weekday() returns 0=Monday, 6=Sunday, so Saturday=5
         days_since_saturday = (transaction_date.weekday() - 5) % 7
         weekend_date = transaction_date - datetime.timedelta(days=days_since_saturday)
         
         # Set key dates to this weekend (Saturday or Sunday)
         record['contract_signing_date'] = weekend_date
         record['notice_of_award_date'] = weekend_date
-        record['bid_opening_date'] = weekend_date - datetime.timedelta(days=1) # Friday evening or Saturday
+        
+        # Friday evening or Saturday - ensure it's valid
+        friday_date = weekend_date - datetime.timedelta(days=1)
+        record['bid_opening_date'] = friday_date
         return record
 
 class InsufficientBiddingPeriod:
@@ -435,7 +454,9 @@ class PrematureContractSigning:
             return record
             
         # This makes the timeline logically impossible and suggests a rigged deal
-        record['contract_signing_date'] = record['notice_of_award_date'] - datetime.timedelta(days=np.random.randint(1, 10))
+        # Use safe timedelta to avoid invalid dates
+        days_before = np.random.randint(1, 10)
+        record['contract_signing_date'] = record['notice_of_award_date'] - datetime.timedelta(days=days_before)
         return record
 
 class ImpossibleTimeline:
@@ -454,7 +475,7 @@ class ImpossibleTimeline:
             
         base_date = record['transaction_date']
         
-        # Create completely impossible timeline sequence
+        # Create completely impossible timeline sequence using safe timedelta operations
         record['contract_signing_date'] = base_date - datetime.timedelta(days=30)
         record['notice_of_award_date'] = base_date - datetime.timedelta(days=35)
         record['bid_opening_date'] = base_date - datetime.timedelta(days=40)
@@ -625,7 +646,7 @@ class ExpeditedProcurement:
         if pd.isna(record.get('transaction_date')):
             return record
             
-        # Create an extremely compressed timeline
+        # Create an extremely compressed timeline using safe timedelta operations
         base_date = record['transaction_date']
         
         # All events happen within 1-2 days
@@ -656,7 +677,7 @@ class IrregularTimelineSequence:
             
         base_date = record['transaction_date']
         
-        # Create impossible timeline sequence
+        # Create impossible timeline sequence using safe timedelta operations
         record['contract_signing_date'] = base_date - datetime.timedelta(days=10)
         record['notice_of_award_date'] = base_date - datetime.timedelta(days=15)
         record['bid_opening_date'] = base_date - datetime.timedelta(days=20)
@@ -680,7 +701,7 @@ class MultipleTimelineViolations:
         if pd.isna(record.get('transaction_date')):
             return record
             
-        # Create multiple timeline violations
+        # Create multiple timeline violations using safe timedelta operations
         base_date = record['transaction_date']
         
         # 1. Insufficient bidding period (less than 7 days)
