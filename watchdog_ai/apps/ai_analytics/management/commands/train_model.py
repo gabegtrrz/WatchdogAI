@@ -340,7 +340,7 @@ class Command(BaseCommand):
         
         # Drop 'is_anomaly' column if it exists to prevent data leakage
         training_data = df_processed.copy()
-        
+
         if 'is_anomaly' in training_data.columns:
             training_data = training_data.drop('is_anomaly', axis=1)
             logger.info(f'Dropped is_anomaly column. Training data shape: {training_data.shape}')
@@ -360,7 +360,7 @@ class Command(BaseCommand):
 
         
         model = IsolationForest(
-            contamination=str(contamination_param), 
+            contamination=contamination_param, 
             random_state=42,
             n_estimators=100
         )
