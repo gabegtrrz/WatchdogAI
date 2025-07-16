@@ -392,11 +392,30 @@ def run_analysis(request):
             logger.error(f"Error validating transaction IDs for analysis: {e}")
             return JsonResponse({'success': False, 'error': f'Error validating transactions: {str(e)}'}, status=400)
 
-    # Start the Celery task
+    # Start the Celery task (runs synchronously in development)
         try:
             task = perform_anomaly_detection.delay(valid_transaction_ids, contamination_float)
             logger.info(f"Analysis task started with ID: {task.id}")
-            return JsonResponse({'success': True, 'task_id': task.id})
+            
+            # In eager mode, the task completes immediately
+            if task.ready():
+                result = task.get()
+                if result.get('status') == 'Completed':
+                    analysis_run_id = result.get('analysis_run_id')
+                    return JsonResponse({
+                        'success': True, 
+                        'task_id': task.id,
+                        'completed': True,
+                        'redirect_url': reverse('analysis_results', args=[analysis_run_id])
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False, 
+                        'error': result.get('error', 'Analysis failed')
+                    }, status=500)
+            else:
+                return JsonResponse({'success': True, 'task_id': task.id})
+                
         except Exception as e:
             logger.error(f"Error starting analysis task: {e}")
             return JsonResponse({'success': False, 'error': f'Error starting analysis task: {str(e)}'}, status=500)

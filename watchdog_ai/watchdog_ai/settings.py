@@ -80,6 +80,9 @@ INSTALLED_APPS = [
     'apps.core.apps.CoreConfig',
     'apps.data_generation.apps.DataGenerationConfig',
     
+    # Celery Results
+    'django_celery_results',
+    
     # It's better to use the full AppConfig path in INSTALLED_APPS
     # for explicit configuration, custom startup logic (ready() method), and improved clarity,
     # aligning with Django's best practices for robust app management.
@@ -370,11 +373,13 @@ LOGGING = {
 }
 
 # Celery Configuration Options
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
+# For development without Redis - run tasks synchronously
+CELERY_TASK_ALWAYS_EAGER = True  # Run tasks synchronously (no broker needed)
+CELERY_TASK_EAGER_PROPAGATES = True  # Propagate exceptions in eager mode
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELery_RESULT_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60 # 30 minutes

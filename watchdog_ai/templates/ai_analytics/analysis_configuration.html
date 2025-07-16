@@ -196,8 +196,17 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log('Response data:', data);
             if (data.success && data.task_id) {
-                statusText.textContent = 'Analysis is running. Please wait...';
-                pollTaskStatus(data.task_id);
+                // Check if task completed immediately (eager mode)
+                if (data.completed && data.redirect_url) {
+                    statusText.textContent = 'Analysis complete. Redirecting...';
+                    console.log('Redirecting to:', data.redirect_url);
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1000); // Small delay to show completion message
+                } else {
+                    statusText.textContent = 'Analysis is running. Please wait...';
+                    pollTaskStatus(data.task_id);
+                }
             } else {
                 analysisModalInstance.hide();
                 alert('Error starting analysis: ' + (data.error || 'An unknown error occurred.'));
