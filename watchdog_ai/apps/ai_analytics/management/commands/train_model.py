@@ -66,11 +66,10 @@ class Command(BaseCommand):
         self._ensure_directories_exist()
         logger.info(f'All output directories ensured')
 
-        # 1. Get and preprocess data
+    # 1. Get and preprocess data. Extract labels if exist
         logger.info('Fetching and preprocessing transaction data...')
         self.stdout.write('Fetching and preprocessing transaction data...')
         
-        # Step 1: Get raw data and clean it
         try:
             csv_source = config.get('data_source', {}).get('csv_path')
             if csv_source:
@@ -92,6 +91,17 @@ class Command(BaseCommand):
             self.stderr.write(f'Error during data fetching: {e}')
             return
         
+        # Extract labels before preprocessing
+        logger.info('Extracting labels from data...')
+        self.stdout.write('Extracting labels from data...')
+        
+        true_labels = preprocessing.extract_labels(df)
+
+        
+        # 2. Preprocess data (this will drop 'is_anomaly' column)
+        logger.info('Preprocessing data...')
+        self.stdout.write('Preprocessing data...')
+        
         try:
             logger.info('Cleaning raw data...')
             cleaned_df = preprocessing.clean_raw_data(df)
@@ -101,9 +111,9 @@ class Command(BaseCommand):
             self.stderr.write(f'Error during data preprocessing: {e}')
             return
 
-        
-        # Step 2: Engineer features
+        # 3. Engineer features
         logger.info('Starting feature engineering...')
+        self.stdout.write('Starting feature engineering...')
 
         try:
             df_processed, training_columns = feature_engineering.create_model_features(cleaned_df)
@@ -117,57 +127,21 @@ class Command(BaseCommand):
         logger.info(f'Successfully processed {df_processed.shape[0]} transactions with {df_processed.shape[1]} features.')
         self.stdout.write(f'Successfully processed {df_processed.shape[0]} transactions with {df_processed.shape[1]} features.')
 
-        # Determine training mode
+        # 4. Determine training mode
         research_mode = config.get('training', {}).get('research_mode', False)
         
         if research_mode:
             logger.info('Starting research mode training...')
+            self.stdout.write('Starting research mode training...')
             contamination_range = config.get('model', {}).get('contamination_range', [0.01, 0.05, 0.10, 0.15])
-            self._research_mode_training(df_processed, training_columns, contamination_range)
+            self._research_mode_training(df_processed, training_columns, contamination_range, true_labels)
         else:
             # Standard training
             logger.info('Starting standard training mode...')
+            self.stdout.write('Starting standard training mode...')
             contamination = config.get('model', {}).get('contamination', 'auto')
             self._standard_training(df_processed, training_columns, contamination)
 
-    def _prepare_training_data(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Union[np.ndarray, None]]:
-        """
-        Safely prepare training data by extracting labels and dropping 'is_anomaly' column.
-        
-        Args:
-            df: DataFrame that may contain 'is_anomaly' column
-            
-        Returns:
-            Tuple of (training_data, true_labels) where:
-            - training_data: DataFrame with 'is_anomaly' column removed
-            - true_labels: numpy array of binary labels (1 for anomaly, 0 for normal) or None
-        """
-        df_copy = df.copy()
-        true_labels = None
-        
-        # Check if 'is_anomaly' column exists
-        if 'is_anomaly' in df_copy.columns:
-            logger.info("'is_anomaly' column found in dataset")
-            
-            # Extract true labels before dropping the column
-            true_labels_raw = df_copy['is_anomaly'].values
-            # Convert to binary: 1 for anomaly, 0 for normal
-            true_labels = (true_labels_raw == 1).astype(int)
-            
-            # Drop 'is_anomaly' column to prevent data leakage
-            training_data = df_copy.drop('is_anomaly', axis=1)
-            logger.info(f"Dropped 'is_anomaly' column. Training data shape: {training_data.shape}")
-            
-            # Log label distribution
-            if true_labels is not None:
-                label_counts = np.bincount(true_labels)
-                logger.info(f"True labels distribution: Normal={label_counts[0]}, Anomalies={label_counts[1] if len(label_counts) > 1 else 0}")
-        else:
-            logger.info("'is_anomaly' column not found in dataset - proceeding with  training")
-            training_data = df_copy
-            true_labels = None
-        
-        return training_data, true_labels
 
     def _validate_config(self, config: dict) -> bool:
         """Validate the configuration structure."""
@@ -300,20 +274,19 @@ class Command(BaseCommand):
                     self.stderr.write(error_msg)
                     raise
 
-    def _research_mode_training(self, df_processed, training_columns, contamination_range):
+    def _research_mode_training(self, df_processed, training_columns, contamination_range, true_labels):
         """Research mode with cross-validation and multiple contamination values."""
         logger.info('Running research mode with cross-validation...')
         self.stdout.write('Running research mode with cross-validation...')
         
         try:
-            # Prepare training data and extract labels
-            training_data, true_labels = self._prepare_training_data(df_processed) #drops 'is_anomaly' column
-            
-            # Validate that we have labels for research mode
+            # Use the labels that were extracted before preprocessing
             if true_labels is None:
                 logger.error("Research mode requires labeled data with 'is_anomaly' column")
                 self.stderr.write("Research mode requires labeled data with 'is_anomaly' column")
                 return
+            
+            training_data = df_processed
             
             logger.info(f'Training data shape: {training_data.shape}')
             logger.info(f'True labels shape: {true_labels.shape}')
@@ -534,8 +507,7 @@ class Command(BaseCommand):
         self.stdout.write('Training Isolation Forest model...')
         
         try:
-            # Prepare training data (drops 'is_anomaly' if present)
-            training_data, _ = self._prepare_training_data(df_processed)
+            training_data = df_processed
             logger.info(f'Training data prepared. Shape: {training_data.shape}')
             
         except Exception as e:
@@ -648,6 +620,11 @@ class Command(BaseCommand):
                     return obj
             
             serializable_results = convert_numpy_types(training_results)
+            
+            # Ensure serializable_results is a dictionary
+            if not isinstance(serializable_results, dict):
+                logger.warning(f"Training results is not a dictionary, converting to dict: {type(serializable_results)}")
+                serializable_results = {"results": serializable_results}
             
             # Read existing results if file exists
             existing_results = []
