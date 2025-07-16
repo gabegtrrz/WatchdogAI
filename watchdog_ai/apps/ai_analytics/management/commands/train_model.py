@@ -21,24 +21,8 @@ MODEL_PATH = os.path.join(MODEL_DIR, 'isolation_forest.joblib')
 COLUMNS_PATH = os.path.join(MODEL_DIR, 'training_columns.joblib')
 RESEARCH_LOG_PATH = os.path.join(MODEL_DIR, 'research_log.json')
 
-# Define logs directory path
-LOGS_DIR = os.path.join(settings.BASE_DIR, 'logs')
-LOG_FILE_PATH = os.path.join(LOGS_DIR, 'model_training.log')
-
-# Ensure logs directory exists
-os.makedirs(LOGS_DIR, exist_ok=True)
-
 # Configure logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(levelname)-8s | %(message)s',
-    datefmt='%H:%M:%S',
-    handlers=[
-        logging.FileHandler(LOG_FILE_PATH),
-        logging.StreamHandler()
-    ]
-)
 
 
 class Command(BaseCommand):

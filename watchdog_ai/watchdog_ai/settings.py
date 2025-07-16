@@ -216,6 +216,11 @@ LOGGING = {
             'format': '[{asctime}] {levelname} {name} {funcName}:{lineno} - {message}',
             'style': '{',
         },
+        'clean': {
+            'format': '[{asctime}] {levelname:<8} | {message}',
+            'style': '{',
+            'datefmt': '%H:%M:%S',
+        },
     },
     'filters': {
         'require_debug_true': {
@@ -227,6 +232,11 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
+        },
+        'console_clean': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'clean',
         },
         'file_general': {
             'level': 'INFO',
@@ -274,7 +284,7 @@ LOGGING = {
             'filename': LOGS_DIR / 'model_training.log',
             'maxBytes': 1024 * 1024 * 10,  # 10MB
             'backupCount': 5,
-            'formatter': 'detailed',
+            'formatter': 'clean',
         },
     },
     'loggers': {
@@ -342,6 +352,11 @@ LOGGING = {
         # Model training logging
         'model_training': {
             'handlers': ['console', 'file_model_training'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.ai_analytics.management.commands.train_model': {
+            'handlers': ['console_clean', 'file_model_training'],
             'level': 'DEBUG',
             'propagate': False,
         },
