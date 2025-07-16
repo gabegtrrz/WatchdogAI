@@ -5,7 +5,9 @@ import os
 import joblib
 import json
 import logging
+import yaml
 from datetime import datetime
+from typing import Union, List
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from sklearn.ensemble import IsolationForest
@@ -30,38 +32,31 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--contamination',
+            '--config',
             type=str,
-            default='auto',
-            help='Contamination parameter for Isolation Forest (float or "auto")'
-        )
-        parser.add_argument(
-            '--research-mode',
-            action='store_true',
-            help='Enable research mode with cross-validation and detailed logging'
-        )
-        parser.add_argument(
-            '--contamination-range',
-            nargs='+',
-            type=float,
-            default=[0.01, 0.05, 0.10, 0.15],
-            help='Range of contamination values to test in research mode'
-        )
-        parser.add_argument(
-            '--csv',
-            type=str,
-            help='Path to CSV file to use for training instead of database data'
-        )
-        parser.add_argument(
-            '--labeled-data-path',
-            type=str,
-            default='data/training_data/training_1/transactions_with_labels.csv',
-            help='Path to labeled data CSV file for research mode evaluation'
+            required=True,
+            help='Path to YAML configuration file'
         )
 
     def handle(self, *args, **options):
         logger.info('Starting model training...')
         self.stdout.write('Starting model training...')
+
+        # Load configuration
+        config_path = options['config']
+        self.config_path = config_path  # Store for use in _get_model_parameters
+        try:
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+            logger.info(f'Loaded configuration from {config_path}')
+        except Exception as e:
+            logger.error(f'Error loading configuration: {e}', exc_info=True)
+            self.stderr.write(f'Error loading configuration: {e}')
+            return
+
+        # Validate configuration
+        if not self._validate_config(config):
+            return
 
         # Ensure the model directory exists
         os.makedirs(MODEL_DIR, exist_ok=True)
@@ -72,10 +67,8 @@ class Command(BaseCommand):
         self.stdout.write('Fetching and preprocessing transaction data...')
         
         # Step 1: Get raw data and clean it
-        # Determine if getting data from CSV or Database
-
         try:
-            csv_source = options.get('csv')
+            csv_source = config.get('data_source', {}).get('csv_path')
             if csv_source:
                 logger.info(f'Using CSV source: {csv_source}')
                 self.stdout.write(f'Using CSV source: {csv_source}')
@@ -120,15 +113,37 @@ class Command(BaseCommand):
         logger.info(f'Successfully processed {df_processed.shape[0]} transactions with {df_processed.shape[1]} features.')
         self.stdout.write(f'Successfully processed {df_processed.shape[0]} transactions with {df_processed.shape[1]} features.')
 
-
-        # Research mode: Test multiple contamination values
-        if options['research_mode']:
+        # Determine training mode
+        research_mode = config.get('training', {}).get('research_mode', False)
+        
+        if research_mode:
             logger.info('Starting research mode training...')
-            self._research_mode_training(df_processed, training_columns, options['contamination_range'])
+            contamination_range = config.get('model', {}).get('contamination_range', [0.01, 0.05, 0.10, 0.15])
+            self._research_mode_training(df_processed, training_columns, contamination_range)
         else:
             # Standard training
             logger.info('Starting standard training mode...')
-            self._standard_training(df_processed, training_columns, contamination=options['contamination'])
+            contamination = config.get('model', {}).get('contamination', 'auto')
+            self._standard_training(df_processed, training_columns, contamination)
+
+    def _validate_config(self, config: dict) -> bool:
+        """Validate the configuration structure."""
+        required_sections = ['model', 'training']
+        
+        for section in required_sections:
+            if section not in config:
+                logger.error(f'Missing required configuration section: {section}')
+                self.stderr.write(f'Missing required configuration section: {section}')
+                return False
+        
+        # Validate model configuration
+        model_config = config.get('model', {})
+        if 'contamination' not in model_config and 'contamination_range' not in model_config:
+            logger.error('Either contamination or contamination_range must be specified in model configuration')
+            self.stderr.write('Either contamination or contamination_range must be specified in model configuration')
+            return False
+        
+        return True
 
     def _research_mode_training(self, df_processed, training_columns, contamination_range):
         """Research mode with cross-validation and multiple contamination values."""
@@ -138,8 +153,8 @@ class Command(BaseCommand):
         try:
             labeled_df = df_processed.copy()
             logger.info(f'Labeled data shape: {labeled_df.shape}')
-            logger.info(f'is_anomaly values: {labeled_df['is_anomaly'].values[:10]}...')
-            self.stdout.write(f'is_anomaly values: {labeled_df['is_anomaly'].values[:10]}...')
+            logger.info(f'is_anomaly values: {labeled_df["is_anomaly"].values[:10]}...')
+            self.stdout.write(f'is_anomaly values: {labeled_df["is_anomaly"].values[:10]}...')
             
             # Get true labels (1 for anomaly, 0 for normal)
             true_labels = labeled_df['is_anomaly'].values
@@ -179,13 +194,12 @@ class Command(BaseCommand):
 
         for contamination in contamination_range:
             logger.info(f'Testing contamination={contamination}...')
-            self.stdout.write(f'{'='*7}Testing contamination={contamination}... {'='*7}')
+            self.stdout.write(f'{"="*7}Testing contamination={contamination}... {"="*7}')
             
-            model = IsolationForest(
-                contamination=contamination, 
-                random_state=42,
-                n_estimators=100 # Number of base estimators (or "itrees") in the ensemble
-            )
+            # Get model parameters from config
+            model_params = self._get_model_parameters(contamination)
+            
+            model = IsolationForest(**model_params)
             logger.info(f'IsolationForest model created with contamination={contamination}')
             
             try:
@@ -233,11 +247,7 @@ class Command(BaseCommand):
                     'true_anomalies': np.sum(true_labels_binary),
                     'true_normal': len(true_labels_binary) - np.sum(true_labels_binary),
                     'confusion_matrix': cm.tolist(),
-                    'model_config': {
-                        'contamination': contamination,
-                        'n_estimators': 100,
-                        'random_state': 42
-                    }
+                    'model_config': model_params
                 }
                 
                 # Log detailed anomaly information
@@ -274,11 +284,9 @@ class Command(BaseCommand):
             logger.info(f'  - Recall: {best_results["recall"]:.4f}')
             logger.info(f'  - F1-Score: {best_results["f1_score"]:.4f}')
             
-            final_model = IsolationForest(
-                contamination=best_contamination,
-                random_state=42,
-                n_estimators=100
-            )
+            # Get model parameters for best contamination
+            final_model_params = self._get_model_parameters(best_contamination)
+            final_model = IsolationForest(**final_model_params)
             logger.info('Training final model with best contamination...')
             final_model.fit(training_data)
             
@@ -345,26 +353,11 @@ class Command(BaseCommand):
             training_data = training_data.drop('is_anomaly', axis=1)
             logger.info(f'Dropped is_anomaly column. Training data shape: {training_data.shape}')
         
-        # Convert contamination to float if it's a numeric string, otherwise keep as 'auto'
-        if contamination == 'auto':
-            contamination_param = 'auto'
-            logger.info('Using auto contamination parameter')
-        else:
-            try:
-                contamination_param = float(contamination)
-                logger.info(f'Using contamination parameter: {contamination_param}')
-            except ValueError:
-                logger.warning(f'Invalid contamination value: {contamination}. Using "auto".')
-                self.stderr.write(f'Invalid contamination value: {contamination}. Using "auto".')
-                contamination_param = 'auto'
-
+        # Get model parameters from config
+        model_params = self._get_model_parameters(contamination)
         
-        model = IsolationForest(
-            contamination=contamination_param, 
-            random_state=42,
-            n_estimators=100
-        )
-        logger.info(f'IsolationForest model created with contamination={contamination_param}')
+        model = IsolationForest(**model_params)
+        logger.info(f'IsolationForest model created with contamination={contamination}')
 
         logger.info('Fitting model to processed data...')
         model.fit(training_data)
@@ -381,4 +374,35 @@ class Command(BaseCommand):
         joblib.dump(training_columns, COLUMNS_PATH)
 
         logger.info('Successfully trained and saved the model and column list.')
-        self.stdout.write('Successfully trained and saved the model and column list.') 
+        self.stdout.write('Successfully trained and saved the model and column list.')
+
+    def _get_model_parameters(self, contamination: Union[float, str]) -> dict:
+        """Get model parameters from configuration."""
+        # Load config to get model parameters
+        config_path = self.config_path if hasattr(self, 'config_path') else None
+        if config_path:
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+        else:
+            # Fallback to default parameters
+            config = {'model': {}}
+        
+        model_config = config.get('model', {})
+        
+        # Base parameters
+        params = {
+            'contamination': contamination,
+            'random_state': model_config.get('random_state', 42),
+            'n_estimators': model_config.get('n_estimators', 100),
+            'max_samples': model_config.get('max_samples', 'auto'),
+            'bootstrap': model_config.get('bootstrap', False),
+            'n_jobs': model_config.get('n_jobs', None),
+            'verbose': model_config.get('verbose', 0),
+            'warm_start': model_config.get('warm_start', False),
+            'max_features': model_config.get('max_features', 1.0)
+        }
+        
+        # Remove None values to use sklearn defaults
+        params = {k: v for k, v in params.items() if v is not None}
+        
+        return params 

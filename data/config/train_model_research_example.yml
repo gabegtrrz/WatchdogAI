@@ -1,0 +1,26 @@
+# Research mode example configuration for training the Isolation Forest model
+
+# Data source configuration
+data_source:
+  # Use CSV file with labeled data for research mode
+  csv_path: "data/training_data/1/transactions_with_labels.csv"
+
+# Model configuration
+model:
+  # Test multiple contamination values in research mode
+  contamination_range: [0.01, 0.05, 0.10, 0.15, 0.20]
+  
+  # Isolation Forest parameters
+  n_estimators: 100
+  random_state: 42
+  max_samples: "auto"
+  bootstrap: false
+  n_jobs: null
+  verbose: 0
+  warm_start: false
+  max_features: 1.0
+
+# Training configuration
+training:
+  # Enable research mode with cross-validation
+  research_mode: true 

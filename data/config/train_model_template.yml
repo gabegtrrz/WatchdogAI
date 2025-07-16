@@ -1,0 +1,58 @@
+# Train Model Configuration Template
+# This template defines the configuration for training the Isolation Forest model
+
+# Data source configuration
+data_source:
+  # Optional: Path to CSV file to use instead of database
+  # If not specified, will use database as data source
+  csv_path: null  # Example: "data/training_data/1/transactions.csv"
+
+# Model configuration
+model:
+  # Contamination parameter for Isolation Forest
+  # Options:
+  # - Single value: "auto" or float (e.g., 0.1)
+  # - Range for research mode: [0.01, 0.05, 0.10, 0.15]
+  contamination: "auto"  # or contamination_range: [0.01, 0.05, 0.10, 0.15]
+  
+  # Isolation Forest parameters
+  n_estimators: 100      # Number of base estimators in the ensemble
+  random_state: 42       # Random state for reproducibility
+  max_samples: "auto"    # Number of samples to draw for each base estimator
+  bootstrap: false       # Whether to use bootstrap samples
+  n_jobs: null          # Number of jobs to run in parallel (null = use all)
+  verbose: 0            # Controls verbosity of output
+  warm_start: false     # Whether to reuse previous solution
+  max_features: 1.0     # Number of features to draw for each base estimator
+
+# Training configuration
+training:
+  # Enable research mode with cross-validation and multiple contamination values
+  # When true, will test multiple contamination values and select the best one
+  research_mode: false   # Set to true for research mode
+
+# ------------------------------
+# Example configurations:
+
+# Standard training with auto contamination:
+# model:
+#   contamination: "auto"
+#   n_estimators: 100
+
+# Standard training with fixed contamination:
+# model:
+#   contamination: 0.1
+#   n_estimators: 200
+
+# Research mode with contamination range:
+# model:
+#   contamination_range: [0.01, 0.05, 0.10, 0.15, 0.20]
+#   n_estimators: 100
+# training:
+#   research_mode: true
+
+# Using CSV data source:
+# data_source:
+#   csv_path: "data/training_data/1/transactions_with_labels.csv"
+# model:
+#   contamination: "auto" 
