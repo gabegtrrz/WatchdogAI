@@ -16,6 +16,12 @@ class AnalysisConfigurationForm(forms.Form):
     label="Expected Anomaly Percentage",
     help_text="For this demo, enter '0.10'. Valid values, representing the expected proportion of anomalies in the dataset, range from 0.01 (1%) to 0.50 (50%)."
     )
+    
+    transaction_ids = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=False,
+        help_text="JSON string of transaction IDs"
+    )
 
     def clean_transaction_ids(self):
         """

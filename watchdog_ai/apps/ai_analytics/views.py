@@ -319,6 +319,7 @@ def analysis_configuration(request):
         request.session.pop('selected_transaction_ids', None)
         return redirect('transaction_list')
 
+# Analysis Configuration Form
     if request.method == 'POST':
         form = AnalysisConfigurationForm(request.POST)
         if form.is_valid():
@@ -339,9 +340,16 @@ def run_analysis(request):
     """
     Initiates the asynchronous analysis task via a fetch request.
     """
+    # Temporary debugging
+    print(f"DEBUG: run_analysis called")
+    print(f"DEBUG: Request method: {request.method}")
+    print(f"DEBUG: Content-Type: {request.headers.get('Content-Type')}")
+    print(f"DEBUG: Request body: {request.body}")
+    
     # Apply rate limiting for analysis requests (more restrictive)
     rate_limit_response = apply_rate_limit(request, 'run_analysis')
     if rate_limit_response:
+        print(f"DEBUG: Rate limited")
         return rate_limit_response
     
     try:
@@ -349,11 +357,11 @@ def run_analysis(request):
         contamination = data.get('contamination')
         transaction_ids = data.get('transaction_ids')
 
-        # Basic validation
+    # Basic validation
         if not all([contamination, transaction_ids]):
              return JsonResponse({'success': False, 'error': 'Missing parameters.'}, status=400)
 
-        # Validate contamination value
+    # Validate contamination value
         try:
             contamination_float = float(contamination)
             if not (0.0 <= contamination_float <= 1.0):
@@ -384,7 +392,7 @@ def run_analysis(request):
             logger.error(f"Error validating transaction IDs for analysis: {e}")
             return JsonResponse({'success': False, 'error': f'Error validating transactions: {str(e)}'}, status=400)
 
-        # Start the Celery task
+    # Start the Celery task
         try:
             task = perform_anomaly_detection.delay(valid_transaction_ids, contamination_float)
             logger.info(f"Analysis task started with ID: {task.id}")

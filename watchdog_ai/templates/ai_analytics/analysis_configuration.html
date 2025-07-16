@@ -51,6 +51,32 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Analysis configuration page loaded');
     
+    // Add a test function to verify fetch is working
+    window.testFetch = function() {
+        console.log('Testing fetch functionality...');
+        fetch("{% url 'run_analysis' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value
+            },
+            body: JSON.stringify({
+                transaction_ids: [1, 2, 3],
+                contamination: 0.1
+            })
+        })
+        .then(response => {
+            console.log('Test response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Test response data:', data);
+        })
+        .catch(error => {
+            console.error('Test fetch error:', error);
+        });
+    };
+    
     const analysisForm = document.getElementById('analysis-form');
     const analysisModal = document.getElementById('analysis-modal');
     
@@ -81,6 +107,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const transactionIdsField = document.querySelector('input[name="transaction_ids"]');
     if (!transactionIdsField) {
         console.error('Transaction IDs field not found');
+        console.log('Available form fields:', document.querySelectorAll('input[name]'));
+        alert('Transaction IDs field not found. Please go back and select transactions again.');
         return;
     }
     
@@ -88,8 +116,15 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
         transactionIds = JSON.parse(transactionIdsField.value);
         console.log('Transaction IDs loaded:', transactionIds);
+        
+        if (!Array.isArray(transactionIds) || transactionIds.length === 0) {
+            console.error('No transaction IDs found or invalid format');
+            alert('No transaction IDs found. Please go back and select transactions again.');
+            return;
+        }
     } catch (error) {
         console.error('Error parsing transaction IDs:', error);
+        console.log('Raw transaction IDs value:', transactionIdsField.value);
         alert('Error loading transaction data. Please go back and try again.');
         return;
     }
@@ -122,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const contamination = contaminationField.value;
         console.log('Contamination value:', contamination);
         
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
         if (!csrfToken) {
             console.error('CSRF token not found');
             analysisModalInstance.hide();
@@ -146,8 +181,15 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                // Try to get error details from response
+                return response.json().then(errorData => {
+                    throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
+                }).catch(() => {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                });
             }
             return response.json();
         })
@@ -171,8 +213,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function pollTaskStatus(taskId) {
         console.log('Starting to poll task status for:', taskId);
         const interval = setInterval(() => {
-            fetch(`/ai-analytics/analysis/task-status/${taskId}/`)
+            fetch(`{% url 'get_task_status' task_id='TASK_ID_PLACEHOLDER' %}`.replace('TASK_ID_PLACEHOLDER', taskId))
                 .then(response => {
+                    console.log('Task status response status:', response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
