@@ -58,8 +58,23 @@ class Command(BaseCommand):
 
         # Get model paths from config or use defaults
         model_config = config.get('model', {})
+        
+        # Handle model path - can be relative or absolute
         model_path = model_config.get('model_path', DEFAULT_MODEL_PATH)
+        if model_path and not os.path.isabs(model_path):
+            # If relative path, make it relative to BASE_DIR
+            model_path = os.path.join(settings.BASE_DIR, model_path)
+        
+        # Handle columns path - can be relative or absolute
         columns_path = model_config.get('columns_path', DEFAULT_COLUMNS_PATH)
+        if columns_path and not os.path.isabs(columns_path):
+            # If relative path, make it relative to BASE_DIR
+            columns_path = os.path.join(settings.BASE_DIR, columns_path)
+        
+        # Get contamination parameter from config (optional)
+        contamination = model_config.get('contamination', 'auto')
+        logger.info(f'Contamination parameter from config: {contamination}')
+        self.stdout.write(f'Contamination parameter from config: {contamination}')
         
         # Get evaluation configuration
         evaluation_config = config.get('evaluation', {})
@@ -100,6 +115,18 @@ class Command(BaseCommand):
             model = joblib.load(model_path)
             training_columns = joblib.load(columns_path)
             logger.info('Successfully loaded trained model and training columns')
+            
+            
+            if contamination != 'auto':
+                if hasattr(model, 'contamination'):
+                    old_contamination = model.contamination
+                    model.contamination = contamination
+                    logger.info(f'Updated model contamination from {old_contamination} to {contamination}')
+                    self.stdout.write(f'Updated model contamination from {old_contamination} to {contamination}')
+                else:
+                    logger.warning('Model does not have contamination attribute, ignoring config parameter')
+                    self.stdout.write('Model does not have contamination attribute, ignoring config parameter')
+                    
         except Exception as e:
             logger.error(f'Error loading trained model: {e}', exc_info=True)
             self.stderr.write(f'Error loading trained model: {e}')
@@ -204,18 +231,30 @@ class Command(BaseCommand):
             true_labels_binary = (true_labels == 1).astype(int)
             logger.info(f'True labels binary distribution: {np.bincount(true_labels_binary)}')
             
-            # Prepare features for prediction (drop label column)
-            features_df = labeled_df.drop('is_anomaly', axis=1)
-            
             # Get advanced configuration
             advanced_config = config.get('advanced', {}) if config else {}
             handle_missing_columns = advanced_config.get('handle_missing_columns', True)
             missing_column_default = advanced_config.get('missing_column_default', 0)
             remove_extra_columns = advanced_config.get('remove_extra_columns', True)
             
+            # Get contamination from config if available
+            contamination = None
+            if config and 'model' in config:
+                contamination = config['model'].get('contamination', 'auto')
+            
+            # Prepare features for prediction (drop label column)
+            features_df = labeled_df.drop('is_anomaly', axis=1)
+            
+            # Debug: Check what columns we have after dropping is_anomaly
+            logger.info(f'Columns after dropping is_anomaly: {list(features_df.columns)}')
+            logger.info(f'Training columns: {list(training_columns)}')
+            
             # Ensure we have the same columns as training
             missing_columns = set(training_columns) - set(features_df.columns)
             extra_columns = set(features_df.columns) - set(training_columns)
+            
+            logger.info(f'Missing columns: {missing_columns}')
+            logger.info(f'Extra columns: {extra_columns}')
             
             if missing_columns and handle_missing_columns:
                 logger.warning(f'Missing columns in evaluation data: {missing_columns}')
@@ -229,6 +268,13 @@ class Command(BaseCommand):
                 features_df = features_df[training_columns]
             
             logger.info(f'Features shape for prediction: {features_df.shape}')
+            logger.info(f'Final feature columns: {list(features_df.columns)}')
+
+            # Safety check: Ensure is_anomaly is not in features
+            if 'is_anomaly' in features_df.columns:
+                logger.error('is_anomaly column still present in features! Removing it...')
+                features_df = features_df.drop('is_anomaly', axis=1)
+                logger.info(f'Features shape after removing is_anomaly: {features_df.shape}')
 
             # Get predictions from trained model
             logger.info('Getting predictions from trained model...')
@@ -253,7 +299,7 @@ class Command(BaseCommand):
             }
             
             # Add model information
-            evaluation_results['model_info'] = {
+            model_info = {
                 'model_type': 'IsolationForest',
                 'contamination': model.contamination,
                 'n_estimators': model.n_estimators,
@@ -261,6 +307,12 @@ class Command(BaseCommand):
                 'bootstrap': model.bootstrap,
                 'random_state': model.random_state
             }
+            
+            # Add config contamination if specified and not 'auto'
+            if contamination != 'auto':
+                model_info['config_contamination'] = contamination
+                
+            evaluation_results['model_info'] = model_info
             
             return evaluation_results
 
