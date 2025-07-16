@@ -12,10 +12,14 @@ Performs three main preprocessing steps:
 """
 import pandas as pd
 import numpy as np
+import logging
 from apps.core.models import Transaction
 from typing import Union, Optional
 from pathlib import Path
 from apps.transaction_management.services import process_transaction_csv
+
+# Configure logging for this module
+logger = logging.getLogger(__name__)
 
 def get_transaction_dataframe():
     """
@@ -43,24 +47,31 @@ def get_transaction_dataframe():
         - notice_of_award_date: When award decision was made
         - contract_signing_date: When contract was signed
     """
-    transactions = Transaction.objects.all().values(
-        'transaction_id',
-        'quantity',
-        'unit_purchase_price',
-        'total_purchase_price',
-        'approved_budget',
-        'procurement_method__name',
-        'supplier',
-        'transaction_date',
-        'invitation_to_bid_posting_date',
-        'bid_submission_deadline',
-        'bid_opening_date',
-        'notice_of_award_date',
-        'contract_signing_date'
-    )
-    df = pd.DataFrame.from_records(transactions)
-    df.set_index('transaction_id', inplace=True)
-    return df
+    logger.info("Fetching transaction data from database...")
+    try:
+        transactions = Transaction.objects.all().values(
+            'transaction_id',
+            'quantity',
+            'unit_purchase_price',
+            'total_purchase_price',
+            'approved_budget',
+            'procurement_method__name',
+            'supplier',
+            'transaction_date',
+            'invitation_to_bid_posting_date',
+            'bid_submission_deadline',
+            'bid_opening_date',
+            'notice_of_award_date',
+            'contract_signing_date'
+        )
+        df = pd.DataFrame.from_records(transactions)
+        df.set_index('transaction_id', inplace=True)
+        logger.info(f"Successfully loaded {len(df)} transactions from database")
+        logger.debug(f"DataFrame shape: {df.shape}")
+        return df
+    except Exception as e:
+        logger.error(f"Error fetching transaction data from database: {e}", exc_info=True)
+        raise
 
 def get_transaction_dataframe_from_csv(csv_path: Union[str, Path]) -> pd.DataFrame:
     """
@@ -79,43 +90,53 @@ def get_transaction_dataframe_from_csv(csv_path: Union[str, Path]) -> pd.DataFra
         FileNotFoundError: If the CSV file doesn't exist
         ValueError: If the CSV file contains validation errors
     """
+    logger.info(f"Processing CSV file: {csv_path}")
     csv_path = Path(csv_path)
     if not csv_path.exists():
+        logger.error(f"CSV file not found: {csv_path}")
         raise FileNotFoundError(f"CSV file not found: {csv_path}")
     
-    # Read the CSV file as a file stream
-    with open(csv_path, 'rb') as file_stream:
-        # Use the existing CSV processing function
-        valid_data, validation_errors = process_transaction_csv(file_stream)
-    
-    # Check for validation errors
-    if validation_errors:
-        error_messages = []
-        for error in validation_errors:
-            if 'row' in error:
-                error_messages.append(f"Row {error['row']}: {error['errors']}")
-            else:
-                error_messages.append(f"{error['type']}: {error['message']}")
-        raise ValueError(f"CSV validation failed:\n" + "\n".join(error_messages))
-    
-    if not valid_data:
-        raise ValueError("No valid data found in CSV file")
-    
-    # Convert the validated data to DataFrame
-    df = pd.DataFrame.from_records(valid_data)
-    
-    # Set transaction_id as index if it exists, otherwise create one
-    df.index = range(len(df))
-    
-    # Ensure procurement_method is properly formatted for consistency
-    if 'procurement_method' in df.columns and df['procurement_method'].dtype == 'object':
-        # Convert procurement method objects to their names
-        df['procurement_method__name'] = df['procurement_method'].apply(
-            lambda x: x.name if hasattr(x, 'name') else str(x)
-        )
-        df.drop('procurement_method', axis=1, inplace=True)
-    
-    return df
+    try:
+        # Read the CSV file as a file stream
+        with open(csv_path, 'rb') as file_stream:
+            # Use the existing CSV processing function
+            valid_data, validation_errors = process_transaction_csv(file_stream)
+        
+        # Check for validation errors
+        if validation_errors:
+            error_messages = []
+            for error in validation_errors:
+                if 'row' in error:
+                    error_messages.append(f"Row {error['row']}: {error['errors']}")
+                else:
+                    error_messages.append(f"{error['type']}: {error['message']}")
+            logger.error(f"CSV validation failed: {error_messages}")
+            raise ValueError(f"CSV validation failed:\n" + "\n".join(error_messages))
+        
+        if not valid_data:
+            logger.error("No valid data found in CSV file")
+            raise ValueError("No valid data found in CSV file")
+        
+        # Convert the validated data to DataFrame
+        df = pd.DataFrame.from_records(valid_data)
+        
+        # Set transaction_id as index if it exists, otherwise create one
+        df.index = range(len(df))
+        
+        # Ensure procurement_method is properly formatted for consistency
+        if 'procurement_method' in df.columns and df['procurement_method'].dtype == 'object':
+            # Convert procurement method objects to their names
+            df['procurement_method__name'] = df['procurement_method'].apply(
+                lambda x: x.name if hasattr(x, 'name') else str(x)
+            )
+            df.drop('procurement_method', axis=1, inplace=True)
+        
+        logger.info(f"Successfully processed CSV file. DataFrame shape: {df.shape}")
+        return df
+        
+    except Exception as e:
+        logger.error(f"Error processing CSV file {csv_path}: {e}", exc_info=True)
+        raise
 
 def get_dataframe(source: Optional[Union[str, Path]] = None) -> pd.DataFrame:
     """
@@ -128,8 +149,10 @@ def get_dataframe(source: Optional[Union[str, Path]] = None) -> pd.DataFrame:
         pd.DataFrame: Raw transaction data ready for preprocessing
     """
     if source is None:
+        logger.debug("No source specified, fetching from database")
         return get_transaction_dataframe()
     else:
+        logger.debug(f"Source specified: {source}, fetching from CSV")
         return get_transaction_dataframe_from_csv(source)
 
 def clean_raw_data(df: pd.DataFrame):
@@ -149,34 +172,50 @@ def clean_raw_data(df: pd.DataFrame):
         B. Missing Value Imputation: Handle missing numerical values
         C. Data Type Conversion: Convert date strings to datetime objects
     """
-# --- A. Column Renaming ---
-    # Standardize column names for consistency across the pipeline
+    logger.info("Starting data cleaning process...")
+    logger.debug(f"Input DataFrame shape: {df.shape}")
+    
+    try:
+        # --- A. Column Renaming ---
+        # Standardize column names for consistency across the pipeline
         # Renames the Django ORM field name to more intuitive name that matches the expected column name in feature engineering
-    df.rename(columns={'procurement_method__name': 'procurement_method'}, inplace=True)
+        logger.debug("Renaming columns for consistency...")
+        df.rename(columns={'procurement_method__name': 'procurement_method'}, inplace=True)
 
-# --- B. Missing Value Imputation ---
-    # Handle missing numerical values by imputing with MEDIAN values
+        # --- B. Missing Value Imputation ---
+        # Handle missing numerical values by imputing with MEDIAN values
         # Missing values in numerical features can occur due to data entry errors
         # or incomplete records. Using MEDIAN imputation preserves data distribution while ensuring all numerical features have complete values. robust to outliers.
-
         # This conservative approach doesn't introduce artificial patterns.
+        logger.debug("Handling missing values in numerical features...")
+        numerical_features = ['quantity', 'unit_purchase_price', 'total_purchase_price', 'approved_budget']
+        for col in numerical_features:
+            if col in df.columns and df[col].isnull().any():
+                missing_count = df[col].isnull().sum()
+                median_val = df[col].median()
+                df[col].fillna(median_val, inplace=True)
+                logger.debug(f"Imputed {missing_count} missing values in {col} with median: {median_val}")
 
-    numerical_features = ['quantity', 'unit_purchase_price', 'total_purchase_price', 'approved_budget']
-    for col in numerical_features:
-        if df[col].isnull().any():
-            median_val = df[col].median()
-            df[col].fillna(median_val, inplace=True)
-
-# --- C. Data Type Conversion ---
-    # Convert all date columns to datetime objects for analysis
+        # --- C. Data Type Conversion ---
+        # Convert all date columns to datetime objects for analysis
         # essential for detecting timing-based anomalies such as end-of-year rush spending or suspicious procurement timing.
         # Using errors='coerce' handles invalid date formats gracefully by converting them to NaT (Not a Time) rather than failing.
-    date_features = [
-        'transaction_date', 'invitation_to_bid_posting_date', 'bid_submission_deadline',
-        'bid_opening_date', 'notice_of_award_date', 'contract_signing_date'
-    ]
-    for col in date_features:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors='coerce')
+        logger.debug("Converting date columns to datetime...")
+        date_features = [
+            'transaction_date', 'invitation_to_bid_posting_date', 'bid_submission_deadline',
+            'bid_opening_date', 'notice_of_award_date', 'contract_signing_date'
+        ]
+        for col in date_features:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors='coerce')
+                invalid_dates = df[col].isna().sum()
+                if invalid_dates > 0:
+                    logger.warning(f"Found {invalid_dates} invalid dates in column {col}")
 
-    return df
+        logger.info("Data cleaning completed successfully")
+        logger.debug(f"Output DataFrame shape: {df.shape}")
+        return df
+        
+    except Exception as e:
+        logger.error(f"Error during data cleaning: {e}", exc_info=True)
+        raise
