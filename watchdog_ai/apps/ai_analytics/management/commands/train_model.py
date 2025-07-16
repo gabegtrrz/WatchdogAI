@@ -175,7 +175,7 @@ class Command(BaseCommand):
 
         for contamination in contamination_range:
             logger.info(f'Testing contamination={contamination}...')
-            self.stdout.write(f'Testing contamination={contamination}...')
+            self.stdout.write(f'{'='*7}Testing contamination={contamination}... {'='*7}')
             
             model = IsolationForest(
                 contamination=contamination, 
@@ -226,6 +226,8 @@ class Command(BaseCommand):
                     'f1_score': f1,
                     'predicted_anomalies': np.sum(predicted_labels),
                     'predicted_normal': len(predicted_labels) - np.sum(predicted_labels),
+                    'true_anomalies': np.sum(true_labels_binary),
+                    'true_normal': len(true_labels_binary) - np.sum(true_labels_binary),
                     'confusion_matrix': cm.tolist(),
                     'model_config': {
                         'contamination': contamination,
@@ -233,6 +235,16 @@ class Command(BaseCommand):
                         'random_state': 42
                     }
                 }
+                
+                # Log detailed anomaly information
+                logger.info(f'Contamination {contamination} Results:')
+                logger.info(f'  - True anomalies: {np.sum(true_labels_binary)}')
+                logger.info(f'  - Predicted anomalies: {np.sum(predicted_labels)}')
+                logger.info(f'  - True positives: {cm[1, 1] if cm.shape == (2, 2) else 0}')
+                logger.info(f'  - False positives: {cm[0, 1] if cm.shape == (2, 2) else 0}')
+                logger.info(f'  - False negatives: {cm[1, 0] if cm.shape == (2, 2) else 0}')
+                logger.info(f'  - True negatives: {cm[0, 0] if cm.shape == (2, 2) else 0}')
+                logger.info(f'  - Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}')
                 
                 # Track best performing model based on F1-score
                 if f1 > best_f1_score:
@@ -248,6 +260,16 @@ class Command(BaseCommand):
         if best_contamination:
             logger.info(f'Best contamination value: {best_contamination} (F1-score: {best_f1_score:.4f})')
             self.stdout.write(f'Best contamination value: {best_contamination} (F1-score: {best_f1_score:.4f})')
+            
+            # Log summary of best model performance
+            best_results = research_results['contamination_analysis'][best_contamination]
+            logger.info('Best Model Summary:')
+            logger.info(f'  - True anomalies in dataset: {best_results["true_anomalies"]}')
+            logger.info(f'  - Predicted anomalies: {best_results["predicted_anomalies"]}')
+            logger.info(f'  - Precision: {best_results["precision"]:.4f}')
+            logger.info(f'  - Recall: {best_results["recall"]:.4f}')
+            logger.info(f'  - F1-Score: {best_results["f1_score"]:.4f}')
+            
             final_model = IsolationForest(
                 contamination=best_contamination,
                 random_state=42,
@@ -266,7 +288,9 @@ class Command(BaseCommand):
                 'contamination': best_contamination,
                 'f1_score': best_f1_score,
                 'precision': research_results['contamination_analysis'][best_contamination]['precision'],
-                'recall': research_results['contamination_analysis'][best_contamination]['recall']
+                'recall': research_results['contamination_analysis'][best_contamination]['recall'],
+                'true_anomalies': research_results['contamination_analysis'][best_contamination]['true_anomalies'],
+                'predicted_anomalies': research_results['contamination_analysis'][best_contamination]['predicted_anomalies']
             }
             
             # Save research log
@@ -292,6 +316,16 @@ class Command(BaseCommand):
             
             logger.info(f'Research results saved to {RESEARCH_LOG_PATH}')
             self.stdout.write(f'Research results saved to {RESEARCH_LOG_PATH}')
+            
+            # Log final summary
+            logger.info('Research Mode Complete - Final Summary:')
+            logger.info(f'  - Dataset size: {research_results["dataset_info"]["sample_count"]} transactions')
+            logger.info(f'  - True anomalies in dataset: {research_results["dataset_info"]["true_anomalies"]}')
+            logger.info(f'  - Best contamination: {best_contamination}')
+            logger.info(f'  - Best F1-Score: {best_f1_score:.4f}')
+            logger.info(f'  - Best Precision: {research_results["best_model"]["precision"]:.4f}')
+            logger.info(f'  - Best Recall: {research_results["best_model"]["recall"]:.4f}')
+            
             logger.info('Research mode training complete.')
             self.stdout.write('Research mode training complete.')
 
