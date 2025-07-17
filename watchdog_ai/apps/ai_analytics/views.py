@@ -6,14 +6,12 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.core.cache import cache
 import json
-import numpy as np
-from sklearn.ensemble import IsolationForest
-from apps.core.models import Transaction
+
+
+from apps.core.models import Transaction, AnalysisReport
 from .filters import TransactionFilter
 from django.urls import reverse
 from celery.result import AsyncResult
-
-from apps.core.models import AnalysisReport
 from .forms import AnalysisConfigurationForm
 from .tasks import perform_anomaly_detection
 from .services.validation import (
@@ -312,7 +310,7 @@ def run_analysis(request):
         is_valid, validated_data, error_message = validate_analysis_parameters(data)
         
         if not is_valid:
-            return create_validation_error_response(error_message)
+            return create_validation_error_response(error_message or "Validation failed")
         
         contamination_float = validated_data['contamination']
         valid_transaction_ids = validated_data['transaction_ids']
@@ -333,8 +331,8 @@ def run_analysis(request):
                         'success': True, 
                         'task_id': task.id,
                         'completed': True,
-                        'redirect_url': reverse('analysis_results', args=[analysis_run_id]
-                        'contamination': contamination_float)
+                        'redirect_url': reverse('analysis_results', args=[analysis_run_id]),
+                        'contamination': contamination_float
                     })
                 else:
                     return JsonResponse({
