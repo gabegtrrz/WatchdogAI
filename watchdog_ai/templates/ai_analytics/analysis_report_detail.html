@@ -163,16 +163,21 @@
                     <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Feature Importance (SHAP Values)</h5>
                 </div>
                 <div class="card-body">
-                    <div id="shap-chart" class="text-center">
-                        <p class="text-muted">SHAP values visualization would be displayed here.</p>
-                        <small class="text-muted">This would show which features contributed most to the anomaly detection.</small>
+                    <!-- SHAP Visualization Container -->
+                    <div id="shap-chart" class="mb-4">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status" id="shap-loading">
+                                <span class="visually-hidden">Loading SHAP visualization...</span>
+                            </div>
+                            <p class="text-muted mt-2">Loading feature importance visualization...</p>
+                        </div>
                     </div>
                     
                     <!-- SHAP Values Table -->
                     <div class="mt-4">
                         <h6 class="text-primary mb-3">Feature Contributions</h6>
                         <div class="table-responsive">
-                            <table class="table table-sm">
+                            <table class="table table-sm" id="shap-table">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Feature</th>
@@ -181,31 +186,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% comment %}
-                                    This would be populated with actual SHAP values from the report
-                                    For now, showing placeholder data
-                                    {% endcomment %}
-                                    <tr>
-                                        <td>Total Purchase Price</td>
-                                        <td class="text-end text-danger">+0.234</td>
-                                        <td class="text-end">
-                                            <span class="badge bg-danger">High</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Unit Price</td>
-                                        <td class="text-end text-warning">+0.156</td>
-                                        <td class="text-end">
-                                            <span class="badge bg-warning">Medium</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Quantity</td>
-                                        <td class="text-end text-info">-0.089</td>
-                                        <td class="text-end">
-                                            <span class="badge bg-info">Low</span>
-                                        </td>
-                                    </tr>
+                                    <!-- Will be populated by JavaScript -->
                                 </tbody>
                             </table>
                         </div>
@@ -223,7 +204,7 @@
                     {% if report.is_anomaly %}
                         <div class="alert alert-warning">
                             <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Why this transaction was flagged as anomalous:</h6>
-                            <ul class="mb-0">
+                            <ul class="mb-0" id="anomaly-reasons">
                                 <li><strong>High Total Purchase Price:</strong> This transaction's total price is significantly higher than similar transactions.</li>
                                 <li><strong>Price Deviation:</strong> The unit price deviates substantially from the average market price.</li>
                                 <li><strong>Supplier Pattern:</strong> Unusual procurement pattern compared to historical data.</li>
@@ -258,25 +239,116 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const shapData = {{ shap_values_data|safe }};
-    if (shapData) {
-        const plotElement = document.getElementById('shap-plot');
-        const explanation = {
-            outNames: ["score"],
-            baseValue: shapData.base_values,
-            features: {},
-            link: "identity"
-        };
-
-        shapData.feature_names.forEach((name, i) => {
-            explanation.features[i] = {
-                name: name,
-                value: shapData.values[i],
-                effect: shapData.values[i]
-            };
-        });
-
-        SHAP.AdditiveForceVisualizer(plotElement, explanation);
+    // SHAP Values Processing
+    const shapValuesData = {{ shap_values_data|safe }};
+    
+    if (shapValuesData && shapValuesData.feature_names && shapValuesData.values) {
+        // Hide loading spinner
+        const loadingSpinner = document.getElementById('shap-loading');
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'none';
+        }
+        
+        // Populate SHAP table
+        const shapTable = document.getElementById('shap-table');
+        if (shapTable) {
+            const tbody = shapTable.querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            // Create array of feature data for sorting
+            const featureData = [];
+            for (let i = 0; i < shapValuesData.feature_names.length; i++) {
+                featureData.push({
+                    name: shapValuesData.feature_names[i],
+                    value: shapValuesData.values[i],
+                    absValue: Math.abs(shapValuesData.values[i])
+                });
+            }
+            
+            // Sort by absolute SHAP value (descending)
+            featureData.sort((a, b) => b.absValue - a.absValue);
+            
+            // Populate table
+            featureData.forEach(feature => {
+                const row = document.createElement('tr');
+                
+                // Determine impact level and color
+                let impactClass = 'bg-info';
+                let impactText = 'Low';
+                
+                if (Math.abs(feature.value) > 0.2) {
+                    impactClass = 'bg-danger';
+                    impactText = 'High';
+                } else if (Math.abs(feature.value) > 0.1) {
+                    impactClass = 'bg-warning';
+                    impactText = 'Medium';
+                }
+                
+                // Determine text color for SHAP value
+                let valueClass = feature.value > 0 ? 'text-danger' : 'text-success';
+                
+                row.innerHTML = `
+                    <td><strong>${feature.name}</strong></td>
+                    <td class="text-end ${valueClass}">${feature.value > 0 ? '+' : ''}${feature.value.toFixed(3)}</td>
+                    <td class="text-end">
+                        <span class="badge ${impactClass}">${impactText}</span>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Update anomaly explanation with SHAP insights
+        if (shapValuesData.values && shapValuesData.feature_names) {
+            const anomalyReasons = document.getElementById('anomaly-reasons');
+            if (anomalyReasons) {
+                // Find top contributing features
+                const featureData = [];
+                for (let i = 0; i < shapValuesData.feature_names.length; i++) {
+                    featureData.push({
+                        name: shapValuesData.feature_names[i],
+                        value: shapValuesData.values[i],
+                        absValue: Math.abs(shapValuesData.values[i])
+                    });
+                }
+                
+                // Sort by absolute value and get top 3
+                featureData.sort((a, b) => b.absValue - a.absValue);
+                const topFeatures = featureData.slice(0, 3);
+                
+                // Update explanation
+                anomalyReasons.innerHTML = '';
+                topFeatures.forEach(feature => {
+                    const direction = feature.value > 0 ? 'increased' : 'decreased';
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${feature.name}:</strong> This feature ${direction} the anomaly score by ${Math.abs(feature.value).toFixed(3)}.`;
+                    anomalyReasons.appendChild(li);
+                });
+            }
+        }
+    } else {
+        // No SHAP data available
+        const shapChart = document.getElementById('shap-chart');
+        if (shapChart) {
+            shapChart.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-chart-bar text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-2">SHAP values not available for this analysis.</p>
+                    <small class="text-muted">Feature importance data may not have been generated during analysis.</small>
+                </div>
+            `;
+        }
+    }
+    
+    // Add interactive features
+    const anomalyScore = {{ report.anomaly_score|default:0 }};
+    const isAnomaly = {{ report.is_anomaly|yesno:"true,false" }};
+    
+    // Add score interpretation
+    const scoreBadge = document.querySelector('.badge.bg-danger');
+    if (scoreBadge) {
+        scoreBadge.title = `Anomaly score: ${anomalyScore.toFixed(4)}. ${isAnomaly ? 'This transaction was flagged as anomalous.' : 'This transaction appears normal.'}`;
     }
 });
 </script>
