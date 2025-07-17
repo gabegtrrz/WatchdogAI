@@ -97,12 +97,27 @@ def run_complete_analysis(transaction: Transaction, contamination_param: float) 
     """
     Orchestrates the full data pipeline for a single transaction.
     
+    **Workflow:**
+    1. **Model Validation**: Checks if the trained Isolation Forest model is loaded
+    2. **Data Conversion**: Converts Django Transaction model to pandas DataFrame
+    3. **Preprocessing**: Cleans and validates raw transaction data
+    4. **Feature Engineering**: Creates derived features for anomaly detection
+    5. **Column Alignment**: Ensures DataFrame columns match the model's training data
+    6. **Model Inference**: Runs Isolation Forest prediction to detect anomalies
+    7. **SHAP Analysis**: Generates explainable AI values for feature importance
+    8. **Result Compilation**: Returns anomaly score, classification, and explanations
+    
+    **Error Handling**: Returns fallback results if any step fails, ensuring system resilience.
+    
     Args:
         transaction (Transaction): The Django model instance.
         contamination_param (float): The contamination parameter for the model.
 
     Returns:
-        dict: A dictionary containing the analysis results.
+        dict: A dictionary containing the analysis results with keys:
+            - is_anomaly (bool): Whether the transaction is classified as anomalous
+            - anomaly_score (float): Raw anomaly score from the model
+            - shap_values_json (str): JSON string containing SHAP explanations
     """
     start_time = time.time()
     logger.info(f"Starting anomaly analysis for transaction ID: {transaction.transaction_id}")
