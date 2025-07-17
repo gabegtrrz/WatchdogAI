@@ -281,6 +281,7 @@ class Command(BaseCommand):
 
     def _get_predictions(self, model, features_df: pd.DataFrame, config: Dict[str, Any]) -> Optional[np.ndarray]:
         """Get predictions from the trained model."""
+
         logger.info('Getting predictions from trained model...')
 
         # Get raw anomaly scores (lower score means more anomalous)
@@ -300,22 +301,34 @@ class Command(BaseCommand):
 
         return predicted_labels
 
-    def _get_contamination_rate(self, model, config: Dict[str, Any]) -> float:
-        """Get contamination rate from config or model default."""
-        contamination_from_config = config.get('model', {}).get('contamination', 0)
-
-        if contamination_from_config != 'auto':
-            try:
-                contamination_rate = float(contamination_from_config)
-                logger.info(f"Using contamination rate from config for thresholding: {contamination_rate}")
-                return contamination_rate
-            except (ValueError, TypeError):
-                logger.warning(f"Invalid contamination value '{contamination_from_config}' in config. "
-                             f"Falling back to model's default.")
+    def _get_contamination_rate(self, model, config: Dict[str, Any]) -> Union[float, str]:
+        """Get the contamination rate from the config, falling back to the model's default."""
         
-        contamination_rate = model.contamination
-        logger.info(f"Using model's default contamination rate for thresholding: {contamination_rate}")
-        return contamination_rate
+        contamination_from_config = config.get('model', {}).get('contamination', None)
+
+        # Check if the config value exists before trying to parse it.
+        if contamination_from_config is not None:
+            try:
+                if str(contamination_from_config).lower() == 'auto':
+                    logger.info("Using 'auto' contamination rate from config.")
+                    return 'auto'
+                
+                rate = float(contamination_from_config)
+                logger.info(f"Using contamination rate from config: {rate}")
+                return rate
+
+            except (ValueError, TypeError):
+                logger.warning(
+                    f"Invalid contamination value '{contamination_from_config}' in config. "
+                    f"Falling back to the model's default."
+                )
+                # Fall through to return the model's default below
+
+        # fallback logic
+        default_rate = getattr(model, 'contamination', 0.05) # Safely get model's rate
+        logger.info(f"Using model's default contamination rate: {default_rate}")
+
+        return default_rate
 
     def _calculate_metrics(self, true_labels: np.ndarray, predicted_labels: np.ndarray, 
                           config: Dict[str, Any]) -> Dict[str, Any]:
