@@ -20,6 +20,7 @@ from typing import Dict, Any, Optional, List, Union
 from . import preprocessing
 from . import feature_engineering
 from apps.core.models import Transaction
+import numpy as np
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
@@ -438,10 +439,21 @@ def run_complete_analysis(transaction: Transaction, contamination_param: float) 
         step_start = time.time()
         
         if model is not None:
-            # Perform anomaly detection using Isolation Forest
-            anomaly_score = model.decision_function(final_df)[0]
-            is_anomaly = model.predict(final_df)[0] == -1 # -1 means anomaly in Isolation Forest
-            logger.info(f"Anomaly detection complete. Score: {anomaly_score:.4f}, Is anomaly: {is_anomaly}")
+            # Get raw anomaly scores. Lower score means more anomalous.
+            anomaly_scores = model.score_samples(final_df)
+            anomaly_score = anomaly_scores[0]  # Get the score for this single transaction
+            
+            # Get the contamination rate from the model
+            contamination_rate = model.contamination
+            
+            # Calculate the threshold based on the contamination rate
+            # This determines the cutoff for what is considered an anomaly.
+            threshold = np.percentile(anomaly_scores, contamination_rate * 100)
+            
+            # Classify the transaction as anomaly (True) or normal (False) based on the threshold
+            is_anomaly = anomaly_score <= threshold
+            
+            logger.info(f"Anomaly detection complete. Score: {anomaly_score:.4f}, Threshold: {threshold:.4f}, Is anomaly: {is_anomaly}")
             logger.debug(f"Model inference completed in {time.time() - step_start:.3f}s")
 
             # Step 6: SHAP Analysis - Generate explainability

@@ -71,11 +71,6 @@ class Command(BaseCommand):
             # If relative path, make it relative to BASE_DIR
             columns_path = os.path.join(settings.BASE_DIR, columns_path)
         
-        # Get contamination parameter from config (optional)
-        contamination = model_config.get('contamination', 'auto')
-        logger.info(f'Contamination parameter from config: {contamination}')
-        self.stdout.write(f'Contamination parameter from config: {contamination}')
-        
         # Get evaluation configuration
         evaluation_config = config.get('evaluation', {})
         output_format = evaluation_config.get('output_format', 'both')
@@ -107,17 +102,6 @@ class Command(BaseCommand):
             model = joblib.load(model_path)
             training_columns = joblib.load(columns_path)
             logger.info('Successfully loaded trained model and training columns')
-            
-            
-            if contamination != 'auto':
-                if hasattr(model, 'contamination'):
-                    old_contamination = model.contamination
-                    model.contamination = contamination
-                    logger.info(f'Updated model contamination from {old_contamination} to {contamination}')
-                    self.stdout.write(f'Updated model contamination from {old_contamination} to {contamination}')
-                else:
-                    logger.warning('Model does not have contamination attribute, ignoring config parameter')
-                    self.stdout.write('Model does not have contamination attribute, ignoring config parameter')
                     
         except Exception as e:
             logger.error(f'Error loading trained model: {e}', exc_info=True)
@@ -249,11 +233,6 @@ class Command(BaseCommand):
             missing_column_default = advanced_config.get('missing_column_default', 0)
             remove_extra_columns = advanced_config.get('remove_extra_columns', True)
             
-            # Get contamination from config if available
-            contamination = None
-            if config and 'model' in config:
-                contamination = config['model'].get('contamination', 'auto')
-            
             features_df = labeled_df
             
             # Debug: Check what columns we have after dropping is_anomaly
@@ -293,8 +272,22 @@ class Command(BaseCommand):
             # Get raw anomaly scores. Lower score means more anomalous.
             anomaly_scores = model.score_samples(features_df)
 
-            # Get the contamination rate from the model (already updated from config)
-            contamination_rate = model.contamination
+            # Determine the contamination rate to use for thresholding.
+            # Priority is given to the value in the config file. If it's 'auto'
+            # or not present, the model's own contamination parameter is used.
+            # This ensures the loaded model itself is not altered.
+            contamination_from_config = config.get('model', {}).get('contamination', 0)
+
+            if contamination_from_config != 'auto':
+                try:
+                    contamination_rate = float(contamination_from_config)
+                    logger.info(f"Using contamination rate from config for thresholding: {contamination_rate}")
+                except (ValueError, TypeError):
+                    logger.warning(f"Invalid contamination value '{contamination_from_config}' in config. Falling back to model's default.")
+                    contamination_rate = model.contamination
+            else:
+                contamination_rate = model.contamination
+                logger.info(f"Using model's default contamination rate for thresholding: {contamination_rate}")
 
             # Calculate the threshold based on the contamination rate
             # This determines the cutoff for what is considered an anomaly.
@@ -331,8 +324,8 @@ class Command(BaseCommand):
             }
             
             # Add config contamination if specified and not 'auto'
-            if contamination != 'auto':
-                model_info['config_contamination'] = contamination
+            if contamination_from_config != 'auto':
+                model_info['config_contamination'] = contamination_from_config
                 
             evaluation_results['model_info'] = model_info
             
@@ -512,7 +505,8 @@ class Command(BaseCommand):
             model_info = evaluation_results.get('model_info', {})
             self.stdout.write(f'\nModel Information:')
             self.stdout.write(f'  - Model type: {model_info.get("model_type", "N/A")}')
-            self.stdout.write(f'  - Contamination: {model_info.get("contamination", "N/A")}')
+            self.stdout.write(f'  - Model Contamination: {model_info.get("contamination", "N/A")}')
+            self.stdout.write(f'  - Configured Contamination: {model_info.get("config_contamination", "N/A")}')
             self.stdout.write(f'  - Estimators: {model_info.get("n_estimators", "N/A")}')
         
         # Performance metrics

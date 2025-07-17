@@ -48,11 +48,31 @@ class Command(BaseCommand):
         self.config_path = config_path  # Store for use in _get_model_parameters
         try:
             with open(config_path, 'r') as f:
-                config = yaml.safe_load(f)
+                content = f.read()
+                logger.info(f'YAML file content length: {len(content)} characters')
+                if not content.strip():
+                    logger.error('YAML file is empty')
+                    self.stderr.write('YAML file is empty')
+                    return
+                config = yaml.safe_load(content)
             logger.info(f'Loaded configuration from {config_path}')
+        except yaml.YAMLError as e:
+            logger.error(f'YAML syntax error: {e}', exc_info=True)
+            self.stderr.write(f'YAML syntax error: {e}')
+            return
+        except FileNotFoundError:
+            logger.error(f'Configuration file not found: {config_path}')
+            self.stderr.write(f'Configuration file not found: {config_path}')
+            return
         except Exception as e:
             logger.error(f'Error loading configuration: {e}', exc_info=True)
             self.stderr.write(f'Error loading configuration: {e}')
+            return
+
+        # Check if config was loaded successfully
+        if config is None:
+            logger.error('Configuration file is empty or invalid')
+            self.stderr.write('Configuration file is empty or invalid')
             return
 
         # Validate configuration
