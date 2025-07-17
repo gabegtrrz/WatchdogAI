@@ -16,10 +16,22 @@ from typing import Tuple, List
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
+# =============================================================================
+# REQUIRED DATABASE COLUMNS
+# =============================================================================
 
-def create_model_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
-    '''
-    Engineers features from the preprocessed DataFrame for anomaly detection.
+# List of raw database columns required for feature engineering
+# This list is imported by the preprocessing service to dynamically fetch
+# the necessary data from the database.
+REQUIRED_COLUMNS = []
+
+
+# =============================================================================
+# FEATURE CREATION ORCHESTRATION
+# =============================================================================
+def create_features(df: pd.DataFrame, is_training: bool = False) -> pd.DataFrame:
+    """
+    Orchestrates the creation of all features for the anomaly detection model.
 
     Transforms raw procurement data into engineered features that
     help the anomaly detection model identify specific types of irregularities.
@@ -42,7 +54,7 @@ def create_model_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
     the original dataframe == df, and 
     return the final dataframe == df_final,
     and the list of final feature column names == final_feature_columns.
-    '''
+    """
 
     try:
         logger.info("Starting feature engineering process...")
@@ -480,14 +492,14 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
     # ]
 
     # Combine expected features
-    expected_feature_columns = (
+    REQUIRED_COLUMNS = (
         origin_features + 
         engineered_features + 
         one_hot_cols
     )
 
     # Filter expected features to only those present in the dataframe
-    present_expected_features = [col for col in expected_feature_columns if col in df_processed.columns]
+    present_expected_features = [col for col in REQUIRED_COLUMNS if col in df_processed.columns]
 
     # Identify all numeric columns in the processed dataframe
     all_numeric_features = df_processed.select_dtypes(include=np.number).columns.tolist()
