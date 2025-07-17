@@ -17,9 +17,10 @@ import os
 import logging
 import time
 from typing import Dict, Any, Optional, List, Union
+import uuid
 from . import preprocessing
 from . import feature_engineering
-from apps.core.models import Transaction
+from apps.core.models import Transaction, AnalysisReport
 import numpy as np
 from django.db.models.query import QuerySet
 
@@ -90,56 +91,90 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
     2. Preprocesses the data
     3. Generates features (using the training columns)
     5. Performs anomaly detection
+    6. Saves the results for each transaction into an AnalysisReport
 
     Args:
         transactions_qs: QuerySet of transactions to analyze.
-        contamination: float (default = 0.05) # make available to str 'auto' later
+        contamination: The proportion of outliers in the data set.
 
-        
     Returns:
+        A dictionary containing the results of the analysis.
     """
 
     start_time = time.time()
-    logger.info(f"Starting anomaly analysis for {len(transactions_qs)} transactions.")
-    logger.info(f"Contamination parameter: {contamination}")
+    logger.info(f"Starting anomaly analysis for {transactions_qs.count()} transactions.")
+    logger.debug(f"Contamination parameter: {contamination}")
 
     try:
-        # 1. Convert the transaction data to a DataFrame
-        raw_df = preprocessing.get_transaction_dataframe(transactions_qs)
+        ### 1. Convert the transaction data to a DataFrame
         step_start = time.time()
         if not model_loaded:
             raise ValueError("Model files not found. Please run the training script first.")
-        
-        # 2. Preprocess the data
-        cleaned_df = preprocessing.clean_raw_data(raw_df)
-        step_start = time.time()
-        logger.info(f"Preprocessing completed in {step_end - step_start:.2f} seconds")
 
-        # 3. Generate features
+        raw_df = preprocessing.get_transaction_dataframe(transactions_qs)
+        logger.info(f"Raw data converted to DataFrame in {time.time() - step_start:.2f} seconds")
+        
+        ### 2. Preprocess the data
+        cleaned_df = preprocessing.clean_raw_data(raw_df)
+        
+        step_start = time.time()
+        logger.info(f"Preprocessing completed in {time.time() - step_start:.2f} seconds")
+
+        ### 3. Generate features
         featured_df, feature_columns_list = feature_engineering.create_features(cleaned_df)
 
-        # 4. Align columns with the model's training columns
+        ### 4. Align columns with the model's training columns
         final_df = featured_df[feature_columns_list] #reorders columns to match the order of the training columns and discards columns that are no longer needed.
 
         # 5. Perform anomaly detection
         anomaly_labels, anomaly_scores = analyze_anomalies(final_df, contamination)
-        step_start = time.time()
+        
+        if anomaly_labels is None or anomaly_scores is None:
+            raise ValueError("Anomaly detection failed, received no labels or scores.")
 
         # Step 6: SHAP Analysis - Generate explainability
         logger.debug("Generating SHAP values for explainability...")
         step_start = time.time()
-
-        shap_values_json = generate_shap_values(model, final_df)
-
         
+        shap_values = generate_shap_values(model, final_df)
 
         logger.debug("SHAP values generated successfully")
-        logger.debug(f"SHAP analysis completed in {time.time() - step_start:.3f}s")
+        logger.info(f"SHAP values generated in {time.time() - step_start:.2f} seconds")
+        
+        # 7. Unpack and Save to Database
+        analysis_run_id = uuid.uuid4()
+        transactions_list = list(transactions_qs)
+        reports_to_create = []
 
+        for i, transaction in enumerate(transactions_list):
+            step_start = time.time()
+            
+            shap_values_for_transaction = dict(zip(final_df.columns, shap_values[i].tolist()))
+                # shap_values[i] gets the SHAP values for the i-th transaction
+                # .tolist() converts the numpy array to a Python list
+                # zip() pairs each column name with its corresponding SHAP value
+                # dict() creates a dictionary from these pairs
+
+            reports_to_create.append(
+                AnalysisReport(
+                    transaction=transaction,
+                    analysis_run_id=analysis_run_id,
+                    is_anomaly=bool(anomaly_labels[i]),
+                    anomaly_score=anomaly_scores[i],
+                    shap_values=shap_values_for_transaction,
+                    contamination_param=contamination,
+                )
+            )
+
+        AnalysisReport.objects.bulk_create(reports_to_create)
+        logger.info(f"Successfully saved {len(reports_to_create)} analysis reports.")
 
         # Compile final results
         results = {
-            
+            "status": "success",
+            "analysis_run_id": str(analysis_run_id),
+            "transactions_analyzed": len(transactions_list),
+            "anomalies_found": int(np.sum(anomaly_labels))
         }
 
         # Log successful completion
@@ -149,8 +184,11 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
 
     except Exception as e:
         # Comprehensive error handling with timing information
-        total_time = time.time() - start_time
-        return
+        logger.error(f"Analysis failed: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 # ============================================================================
 # UTILITY FUNCTIONS
