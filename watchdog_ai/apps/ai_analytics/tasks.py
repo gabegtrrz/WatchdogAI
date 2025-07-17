@@ -19,8 +19,7 @@ def perform_anomaly_detection(transaction_ids, contamination):
         transactions = Transaction.objects.filter(id__in=transaction_ids)
         logger.info(f"Found {transactions.count()} transactions to analyze")
         
-        # Note: This is a simplified loop. For high performance, consider
-        # batch processing of transactions instead of one-by-one.
+        # consider batch processing of transactions instead of one-by-one.
         for transaction in transactions:
             logger.info(f"Processing transaction {transaction.id}")
             

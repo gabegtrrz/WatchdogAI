@@ -24,6 +24,8 @@ from apps.core.models import Transaction
 # Configure logging for this module
 logger = logging.getLogger(__name__)
 
+# Model is loaded at module import
+
 # =============================================================================
 # MODEL CONFIGURATION AND LOADING
 # =============================================================================
@@ -146,23 +148,25 @@ def generate_shap_values(model: Any, final_df: pd.DataFrame) -> str:
         base_values = explainer.expected_value
         if base_values is None:
             base_values = 0.5
-        # Only call .tolist() if attribute exists and is not a list already
-        elif hasattr(base_values, 'tolist') and not isinstance(base_values, (list, tuple)):
+        elif isinstance(base_values, (list, tuple)):
+            base_values = list(base_values)
+        elif hasattr(base_values, 'tolist'):
             try:
                 base_values = base_values.tolist()
             except (AttributeError, TypeError):
+                # Fallback if tolist() fails unexpectedly
                 base_values = 0.5
-        elif isinstance(base_values, (list, tuple)):
-            base_values = list(base_values)
         else:
             try:
-                # Only call float() on convertible types
+                # Handle scalar values that are convertible to float
                 if isinstance(base_values, (int, float, str)):
                     base_values = float(base_values)
                 else:
+                    # Default for non-convertible types
                     base_values = 0.5
             except (ValueError, TypeError):
                 base_values = 0.5
+        
         # Return structured SHAP explanation data
         return json.dumps({
             'values': shap_values[0].tolist(),
@@ -179,6 +183,24 @@ def generate_shap_values(model: Any, final_df: pd.DataFrame) -> str:
             'feature_names': final_df.columns.tolist(),
             'error': 'SHAP calculation failed'
         })
+
+def debug_column_issue(df: pd.DataFrame, stage: str) -> None:
+    """Debug function to identify where 'is_anomaly' column might be coming from.
+    
+    Args:
+        df: DataFrame to check
+        stage: Name of the processing stage for logging
+    """
+    if 'is_anomaly' in df.columns:
+        logger.error(f"CRITICAL: 'is_anomaly' column found at stage: {stage}")
+        logger.error(f"DataFrame columns: {list(df.columns)}")
+        logger.error(f"DataFrame shape: {df.shape}")
+        # Check if any other columns contain 'anomaly' in their name
+        anomaly_related_cols = [col for col in df.columns if 'anomaly' in col.lower()]
+        if anomaly_related_cols:
+            logger.error(f"Anomaly-related columns found: {anomaly_related_cols}")
+    else:
+        logger.debug(f"No 'is_anomaly' column found at stage: {stage}")
 
 # =============================================================================
 # DATA CONVERSION FUNCTIONS
@@ -265,7 +287,7 @@ def align_columns(df: pd.DataFrame, training_columns: List[str]) -> pd.DataFrame
     3. Ensures column order matches training data exactly.
     4. Returns DataFrame with identical structure to training data.
     
-    **Purpose:** Ensures model input compatibility and prevents dimension mismatch errors.
+    Purpose: Ensures model input compatibility and prevents dimension mismatch errors.
     
     Args:
         df: Input DataFrame with potentially mismatched columns.
@@ -321,7 +343,7 @@ def align_columns(df: pd.DataFrame, training_columns: List[str]) -> pd.DataFrame
 # =======================
 
 def run_complete_analysis(transaction: Transaction, contamination_param: float) -> Dict[str, Any]:
-    """Orchestrates the complete anomaly detection pipeline for a single transaction.
+    """Complete anomaly detection pipeline for a SINGLE transaction.
     
     Workflow Steps:
     1. Model Validation: Verifies trained Isolation Forest model is loaded.
@@ -333,13 +355,13 @@ def run_complete_analysis(transaction: Transaction, contamination_param: float) 
     7. SHAP Analysis: Generates explainable AI values for feature importance.
     8. Result Compilation: Returns comprehensive analysis results.
     
-    **Error Handling:** Returns fallback results if any step fails, ensuring system resilience.
+    Error Handling: Returns fallback results if any step fails, ensuring system resilience.
     
-    **Performance Monitoring:** Tracks timing for each pipeline stage for optimization.
+    Performance Monitoring: Tracks timing for each pipeline stage for optimization.
     
     Args:
-        transaction: The Django Transaction model instance to analyze.
-        contamination_param: The contamination parameter for the model (stored for record-keeping).
+        transaction: Transaction instance to analyze.
+        contamination_param: Contamination parameter for the model (stored for record-keeping).
 
     Returns:
         dict: Comprehensive analysis results containing:
@@ -361,30 +383,57 @@ def run_complete_analysis(transaction: Transaction, contamination_param: float) 
         # Step 1: Convert Django model to DataFrame
         logger.debug("Converting transaction to DataFrame...")
         step_start = time.time()
+
         transaction_df = model_to_dataframe(transaction)
+
         logger.debug(f"DataFrame shape: {transaction_df.shape}")
         logger.debug(f"DataFrame conversion completed in {time.time() - step_start:.3f}s")
+
+
 
         # Step 2: Preprocessing - Clean and validate raw data
         logger.debug("Starting preprocessing...")
         step_start = time.time()
+
         preprocessed_df = preprocessing.clean_raw_data(transaction_df)
+
         logger.debug(f"Preprocessed DataFrame shape: {preprocessed_df.shape}")
         logger.debug(f"Preprocessing completed in {time.time() - step_start:.3f}s")
+
+
 
         # Step 3: Feature Engineering - Create derived features
         logger.debug("Starting feature engineering...")
         step_start = time.time()
+
         featured_df, feature_columns = feature_engineering.create_model_features(preprocessed_df)
+
         logger.debug(f"Feature engineering complete. Feature columns: {len(feature_columns)}")
         logger.debug(f"Feature engineering completed in {time.time() - step_start:.3f}s")
+
+
 
         # Step 4: Column Alignment - Ensure model compatibility
         logger.debug("Aligning columns with training data...")
         step_start = time.time()
+
+        # Safety check: Explicitly remove 'is_anomaly' column if present
+        if 'is_anomaly' in featured_df.columns:
+            logger.warning("Found 'is_anomaly' column in FEATURED DataFrame - removing to prevent data leakage")
+            featured_df = featured_df.drop(columns=['is_anomaly'])
+
         final_df = align_columns(featured_df, training_columns)
+
+        # Double-check that 'is_anomaly' is not in final DataFrame
+        if 'is_anomaly' in final_df.columns:
+            logger.error("'is_anomaly' column still present in FINAL DataFrame - removing")
+            final_df = final_df.drop(columns=['is_anomaly'])
+
         logger.debug(f"Final DataFrame shape: {final_df.shape}")
+        logger.debug(f"Final DataFrame columns: {list(final_df.columns)}")
         logger.debug(f"Column alignment completed in {time.time() - step_start:.3f}s")
+
+
 
         # Step 5: Model Inference - Run anomaly detection
         logger.debug("Running model inference...")
