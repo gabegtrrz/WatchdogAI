@@ -14,7 +14,7 @@
                 <div class="card-body p-4">
                     <p class="text-muted">You have selected <strong id="transaction-count">{{ transaction_count }}</strong> transaction(s) for analysis. Please set the analysis parameters below.</p>
                     
-                    <form id="analysis-form">
+                    <form id="analysis-form" action="{% url 'run_analysis' %}" method="POST">
                         {% csrf_token %}
                         {{ form.as_p }}
                         <div class="d-flex justify-content-between mt-4">
@@ -51,32 +51,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Analysis configuration page loaded');
     
-    // Add a test function to verify fetch is working
-    window.testFetch = function() {
-        console.log('Testing fetch functionality...');
-        fetch("{% url 'run_analysis' %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value
-            },
-            body: JSON.stringify({
-                transaction_ids: [1, 2, 3],
-                contamination: 0.1
-            })
-        })
-        .then(response => {
-            console.log('Test response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Test response data:', data);
-        })
-        .catch(error => {
-            console.error('Test fetch error:', error);
-        });
-    };
-    
     const analysisForm = document.getElementById('analysis-form');
     const analysisModal = document.getElementById('analysis-modal');
     
@@ -103,32 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     const statusText = document.getElementById('modal-status-text');
     
-    // Get transaction IDs
-    const transactionIdsField = document.querySelector('input[name="transaction_ids"]');
-    if (!transactionIdsField) {
-        console.error('Transaction IDs field not found');
-        console.log('Available form fields:', document.querySelectorAll('input[name]'));
-        alert('Transaction IDs field not found. Please go back and select transactions again.');
-        return;
-    }
-    
-    let transactionIds;
-    try {
-        transactionIds = JSON.parse(transactionIdsField.value);
-        console.log('Transaction IDs loaded:', transactionIds);
-        
-        if (!Array.isArray(transactionIds) || transactionIds.length === 0) {
-            console.error('No transaction IDs found or invalid format');
-            alert('No transaction IDs found. Please go back and select transactions again.');
-            return;
-        }
-    } catch (error) {
-        console.error('Error parsing transaction IDs:', error);
-        console.log('Raw transaction IDs value:', transactionIdsField.value);
-        alert('Error loading transaction data. Please go back and try again.');
-        return;
-    }
-
     analysisForm.addEventListener('submit', function(e) {
         e.preventDefault();
         console.log('Form submitted');
@@ -165,6 +113,18 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Get transaction IDs from session (they should be available from the view)
+        const transactionIdsField = document.querySelector('input[name="transaction_ids"]');
+        let transactionIds = [];
+        
+        if (transactionIdsField && transactionIdsField.value) {
+            try {
+                transactionIds = JSON.parse(transactionIdsField.value);
+            } catch (error) {
+                console.error('Error parsing transaction IDs:', error);
+            }
+        }
+
         const requestData = {
             transaction_ids: transactionIds,
             contamination: contamination
@@ -181,10 +141,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
             
             if (!response.ok) {
-                // Try to get error details from response
                 return response.json().then(errorData => {
                     throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
                 }).catch(() => {
@@ -196,13 +154,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log('Response data:', data);
             if (data.success && data.task_id) {
-                // Check if task completed immediately (eager mode)
                 if (data.completed && data.redirect_url) {
                     statusText.textContent = 'Analysis complete. Redirecting...';
                     console.log('Redirecting to:', data.redirect_url);
                     setTimeout(() => {
                         window.location.href = data.redirect_url;
-                    }, 1000); // Small delay to show completion message
+                    }, 1000);
                 } else {
                     statusText.textContent = 'Analysis is running. Please wait...';
                     pollTaskStatus(data.task_id);
@@ -249,12 +206,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
+                    console.error('Task status polling error:', error);
                     clearInterval(interval);
                     analysisModalInstance.hide();
-                    console.error('Polling error:', error);
-                    alert('An error occurred while checking the analysis status: ' + error.message);
+                    alert('Error checking analysis status: ' + error.message);
                 });
-        }, 3000); // Poll every 3 seconds
+        }, 2000); // Poll every 2 seconds
     }
 });
 </script>

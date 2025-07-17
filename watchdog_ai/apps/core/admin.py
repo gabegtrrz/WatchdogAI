@@ -253,12 +253,18 @@ class AnalysisReportAdmin(admin.ModelAdmin):
     def get_anomaly_score(self, obj):
         """Display anomaly score with color coding and percentage."""
         if obj.anomaly_score is not None:
-            percentage = obj.anomaly_percentage
-            color = 'red' if obj.is_anomaly else 'green'
-            return format_html(
-                '<span style="color: {};">{:.2f} ({:.1f}%)</span>',
-                color, obj.anomaly_score, percentage
-            )
+            # Ensure values are properly converted to float for formatting
+            try:
+                score = float(obj.anomaly_score)
+                percentage = float(obj.anomaly_percentage) if obj.anomaly_percentage is not None else 0.0
+                color = 'red' if obj.is_anomaly else 'green'
+                return format_html(
+                    '<span style="color: {};">{:.2f} ({:.1f}%)</span>',
+                    color, score, percentage
+                )
+            except (ValueError, TypeError):
+                # Fallback if conversion fails
+                return f"Score: {obj.anomaly_score}"
         return "N/A"
     get_anomaly_score.short_description = 'Anomaly Score'
     get_anomaly_score.admin_order_field = 'anomaly_score'
