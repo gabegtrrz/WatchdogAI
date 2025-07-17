@@ -38,7 +38,7 @@ model: Optional[Any] = None
 training_columns: List[str] = []
 
 def _load_model_files() -> None:
-    """Loads the trained Isolation Forest model and training columns."""
+    """Loads the trained Isolation Forest model and training columns.
     
     **Process:**
     1. Checks if model files exist on disk
@@ -47,6 +47,7 @@ def _load_model_files() -> None:
     4. Sets global state variables for model availability
     
     **Error Handling:** Sets fallback state if files are missing or corrupted.
+    """
 
     global model_loaded, model, training_columns
     
@@ -93,7 +94,7 @@ def test_logging() -> str:
     return "Logging test completed"
 
 def safe_float_conversion(value: Any, field_name: str = "") -> float:
-    """Safely converts a value to a float, with comprehensive error handling."""
+    """Safely converts a value to a float, with comprehensive error handling.
     
     **Process:**
     1. Handles None values by returning 0.
@@ -108,6 +109,7 @@ def safe_float_conversion(value: Any, field_name: str = "") -> float:
     Returns:
         float: Converted value or 0.0 if conversion fails.
     """
+
     try:
         if value is None:
             return 0.0
@@ -178,7 +180,7 @@ def generate_shap_values(model: Any, final_df: pd.DataFrame) -> str:
 # =============================================================================
 
 def model_to_dataframe(transaction: Transaction) -> pd.DataFrame:
-    """Converts a Django Transaction model instance to a pandas DataFrame."""
+    """Converts a Django Transaction model instance to a pandas DataFrame.
     
     **Process:**
     1. Extracts all relevant fields from the Transaction model.
@@ -250,7 +252,7 @@ def model_to_dataframe(transaction: Transaction) -> pd.DataFrame:
         raise
 
 def align_columns(df: pd.DataFrame, training_columns: List[str]) -> pd.DataFrame:
-    """Aligns DataFrame columns to match the model's training columns exactly."""
+    """Aligns DataFrame columns to match the model's training columns exactly.
     
     **Process:**
     1. Removes extra columns not present in training data.
@@ -304,12 +306,12 @@ def align_columns(df: pd.DataFrame, training_columns: List[str]) -> pd.DataFrame
         logger.error(f"Error aligning columns: {e}", exc_info=True)
         raise
 
-# =============================================================================
+# =======================
 # MAIN ANALYSIS WORKFLOW
-# =============================================================================
+# =======================
 
 def run_complete_analysis(transaction: Transaction, contamination_param: float) -> Dict[str, Any]:
-    """Orchestrates the complete anomaly detection pipeline for a single transaction."""
+    """Orchestrates the complete anomaly detection pipeline for a single transaction.
     
     **Workflow Steps:**
     1. **Model Validation**: Verifies trained Isolation Forest model is loaded.
@@ -335,6 +337,7 @@ def run_complete_analysis(transaction: Transaction, contamination_param: float) 
             - anomaly_score (float): Raw anomaly score from the model.
             - shap_values_json (str): JSON string containing SHAP explanations.
     """
+    
     start_time = time.time()
     logger.info(f"Starting anomaly analysis for transaction ID: {transaction.transaction_id}")
     logger.debug(f"Contamination parameter: {contamination_param}")
@@ -413,7 +416,7 @@ def run_complete_analysis(transaction: Transaction, contamination_param: float) 
         return _get_fallback_result()
 
 def _get_fallback_result() -> Dict[str, Any]:
-    """Returns a standardized fallback result when model analysis fails."""
+    """Returns a standardized fallback result when model analysis fails.
     
     **Purpose:** Ensures system resilience by providing consistent fallback behavior.
     
