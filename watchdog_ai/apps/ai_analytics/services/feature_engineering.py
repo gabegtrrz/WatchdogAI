@@ -1,8 +1,5 @@
 """
-Feature Engineering Service for Anomaly Detection
-
-This service engineers features for the anomaly detection model by transforming
-raw procurement data into meaningful features that help identify specific irregularities.
+Engineers features for the anomaly detection model
 
 The service creates three main categories of features:
 1. Date-based features - to detect timing anomalies
@@ -19,6 +16,71 @@ from typing import Tuple, List
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
+
+def create_model_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
+    '''
+    Engineers features from the preprocessed DataFrame for anomaly detection.
+
+    Transforms raw procurement data into engineered features that
+    help the anomaly detection model identify specific types of irregularities.
+
+    Args:
+        df (pd.DataFrame): Preprocessed DataFrame containing procurement transaction data.
+                          Must include columns for dates, prices, suppliers, and methods as specified in preprocess.py.
+
+    Returns:
+        tuple: (pd.DataFrame, list)
+            - pd.DataFrame: The final DataFrame with all engineered features
+            - list: List of final feature column names used for model training
+
+    Feature Categories:
+        A. Date-Based Features: Detect timing anomalies
+        B. Price & Budget Features: Detect financial irregularities and budget violations
+        C. Categorical & Interaction Features: Detect supplier favoritism and collusion
+
+    Note: We append to 
+    the original dataframe == df, and 
+    return the final dataframe == df_final,
+    and the list of final feature column names == final_feature_columns.
+    '''
+
+    try:
+        logger.info("Starting feature engineering process...")
+        logger.debug(f"Input DataFrame shape: {df.shape}")
+
+        # Step 1: Convert decimal columns to float
+        df = _convert_decimal_columns(df)
+
+        # Step 2: Create financial features
+        df = _create_finance_features(df)
+
+        # Step 3: Create date-based features
+        df = _create_date_based_features(df)
+
+        # Step 4: Create supplier-related features
+        df = _create_supplier_features(df)
+
+        # Step 5: Create efficiency features
+        df = _create_efficiency_features(df)
+
+        # Step 6: Drop transformed source columns
+        df = _drop_transformed_columns(df)
+
+        # Step 7: Impute missing values
+        df = _impute_missing_values(df)
+
+        # Step 8: Perform one-hot encoding
+        df_processed = _perform_one_hot_encoding(df)
+
+        # Step 9: Get final feature columns and create final DataFrame
+        df_final, final_feature_columns = _get_final_feature_columns(df_processed)
+
+        logger.info("Feature engineering process completed successfully.")
+        return df_final, final_feature_columns
+
+    except Exception as e:
+        logger.error(f"An error occurred during feature engineering: {e}", exc_info=True)
+        raise
 
 def safe_date_diff(d1: pd.Timestamp, d2: pd.Timestamp) -> float:
     """Safely calculates the difference in days between two dates, handling NaT."""
@@ -95,19 +157,41 @@ def _create_date_based_features(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def _create_price_budget_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Create price and budget features to detect financial irregularities.
-
-    Targets: 'BidCeilingCollusion', 'PriceExceedsBudget'
-
+def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Create financial features from base numerical columns for anomaly detection.
+    
+    Transforms raw numerical procurement data into engineered features that help
+    identify specific types of financial irregularities, budget violations, and pricing anomalies.
+    
+    Targets: 'BidCeilingCollusion', 'PriceExceedsBudget', 'SuspiciousOverpricing'
+    
     Args:
         df: Input DataFrame
-
+        
     Returns:
-        pd.DataFrame: DataFrame with price and budget features added
+        pd.DataFrame: DataFrame with financial features added
     """
-    logger.debug("Creating price and budget features...")
+    logger.debug("Creating financial features...")
+    
+    # Price per unit efficiency
+    # Measures how efficiently the budget is used per unit purchased.
+    # High values might indicate overpricing or low quantity purchases.
+    # This helps detect suspicious pricing patterns where unit costs are inflated.
+    epsilon = 1e-6  # Small value to prevent division by zero
+    df['price_per_unit_efficiency'] = df['unit_purchase_price'] / (df['total_purchase_price'] / df['quantity'] + epsilon)
+    
+    # Quantity efficiency ratio
+    # Measures the relationship between quantity purchased and total price.
+    # Unusual ratios might indicate bulk purchase anomalies or pricing irregularities.
+    df['quantity_efficiency_ratio'] = df['quantity'] / (df['total_purchase_price'] + epsilon)
 
+    
+    # Unit price deviation from average
+    # Measures how much each transaction's unit price deviates from the overall average.
+    # Large deviations might indicate price manipulation or quality differences.
+    overall_avg_unit_price = df['unit_purchase_price'].mean()
+    df['unit_price_deviation_from_avg'] = df['unit_purchase_price'] - overall_avg_unit_price
+    
     # Budget utilization ratio
     # This feature measures how much of the approved budget is actually spent.
     # Values > 1 indicate budget overruns, which could signal poor planning,
@@ -116,7 +200,30 @@ def _create_price_budget_features(df: pd.DataFrame) -> pd.DataFrame:
     # conservative estimates or last-minute changes.
     safe_budget = df['approved_budget'].replace(0, np.nan)  # Avoid division by zero
     df['budget_utilization_ratio'] = df['total_purchase_price'] / safe_budget
-
+    
+    # Budget efficiency score
+    # Combines budget utilization with price efficiency.
+    # Values close to 1 indicate good budget utilization, while very high or low values might indicate issues.
+    df['budget_efficiency_score'] = (df['total_purchase_price'] / safe_budget) * (1 / (1 + abs(df['unit_price_deviation_from_avg'])))
+    
+    # Price variance indicator
+    # Measures the coefficient of variation for unit prices across the dataset.
+    # High variance might indicate inconsistent pricing or potential manipulation.
+    unit_price_std = df['unit_purchase_price'].std()
+    unit_price_mean = df['unit_purchase_price'].mean()
+    df['price_variance_coefficient'] = unit_price_std / (unit_price_mean + epsilon)
+    
+    # Quantity-price correlation feature
+    # Measures the relationship between quantity and unit price.
+    # Negative correlation might indicate bulk discounts, while positive might indicate scarcity pricing.
+    df['quantity_price_correlation_feature'] = df['quantity'] * df['unit_purchase_price']
+    
+    # Average price deviation (if average_price column exists)
+    # Measures how much each transaction's total price deviates from the average price for similar items.
+    if 'average_price' in df.columns:
+        df['total_price_deviation_from_avg'] = df['total_purchase_price'] - df['average_price']
+        df['price_competitiveness_score'] = df['total_purchase_price'] / (df['average_price'] + epsilon)
+    
     return df
 
 def _create_supplier_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -231,7 +338,10 @@ def _drop_transformed_columns(df: pd.DataFrame) -> pd.DataFrame:
         'bid_opening_date', 'notice_of_award_date', 'contract_signing_date',
 
         # Raw categorical columns are encoded into numerical representations.
-        'supplier'
+        'supplier',
+        
+        # Base numerical columns that have been transformed into engineered features
+        'quantity', 'unit_purchase_price', 'total_purchase_price', 'approved_budget'
     ]
     df.drop(columns=columns_to_drop, inplace=True, errors='ignore')
     return df
@@ -252,12 +362,22 @@ def _impute_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     """
     logger.debug("Handling missing values in engineered features...")
     engineered_features = [
+        # Base numerical features
+        'price_per_unit_efficiency',
+        'quantity_efficiency_ratio',
+        'unit_price_deviation_from_avg',
+        'budget_efficiency_score', 'price_variance_coefficient', 'quantity_price_correlation_feature',
+        'budget_utilization_ratio', 'total_price_deviation_from_avg', 'price_competitiveness_score',
+        
+        # Date-based features
         'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
         'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
-        'budget_utilization_ratio',
-        'supplier_frequency',
-        'price_per_supplier_freq',
-        'price_deviation_from_supplier_avg', 'budget_efficiency_score', 'timeline_efficiency', 'weekend_activity'
+        
+        # Supplier features
+        'supplier_frequency', 'price_per_supplier_freq', 'price_deviation_from_supplier_avg',
+        
+        # Efficiency features
+        'timeline_efficiency', 'weekend_activity'
     ]
 
     # Impute missing values with median for each engineered feature
@@ -303,16 +423,26 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
     """
     # Define expected engineered features
     engineered_features = [
+        # Base numerical features
+        'price_per_unit_efficiency',
+        'quantity_efficiency_ratio','unit_price_deviation_from_avg',
+        'budget_efficiency_score', 'price_variance_coefficient', 'quantity_price_correlation_feature',
+        'budget_utilization_ratio', 'total_price_deviation_from_avg', 'price_competitiveness_score',
+        
+        # Date-based features
         'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
         'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
-        'budget_utilization_ratio',
-        'supplier_frequency',
-        'price_per_supplier_freq',
-        'price_deviation_from_supplier_avg', 'budget_efficiency_score', 'timeline_efficiency', 'weekend_activity'
+        
+        # Supplier features
+        'supplier_frequency', 'price_per_supplier_freq', 'price_deviation_from_supplier_avg',
+        
+        # Efficiency features
+        'timeline_efficiency', 'weekend_activity'
     ]
 
     # Get one-hot encoded columns
     one_hot_cols = [col for col in df_processed.columns if 'procurement_method_' in col]
+
     # e.g.:
     # one_hot_cols = [
     #     'procurement_method_Open_Bidding',
@@ -349,65 +479,3 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
 
     return df_final, final_feature_columns
 
-def create_model_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
-    '''
-    Engineers features from the preprocessed DataFrame for anomaly detection.
-
-    Transforms raw procurement data into engineered features that
-    help the anomaly detection model identify specific types of irregularities.
-
-    Args:
-        df (pd.DataFrame): Preprocessed DataFrame containing procurement transaction data.
-                          Must include columns for dates, prices, suppliers, and methods as specified in preprocess.py.
-
-    Returns:
-        tuple: (pd.DataFrame, list)
-            - pd.DataFrame: The final DataFrame with all engineered features
-            - list: List of final feature column names used for model training
-
-    Feature Categories:
-        A. Date-Based Features: Detect timing anomalies
-        B. Price & Budget Features: Detect financial irregularities and budget violations
-        C. Categorical & Interaction Features: Detect supplier favoritism and collusion
-
-    Note: We append to the original dataframe, df, and return the final dataframe, df_final,
-    and the list of final feature column names, final_feature_columns.
-    '''
-
-    try:
-        logger.info("Starting feature engineering process...")
-        logger.debug(f"Input DataFrame shape: {df.shape}")
-
-        # Step 1: Convert decimal columns to float
-        df = _convert_decimal_columns(df)
-
-        # Step 2: Create date-based features
-        df = _create_date_based_features(df)
-
-        # Step 3: Create price and budget features
-        df = _create_price_budget_features(df)
-
-        # Step 4: Create supplier-related features
-        df = _create_supplier_features(df)
-
-        # Step 5: Create efficiency features
-        df = _create_efficiency_features(df)
-
-        # Step 6: Drop transformed source columns
-        df = _drop_transformed_columns(df)
-
-        # Step 7: Impute missing values
-        df = _impute_missing_values(df)
-
-        # Step 8: Perform one-hot encoding
-        df_processed = _perform_one_hot_encoding(df)
-
-        # Step 9: Get final feature columns and create final DataFrame
-        df_final, final_feature_columns = _get_final_feature_columns(df_processed)
-
-        logger.info("Feature engineering process completed successfully.")
-        return df_final, final_feature_columns
-
-    except Exception as e:
-        logger.error(f"An error occurred during feature engineering: {e}", exc_info=True)
-        raise
