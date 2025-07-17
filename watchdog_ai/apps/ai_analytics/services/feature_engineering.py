@@ -341,7 +341,7 @@ def _drop_transformed_columns(df: pd.DataFrame) -> pd.DataFrame:
         'supplier',
         
         # Base numerical columns that have been transformed into engineered features
-        'quantity', 'unit_purchase_price', 'total_purchase_price', 'approved_budget'
+        'unit_purchase_price', 'total_purchase_price', 'approved_budget'
     ]
     df.drop(columns=columns_to_drop, inplace=True, errors='ignore')
     return df
@@ -422,8 +422,14 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
         Tuple[pd.DataFrame, List[str]]: Final DataFrame and list of feature column names
     """
     # Define expected engineered features
+
+    # Origin Features
+    origin_features = [
+        'quantity',
+    ]
+
     engineered_features = [
-        # Base numerical features
+        # Financial features
         'price_per_unit_efficiency',
         'quantity_efficiency_ratio','unit_price_deviation_from_avg',
         'budget_efficiency_score', 'price_variance_coefficient', 'quantity_price_correlation_feature',
@@ -453,7 +459,11 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
     # ]
 
     # Combine expected features
-    expected_feature_columns = engineered_features + one_hot_cols
+    expected_feature_columns = (
+        origin_features + 
+        engineered_features + 
+        one_hot_cols
+    )
 
     # Filter expected features to only those present in the dataframe
     present_expected_features = [col for col in expected_feature_columns if col in df_processed.columns]
