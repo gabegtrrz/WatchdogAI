@@ -195,7 +195,7 @@ class Command(BaseCommand):
             logger.info(f'Cleaned data shape: {cleaned_df.shape}')
 
             logger.info('Starting feature engineering...')
-            df_processed, _ = feature_engineering.create_model_features(cleaned_df)
+            df_processed, _ = feature_engineering.create_features(cleaned_df)
             logger.info(f'Feature engineering completed. Processed data shape: {df_processed.shape}')
             
             return df_processed

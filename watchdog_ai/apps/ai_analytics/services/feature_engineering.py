@@ -16,20 +16,32 @@ from typing import Tuple, List
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
-# =============================================================================
+# ===========================
 # REQUIRED DATABASE COLUMNS
-# =============================================================================
+# ============================
 
 # List of raw database columns required for feature engineering
 # This list is imported by the preprocessing service to dynamically fetch
 # the necessary data from the database.
 REQUIRED_COLUMNS = []
+PROCUREMENT_METHODS = [
+    'Competitive Bidding',
+    'Direct Contracting',
+    'Limited Source Bidding',
+    'Negotiated Procurement',
+    'Negotiated Procurement (Agency-to-Agency)',
+    'Negotiated Procurement (Small Value Procurement)',
+    'Negotiated Procurement (Two Failed Biddings)',
+    'Repeat Order',
+]
+REQUIRED_COLUMNS.extend(PROCUREMENT_METHODS)
+
 
 
 # =============================================================================
 # FEATURE CREATION ORCHESTRATION
 # =============================================================================
-def create_features(df: pd.DataFrame, is_training: bool = False) -> pd.DataFrame:
+def create_features(df: pd.DataFrame, is_training: bool = False) -> Tuple[pd.DataFrame, List[str]]:
     """
     Orchestrates the creation of all features for the anomaly detection model.
 
@@ -75,14 +87,14 @@ def create_features(df: pd.DataFrame, is_training: bool = False) -> pd.DataFrame
         # Step 5: Create efficiency features
         df = _create_efficiency_features(df)
 
-        # Step 6: Drop transformed source columns
-        df = _drop_transformed_columns(df)
+        # Step 6: Perform one-hot encoding (before dropping columns)
+        df_processed = _perform_one_hot_encoding(df)
 
         # Step 7: Impute missing values
-        df = _impute_missing_values(df)
+        df_processed = _impute_missing_values(df_processed)
 
-        # Step 8: Perform one-hot encoding
-        df_processed = _perform_one_hot_encoding(df)
+        # Step 8: Drop transformed unnecessary columns
+        df_processed = _drop_transformed_columns(df_processed)
 
         # Step 9: Get final feature columns and create final DataFrame
         df_final, final_feature_columns = _get_final_feature_columns(df_processed)
@@ -239,7 +251,7 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
 
         imputed_average_price = df['unit_purchase_price'] * random_variation_arr
 
-        average_price = df['average_price'].fillna(imputed_average_price)
+        average_price = df['average_price'].fillna(imputed_average_price).infer_objects(copy=False)
         
         df['price_deviation_from_avg'] = df['unit_purchase_price'] - average_price
 
@@ -301,7 +313,9 @@ def _create_supplier_features(df: pd.DataFrame) -> pd.DataFrame:
     valid_prices_df = df[df['unit_purchase_price'].notna()]
     if not valid_prices_df.empty:
         valid_supplier_prices = valid_prices_df.groupby('supplier')['unit_purchase_price']
-        supplier_price_stats = valid_supplier_prices.agg(['mean', 'std']).fillna(0)
+        supplier_price_stats = valid_supplier_prices.agg(['mean', 'std']).fillna(0).infer_objects(copy=False) 
+        # .infer_objects(copy=False) converts the data type to float64.
+
     else:
         # If no valid prices exist, create an empty DataFrame with the expected columns
         # to avoid errors in subsequent steps.
@@ -313,7 +327,9 @@ def _create_supplier_features(df: pd.DataFrame) -> pd.DataFrame:
     # Large deviations might indicate price manipulation or quality differences.
     # Use safe mapping to handle suppliers not in the stats
     supplier_mean_prices = supplier_price_stats['mean'].to_dict()
-    df['price_deviation_from_supplier_avg'] = df['unit_purchase_price'] - df['supplier'].map(supplier_mean_prices).fillna(0)
+    df['price_deviation_from_supplier_avg'] = df['unit_purchase_price'] - df['supplier'].map(supplier_mean_prices).fillna(0).infer_objects(copy=False)
+    # .infer_objects(copy=False) converts the data type to float64.
+
     return df
 
 def _create_efficiency_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -352,11 +368,7 @@ def _create_efficiency_features(df: pd.DataFrame) -> pd.DataFrame:
 
 def _drop_transformed_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Drop original columns that have been transformed into engineered features.
-
-    To keep the final feature set clean and relevant for the model, we drop the original
-    columns that have already been transformed into engineered features. This prevents
-    data leakage and reduces the dimensionality of the input data.
+    Drops original columns that were used to create new, engineered features. This avoids data leakage and reduces dataset dimensionality.
 
     Args:
         df: Input DataFrame
@@ -374,7 +386,12 @@ def _drop_transformed_columns(df: pd.DataFrame) -> pd.DataFrame:
         'supplier',
         
         # Base numerical columns that have been transformed into engineered features
-        'unit_purchase_price', 'total_purchase_price', 'approved_budget', 'average_price'
+        'unit_purchase_price', 'total_purchase_price', 'approved_budget', 'average_price',
+
+        # blockchain and database columns:
+        'id', 'transaction_id', 'block_id', 'blockchain_retry_count', 'procurement_method_id',
+
+
     ]
     df.drop(columns=columns_to_drop, inplace=True, errors='ignore')
     return df
@@ -419,6 +436,7 @@ def _impute_missing_values(df: pd.DataFrame) -> pd.DataFrame:
             missing_count = df[col].isnull().sum()
             median_val = df[col].median()
             df.fillna({col: median_val}, inplace=True)
+            df.infer_objects(copy=False)
             logger.debug(f"Imputed {missing_count} missing values in {col} with median: {median_val}")
     return df
 
@@ -436,6 +454,17 @@ def _perform_one_hot_encoding(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: DataFrame with one-hot encoded columns
     """
     logger.debug("Performing one-hot encoding...")
+    
+    # Check if procurement_method column exists
+    if 'procurement_method' not in df.columns:
+        logger.warning("procurement_method column not found in DataFrame. Skipping one-hot encoding.")
+        return df
+    
+    # Check if procurement_method column has any data
+    if df['procurement_method'].isna().all():
+        logger.warning("procurement_method column contains only NaN values. Skipping one-hot encoding.")
+        return df
+    
     df_processed = pd.get_dummies(
         df,
         columns=['procurement_method'],  # specifies which column(s) to encode
@@ -492,7 +521,7 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
     # ]
 
     # Combine expected features
-    REQUIRED_COLUMNS = (
+    REQUIRED_COLUMNS.extend(
         origin_features + 
         engineered_features + 
         one_hot_cols
@@ -521,4 +550,3 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
     df_final = df_processed[final_feature_columns]
 
     return df_final, final_feature_columns
-

@@ -217,6 +217,7 @@ def clean_raw_data(df: pd.DataFrame):
                 missing_count = df[col].isnull().sum()
                 median_val = df[col].median()
                 df[col].fillna(median_val, inplace=True)
+                df[col] = df[col].infer_objects(copy=False)
                 logger.debug(f"Imputed {missing_count} missing values in {col} with median: {median_val}")
 
         # --- D. Data Type Conversion ---

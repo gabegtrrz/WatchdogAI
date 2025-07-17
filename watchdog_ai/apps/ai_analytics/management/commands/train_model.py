@@ -142,7 +142,7 @@ class Command(BaseCommand):
         self.stdout.write('Starting feature engineering...')
 
         try:
-            df_processed, training_columns = feature_engineering.create_model_features(cleaned_df)
+            df_processed, training_columns = feature_engineering.create_features(cleaned_df)
             logger.info(f'Feature engineering completed. Processed data shape: {df_processed.shape}')
             logger.info(f'Training columns: {training_columns}')
         except Exception as e:
