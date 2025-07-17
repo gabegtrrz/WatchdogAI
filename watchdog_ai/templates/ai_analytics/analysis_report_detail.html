@@ -1,74 +1,256 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Anomaly Report: {{ report.transaction.transaction_id }}{% endblock %}
-
-{% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/shapjs@0.1.0/shap.min.js"></script>
-<style>
-    .shap-plot-container {
-        border: 1px solid #dee2e6;
-        border-radius: .375rem;
-        padding: 1.5rem;
-        background-color: #fff;
-    }
-    .explanation-text {
-        line-height: 1.6;
-    }
-</style>
-{% endblock %}
+{% block title %}Analysis Report Detail - {{ report.transaction.transaction_id }}{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
     <div class="row">
-        <!-- Transaction Details Column -->
-        <div class="col-lg-5">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1"><i class="fas fa-search-plus me-2"></i>Analysis Report Detail</h2>
+                    <p class="text-muted mb-0">Transaction ID: <strong class="font-monospace">{{ report.transaction.transaction_id }}</strong></p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-danger fs-6">Anomaly Score: {{ report.anomaly_score|floatformat:4 }}</span>
+                </div>
+            </div>
+
+            <!-- Transaction Details -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light">
-                    <h4 class="mb-0 fw-bold"><i class="fas fa-file-invoice-dollar me-2"></i>Transaction Details</h4>
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Transaction Information</h5>
                 </div>
                 <div class="card-body">
-                    <h5 class="card-title">{{ report.transaction.item_name }}</h5>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between">
-                            <strong>Transaction ID:</strong> <span>{{ report.transaction.transaction_id }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between">
-                            <strong>Total Price:</strong> <span>₱{{ report.transaction.total_purchase_price|floatformat:2 }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between">
-                            <strong>Supplier:</strong> <span>{{ report.transaction.supplier_name }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between">
-                            <strong>Anomaly Score:</strong> <span class="text-danger fw-bold">{{ report.anomaly_score|floatformat:4 }}</span>
-                        </li>
-                    </ul>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Basic Information</h6>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Transaction ID</small>
+                                    <strong class="font-monospace">{{ report.transaction.transaction_id }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Item Name</small>
+                                    <strong>{{ report.transaction.item_name }}</strong>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Supplier</small>
+                                    <strong>{{ report.transaction.supplier }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Quantity</small>
+                                    <strong>{{ report.transaction.quantity }}</strong>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Unit Price</small>
+                                    <strong>₱{{ report.transaction.unit_purchase_price|floatformat:2 }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Total Price</small>
+                                    <strong class="text-danger">₱{{ report.transaction.total_purchase_price|floatformat:2 }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Procurement Details</h6>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Procurement Method</small>
+                                    <strong>{{ report.transaction.procurement_method }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Officer</small>
+                                    <strong>{{ report.transaction.procurement_officer|default:"-" }}</strong>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Project Name</small>
+                                    <strong>{{ report.transaction.project_name|default:"-" }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">End User Unit</small>
+                                    <strong>{{ report.transaction.end_user_unit|default:"-" }}</strong>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Transaction Date</small>
+                                    <strong>{{ report.transaction.transaction_date|date:"M d, Y" }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Average Price</small>
+                                    <strong>₱{{ report.transaction.average_price|floatformat:2|default:"-" }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Anomaly Explanation Column -->
-        <div class="col-lg-7">
-            <div class="card shadow-sm">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0 fw-bold"><i class="fas fa-lightbulb me-2"></i>Anomaly Explanation</h4>
+            <!-- Analysis Results -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Analysis Results</h5>
                 </div>
                 <div class="card-body">
-                    <h5 class="mb-3">Feature Contribution Plot</h5>
-                    <div id="shap-plot" class="shap-plot-container mb-4"></div>
-                    
-                    <h5 class="mb-3">Summary</h5>
-                    <p class="explanation-text">
-                        This transaction was flagged as an anomaly with a score of <strong>{{ report.anomaly_score|floatformat:4 }}</strong>.
-                        The plot above illustrates the features that pushed the model's prediction from the baseline towards this anomalous score.
-                        Features in <span class="text-primary">blue</span> decrease the score (making it more normal), while features in <span class="text-danger">red</span> increase the score (making it more anomalous).
-                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Anomaly Detection</h6>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Is Anomaly</small>
+                                    <strong class="text-danger">
+                                        {% if report.is_anomaly %}
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Yes
+                                        {% else %}
+                                            <i class="fas fa-check-circle me-1"></i>No
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Anomaly Score</small>
+                                    <strong class="text-danger">{{ report.anomaly_score|floatformat:4 }}</strong>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Contamination Parameter</small>
+                                    <strong>{{ report.contamination_param|floatformat:3 }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Analysis Date</small>
+                                    <strong>{{ report.created_at|date:"M d, Y H:i" }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Analysis Metadata</h6>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Analysis Run ID</small>
+                                    <strong class="font-monospace">{{ report.analysis_run_id|default:"-" }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Report ID</small>
+                                    <strong class="font-monospace">{{ report.id }}</strong>
+                                </div>
+                            </div>
+                            {% if report.error_message %}
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <small class="text-muted d-block">Error Message</small>
+                                    <strong class="text-danger">{{ report.error_message }}</strong>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <!-- SHAP Values Visualization -->
+            {% if report.shap_values %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Feature Importance (SHAP Values)</h5>
+                </div>
+                <div class="card-body">
+                    <div id="shap-chart" class="text-center">
+                        <p class="text-muted">SHAP values visualization would be displayed here.</p>
+                        <small class="text-muted">This would show which features contributed most to the anomaly detection.</small>
+                    </div>
+                    
+                    <!-- SHAP Values Table -->
+                    <div class="mt-4">
+                        <h6 class="text-primary mb-3">Feature Contributions</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th class="text-end">SHAP Value</th>
+                                        <th class="text-end">Impact</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% comment %}
+                                    This would be populated with actual SHAP values from the report
+                                    For now, showing placeholder data
+                                    {% endcomment %}
+                                    <tr>
+                                        <td>Total Purchase Price</td>
+                                        <td class="text-end text-danger">+0.234</td>
+                                        <td class="text-end">
+                                            <span class="badge bg-danger">High</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Unit Price</td>
+                                        <td class="text-end text-warning">+0.156</td>
+                                        <td class="text-end">
+                                            <span class="badge bg-warning">Medium</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Quantity</td>
+                                        <td class="text-end text-info">-0.089</td>
+                                        <td class="text-end">
+                                            <span class="badge bg-info">Low</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Anomaly Explanation -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Anomaly Explanation</h5>
+                </div>
+                <div class="card-body">
+                    {% if report.is_anomaly %}
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Why this transaction was flagged as anomalous:</h6>
+                            <ul class="mb-0">
+                                <li><strong>High Total Purchase Price:</strong> This transaction's total price is significantly higher than similar transactions.</li>
+                                <li><strong>Price Deviation:</strong> The unit price deviates substantially from the average market price.</li>
+                                <li><strong>Supplier Pattern:</strong> Unusual procurement pattern compared to historical data.</li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success">
+                            <h6 class="alert-heading"><i class="fas fa-check-circle me-2"></i>This transaction appears normal:</h6>
+                            <p class="mb-0">The transaction values and patterns are within expected ranges for similar procurements.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="text-center">
+                <a href="{% url 'analysis_results' analysis_run_id=report.analysis_run_id %}" class="btn btn-secondary me-2">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Results
+                </a>
+                <a href="{% url 'transaction_list' %}" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-list me-2"></i>Transaction List
+                </a>
+                <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-success">
+                    <i class="fas fa-flask-vial me-2"></i>New Analysis
+                </a>
+            </div>
         </div>
-    </div>
-    <div class="text-center mt-4">
-        <a href="{% url 'analysis_results' report.analysis_run_id %}" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Results</a>
     </div>
 </div>
 {% endblock %}

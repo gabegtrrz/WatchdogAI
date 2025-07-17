@@ -8,11 +8,39 @@
     <div class="card shadow-sm">
         <div class="card-header bg-light border-bottom">
             <h4 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2"></i>Analysis Results</h4>
-            <p class="mb-0 text-muted">Run ID: {{ analysis_run_id }}</p>
+            <p class="mb-0 text-muted">Run ID: {{ analysis_run_id|default:"Unknown" }}</p>
         </div>
         <div class="card-body">
+            <!-- Analysis Summary -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h5 class="text-primary mb-1">{{ total_transactions|default:"0" }}</h5>
+                        <small class="text-muted">Total Analyzed</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h5 class="text-danger mb-1">{{ anomaly_count|default:"0" }}</h5>
+                        <small class="text-muted">Anomalies Found</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h5 class="text-success mb-1">{{ anomaly_percentage|default:"0"|floatformat:1 }}%</h5>
+                        <small class="text-muted">Anomaly Rate</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h5 class="text-info mb-1">{{ contamination_param|default:"0.1"|floatformat:3 }}</h5>
+                        <small class="text-muted">Contamination Param</small>
+                    </div>
+                </div>
+            </div>
+
             {% if reports %}
-                <h5 class="mb-3">Anomalous Transactions Detected</h5>
+                <h5 class="mb-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Anomalous Transactions Detected</h5>
                 <div class="table-responsive">
                     <table class="table table-hover table-striped">
                         <thead class="table-dark">
@@ -28,11 +56,13 @@
                         <tbody>
                             {% for report in reports %}
                                 <tr>
-                                    <td>{{ report.transaction.transaction_id }}</td>
+                                    <td><strong class="font-monospace">{{ report.transaction.transaction_id }}</strong></td>
                                     <td>{{ report.transaction.item_name }}</td>
                                     <td>{{ report.transaction.supplier }}</td>
-                                    <td class="text-end">{{ report.transaction.total_purchase_price|floatformat:2 }}</td>
-                                    <td class="text-end text-danger fw-bold">{{ report.anomaly_score|floatformat:4 }}</td>
+                                    <td class="text-end">₱{{ report.transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
+                                    <td class="text-end">
+                                        <span class="badge bg-danger">{{ report.anomaly_score|floatformat:4 }}</span>
+                                    </td>
                                     <td>
                                         <a href="{% url 'analysis_report_detail' report.id %}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-search-plus me-1"></i>View Details
@@ -47,10 +77,37 @@
                 <div class="alert alert-success text-center" role="alert">
                     <h4 class="alert-heading"><i class="fas fa-check-circle me-2"></i>No Anomalies Found</h4>
                     <p>The analysis completed successfully, and no transactions were flagged as anomalous in this run.</p>
+                    {% if total_transactions %}
+                        <hr>
+                        <p class="mb-0"><strong>{{ total_transactions }}</strong> transactions were analyzed with a contamination parameter of <strong>{{ contamination_param|default:"0.1" }}</strong>.</p>
+                    {% endif %}
                 </div>
             {% endif %}
+
+            <!-- Analysis Details -->
+            {% if analysis_details %}
+            <div class="mt-4">
+                <h6 class="text-muted mb-3"><i class="fas fa-info-circle me-2"></i>Analysis Details</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Analysis Run ID</small>
+                        <strong class="font-monospace">{{ analysis_run_id|default:"Unknown" }}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Analysis Date</small>
+                        <strong>{{ analysis_date|default:"Unknown" }}</strong>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <div class="mt-4 text-center">
-                <a href="{% url 'transaction_list' %}" class="btn btn-secondary"><i class="fas fa-list me-2"></i>Back to Transaction List</a>
+                <a href="{% url 'transaction_list' %}" class="btn btn-secondary me-2">
+                    <i class="fas fa-list me-2"></i>Back to Transaction List
+                </a>
+                <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-flask-vial me-2"></i>Run New Analysis
+                </a>
             </div>
         </div>
     </div>
