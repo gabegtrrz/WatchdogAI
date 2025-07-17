@@ -27,7 +27,12 @@
                 </div>
                 <div class="col-md-3">
                     <div class="text-center p-3 bg-light rounded">
-                        <h5 class="text-success mb-1">{{ anomaly_percentage|default:"0"|floatformat:1 }}%</h5>
+                        {% if total_transactions and total_transactions > 0 and anomaly_count %}
+                            {% widthratio anomaly_count total_transactions 100 as anomaly_percentage %}
+                            <h5 class="text-success mb-1">{{ anomaly_percentage|floatformat:1 }}%</h5>
+                        {% else %}
+                            <h5 class="text-success mb-1">0.0%</h5>
+                        {% endif %}
                         <small class="text-muted">Anomaly Rate</small>
                     </div>
                 </div>
@@ -38,6 +43,30 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Analysis Status Summary -->
+            {% if total_transactions %}
+            <div class="alert alert-info mb-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Analysis Status:</strong> 
+                        {% if anomaly_count and anomaly_count > 0 %}
+                            <span class="text-warning">Anomalies detected</span>
+                        {% else %}
+                            <span class="text-success">No anomalies found</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Analysis Coverage:</strong> 
+                        {% if total_transactions > 0 %}
+                            <span class="text-info">{{ total_transactions }} transactions processed</span>
+                        {% else %}
+                            <span class="text-muted">No transactions processed</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             {% if reports %}
                 <h5 class="mb-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Anomalous Transactions Detected</h5>
@@ -59,7 +88,7 @@
                                     <td><strong class="font-monospace">{{ report.transaction.transaction_id }}</strong></td>
                                     <td>{{ report.transaction.item_name }}</td>
                                     <td>{{ report.transaction.supplier }}</td>
-                                    <td class="text-end">₱{{ report.transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
+                                    <td class="text-end">${{ report.transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
                                     <td class="text-end">
                                         <span class="badge bg-danger">{{ report.anomaly_score|floatformat:4 }}</span>
                                     </td>
@@ -77,9 +106,19 @@
                 <div class="alert alert-success text-center" role="alert">
                     <h4 class="alert-heading"><i class="fas fa-check-circle me-2"></i>No Anomalies Found</h4>
                     <p>The analysis completed successfully, and no transactions were flagged as anomalous in this run.</p>
-                    {% if total_transactions %}
+                    {% if total_transactions and total_transactions > 0 %}
                         <hr>
-                        <p class="mb-0"><strong>{{ total_transactions }}</strong> transactions were analyzed with a contamination parameter of <strong>{{ contamination_param|default:"0.1" }}</strong>.</p>
+                        <p class="mb-0">
+                            <strong>{{ total_transactions }}</strong> transactions were analyzed with a contamination parameter of <strong>{{ contamination_param|default:"0.1" }}</strong>.
+                            {% if contamination_param %}
+                                {% widthratio contamination_param 1 100 as contamination_percent %}
+                                {% widthratio contamination_param total_transactions 1 as expected_anomalies %}
+                                <br><small class="text-muted">Expected anomalies: ~{{ expected_anomalies|floatformat:0 }} ({{ contamination_percent|floatformat:1 }}% of total)</small>
+                            {% endif %}
+                        </p>
+                    {% else %}
+                        <hr>
+                        <p class="mb-0 text-muted">No transactions were available for analysis.</p>
                     {% endif %}
                 </div>
             {% endif %}
