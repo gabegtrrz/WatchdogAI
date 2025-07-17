@@ -296,7 +296,7 @@ class Command(BaseCommand):
             logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
             
             # Calculate evaluation metrics
-            evaluation_results = self._calculate_metrics(true_labels_binary, predicted_labels, config)
+            evaluation_results = self._calculate_metrics(true_labels=true_labels_binary, predicted_labels=predicted_labels, config=config)
             
             # Add dataset information
             evaluation_results['dataset_info'] = {
