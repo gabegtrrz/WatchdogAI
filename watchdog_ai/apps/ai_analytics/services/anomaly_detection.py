@@ -81,7 +81,7 @@ _load_model_files()
 
 def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05) -> Dict[str, Any]:
     """
-    Run the complete anomaly detection pipeline for selected transactions.
+    Run the complete anomaly detection pipeline for all selected transactions.
 
     **Process:**
     0. Model files already loaded.
@@ -97,12 +97,11 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
 
         
     Returns:
-        Dict[str, Any]: Dictionary containing the results of the analysis
     """
 
     start_time = time.time()
-    logger.info(f"Starting anomaly analysis for transaction ID: {transaction.transaction_id}")
-    logger.debug(f"Contamination parameter: {contamination}")
+    logger.info(f"Starting anomaly analysis for {len(transactions_qs)} transactions.")
+    logger.info(f"Contamination parameter: {contamination}")
 
     try:
         # 1. Convert the transaction data to a DataFrame
@@ -123,7 +122,7 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         final_df = featured_df[feature_columns_list] #reorders columns to match the order of the training columns and discards columns that are no longer needed.
 
         # 5. Perform anomaly detection
-        anomaly_labels = analyze_anomalies(final_df, contamination)
+        anomaly_labels, anomaly_scores = analyze_anomalies(final_df, contamination)
         step_start = time.time()
 
         # Step 6: SHAP Analysis - Generate explainability
@@ -131,6 +130,8 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         step_start = time.time()
 
         shap_values_json = generate_shap_values(model, final_df)
+
+        
 
         logger.debug("SHAP values generated successfully")
         logger.debug(f"SHAP analysis completed in {time.time() - step_start:.3f}s")
@@ -149,7 +150,6 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
     except Exception as e:
         # Comprehensive error handling with timing information
         total_time = time.time() - start_time
-        logger.error(f"Error in anomaly detection for transaction {transaction.transaction_id} after {total_time:.3f}s: {e}", exc_info=True)
         return
 
 # ============================================================================
@@ -184,15 +184,15 @@ def analyze_anomalies(final_df: pd.DataFrame, contamination: float=0.05):
                    f'using contamination rate of {contamination:.4f} and threshold of {threshold:.4f}'
                    )
 
-            return predicted_labels
+            return predicted_labels, anomaly_scores
 
         else:
             logger.error("Model is None, cannot perform inference")
-            return 
+            return None, None
     
     except Exception as e:
         logger.error(f"Error in anomaly detection: {e}", exc_info=True)
-        return 
+        return None, None
 
 
 
