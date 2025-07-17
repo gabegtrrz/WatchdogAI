@@ -561,7 +561,7 @@ class Command(BaseCommand):
         return df
 
     def _save_output_files(self, df_raw, df_labeled, config_path, config, is_training_data=False):
-        """Saves the two required CSV files to the specified output folder."""
+        """Saves the data split into training (70%), testing (20%), and evaluation (10) datasets."""
         # Determine output directory
         output_folder_path = config.get('output_folder_path', 'generated_data')
         
@@ -570,21 +570,70 @@ class Command(BaseCommand):
         output_dir = os.path.join(output_folder_path, str(timestamp))
         os.makedirs(output_dir, exist_ok=True)
 
-        # Define file paths
-        raw_path = os.path.join(output_dir, 'transactions.csv')
-        labeled_path = os.path.join(output_dir, 'transactions_with_labels.csv')
+        # Create separate subdirectories for labeled and unlabeled data
+        labeled_dir = os.path.join(output_dir, 'labeled')
+        unlabeled_dir = os.path.join(output_dir, 'unlabeled')
+        os.makedirs(labeled_dir, exist_ok=True)
+        os.makedirs(unlabeled_dir, exist_ok=True)
 
-        # Conditionally remove the 'total_purchase_price' column
+        # Split data into training (70%), testing (20%), and evaluation (10%) datasets.
+        total_samples = len(df_raw)
+        train_size = int(total_samples * 0.7)
+        test_size = int(total_samples * 0.2)
+        # eval_size = total_samples - train_size - test_size  # Remaining 10%
+        
+        # Create indices for splitting
+        indices = np.random.permutation(total_samples)
+        train_indices = indices[:train_size]
+        test_indices = indices[train_size:train_size + test_size]
+        eval_indices = indices[train_size + test_size:]
+        
+        # Split the dataframes
+        df_raw_train = df_raw.iloc[train_indices].reset_index(drop=True)
+        df_raw_test = df_raw.iloc[test_indices].reset_index(drop=True)
+        df_raw_eval = df_raw.iloc[eval_indices].reset_index(drop=True)
+        
+        df_labeled_train = df_labeled.iloc[train_indices].reset_index(drop=True)
+        df_labeled_test = df_labeled.iloc[test_indices].reset_index(drop=True)
+        df_labeled_eval = df_labeled.iloc[eval_indices].reset_index(drop=True)
+
+        # Conditionally remove the 'total_purchase_price' column for non-training data
         if not is_training_data:
-            if 'total_purchase_price' in df_raw.columns:
-                df_raw = df_raw.drop(columns=['total_purchase_price'])
-            if 'total_purchase_price' in df_labeled.columns:
-                df_labeled = df_labeled.drop(columns=['total_purchase_price'])
+            for df_list in [df_raw_test, df_raw_eval, df_labeled_test, df_labeled_eval]:
+                if 'total_purchase_price' in df_list.columns:
+                    df_list.drop(columns=['total_purchase_price'], inplace=True)
 
-        # Save raw data (without the is_anomaly column)
-        df_raw.to_csv(raw_path, index=False)
-        self.stdout.write(self.style.SUCCESS(f"Successfully saved raw data to: {raw_path}"))  # type: ignore
+        # Save unlabeled data (raw data without anomaly labels)
+        train_raw_path = os.path.join(unlabeled_dir, 'training.csv')
+        test_raw_path = os.path.join(unlabeled_dir, 'testing.csv')
+        eval_raw_path = os.path.join(unlabeled_dir, 'eval.csv')
+        
+        df_raw_train.to_csv(train_raw_path, index=False)
+        df_raw_test.to_csv(test_raw_path, index=False)
+        df_raw_eval.to_csv(eval_raw_path, index=False)
+        
+        self.stdout.write(self.style.SUCCESS(f"Unlabeled data saved to {unlabeled_dir}:"))  # type: ignore
+        self.stdout.write(f"  - Training: {train_raw_path} ({len(df_raw_train)} samples)")
+        self.stdout.write(f"  - Testing: {test_raw_path} ({len(df_raw_test)} samples)")
+        self.stdout.write(f"  - Evaluation: {eval_raw_path} ({len(df_raw_eval)} samples)")
 
-        # Save labeled data
-        df_labeled.to_csv(labeled_path, index=False)
-        self.stdout.write(self.style.SUCCESS(f"Successfully saved labeled data to: {labeled_path}"))  # type: ignore 
+        # Save labeled data (with anomaly labels)
+        train_labeled_path = os.path.join(labeled_dir, 'training.csv')
+        test_labeled_path = os.path.join(labeled_dir, 'testing.csv')
+        eval_labeled_path = os.path.join(labeled_dir, 'eval.csv')
+        
+        df_labeled_train.to_csv(train_labeled_path, index=False)
+        df_labeled_test.to_csv(test_labeled_path, index=False)
+        df_labeled_eval.to_csv(eval_labeled_path, index=False)
+        
+        self.stdout.write(self.style.SUCCESS(f"Labeled data saved to {labeled_dir}:"))  # type: ignore
+        self.stdout.write(f"  - Training: {train_labeled_path} ({len(df_labeled_train)} samples)")
+        self.stdout.write(f"  - Testing: {test_labeled_path} ({len(df_labeled_test)} samples)")
+        self.stdout.write(f"  - Evaluation: {eval_labeled_path} ({len(df_labeled_eval)} samples)")
+
+        # Print split summary
+        self.stdout.write(self.style.SUCCESS(f"\nData split summary:"))  # type: ignore
+        self.stdout.write(f"  - Training: {len(df_raw_train)} samples (70%)")
+        self.stdout.write(f"  - Testing: {len(df_raw_test)} samples (20%)")
+        self.stdout.write(f"  - Evaluation: {len(df_raw_eval)} samples (10%)")
+        self.stdout.write(f"  - Total: {total_samples} samples") 
