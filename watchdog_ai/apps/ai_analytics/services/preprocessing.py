@@ -220,10 +220,16 @@ def clean_raw_data(df: pd.DataFrame):
         ]
         for col in date_features:
             if col in df.columns:
+                # Store original values before conversion to identify invalid dates
+                original_values = df[col].copy()
                 df[col] = pd.to_datetime(df[col], errors='coerce')
                 invalid_dates = df[col].isna().sum()
                 if invalid_dates > 0:
-                    logger.warning(f"Found {invalid_dates} invalid dates in column {col}")
+                    # Find the original values that became NaT
+                    invalid_mask = df[col].isna()
+                    invalid_original_values = original_values[invalid_mask].unique()
+                    logger.warning(f"Found {invalid_dates} invalid dates in column {col}. Coerced to NaT.")
+                    logger.warning(f"Invalid date values in {col}: {invalid_original_values.tolist()}")
 
         logger.info("Data cleaning completed successfully")
         logger.debug(f"Output DataFrame shape: {df.shape}")

@@ -148,25 +148,23 @@ def generate_shap_values(model: Any, final_df: pd.DataFrame) -> str:
         base_values = explainer.expected_value
         if base_values is None:
             base_values = 0.5
-        elif isinstance(base_values, (list, tuple)):
-            base_values = list(base_values)
-        elif hasattr(base_values, 'tolist'):
+        # Only call .tolist() if attribute exists and is not a list already
+        elif hasattr(base_values, 'tolist') and not isinstance(base_values, (list, tuple)):
             try:
                 base_values = base_values.tolist()
             except (AttributeError, TypeError):
-                # Fallback if tolist() fails unexpectedly
                 base_values = 0.5
+        elif isinstance(base_values, (list, tuple)):
+            base_values = list(base_values)
         else:
             try:
-                # Handle scalar values that are convertible to float
+                # Only call float() on convertible types
                 if isinstance(base_values, (int, float, str)):
                     base_values = float(base_values)
                 else:
-                    # Default for non-convertible types
                     base_values = 0.5
             except (ValueError, TypeError):
                 base_values = 0.5
-        
         # Return structured SHAP explanation data
         return json.dumps({
             'values': shap_values[0].tolist(),
