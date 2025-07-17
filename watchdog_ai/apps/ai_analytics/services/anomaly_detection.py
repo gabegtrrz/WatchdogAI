@@ -80,7 +80,7 @@ def _load_model_files():
 _load_model_files()
 
 
-def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05) -> Dict[str, Any]:
+def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05, analysis_run_id: uuid.UUID = None) -> Dict[str, Any]:
     """
     Run the complete anomaly detection pipeline for all selected transactions.
 
@@ -142,7 +142,10 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         logger.info(f"SHAP values generated in {time.time() - step_start:.2f} seconds")
         
         # 7. Unpack and Save to Database
-        analysis_run_id = uuid.uuid4()
+        analysis_run_id = analysis_run_id 
+        if not analysis_run_id:
+            raise ValueError("Analysis run ID is required")
+
         transactions_list = list(transactions_qs)
         reports_to_create = []
 

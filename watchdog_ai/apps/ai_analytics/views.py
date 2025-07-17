@@ -333,7 +333,8 @@ def run_analysis(request):
                         'success': True, 
                         'task_id': task.id,
                         'completed': True,
-                        'redirect_url': reverse('analysis_results', args=[analysis_run_id])
+                        'redirect_url': reverse('analysis_results', args=[analysis_run_id]
+                        'contamination': contamination_float)
                     })
                 else:
                     return JsonResponse({
@@ -395,15 +396,29 @@ def get_task_status(request, task_id):
 def analysis_results(request, analysis_run_id):
     """
     Displays the results of a specific analysis run.
+    Provides comprehensive context including summary statistics.
     """
-    anomalous_reports = AnalysisReport.objects.filter(
-        analysis_run_id=analysis_run_id,
-        is_anomaly=True
-    ).select_related('transaction').order_by('-anomaly_score')
+    # Get all reports for this analysis run (both anomalous and normal)
+    all_reports = AnalysisReport.objects.filter(
+        analysis_run_id=analysis_run_id
+    ).select_related('transaction')
+    
+    # Get only anomalous reports for display
+    anomalous_reports = all_reports.filter(is_anomaly=True).order_by('-anomaly_score')
+    
+    # Calculate summary statistics
+    total_transactions = all_reports.count()
+    anomaly_count = anomalous_reports.count()
+    
+    # Get contamination SETTING
+    contamination_param = request.GET.get('contamination')
     
     return render(request, 'ai_analytics/analysis_results.html', {
         'reports': anomalous_reports,
-        'analysis_run_id': analysis_run_id
+        'analysis_run_id': analysis_run_id,
+        'total_transactions': total_transactions,
+        'anomaly_count': anomaly_count,
+        'contamination_param': contamination_param,
     })
 
 def analysis_report_detail(request, report_id):
