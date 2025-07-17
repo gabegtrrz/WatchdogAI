@@ -289,12 +289,22 @@ class Command(BaseCommand):
 
             # Get predictions from trained model
             logger.info('Getting predictions from trained model...')
-            scores = model.predict(features_df)
-            
-            # Convert scores to binary predictions: -1 (anomaly) -> 1, 1 (normal) -> 0
-            predicted_labels = (scores == -1).astype(int)
-            logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
-            
+
+            # Get raw anomaly scores. Lower score means more anomalous.
+            anomaly_scores = model.score_samples(features_df)
+
+            # Get the contamination rate from the model (already updated from config)
+            contamination_rate = model.contamination
+
+            # Calculate the threshold based on the contamination rate
+            # This determines the cutoff for what is considered an anomaly.
+            threshold = np.percentile(anomaly_scores, contamination_rate * 100)
+
+            # Classify samples as anomalies (1) or normal (0) based on the threshold
+            predicted_labels = (anomaly_scores <= threshold).astype(int)
+
+            logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)} using a contamination rate of {contamination_rate:.4f} and a score threshold of {threshold:.4f}')
+
             # Calculate evaluation metrics
             evaluation_results = self._calculate_metrics(true_labels=true_labels_binary, predicted_labels=predicted_labels, config=config)
             
@@ -437,9 +447,9 @@ class Command(BaseCommand):
             serializable_results = convert_numpy_types(evaluation_results)
             
             # Safety check: ensure serializable_results is a dictionary
-            if serializable_results is None:
-                logger.error('Failed to convert evaluation results to serializable format')
-                self.stderr.write('Failed to convert evaluation results to serializable format')
+            if not isinstance(serializable_results, dict):
+                logger.error(f'Evaluation results are not a dictionary, but {type(serializable_results)}')
+                self.stderr.write('Failed to process evaluation results: not a dictionary.')
                 return
             
             # Read existing results if file exists
