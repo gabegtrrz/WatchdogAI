@@ -286,8 +286,15 @@ def _create_supplier_features(df: pd.DataFrame) -> pd.DataFrame:
     # Measures how much the unit price varies for each supplier across transactions.
     # High variance might indicate inconsistent pricing or potential price manipulation.
     # Handle empty groups by filtering out suppliers with no valid price data
-    valid_supplier_prices = df[df['unit_purchase_price'].notna()].groupby('supplier')['unit_purchase_price']
-    supplier_price_stats = valid_supplier_prices.agg(['mean', 'std']).fillna(0)
+    valid_prices_df = df[df['unit_purchase_price'].notna()]
+    if not valid_prices_df.empty:
+        valid_supplier_prices = valid_prices_df.groupby('supplier')['unit_purchase_price']
+        supplier_price_stats = valid_supplier_prices.agg(['mean', 'std']).fillna(0)
+    else:
+        # If no valid prices exist, create an empty DataFrame with the expected columns
+        # to avoid errors in subsequent steps.
+        supplier_price_stats = pd.DataFrame(columns=['mean', 'std'])
+
 
     # Average price deviation
     # Measures how much each transaction's unit price deviates from the average price for that supplier.
