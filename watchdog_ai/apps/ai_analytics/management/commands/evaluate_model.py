@@ -301,7 +301,7 @@ class Command(BaseCommand):
 
         return predicted_labels
 
-    def _get_contamination_rate(self, model, config: Dict[str, Any]) -> Union[float, str]:
+    def _get_contamination_rate(self, model, config: Dict[str, Any]) -> float:
         """Get the contamination rate from the config, falling back to the model's default."""
         
         contamination_from_config = config.get('model', {}).get('contamination', None)
@@ -311,7 +311,8 @@ class Command(BaseCommand):
             try:
                 if str(contamination_from_config).lower() == 'auto':
                     logger.info("Using 'auto' contamination rate from config.")
-                    return 'auto'
+                    # For 'auto', use model's contamination rate
+                    return float(getattr(model, 'contamination', 0.05))
                 
                 rate = float(contamination_from_config)
                 logger.info(f"Using contamination rate from config: {rate}")
@@ -328,7 +329,7 @@ class Command(BaseCommand):
         default_rate = getattr(model, 'contamination', 0.05) # Safely get model's rate
         logger.info(f"Using model's default contamination rate: {default_rate}")
 
-        return default_rate
+        return float(default_rate)
 
     def _calculate_metrics(self, true_labels: np.ndarray, predicted_labels: np.ndarray, 
                           config: Dict[str, Any]) -> Dict[str, Any]:
