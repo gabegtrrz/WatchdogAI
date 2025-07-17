@@ -221,8 +221,22 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
     # Average price deviation (if average_price column exists)
     # Measures how much each transaction's total price deviates from the average price for similar items.
     if 'average_price' in df.columns:
-        df['total_price_deviation_from_avg'] = df['total_purchase_price'] - df['average_price']
-        df['price_competitiveness_score'] = df['total_purchase_price'] / (df['average_price'] + epsilon)
+        # Impute missing average_price with unit_purchase_price plus random variation (±20%)
+        # This creates more realistic imputed values while maintaining neutral baseline
+        random_variation_arr = np.random.uniform(0.8, 1.2, size=len(df))  # +/- 20% variation
+
+        imputed_average_price = df['unit_purchase_price'] * random_variation_arr
+
+        average_price = df['average_price'].fillna(imputed_average_price)
+        
+        df['price_deviation_from_avg'] = df['unit_purchase_price'] - average_price
+
+        df['price_competitiveness_score'] = df['unit_purchase_price'] / (average_price + epsilon)
+        
+    else:
+        # If 'average_price' column is missing entirely, create neutral features
+        df['price_deviation_from_avg'] = 0
+        df['price_competitiveness_score'] = 1.0
     
     return df
 
@@ -341,7 +355,7 @@ def _drop_transformed_columns(df: pd.DataFrame) -> pd.DataFrame:
         'supplier',
         
         # Base numerical columns that have been transformed into engineered features
-        'unit_purchase_price', 'total_purchase_price', 'approved_budget'
+        'unit_purchase_price', 'total_purchase_price', 'approved_budget', 'average_price'
     ]
     df.drop(columns=columns_to_drop, inplace=True, errors='ignore')
     return df
@@ -367,7 +381,7 @@ def _impute_missing_values(df: pd.DataFrame) -> pd.DataFrame:
         'quantity_efficiency_ratio',
         'unit_price_deviation_from_avg',
         'budget_efficiency_score', 'price_variance_coefficient', 'quantity_price_correlation_feature',
-        'budget_utilization_ratio', 'total_price_deviation_from_avg', 'price_competitiveness_score',
+        'budget_utilization_ratio', 'price_deviation_from_avg', 'price_competitiveness_score',
         
         # Date-based features
         'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
@@ -433,7 +447,7 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
         'price_per_unit_efficiency',
         'quantity_efficiency_ratio','unit_price_deviation_from_avg',
         'budget_efficiency_score', 'price_variance_coefficient', 'quantity_price_correlation_feature',
-        'budget_utilization_ratio', 'total_price_deviation_from_avg', 'price_competitiveness_score',
+        'budget_utilization_ratio', 'price_deviation_from_avg', 'price_competitiveness_score',
         
         # Date-based features
         'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
