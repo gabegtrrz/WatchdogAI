@@ -323,15 +323,15 @@ def align_columns(df: pd.DataFrame, training_columns: List[str]) -> pd.DataFrame
 def run_complete_analysis(transaction: Transaction, contamination_param: float) -> Dict[str, Any]:
     """Orchestrates the complete anomaly detection pipeline for a single transaction.
     
-    **Workflow Steps:**
-    1. **Model Validation**: Verifies trained Isolation Forest model is loaded.
-    2. **Data Conversion**: Converts Django Transaction model to pandas DataFrame.
-    3. **Preprocessing**: Cleans and validates raw transaction data.
-    4. **Feature Engineering**: Creates derived features for anomaly detection.
-    5. **Column Alignment**: Ensures DataFrame columns match model's training data.
-    6. **Model Inference**: Runs Isolation Forest prediction to detect anomalies.
-    7. **SHAP Analysis**: Generates explainable AI values for feature importance.
-    8. **Result Compilation**: Returns comprehensive analysis results.
+    Workflow Steps:
+    1. Model Validation: Verifies trained Isolation Forest model is loaded.
+    2. Data Conversion: Converts Django Transaction model to pandas DataFrame.
+    3. Preprocessing: Cleans and validates raw transaction data.
+    4. Feature Engineering: Creates derived features for anomaly detection.
+    5. Column Alignment: Ensures DataFrame columns match model's training data.
+    6. Model Inference: Runs Isolation Forest prediction to detect anomalies.
+    7. SHAP Analysis: Generates explainable AI values for feature importance.
+    8. Result Compilation: Returns comprehensive analysis results.
     
     **Error Handling:** Returns fallback results if any step fails, ensuring system resilience.
     
