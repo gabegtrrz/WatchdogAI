@@ -485,7 +485,7 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
     final_feature_columns = present_expected_features + unexpected_new_features
 
     # Safety check to ensure all columns exist, creating the final DataFrame
-    df_final = df_processed[final_feature_columns].copy()
+    df_final = df_processed[final_feature_columns]
 
     return df_final, final_feature_columns
 
