@@ -146,7 +146,8 @@ def generate_shap_values(model: Any, final_df: pd.DataFrame) -> str:
         base_values = explainer.expected_value
         if base_values is None:
             base_values = 0.5
-        elif hasattr(base_values, 'tolist'):
+        # Only call .tolist() if attribute exists and is not a list already
+        elif hasattr(base_values, 'tolist') and not isinstance(base_values, (list, tuple)):
             try:
                 base_values = base_values.tolist()
             except (AttributeError, TypeError):
@@ -155,7 +156,11 @@ def generate_shap_values(model: Any, final_df: pd.DataFrame) -> str:
             base_values = list(base_values)
         else:
             try:
-                base_values = float(base_values)
+                # Only call float() on convertible types
+                if isinstance(base_values, (int, float, str)):
+                    base_values = float(base_values)
+                else:
+                    base_values = 0.5
             except (ValueError, TypeError):
                 base_values = 0.5
         # Return structured SHAP explanation data
@@ -240,7 +245,7 @@ def model_to_dataframe(transaction: Transaction) -> pd.DataFrame:
             'bid_submission_deadline': [pd.to_datetime(str(transaction.bid_submission_deadline)) if transaction.bid_submission_deadline else None],
             'bid_opening_date': [pd.to_datetime(str(transaction.bid_opening_date)) if transaction.bid_opening_date else None],
             'notice_of_award_date': [pd.to_datetime(str(transaction.notice_of_award_date)) if transaction.notice_of_award_date else None],
-            'contract_signing_date': [pd.to_datetime(transaction.contract_signing_date) if transaction.contract_signing_date else None],
+            'contract_signing_date': [pd.to_datetime(str(transaction.contract_signing_date)) if transaction.contract_signing_date else None],
         }
         
         df = pd.DataFrame(data)
@@ -298,7 +303,12 @@ def align_columns(df: pd.DataFrame, training_columns: List[str]) -> pd.DataFrame
             logger.debug(f"Added missing columns: {missing_columns}")
         
         # Ensure columns are in the same order as training data
-        aligned_df = df[training_columns].copy()
+        aligned_df = df[training_columns]
+        # If the result is a Series (single column), convert to DataFrame
+        if isinstance(aligned_df, pd.Series):
+            aligned_df = aligned_df.to_frame().T
+        else:
+            aligned_df = aligned_df.copy()
         logger.debug(f"Column alignment complete. Output shape: {aligned_df.shape}")
         return aligned_df
         
