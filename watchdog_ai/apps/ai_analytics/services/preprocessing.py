@@ -14,19 +14,25 @@ import pandas as pd
 import numpy as np
 import logging
 from django.apps import apps
+from django.db.models.query import QuerySet
 from typing import Union, Optional
 from pathlib import Path
 from apps.transaction_management.services import process_transaction_csv
+from .feature_engineering import REQUIRED_COLUMNS
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
 
-def get_transaction_dataframe():
+def get_transaction_dataframe(transactions_qs: Optional[QuerySet] = None) -> pd.DataFrame:
     """
-    Fetches all transactions and converts them into a pandas DataFrame.
+    Fetches transactions and converts them into a pandas DataFrame.
+    If a queryset is provided, it uses it. Otherwise, it fetches all transactions.
     
     Extracts raw transaction data from the database and structures it for preprocessing.
     Serves as data extraction layer between the database and the preprocessing pipeline.
+
+    Args:
+        transactions_qs (Optional[QuerySet]): A Django QuerySet of Transaction objects.
     
     Returns:
         pd.DataFrame: Raw transaction data with all necessary columns for preprocessing and feature engineering.
@@ -50,27 +56,31 @@ def get_transaction_dataframe():
     logger.info("Fetching transaction data from database...")
     try:
         # Get the Transaction model dynamically to avoid import issues
-        Transaction = apps.get_model('core', 'Transaction')
-        transactions = Transaction.objects.all().values(
-            'transaction_id',
-            'quantity',
-            'unit_purchase_price',
-            'total_purchase_price',
-            'approved_budget',
-            'procurement_method__name',
-            'supplier',
-            'transaction_date',
-            'invitation_to_bid_posting_date',
-            'bid_submission_deadline',
-            'bid_opening_date',
-            'notice_of_award_date',
-            'contract_signing_date'
-        )
+        if transactions_qs is None:
+            Transaction = apps.get_model('core', 'Transaction')
+            transactions_qs = Transaction.objects.all()
+
+        # Ensure we have a valid QuerySet
+        if not isinstance(transactions_qs, QuerySet):
+            raise ValueError("transactions_qs must be a Django QuerySet")
+
+        # Dynamically get columns, handling procurement_method renaming
+        db_columns = [
+            'procurement_method__name' if col == 'procurement_method' else col
+            for col in REQUIRED_COLUMNS
+        ]
+        
+        transactions = transactions_qs.values(*db_columns)
+        
         df = pd.DataFrame.from_records(transactions)
-        df.set_index('transaction_id', inplace=True)
+
+        if not df.empty:
+            df.set_index('transaction_id', inplace=True)
+
         logger.info(f"Successfully loaded {len(df)} transactions from database")
         logger.debug(f"DataFrame shape: {df.shape}")
         return df
+            
     except Exception as e:
         logger.error(f"Error fetching transaction data from database: {e}", exc_info=True)
         raise
@@ -227,9 +237,10 @@ def clean_raw_data(df: pd.DataFrame):
                 if invalid_dates > 0:
                     # Find the original values that became NaT
                     invalid_mask = df[col].isna()
-                    invalid_original_values = original_values[invalid_mask].unique()
+                    invalid_original_values = original_values[invalid_mask]
+                    unique_invalid_values = pd.Series(invalid_original_values).unique()
                     logger.warning(f"Found {invalid_dates} invalid dates in column {col}. Coerced to NaT.")
-                    logger.warning(f"Invalid date values in {col}: {invalid_original_values.tolist()}")
+                    logger.warning(f"Invalid date values in {col}: {unique_invalid_values.tolist()}")
 
         logger.info("Data cleaning completed successfully")
         logger.debug(f"Output DataFrame shape: {df.shape}")
