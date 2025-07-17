@@ -66,6 +66,12 @@ class Command(BaseCommand):
         self._ensure_directories_exist()
         logger.info(f'All output directories ensured')
 
+        # Get actual contamination from config if available
+        actual_contamination_from_config = config.get('data_source', {}).get('actual_contamination')
+        if actual_contamination_from_config:
+            logger.info(f"Actual contamination specified in config: {actual_contamination_from_config}")
+            self.stdout.write(f"Actual contamination specified in config: {actual_contamination_from_config}")
+
     # 1. Get and preprocess data. Extract labels if exist
         logger.info('Fetching and preprocessing transaction data...')
         self.stdout.write('Fetching and preprocessing transaction data...')
@@ -130,18 +136,19 @@ class Command(BaseCommand):
         # 4. Determine training mode
         research_mode = config.get('training', {}).get('research_mode', False)
         
+        # Get contamination range from config (required for both modes)
+        contamination_range = config.get('model', {}).get('contamination_range', [0.1])
+        
         if research_mode:
             logger.info('Starting research mode training...')
             self.stdout.write('Starting research mode training...')
-            contamination_range = config.get('model', {}).get('contamination_range', [0.01, 0.05, 0.10, 0.15])
-            self._research_mode_training(df_processed, training_columns, contamination_range, true_labels)
+            self._research_mode_training(df_processed, training_columns, contamination_range, true_labels, actual_contamination_from_config)
         else:
-            # Standard training
+            # Standard training - use first value from contamination range
             logger.info('Starting standard training mode...')
             self.stdout.write('Starting standard training mode...')
-            contamination = config.get('model', {}).get('contamination', 'auto')
+            contamination = contamination_range[0] if contamination_range else 'auto'
             self._standard_training(df_processed, training_columns, contamination)
-
 
     def _validate_config(self, config: dict) -> bool:
         """Validate the configuration structure."""
@@ -153,11 +160,11 @@ class Command(BaseCommand):
                 self.stderr.write(f'Missing required configuration section: {section}')
                 return False
         
-        # Validate model configuration
+        # Validate model configuration - only contamination_range is required
         model_config = config.get('model', {})
-        if 'contamination' not in model_config and 'contamination_range' not in model_config:
-            logger.error('Either contamination or contamination_range must be specified in model configuration')
-            self.stderr.write('Either contamination or contamination_range must be specified in model configuration')
+        if 'contamination_range' not in model_config:
+            logger.error('contamination_range must be specified in model configuration')
+            self.stderr.write('contamination_range must be specified in model configuration')
             return False
         
         return True
@@ -216,39 +223,6 @@ class Command(BaseCommand):
         
         return model_dir, model_path, columns_path, research_log_path
 
-    def _validate_output_paths(self, model_dir: str, model_path: str, columns_path: str, research_log_path: str):
-        """
-        Validate that output paths are valid and accessible.
-        
-        Args:
-            model_dir: Directory for model files
-            model_path: Path to model file
-            columns_path: Path to columns file
-            research_log_path: Path to research log file
-        """
-        paths_to_check = [model_dir, os.path.dirname(model_path), 
-                         os.path.dirname(columns_path), os.path.dirname(research_log_path)]
-        
-        for path in paths_to_check:
-            if path and not os.path.exists(path):
-                logger.info(f'Directory will be created: {path}')
-            elif path:
-                logger.info(f'Directory already exists: {path}')
-        
-        # Check if we can write to the directories
-        for path in paths_to_check:
-            if path:
-                try:
-                    # Try to create a temporary file to test write permissions
-                    test_file = os.path.join(path, '.write_test')
-                    with open(test_file, 'w') as f:
-                        f.write('test')
-                    os.remove(test_file)
-                    logger.info(f'Write permissions confirmed for: {path}')
-                except Exception as e:
-                    logger.warning(f'Write permissions issue for {path}: {e}')
-                    self.stderr.write(f'Warning: Write permissions issue for {path}: {e}')
-
     def _ensure_directories_exist(self):
         """
         Ensure all required directories exist for output files.
@@ -274,7 +248,7 @@ class Command(BaseCommand):
                     self.stderr.write(error_msg)
                     raise
 
-    def _research_mode_training(self, df_processed, training_columns, contamination_range, true_labels):
+    def _research_mode_training(self, df_processed, training_columns, contamination_range, true_labels, actual_contamination_from_config=None):
         """Research mode with cross-validation and multiple contamination values."""
         logger.info('Running research mode with cross-validation...')
         self.stdout.write('Running research mode with cross-validation...')
@@ -305,6 +279,9 @@ class Command(BaseCommand):
             logger.warning(f'Could not load full configuration for results: {e}')
             full_config = {}
         
+        # Calculate actual contamination from data
+        actual_contamination_from_data = np.sum(true_labels) / len(true_labels) if len(true_labels) > 0 else 0
+
         # Initialize research results dictionary
         research_results = {
             'training_date': datetime.now().isoformat(),
@@ -315,7 +292,9 @@ class Command(BaseCommand):
                 'feature_columns': training_columns,
                 'labeled_data_count': len(true_labels),
                 'true_anomalies': np.sum(true_labels),
-                'true_normal': len(true_labels) - np.sum(true_labels)
+                'true_normal': len(true_labels) - np.sum(true_labels),
+                'actual_contamination_from_config': actual_contamination_from_config,
+                'actual_contamination_from_data': actual_contamination_from_data
             },
             'contamination_analysis': {},
             'best_model': None,
@@ -330,104 +309,19 @@ class Command(BaseCommand):
         for contamination in contamination_range:
             logger.info(f'Testing contamination={contamination}...')
             self.stdout.write(f'{"="*7}Testing contamination={contamination}... {"="*7}')
-            
-            # Get model parameters from config
-            model_params = self._get_model_parameters(contamination)
-            
-            model = IsolationForest(**model_params)
-            logger.info(f'IsolationForest model created with contamination={contamination}')
-            
+
             try:
-                # Get anomaly predictions for evaluation
-                logger.info(f'Fitting and predicting with contamination={contamination}...')
-                scores = model.fit_predict(training_data)
-                # returns an array where:
-                # -1 indicates an anomaly (outlier)
-                # 1 indicates normal data (inlier)
+                trial_results = self._evaluate_contamination_trial(contamination, training_data, true_labels)
+                research_results['contamination_analysis'][contamination] = trial_results
 
-                # Convert scores to binary predictions: -1 (anomaly) -> 1, 1 (normal) -> 0
-                predicted_labels = (scores == -1).astype(int) #  returns a new numpy.ndarray filled with True or False values -> int (1 or 0)
-                logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
-                
-                # Calculate metrics using true labels
-                
-                # Handle case where no anomalies are predicted
-                if np.sum(predicted_labels) == 0:
-                    logger.warning(f'No anomalies predicted for contamination={contamination}')
-                    precision = 0.0
-                    recall = 0.0
-                    f1 = 0.0
-                else:
-                    precision = precision_score(true_labels, predicted_labels, zero_division='warn')
-                    # zero_division='warn' is used to handle the case where there are no anomalies predicted.
-                    # It sets the precision to 0.0 in such cases.
-                    # This is useful because precision is undefined when there are no predicted anomalies.
-                    
-                    recall = recall_score(true_labels, predicted_labels, zero_division='warn')
+                f1 = trial_results['f1_score']
 
-                    f1 = f1_score(true_labels, predicted_labels, zero_division='warn')
-                    logger.info(f'Metrics for contamination={contamination}: precision={precision:.4f}, recall={recall:.4f}, f1={f1:.4f}')
-                
-                # Calculate confusion matrix
-                cm = confusion_matrix(true_labels, predicted_labels)
-                logger.info(f'Confusion matrix for contamination={contamination}: {cm.tolist()}')
-                
-                # Interpret confusion matrix correctly:
-                # For labels [0, 1] where 0=normal, 1=anomaly:
-                # cm[0,0] = True Negatives (TN): predicted normal, actually normal
-                # cm[0,1] = False Positives (FP): predicted anomaly, actually normal  
-                # cm[1,0] = False Negatives (FN): predicted normal, actually anomaly
-                # cm[1,1] = True Positives (TP): predicted anomaly, actually anomaly
-                
-                # Extract confusion matrix values safely
-                if cm.shape == (2, 2):
-                    tn, fp, fn, tp = cm[0,0], cm[0,1], cm[1,0], cm[1,1]
-                else:
-                    # Handle edge cases where confusion matrix might not be 2x2
-                    tn = cm[0,0] if cm.shape[0] > 0 and cm.shape[1] > 0 else 0
-                    fp = cm[0,1] if cm.shape[0] > 0 and cm.shape[1] > 1 else 0
-                    fn = cm[1,0] if cm.shape[0] > 1 and cm.shape[1] > 0 else 0
-                    tp = cm[1,1] if cm.shape[0] > 1 and cm.shape[1] > 1 else 0
-                
-                # Store results
-                research_results['contamination_analysis'][contamination] = {
-                    'precision': precision,
-                    'recall': recall,
-                    'f1_score': f1,
-                    'predicted_anomalies': np.sum(predicted_labels),
-                    'predicted_normal': len(predicted_labels) - np.sum(predicted_labels),
-                    'true_anomalies': np.sum(true_labels),
-                    'true_normal': len(true_labels) - np.sum(true_labels),
-                    'confusion_matrix': cm.tolist(),
-                    'confusion_matrix_interpreted': {
-                        'true_negatives': int(tn),
-                        'false_positives': int(fp), 
-                        'false_negatives': int(fn),
-                        'true_positives': int(tp)
-                    },
-                    'model_config': model_params
-                }
-                
-                # Log detailed anomaly information with correct interpretation
-                logger.info(f'Contamination {contamination} Results:')
-                logger.info(f'  - True anomalies: {np.sum(true_labels)}')
-                logger.info(f'  - Predicted anomalies: {np.sum(predicted_labels)}')
-                logger.info(f'  - True positives (TP): {tp} (predicted anomaly, actually anomaly)')
-                logger.info(f'  - False positives (FP): {fp} (predicted anomaly, actually normal)')
-                logger.info(f'  - False negatives (FN): {fn} (predicted normal, actually anomaly)')
-                logger.info(f'  - True negatives (TN): {tn} (predicted normal, actually normal)')
-                logger.info(f'  - Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}')
-                
-                # Verify confusion matrix interpretation
-                logger.info(f'  - Verification: TP+FN={tp+fn} (should equal true anomalies: {np.sum(true_labels)})')
-                logger.info(f'  - Verification: FP+TN={fp+tn} (should equal true normals: {len(true_labels)-np.sum(true_labels)})')
-                
                 # Track best performing model based on F1-score
                 if f1 > best_f1_score:
                     best_f1_score = f1
                     best_contamination = contamination
                     logger.info(f'New best model found: contamination={contamination}, f1_score={f1:.4f}')
-                    
+
             except Exception as e:
                 logger.error(f'Error testing contamination={contamination}: {e}', exc_info=True)
                 self.stderr.write(f'Error testing contamination={contamination}: {e}')
@@ -500,6 +394,100 @@ class Command(BaseCommand):
             
             logger.info('Research mode training complete.')
             self.stdout.write('Research mode training complete.')
+
+    def _evaluate_contamination_trial(self, contamination, training_data, true_labels):
+        """
+        Evaluate a single contamination value, returning key metrics.
+        """
+        model_params = self._get_model_parameters(contamination)
+        model = IsolationForest(**model_params)
+        logger.info(f'IsolationForest model created with contamination={contamination}')
+
+        # Get anomaly predictions for evaluation
+        logger.info(f'Fitting and predicting with contamination={contamination}...')
+        scores = model.fit_predict(training_data)
+        # returns an array where:
+        # -1 indicates an anomaly (outlier)
+        # 1 indicates normal data (inlier)
+
+        # Convert scores to binary predictions: -1 (anomaly) -> 1, 1 (normal) -> 0
+        predicted_labels = (scores == -1).astype(int) #  returns a new numpy.ndarray filled with True or False values -> int (1 or 0)
+        logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
+        
+        # Calculate metrics using true labels
+        
+        # Handle case where no anomalies are predicted
+        if np.sum(predicted_labels) == 0:
+            logger.warning(f'No anomalies predicted for contamination={contamination}')
+            precision = 0.0
+            recall = 0.0
+            f1 = 0.0
+        else:
+            precision = precision_score(true_labels, predicted_labels, zero_division='warn')
+            # zero_division='warn' is used to handle the case where there are no anomalies predicted.
+            # It sets the precision to 0.0 in such cases.
+            # This is useful because precision is undefined when there are no predicted anomalies.
+            
+            recall = recall_score(true_labels, predicted_labels, zero_division='warn')
+
+            f1 = f1_score(true_labels, predicted_labels, zero_division='warn')
+            logger.info(f'Metrics for contamination={contamination}: precision={precision:.4f}, recall={recall:.4f}, f1={f1:.4f}')
+        
+        # Calculate confusion matrix
+        cm = confusion_matrix(true_labels, predicted_labels)
+        logger.info(f'Confusion matrix for contamination={contamination}: {cm.tolist()}')
+        
+        # Interpret confusion matrix correctly:
+        # For labels [0, 1] where 0=normal, 1=anomaly:
+        # cm[0,0] = True Negatives (TN): predicted normal, actually normal
+        # cm[0,1] = False Positives (FP): predicted anomaly, actually normal  
+        # cm[1,0] = False Negatives (FN): predicted normal, actually anomaly
+        # cm[1,1] = True Positives (TP): predicted anomaly, actually anomaly
+        
+        # Extract confusion matrix values safely
+        if cm.shape == (2, 2):
+            tn, fp, fn, tp = cm[0,0], cm[0,1], cm[1,0], cm[1,1]
+        else:
+            # Handle edge cases where confusion matrix might not be 2x2
+            tn = cm[0,0] if cm.shape[0] > 0 and cm.shape[1] > 0 else 0
+            fp = cm[0,1] if cm.shape[0] > 0 and cm.shape[1] > 1 else 0
+            fn = cm[1,0] if cm.shape[0] > 1 and cm.shape[1] > 0 else 0
+            tp = cm[1,1] if cm.shape[0] > 1 and cm.shape[1] > 1 else 0
+        
+        # Store results
+        trial_results = {
+            'precision': precision,
+            'recall': recall,
+            'f1_score': f1,
+            'predicted_anomalies': np.sum(predicted_labels),
+            'predicted_normal': len(predicted_labels) - np.sum(predicted_labels),
+            'true_anomalies': np.sum(true_labels),
+            'true_normal': len(true_labels) - np.sum(true_labels),
+            'confusion_matrix': cm.tolist(),
+            'confusion_matrix_interpreted': {
+                'true_negatives': int(tn),
+                'false_positives': int(fp), 
+                'false_negatives': int(fn),
+                'true_positives': int(tp)
+            },
+            'model_config': model_params
+        }
+        
+        # Log detailed anomaly information with correct interpretation
+        logger.info(f'Contamination {contamination} Results:')
+        logger.info(f'  - True anomalies: {np.sum(true_labels)}')
+        logger.info(f'  - Predicted anomalies: {np.sum(predicted_labels)}')
+        logger.info(f'  - True positives (TP): {tp} (predicted anomaly, actually anomaly)')
+        logger.info(f'  - False positives (FP): {fp} (predicted anomaly, actually normal)')
+        logger.info(f'  - False negatives (FN): {fn} (predicted normal, actually anomaly)')
+        logger.info(f'  - True negatives (TN): {tn} (predicted normal, actually normal)')
+        logger.info(f'  - Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}')
+        
+        # Verify confusion matrix interpretation
+        logger.info(f'  - Verification: TP+FN={tp+fn} (should equal true anomalies: {np.sum(true_labels)})')
+        logger.info(f'  - Verification: FP+TN={fp+tn} (should equal true normals: {len(true_labels)-np.sum(true_labels)})')
+
+        return trial_results
 
     def _standard_training(self, df_processed, training_columns, contamination):
         """Standard training mode."""
