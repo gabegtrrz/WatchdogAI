@@ -341,7 +341,7 @@ def align_columns(df: pd.DataFrame, training_columns: List[str]) -> pd.DataFrame
 # MAIN ANALYSIS WORKFLOW
 # =======================
 
-def run_complete_analysis(transaction: Transaction, contamination_param: float) -> Dict[str, Any]:
+def run_complete_analysis(transaction: Transaction, contamination_param: float = 0.05) -> Dict[str, Any]:
     """Complete anomaly detection pipeline for a SINGLE transaction.
     
     Workflow Steps:
@@ -444,7 +444,7 @@ def run_complete_analysis(transaction: Transaction, contamination_param: float) 
             anomaly_score = anomaly_scores[0]  # Get the score for this single transaction
             
             # Get the contamination rate from the model
-            contamination_rate = model.contamination
+            contamination_rate = contamination_param
             
             # Calculate the threshold based on the contamination rate
             # This determines the cutoff for what is considered an anomaly.
