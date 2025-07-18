@@ -8,13 +8,16 @@ class AnalysisConfigurationForm(forms.Form):
     min_value=0.01,
     max_value=0.5,
     required=True,
+    initial=0.05,
     widget=forms.NumberInput(attrs={
         'class': 'form-control form-control-lg',
         'step': '0.01',
-        'placeholder': '0.05'
+        'placeholder': '0.05',
+        'min': '0.01',
+        'max': '0.50'
     }),
-    label="Contamination Parameter",
-    help_text="Enter a value between 0.01 (1%) and 0.50 (50%)."
+    label='Contamination Parameter',
+    help_text='Enter a value between 0.01 (1%) and 0.50 (50%).'
     )
     
     transaction_ids = forms.CharField(
