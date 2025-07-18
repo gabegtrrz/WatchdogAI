@@ -48,29 +48,5 @@ deprecated/
 # Ignore generated CSV files from data generation
 
 
-# Ignore scraped data directories
-data/*/normal_data_scraped/
-data/*/iforest_training_data/
-data/*/normal_blank_average/
-
-
-# Ignore Model Files
-
-# Ignore joblib files (machine learning model files)
-D:\Projects\WatchdogAI\data\training\models
-data/training/models/columns.joblib
-data/training/models/iforest.joblib
-
-# Ignore evaluation files
-data/evalutation/
-
 *tests!/
 
-
-# Ignore training results
-data/training
-
-data/generation_config/
-data/
-
-*.joblib
