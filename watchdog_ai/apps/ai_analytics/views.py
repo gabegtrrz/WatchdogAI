@@ -413,8 +413,11 @@ def analysis_results(request, analysis_run_id):
     total_transactions = all_reports.count()
     anomaly_count = anomalous_reports.count()
     
-    # Get contamination SETTING
-    contamination_param = request.GET.get('contamination')
+    # Get contamination parameter from the first report (all reports in a run use the same contamination)
+    contamination_param = None
+    if all_reports.exists():
+        first_report = all_reports.first()
+        contamination_param = first_report.contamination_param
     
     return render(request, 'ai_analytics/analysis_results.html', {
         'reports': anomalous_reports,

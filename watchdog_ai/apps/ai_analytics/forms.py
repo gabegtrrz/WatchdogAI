@@ -11,10 +11,10 @@ class AnalysisConfigurationForm(forms.Form):
     widget=forms.NumberInput(attrs={
         'class': 'form-control form-control-lg',
         'step': '0.01',
-        'placeholder': 'e.g., 0.05 for 5% anomalies'
+        'placeholder': '0.05'
     }),
-    label="Expected Anomaly Percentage",
-    help_text="For this demo, enter '0.10'. Valid values, representing the expected proportion of anomalies in the dataset, range from 0.01 (1%) to 0.50 (50%)."
+    label="Contamination Parameter",
+    help_text="Enter a value between 0.01 (1%) and 0.50 (50%)."
     )
     
     transaction_ids = forms.CharField(
