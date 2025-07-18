@@ -80,6 +80,9 @@ INSTALLED_APPS = [
     'apps.core.apps.CoreConfig',
     'apps.data_generation.apps.DataGenerationConfig',
     
+    # Celery Results
+    'django_celery_results',
+    
     # It's better to use the full AppConfig path in INSTALLED_APPS
     # for explicit configuration, custom startup logic (ready() method), and improved clarity,
     # aligning with Django's best practices for robust app management.
@@ -163,12 +166,11 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [
-    BASE_DIR / 'staticfiles'
-    # BASE_DIR / "viewer/static",  # Old static for viewer app
+    BASE_DIR / 'static'
 ]
 
 # Where collectstatic will put all static files for production
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -216,6 +218,11 @@ LOGGING = {
             'format': '[{asctime}] {levelname} {name} {funcName}:{lineno} - {message}',
             'style': '{',
         },
+        'clean': {
+            'format': '[{asctime}] {levelname:<8} | {message}',
+            'style': '{',
+            'datefmt': '%H:%M:%S',
+        },
     },
     'filters': {
         'require_debug_true': {
@@ -227,6 +234,11 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
+        },
+        'console_clean': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'clean',
         },
         'file_general': {
             'level': 'INFO',
@@ -267,6 +279,14 @@ LOGGING = {
             'maxBytes': 1024 * 1024 * 10,  # 10MB
             'backupCount': 5,
             'formatter': 'detailed',
+        },
+        'file_model_training': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'model_training.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'clean',
         },
     },
     'loggers': {
@@ -331,6 +351,18 @@ LOGGING = {
             'propagate': False,
         },
         
+        # Model training logging
+        'model_training': {
+            'handlers': ['console', 'file_model_training'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.ai_analytics.management.commands.train_model': {
+            'handlers': ['console_clean', 'file_model_training'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        
         # Root logger - catches all other loggers
         '': {
             'handlers': ['console', 'file_general'],
@@ -338,3 +370,15 @@ LOGGING = {
         },
     },
 }
+
+# Celery Configuration Options
+# For development without Redis - run tasks synchronously
+CELERY_TASK_ALWAYS_EAGER = True  # Run tasks synchronously (no broker needed)
+CELERY_TASK_EAGER_PROPAGATES = True  # Propagate exceptions in eager mode
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60 # 30 minutes

@@ -190,6 +190,7 @@ data_generator:
   
   active_anomalies:
     - "Suspicious Overpricing"      # Grossly overpriced items with non-competitive methods
+    - "Budget Efficiency Anomaly"   # Unusual combinations of budget utilization and price deviation-
     - "Unusual Bulk Order"          # Very large quantities under vague project names
     - "End of Year Rush"            # Rushed transactions at fiscal year end
     - "Compressed Timeline"         # Unnaturally short procurement timelines

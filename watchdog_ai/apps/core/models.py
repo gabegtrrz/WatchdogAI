@@ -355,3 +355,90 @@ class ProcurementMethod(models.Model):
 
     def __str__(self):
         return str(self.name)
+
+
+class AnalysisReport(models.Model):
+    """
+    Represents an AI analysis report for a transaction.
+    Contains anomaly detection results and SHAP values for model interpretability.
+    """
+    
+    # --- Transaction Linkage ---
+    transaction = models.ForeignKey(
+        Transaction,
+        on_delete=models.CASCADE,
+        related_name='analysis_reports',
+        help_text="The transaction this analysis report belongs to."
+    )
+    
+    # --- Analysis Run Grouping ---
+    analysis_run_id = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="UUID to group multiple analysis reports from the same analysis run."
+    )
+    
+    # --- Anomaly Detection Results ---
+    is_anomaly = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Whether this transaction was flagged as an anomaly by the AI model."
+    )
+    anomaly_score = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Anomaly score from the AI model (lower values indicate higher anomaly probability)."
+    )
+    
+    # --- Model Interpretability ---
+    shap_values = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="SHAP (SHapley Additive exPlanations) values for feature importance analysis."
+    )
+    
+    # --- Model Parameters ---
+    contamination_param = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Contamination parameter used in the anomaly detection model."
+    )
+    
+    # --- Error Handling ---
+    error_message = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Error message if the analysis failed for this transaction."
+    )
+    
+    # --- Timestamps ---
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Timestamp when this analysis report was created."
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text="Timestamp when this analysis report was last updated."
+    )
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Analysis Report"
+        verbose_name_plural = "Analysis Reports"
+        # Remove unique_together constraint to allow multiple analyses per transaction
+        # unique_together = ['transaction']
+    
+    def __str__(self):
+        return f"Analysis Report for Transaction {self.transaction.transaction_id} - {'Anomaly' if self.is_anomaly else 'Normal'}"
+    
+    @property
+    def anomaly_percentage(self):
+        """
+        Convert anomaly score to percentage for easier interpretation.
+        Lower scores indicate higher anomaly probability.
+        """
+        if self.anomaly_score is not None:
+            # Convert to percentage (assuming score is between 0 and 1)
+            return (1 - self.anomaly_score) * 100
+        return None

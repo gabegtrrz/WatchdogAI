@@ -117,13 +117,16 @@ data_generator:
   active_anomalies:
     # --- Pricing & Bidding Anomalies ---
     - "Suspicious Overpricing"      # Grossly overpriced items with non-competitive methods
+    - "Budget Efficiency Anomaly"   # Unusual combinations of budget utilization and price deviation
     - "Bid Ceiling Collusion"       # Final price suspiciously close to approved budget
     - "Price Exceeds Budget"        # Contract price significantly higher than approved budget
     - "Budget Manipulation"         # Artificially inflated approved budget
+    - "Extreme Price Anomaly"       # Prices so extreme they defy market reality
     
     # --- Quantity & Scope Anomalies ---
     - "Unusual Bulk Order"          # Very large quantities under vague project names
     - "Contract Splitting"          # Project broken into smaller contracts to bypass bidding
+    - "Massive Quantity Anomaly"    # Quantities so large they defy practical use
     
     # --- Timeline & Date Anomalies ---
     - "End of Year Rush"            # Rushed transactions at fiscal year end
@@ -136,6 +139,7 @@ data_generator:
     - "Expedited Procurement"       # Extremely rushed procurement process
     - "Irregular Timeline Sequence" # Impossible timeline event sequence
     - "Multiple Timeline Violations" # Multiple violations simultaneously
+    - "Impossible Timeline"         # Completely impossible timeline sequence
     
     # --- Supplier & Method Anomalies ---
     - "Unjustified Direct Contracting" # Direct contracting for common goods

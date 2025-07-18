@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib import messages
-from .models import Transaction, ProcurementMethod
+from .models import Transaction, ProcurementMethod, AnalysisReport
 from apps.blockchain.integrity_service import integrity_service
 
 
@@ -12,6 +12,7 @@ class TransactionAdmin(admin.ModelAdmin):
     manual changes, as transactions should be immutable once created.
     """
     list_display = (
+        'id',
         'transaction_id',
         'item_name',
         'quantity',
@@ -24,7 +25,7 @@ class TransactionAdmin(admin.ModelAdmin):
         'get_block_info',
         'get_integrity_status',
     )
-    list_filter = ('transaction_date', 'supplier', 'procurement_method', 'blockchain_status')
+    list_filter = ('transaction_date', 'procurement_method', 'blockchain_status','supplier')
     search_fields = (
         'transaction_id',
         'item_name',
@@ -188,3 +189,132 @@ class ProcurementMethodAdmin(admin.ModelAdmin):
         Allows only superusers to delete procurement methods.
         """
         return request.user.is_superuser
+
+
+@admin.register(AnalysisReport)
+class AnalysisReportAdmin(admin.ModelAdmin):
+    """
+    Admin view for the AnalysisReport model.
+    Provides comprehensive view of AI analysis results with filtering and search capabilities.
+    """
+    list_display = (
+        'get_transaction_id',
+        'get_item_name',
+        'get_supplier',
+        'is_anomaly',
+        'get_anomaly_score',
+        'contamination_param',
+        'created_at',
+    )
+    list_filter = (
+        'is_anomaly',
+        'created_at',
+        'updated_at',
+        'transaction__procurement_method',
+        'transaction__supplier',
+    )
+    search_fields = (
+        'transaction__transaction_id',
+        'transaction__item_name',
+        'transaction__supplier',
+        'transaction__procurement_officer',
+    )
+    search_help_text = 'Search by Transaction ID, Item Name, Supplier, or Officer.'
+    
+    # Use raw_id_fields for transaction to handle large numbers efficiently
+    raw_id_fields = ('transaction',)
+    
+    ordering = ('-created_at',)
+    
+    # Actions for bulk operations
+    actions = ['mark_as_anomaly', 'mark_as_normal', 'recalculate_scores']
+    
+    # Read-only fields for non-superusers
+    readonly_fields = ('created_at', 'updated_at')
+    
+    def get_transaction_id(self, obj):
+        """Display transaction ID with link to transaction detail."""
+        return obj.transaction.transaction_id
+    get_transaction_id.short_description = 'Transaction ID'
+    get_transaction_id.admin_order_field = 'transaction__transaction_id'
+    
+    def get_item_name(self, obj):
+        """Display item name from related transaction."""
+        return obj.transaction.item_name
+    get_item_name.short_description = 'Item Name'
+    get_item_name.admin_order_field = 'transaction__item_name'
+    
+    def get_supplier(self, obj):
+        """Display supplier from related transaction."""
+        return obj.transaction.supplier
+    get_supplier.short_description = 'Supplier'
+    get_supplier.admin_order_field = 'transaction__supplier'
+    
+    def get_anomaly_score(self, obj):
+        """Display anomaly score with color coding and percentage."""
+        if obj.anomaly_score is not None:
+            # Ensure values are properly converted to float for formatting
+            try:
+                score = float(obj.anomaly_score)
+                percentage = float(obj.anomaly_percentage) if obj.anomaly_percentage is not None else 0.0
+                color = 'red' if obj.is_anomaly else 'green'
+                return format_html(
+                    '<span style="color: {};">{:.2f} ({:.1f}%)</span>',
+                    color, score, percentage
+                )
+            except (ValueError, TypeError):
+                # Fallback if conversion fails
+                return f"Score: {obj.anomaly_score}"
+        return "N/A"
+    get_anomaly_score.short_description = 'Anomaly Score'
+    get_anomaly_score.admin_order_field = 'anomaly_score'
+    
+    def mark_as_anomaly(self, request, queryset):
+        """Admin action to mark selected reports as anomalies."""
+        updated = queryset.update(is_anomaly=True)
+        messages.success(request, f"✅ Marked {updated} analysis reports as anomalies.")
+    mark_as_anomaly.short_description = "Mark selected as anomalies"
+    
+    def mark_as_normal(self, request, queryset):
+        """Admin action to mark selected reports as normal."""
+        updated = queryset.update(is_anomaly=False)
+        messages.success(request, f"✅ Marked {updated} analysis reports as normal.")
+    mark_as_normal.short_description = "Mark selected as normal"
+    
+    def recalculate_scores(self, request, queryset):
+        """Admin action placeholder for recalculating anomaly scores."""
+        messages.info(request, "🔄 Recalculation functionality would be implemented here.")
+    recalculate_scores.short_description = "Recalculate anomaly scores"
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Dynamically sets fields as read-only for non-superusers."""
+        if request.user.is_superuser:
+            return ('created_at', 'updated_at')
+        return tuple(field.name for field in self.model._meta.fields)
+    
+    def has_add_permission(self, request):
+        """Allow adding analysis reports only for superusers."""
+        return request.user.is_superuser
+    
+    def has_delete_permission(self, request, obj=None):
+        """Allow deleting analysis reports only for superusers."""
+        return request.user.is_superuser
+    
+    # Organize the detail view into logical sections
+    fieldsets = (
+        ('Transaction Information', {
+            'fields': ('transaction',)
+        }),
+        ('Anomaly Detection Results', {
+            'fields': ('is_anomaly', 'anomaly_score', 'contamination_param'),
+            'description': 'AI model analysis results and parameters'
+        }),
+        ('Model Interpretability', {
+            'fields': ('shap_values',),
+            'description': 'SHAP values for feature importance analysis'
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

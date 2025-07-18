@@ -2,13 +2,19 @@ import os
 import uuid
 import datetime
 import yaml
+import json
+import logging
 import pandas as pd
 import numpy as np
 from django.core.management.base import BaseCommand, CommandError
 from faker import Faker
 from apps.data_generation.anomaly_definitions import ANOMALY_BLUEPRINTS
 from apps.data_augmentation.models import ItemAveragePrice
-from django.utils import timezone 
+from django.utils import timezone
+from django.conf import settings
+
+# Configure logging
+logger = logging.getLogger(__name__) 
 
 class Command(BaseCommand):
     """
@@ -561,7 +567,7 @@ class Command(BaseCommand):
         return df
 
     def _save_output_files(self, df_raw, df_labeled, config_path, config, is_training_data=False):
-        """Saves the two required CSV files to the specified output folder."""
+        """Saves the data either split into training/testing/evaluation datasets or as a single file."""
         # Determine output directory
         output_folder_path = config.get('output_folder_path', 'generated_data')
         
@@ -570,21 +576,268 @@ class Command(BaseCommand):
         output_dir = os.path.join(output_folder_path, str(timestamp))
         os.makedirs(output_dir, exist_ok=True)
 
-        # Define file paths
-        raw_path = os.path.join(output_dir, 'transactions.csv')
-        labeled_path = os.path.join(output_dir, 'transactions_with_labels.csv')
+        # Check if no_split mode is enabled
+        split_mode = config.get('split_mode', True)
+        
+        if not split_mode:
+            # Save data without splitting - single files
+            self._save_unsplit_data(df_raw, df_labeled, output_dir, is_training_data)
+        else:
+            # Save data with train-test-eval split (existing behavior)
+            self._save_split_data(df_raw, df_labeled, output_dir, is_training_data)
+        
+        # Save generation log
+        self._save_generation_log(df_raw, df_labeled, config_path, config, is_training_data, output_dir, split_mode)
 
-        # Conditionally remove the 'total_purchase_price' column
+    def _save_unsplit_data(self, df_raw, df_labeled, output_dir, is_training_data):
+        """Saves data as single files without splitting into train-test-eval."""
+        # Create separate subdirectories for labeled and unlabeled data
+        labeled_dir = os.path.join(output_dir, 'labeled')
+        unlabeled_dir = os.path.join(output_dir, 'unlabeled')
+        os.makedirs(labeled_dir, exist_ok=True)
+        os.makedirs(unlabeled_dir, exist_ok=True)
+
+        # Create copies for potential modification
+        df_raw_copy = df_raw.copy()
+        df_labeled_copy = df_labeled.copy()
+
+        # Conditionally remove the 'total_purchase_price' column for non-training data
         if not is_training_data:
-            if 'total_purchase_price' in df_raw.columns:
-                df_raw = df_raw.drop(columns=['total_purchase_price'])
-            if 'total_purchase_price' in df_labeled.columns:
-                df_labeled = df_labeled.drop(columns=['total_purchase_price'])
+            if 'total_purchase_price' in df_raw_copy.columns:
+                df_raw_copy.drop(columns=['total_purchase_price'], inplace=True)
+            if 'total_purchase_price' in df_labeled_copy.columns:
+                df_labeled_copy.drop(columns=['total_purchase_price'], inplace=True)
 
-        # Save raw data (without the is_anomaly column)
-        df_raw.to_csv(raw_path, index=False)
-        self.stdout.write(self.style.SUCCESS(f"Successfully saved raw data to: {raw_path}"))  # type: ignore
+        # Save unlabeled data (raw data without anomaly labels)
+        raw_path = os.path.join(unlabeled_dir, 'transactions.csv')
+        df_raw_copy.to_csv(raw_path, index=False)
+        
+        self.stdout.write(self.style.SUCCESS(f"Unlabeled data saved to {unlabeled_dir}:"))  # type: ignore
+        self.stdout.write(f"  - Transactions: {raw_path} ({len(df_raw_copy)} samples)")
 
-        # Save labeled data
-        df_labeled.to_csv(labeled_path, index=False)
-        self.stdout.write(self.style.SUCCESS(f"Successfully saved labeled data to: {labeled_path}"))  # type: ignore 
+        # Save labeled data (with anomaly labels)
+        labeled_path = os.path.join(labeled_dir, 'transactions.csv')
+        df_labeled_copy.to_csv(labeled_path, index=False)
+        
+        self.stdout.write(self.style.SUCCESS(f"Labeled data saved to {labeled_dir}:"))  # type: ignore
+        self.stdout.write(f"  - Transactions: {labeled_path} ({len(df_labeled_copy)} samples)")
+
+        # Print summary
+        self.stdout.write(self.style.SUCCESS(f"\nData summary:"))  # type: ignore
+        self.stdout.write(f"  - Total transactions: {len(df_raw_copy)} samples")
+        self.stdout.write(f"  - No splitting applied (single file mode)")
+
+    def _save_split_data(self, df_raw, df_labeled, output_dir, is_training_data):
+        """Saves the data split into training (70%), testing (20%), and evaluation (10) datasets."""
+        # Create separate subdirectories for labeled and unlabeled data
+        labeled_dir = os.path.join(output_dir, 'labeled')
+        unlabeled_dir = os.path.join(output_dir, 'unlabeled')
+        os.makedirs(labeled_dir, exist_ok=True)
+        os.makedirs(unlabeled_dir, exist_ok=True)
+
+        # Split data into training (70%), testing (20%), and evaluation (10%) datasets.
+        total_samples = len(df_raw)
+        train_size = int(total_samples * 0.7)
+        test_size = int(total_samples * 0.2)
+        # eval_size = total_samples - train_size - test_size  # Remaining 10%
+        
+        # Create indices for splitting
+        indices = np.random.permutation(total_samples)
+        train_indices = indices[:train_size]
+        test_indices = indices[train_size:train_size + test_size]
+        eval_indices = indices[train_size + test_size:]
+        
+        # Split the dataframes
+        df_raw_train = df_raw.iloc[train_indices].reset_index(drop=True)
+        df_raw_test = df_raw.iloc[test_indices].reset_index(drop=True)
+        df_raw_eval = df_raw.iloc[eval_indices].reset_index(drop=True)
+        
+        df_labeled_train = df_labeled.iloc[train_indices].reset_index(drop=True)
+        df_labeled_test = df_labeled.iloc[test_indices].reset_index(drop=True)
+        df_labeled_eval = df_labeled.iloc[eval_indices].reset_index(drop=True)
+
+        # Conditionally remove the 'total_purchase_price' column for non-training data
+        if not is_training_data:
+            for df_list in [df_raw_test, df_raw_eval, df_labeled_test, df_labeled_eval]:
+                if 'total_purchase_price' in df_list.columns:
+                    df_list.drop(columns=['total_purchase_price'], inplace=True)
+
+        # Save unlabeled data (raw data without anomaly labels)
+        train_raw_path = os.path.join(unlabeled_dir, 'training.csv')
+        test_raw_path = os.path.join(unlabeled_dir, 'testing.csv')
+        eval_raw_path = os.path.join(unlabeled_dir, 'eval.csv')
+        
+        df_raw_train.to_csv(train_raw_path, index=False)
+        df_raw_test.to_csv(test_raw_path, index=False)
+        df_raw_eval.to_csv(eval_raw_path, index=False)
+        
+        self.stdout.write(self.style.SUCCESS(f"Unlabeled data saved to {unlabeled_dir}:"))  # type: ignore
+        self.stdout.write(f"  - Training: {train_raw_path} ({len(df_raw_train)} samples)")
+        self.stdout.write(f"  - Testing: {test_raw_path} ({len(df_raw_test)} samples)")
+        self.stdout.write(f"  - Evaluation: {eval_raw_path} ({len(df_raw_eval)} samples)")
+
+        # Save labeled data (with anomaly labels)
+        train_labeled_path = os.path.join(labeled_dir, 'training.csv')
+        test_labeled_path = os.path.join(labeled_dir, 'testing.csv')
+        eval_labeled_path = os.path.join(labeled_dir, 'eval.csv')
+        
+        df_labeled_train.to_csv(train_labeled_path, index=False)
+        df_labeled_test.to_csv(test_labeled_path, index=False)
+        df_labeled_eval.to_csv(eval_labeled_path, index=False)
+        
+        self.stdout.write(self.style.SUCCESS(f"Labeled data saved to {labeled_dir}:"))  # type: ignore
+        self.stdout.write(f"  - Training: {train_labeled_path} ({len(df_labeled_train)} samples)")
+        self.stdout.write(f"  - Testing: {test_labeled_path} ({len(df_labeled_test)} samples)")
+        self.stdout.write(f"  - Evaluation: {eval_labeled_path} ({len(df_labeled_eval)} samples)")
+
+        # Print split summary
+        self.stdout.write(self.style.SUCCESS(f"\nData split summary:"))  # type: ignore
+        self.stdout.write(f"  - Training: {len(df_raw_train)} samples (70%)")
+        self.stdout.write(f"  - Testing: {len(df_raw_test)} samples (20%)")
+        self.stdout.write(f"  - Evaluation: {len(df_raw_eval)} samples (10%)")
+        self.stdout.write(f"  - Total: {total_samples} samples")
+
+    def _save_generation_log(self, df_raw, df_labeled, config_path, config, is_training_data, output_dir, split_mode):
+        """Saves the generation results to JSON file in the output directory."""
+        try:
+            # Save JSON log in the same directory as the output data
+            log_directory = output_dir
+            
+            # Load full configuration for inclusion in results
+            try:
+                with open(config_path, 'r') as f:
+                    full_config = yaml.safe_load(f)
+            except Exception as e:
+                logger.warning(f'Could not load full configuration for results: {e}')        
+                full_config = {}
+            
+            # Extract anomaly information
+            true_labels = df_labeled['is_anomaly'] if 'is_anomaly' in df_labeled.columns else None
+            anomaly_count = np.sum(true_labels) if true_labels is not None else 0
+            normal_count = len(true_labels) - anomaly_count if true_labels is not None else len(df_labeled)
+            
+            # Determine file structure based on mode
+            if not split_mode:
+                files_created = {
+                    'labeled': [os.path.join(output_dir, 'labeled', 'transactions.csv')],
+                    'unlabeled': [os.path.join(output_dir, 'unlabeled', 'transactions.csv')]
+                }
+                data_split_info = {
+                    'mode': 'no_split',
+                    'total_samples': len(df_raw),
+                    'split_applied': False
+                }
+                total_files_created = 2  # 1 labeled + 1 unlabeled
+            else:
+                files_created = {
+                    'labeled': [
+                        os.path.join(output_dir, 'labeled', 'training.csv'),
+                        os.path.join(output_dir, 'labeled', 'testing.csv'),
+                        os.path.join(output_dir, 'labeled', 'eval.csv')
+                    ],
+                    'unlabeled': [
+                        os.path.join(output_dir, 'unlabeled', 'training.csv'),
+                        os.path.join(output_dir, 'unlabeled', 'testing.csv'),
+                        os.path.join(output_dir, 'unlabeled', 'eval.csv')
+                    ]
+                }
+                data_split_info = {
+                    'mode': 'split',
+                    'training_samples': int(len(df_raw) * 0.7),
+                    'testing_samples': int(len(df_raw) * 0.2),
+                    'evaluation_samples': len(df_raw) - int(len(df_raw) * 0.7) - int(len(df_raw) * 0.2),
+                    'split_ratios': {
+                        'training': 0.7,
+                        'testing': 0.2,
+                        'evaluation': 0.1
+                    }
+                }
+                total_files_created = 6  # 3 labeled + 3 unlabeled
+            
+            # Create generation results
+            generation_results = {
+                'test_name': config.get('test_name', 'Unnamed Test'),
+                'generation_date': datetime.datetime.now().isoformat(),
+                'configuration': full_config,
+                'dataset_info': {
+                    'total_samples': len(df_raw),
+                    'columns_count': len(df_raw.columns),
+                    'columns': list(df_raw.columns),
+                    'labeled_data_count': len(df_labeled),
+                    'true_anomalies': int(anomaly_count),
+                    'true_normal': int(normal_count),
+                    'anomaly_fraction': float(anomaly_count / len(df_labeled)) if len(df_labeled) > 0 else 0.0
+                },
+                'data_split': data_split_info,
+                'output_structure': {
+                    'output_directory': output_dir,
+                    'labeled_directory': os.path.join(output_dir, 'labeled'),
+                    'unlabeled_directory': os.path.join(output_dir, 'unlabeled'),
+                    'log_directory': log_directory,
+                    'files_created': files_created
+                },
+                'generation_settings': {
+                    'is_training_data': is_training_data,
+                    'split_mode': split_mode,
+                    'random_state': config.get('random_state'),
+                    'n_samples': config.get('n_samples'),
+                    'anomaly_fraction': config.get('anomaly_fraction'),
+                    'active_anomalies': config.get('active_anomalies', []),
+                    'average_price_mode': config.get('average_price', {}).get('mode', 'none')
+                },
+                'generation_summary': {
+                    'generation_completed_at': datetime.datetime.now().isoformat(),
+                    'output_directory': output_dir,
+                    'log_directory': log_directory,
+                    'total_files_created': total_files_created
+                }
+            }
+            
+            # Convert numpy types to native Python types for JSON serialization
+            def convert_numpy_types(obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                elif isinstance(obj, dict):
+                    return {key: convert_numpy_types(value) for key, value in obj.items()}
+                elif isinstance(obj, list):
+                    return [convert_numpy_types(item) for item in obj]
+                else:
+                    return obj
+            
+            serializable_results = convert_numpy_types(generation_results)
+            
+            # Define log file path in JSON directory
+            log_filename = 'generation_log.json'
+            log_path = os.path.join(log_directory, log_filename)
+            
+            # Read existing results if file exists
+            existing_results = []
+            if os.path.exists(log_path):
+                try:
+                    with open(log_path, 'r') as f:
+                        existing_results = json.load(f)
+                    if not isinstance(existing_results, list):
+                        existing_results = [existing_results]
+                except (json.JSONDecodeError, FileNotFoundError):
+                    existing_results = []
+            
+            # Add timestamp to new result
+            serializable_results['generation_timestamp'] = datetime.datetime.now().isoformat()
+            
+            # Prepend new result to existing results
+            all_results = [serializable_results] + existing_results
+            
+            # Write all results back to file
+            with open(log_path, 'w') as f:
+                json.dump(all_results, f, indent=2)
+            
+            logger.info(f'Generation results appended to top of {log_path}')
+            self.stdout.write(f'Generation log saved to: {log_path}')
+            
+        except Exception as e:
+            logger.error(f'Error saving generation results: {e}, exc_info=True')
+            self.stderr.write(f'Error saving generation results: {e}')
