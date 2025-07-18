@@ -167,7 +167,6 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [
     BASE_DIR / 'static'
-    # BASE_DIR / "viewer/static",  # Old static for viewer app
 ]
 
 # Where collectstatic will put all static files for production
