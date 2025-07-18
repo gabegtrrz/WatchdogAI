@@ -481,7 +481,9 @@ def _impute_missing_values(df: pd.DataFrame) -> pd.DataFrame:
         'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
         
         # Supplier features
-        'supplier_frequency', 'price_per_supplier_freq', 'price_deviation_from_supplier_avg',
+        'supplier_frequency',
+        'price_per_supplier_freq',
+        'price_deviation_from_supplier_avg',
         
         # Efficiency features
         'timeline_efficiency', 'weekend_activity'
@@ -528,7 +530,8 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
         'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
         
         # Supplier features
-        'supplier_frequency', 'price_per_supplier_freq', 'price_deviation_from_supplier_avg',
+        'supplier_frequency',
+        'price_per_supplier_freq', 'price_deviation_from_supplier_avg',
         
         # Efficiency features
         'timeline_efficiency', 'weekend_activity'
