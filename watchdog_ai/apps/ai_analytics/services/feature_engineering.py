@@ -24,19 +24,74 @@ logger = logging.getLogger(__name__)
 # This list is imported by the preprocessing service to dynamically fetch
 # the necessary data from the database.
 REQUIRED_COLUMNS = []
+FINANCE_COLUMNS = [ # Implement later, just use for preprocessing for now.
+    'quantity',
+    'unit_purchase_price',
+    'total_purchase_price',
+    'average_price',
+    'approved_budget',
+] 
+ONE_HOT_COLUMNS = [
+    'supplier',
+    'procurement_method',
+] # implement later
+DATE_COLUMNS = [
+    'transaction_date',
+    'invitation_to_bid_posting_date',
+    'bid_submission_deadline',
+    'bid_opening_date',
+    'notice_of_award_date',
+    'contract_signing_date',
+]
+INITIAL_COLUMNS_TO_USE = (
+    FINANCE_COLUMNS + 
+    DATE_COLUMNS + 
+    ONE_HOT_COLUMNS
+)
+
+COLUMNS_TO_DROP_FROM_FINAL = [
+    # Raw date columns are converted into duration and cyclical features.
+        'transaction_date', 
+        'invitation_to_bid_posting_date',
+        'bid_submission_deadline',
+        'bid_opening_date', 'notice_of_award_date', 'contract_signing_date',
+
+        # Text columns
+        'project_name', 'end_user_unit', 'project_description',
+
+        # Raw categorical columns are encoded into numerical representations.
+        'supplier', 'procurement_method', 'procurement_officer',
+        
+        # Base numerical columns that have been transformed into engineered features
+        'unit_purchase_price', 'total_purchase_price', 'approved_budget', 'average_price',
+
+        # blockchain and database columns:
+        'id', 'transaction_id', 'block_id', 'blockchain_retry_count', 'procurement_method_id',
+   
+]
 PROCUREMENT_METHODS = [
     'Competitive Bidding',
     'Direct Contracting',
-    'Limited Source Bidding',
-    'Negotiated Procurement',
+    # 'Limited Source Bidding',
+    # 'Negotiated Procurement',
     'Negotiated Procurement (Agency-to-Agency)',
     'Negotiated Procurement (Small Value Procurement)',
     'Negotiated Procurement (Two Failed Biddings)',
     'Repeat Order',
+    'nan',
 ]
 REQUIRED_COLUMNS.extend(PROCUREMENT_METHODS)
 
+#===============================================
+# ONE-HOT ENCODING
+#===============================================
 
+# Map to configure columns for one-hot encoding and their categories
+ONE_HOT_ENCODING_MAP = {
+    'procurement_method': PROCUREMENT_METHODS,
+    # To encode other columns, add here
+
+}
 
 # =============================================================================
 # FEATURE CREATION ORCHESTRATION
@@ -88,13 +143,17 @@ def create_features(df: pd.DataFrame, is_training: bool = False) -> Tuple[pd.Dat
         df = _create_efficiency_features(df)
 
         # Step 6: Perform one-hot encoding (before dropping columns)
-        df_processed = _perform_one_hot_encoding(df)
+        df_processed = df.copy()
+        for column, categories in ONE_HOT_ENCODING_MAP.items():
+            df_processed = _perform_one_hot_encoding(df_processed, column, categories)
+
 
         # Step 7: Impute missing values
         df_processed = _impute_missing_values(df_processed)
 
         # Step 8: Drop transformed unnecessary columns
-        df_processed = _drop_transformed_columns(df_processed)
+        logger.debug("Dropping transformed source columns...")
+        df_processed.drop(columns=COLUMNS_TO_DROP_FROM_FINAL, inplace=True, errors='ignore')
 
         # Step 9: Get final feature columns and create final DataFrame
         df_final, final_feature_columns = _get_final_feature_columns(df_processed)
@@ -129,6 +188,33 @@ def _convert_decimal_columns(df: pd.DataFrame) -> pd.DataFrame:
         if col in df.columns:
             df[col] = df[col].astype(float)
     return df
+
+def _perform_one_hot_encoding(df: pd.DataFrame, column_name: str, categories: list) -> pd.DataFrame:
+    """Performs generic one-hot encoding on specified categorical column.
+    
+    Args:
+        df: Input DataFrame
+        column_name: Name of the categorical column to encode
+        categories: List of categories to encode
+
+    Returns:
+        pd.DataFrame: DataFrame with one-hot encoded columns added
+    """
+    if column_name not in df.columns:
+        # If the column to be encoded is missing, create empty columns for its categories to ensure a consistent DataFrame schema for the model.
+        for category in categories:
+            df[f'{column_name}_{category}'] = 0
+        return df
+    else:
+        # Convert column to a categorical type to ensure all predefined categories are included.
+        df[column_name] = pd.Categorical(df[column_name], categories=categories)
+
+        # Create the one-hot encoded dummy variables.
+        dummies = pd.get_dummies(df[column_name], prefix=column_name)
+
+        # Combine the new dummy columns with the original DataFrame.
+        return pd.concat([df, dummies], axis=1)
+
 
 def _create_date_based_features(df: pd.DataFrame) -> pd.DataFrame:
     """Create date-based features to detect timing anomalies.
@@ -366,35 +452,6 @@ def _create_efficiency_features(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def _drop_transformed_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Drops original columns that were used to create new, engineered features. This avoids data leakage and reduces dataset dimensionality.
-
-    Args:
-        df: Input DataFrame
-
-    Returns:
-        pd.DataFrame: DataFrame with transformed columns removed
-    """
-    logger.debug("Dropping transformed source columns...")
-    columns_to_drop = [
-        # Raw date columns are converted into duration and cyclical features.
-        'transaction_date', 'invitation_to_bid_posting_date', 'bid_submission_deadline',
-        'bid_opening_date', 'notice_of_award_date', 'contract_signing_date',
-
-        # Raw categorical columns are encoded into numerical representations.
-        'supplier',
-        
-        # Base numerical columns that have been transformed into engineered features
-        'unit_purchase_price', 'total_purchase_price', 'approved_budget', 'average_price',
-
-        # blockchain and database columns:
-        'id', 'transaction_id', 'block_id', 'blockchain_retry_count', 'procurement_method_id',
-
-
-    ]
-    df.drop(columns=columns_to_drop, inplace=True, errors='ignore')
-    return df
 
 def _impute_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     """Handle missing values in engineered features by imputing with median values.
@@ -440,38 +497,7 @@ def _impute_missing_values(df: pd.DataFrame) -> pd.DataFrame:
             logger.debug(f"Imputed {missing_count} missing values in {col} with median: {median_val}")
     return df
 
-def _perform_one_hot_encoding(df: pd.DataFrame) -> pd.DataFrame:
-    """Perform one-hot encoding on categorical columns.
 
-    get_dummies() converts categorical procurement methods to numerical features.
-    After one-hot encoding, each unique value in procurement_method becomes a new column
-    named like procurement_method_<value> (e.g., procurement_method_Open_Bidding).
-
-    Args:
-        df: Input DataFrame
-
-    Returns:
-        pd.DataFrame: DataFrame with one-hot encoded columns
-    """
-    logger.debug("Performing one-hot encoding...")
-    
-    # Check if procurement_method column exists
-    if 'procurement_method' not in df.columns:
-        logger.warning("procurement_method column not found in DataFrame. Skipping one-hot encoding.")
-        return df
-    
-    # Check if procurement_method column has any data
-    if df['procurement_method'].isna().all():
-        logger.warning("procurement_method column contains only NaN values. Skipping one-hot encoding.")
-        return df
-    
-    df_processed = pd.get_dummies(
-        df,
-        columns=['procurement_method'],  # specifies which column(s) to encode
-        prefix=['procurement_method'],
-        dummy_na=True  # include columns for missing values
-    )
-    return df_processed
 
 def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
     """
@@ -508,17 +534,12 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
         'timeline_efficiency', 'weekend_activity'
     ]
 
-    # Get one-hot encoded columns
-    one_hot_cols = [col for col in df_processed.columns if 'procurement_method_' in col]
+    
 
-    # e.g.:
-    # one_hot_cols = [
-    #     'procurement_method_Open_Bidding',
-    #     'procurement_method_Direct_Contracting',
-    #     'procurement_method_Limited_Source',
-    #     'procurement_method_Negotiated_Procurement',
-    #     'procurement_method_nan'
-    # ]
+    one_hot_cols = []
+    for column, categories in ONE_HOT_ENCODING_MAP.items():
+        for category in categories:
+            one_hot_cols.append(f'{column}_{category}')
 
     # Combine expected features
     REQUIRED_COLUMNS.extend(
