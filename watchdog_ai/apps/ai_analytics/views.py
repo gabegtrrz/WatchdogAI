@@ -5,15 +5,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.core.cache import cache
+from typing import TYPE_CHECKING, Dict, Any
 import json
-import numpy as np
-from sklearn.ensemble import IsolationForest
-from apps.core.models import Transaction
+
+if TYPE_CHECKING:
+    from apps.core.models import Transaction, AnalysisReport
+else:
+    from apps.core.models import Transaction, AnalysisReport
 from .filters import TransactionFilter
 from django.urls import reverse
 from celery.result import AsyncResult
-
-from apps.core.models import AnalysisReport
 from .forms import AnalysisConfigurationForm
 from .tasks import perform_anomaly_detection
 from .services.validation import (
@@ -312,8 +313,10 @@ def run_analysis(request):
         is_valid, validated_data, error_message = validate_analysis_parameters(data)
         
         if not is_valid:
-            return create_validation_error_response(error_message)
+            return create_validation_error_response(error_message or "Validation failed")
         
+        # validated_data is guaranteed to be a dict when is_valid is True
+        validated_data: Dict[str, Any] = validated_data  # type: ignore
         contamination_float = validated_data['contamination']
         valid_transaction_ids = validated_data['transaction_ids']
         
@@ -333,7 +336,8 @@ def run_analysis(request):
                         'success': True, 
                         'task_id': task.id,
                         'completed': True,
-                        'redirect_url': reverse('analysis_results', args=[analysis_run_id])
+                        'redirect_url': reverse('analysis_results', args=[analysis_run_id]),
+                        'contamination': contamination_float
                     })
                 else:
                     return JsonResponse({
@@ -395,15 +399,32 @@ def get_task_status(request, task_id):
 def analysis_results(request, analysis_run_id):
     """
     Displays the results of a specific analysis run.
+    Provides comprehensive context including summary statistics.
     """
-    anomalous_reports = AnalysisReport.objects.filter(
-        analysis_run_id=analysis_run_id,
-        is_anomaly=True
-    ).select_related('transaction').order_by('-anomaly_score')
+    # Get all reports for this analysis run (both anomalous and normal)
+    all_reports = AnalysisReport.objects.filter(
+        analysis_run_id=analysis_run_id
+    ).select_related('transaction')
+    
+    # Get only anomalous reports for display
+    anomalous_reports = all_reports.filter(is_anomaly=True).order_by('-anomaly_score')
+    
+    # Calculate summary statistics
+    total_transactions = all_reports.count()
+    anomaly_count = anomalous_reports.count()
+    
+    # Get contamination parameter from the first report (all reports in a run use the same contamination)
+    contamination_param = None
+    if all_reports.exists():
+        first_report = all_reports.first()
+        contamination_param = first_report.contamination_param
     
     return render(request, 'ai_analytics/analysis_results.html', {
         'reports': anomalous_reports,
-        'analysis_run_id': analysis_run_id
+        'analysis_run_id': analysis_run_id,
+        'total_transactions': total_transactions,
+        'anomaly_count': anomaly_count,
+        'contamination_param': contamination_param,
     })
 
 def analysis_report_detail(request, report_id):
@@ -412,8 +433,8 @@ def analysis_report_detail(request, report_id):
     """
     report = get_object_or_404(AnalysisReport.objects.select_related('transaction'), pk=report_id)
     
-    # SHAP values are stored as a JSON string in the model
-    shap_values_data = json.loads(report.shap_values) if report.shap_values else None
+    # SHAP values are stored as a JSONField in the model (automatically deserialized to dict)
+    shap_values_data = report.shap_values if report.shap_values else None
     
     return render(request, 'ai_analytics/analysis_report_detail.html', {
         'report': report,

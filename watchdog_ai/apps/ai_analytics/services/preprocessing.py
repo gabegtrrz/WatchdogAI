@@ -14,65 +14,92 @@ import pandas as pd
 import numpy as np
 import logging
 from django.apps import apps
+from django.db.models.query import QuerySet
 from typing import Union, Optional
 from pathlib import Path
 from apps.transaction_management.services import process_transaction_csv
+from .feature_engineering import INITIAL_COLUMNS_TO_USE
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
 
-def get_transaction_dataframe():
+from django.db.models import F, QuerySet
+from django.apps import apps
+import pandas as pd
+import logging
+from typing import Optional
+
+logger = logging.getLogger(__name__)
+
+
+def get_transaction_dataframe(transactions_qs: Optional[QuerySet] = None) -> pd.DataFrame:
     """
-    Fetches all transactions and converts them into a pandas DataFrame.
+    Fetches transactions and converts them into a pandas DataFrame.
+    If a queryset is provided, it uses it. Otherwise, it fetches all transactions.
     
     Extracts raw transaction data from the database and structures it for preprocessing.
-    Serves as data extraction layer between the database and the preprocessing pipeline.
+    Serves as a data extraction layer between the database and the preprocessing pipeline.
+
+    Args:
+        transactions_qs (Optional[QuerySet]): A Django QuerySet of Transaction objects.
     
     Returns:
         pd.DataFrame: Raw transaction data with all necessary columns for preprocessing and feature engineering.
-                     Indexed by transaction_id for easy identification.
-    
-    Database Fields Extracted:
-        - transaction_id: Primary key for identification
-        - quantity: Number of items purchased
-        - unit_purchase_price: Price per unit
-        - total_purchase_price: Total transaction value
-        - approved_budget: Budget limit for the transaction
-        - procurement_method__name: Method used for procurement
-        - supplier: Supplier name/identifier
-        - transaction_date: Date of the transaction
-        - invitation_to_bid_posting_date: When bidding was announced
-        - bid_submission_deadline: Deadline for bid submissions
-        - bid_opening_date: When bids were opened
-        - notice_of_award_date: When award decision was made
-        - contract_signing_date: When contract was signed
+                      Indexed by transaction_id for easy identification.
     """
-    logger.info("Fetching transaction data from database...")
+    logger.info("Fetching transaction data from the database...")
+    
     try:
-        # Get the Transaction model dynamically to avoid import issues
         Transaction = apps.get_model('core', 'Transaction')
-        transactions = Transaction.objects.all().values(
-            'transaction_id',
-            'quantity',
-            'unit_purchase_price',
-            'total_purchase_price',
-            'approved_budget',
-            'procurement_method__name',
-            'supplier',
-            'transaction_date',
-            'invitation_to_bid_posting_date',
-            'bid_submission_deadline',
-            'bid_opening_date',
-            'notice_of_award_date',
-            'contract_signing_date'
+        if transactions_qs is None:
+            transactions_qs = Transaction.objects.all()
+
+        if not isinstance(transactions_qs, QuerySet):
+            raise TypeError("The provided transactions_qs must be a Django QuerySet.")
+
+        # --- COLUMN GENERATION ---
+        # 1. Get all concrete field  names directly from the model.
+        model_fields_list = INITIAL_COLUMNS_TO_USE.copy()
+
+        # 2 remove the foreign key field 'procurement_method' from the list.
+        if 'procurement_method' in model_fields_list:
+            model_fields_list.remove('procurement_method')
+
+        # 3. Annotate (add new col) to the qs, to get the related name.
+        # !! trying to get 'procurement_method' only gets procurement_method 'id'
+        annotated_qs = transactions_qs.annotate(
+            procurement_method_name=F('procurement_method__name') #must be diff name because we're annotating (adding new col)
+            # F() expression tells Django to get the value directly from a database field rather than using a static value
         )
-        df = pd.DataFrame.from_records(transactions)
-        df.set_index('transaction_id', inplace=True)
-        logger.info(f"Successfully loaded {len(df)} transactions from database")
+
+        # 4. 
+        final_columns_list = model_fields_list + ['procurement_method_name'] #final list of columns for the .values() query.
+       
+
+        transactions_list = list(annotated_qs.values(*final_columns_list))
+
+        if not transactions_list:
+            logger.info("No transactions found to load into DataFrame.")
+            return pd.DataFrame()
+
+        df = pd.DataFrame.from_records(transactions_list)
+        
+        # Set index if transaction_id was fetched
+        if 'transaction_id' in df.columns:
+            df.set_index('transaction_id', inplace=True)
+        
+        # !! Rename the annotated column to its final name.
+        df.rename(
+            columns={'procurement_method_name': 'procurement_method'}, 
+            inplace=True
+        )
+
+        logger.info(f"Successfully loaded {len(df)} transactions from the database.")
         logger.debug(f"DataFrame shape: {df.shape}")
         return df
+        
     except Exception as e:
-        logger.error(f"Error fetching transaction data from database: {e}", exc_info=True)
+        logger.error(f"Error fetching transaction data from the database: {e}", exc_info=True)
         raise
 
 def get_transaction_dataframe_from_csv(csv_path: Union[str, Path]) -> pd.DataFrame:
@@ -190,10 +217,7 @@ def clean_raw_data(df: pd.DataFrame):
             logger.debug(f"DataFrame shape after dropping 'is_anomaly': {df.shape}")
         
         # --- B. Column Renaming ---
-        # Standardize column names for consistency across the pipeline
-        # Renames the Django ORM field name to more intuitive name that matches the expected column name in feature engineering
-        logger.debug("Renaming columns for consistency...")
-        df.rename(columns={'procurement_method__name': 'procurement_method'}, inplace=True)
+
 
         # --- C. Missing Value Imputation ---
         # Handle missing numerical values by imputing with MEDIAN values
@@ -207,6 +231,7 @@ def clean_raw_data(df: pd.DataFrame):
                 missing_count = df[col].isnull().sum()
                 median_val = df[col].median()
                 df[col].fillna(median_val, inplace=True)
+                df[col] = df[col].infer_objects(copy=False)
                 logger.debug(f"Imputed {missing_count} missing values in {col} with median: {median_val}")
 
         # --- D. Data Type Conversion ---
@@ -227,9 +252,10 @@ def clean_raw_data(df: pd.DataFrame):
                 if invalid_dates > 0:
                     # Find the original values that became NaT
                     invalid_mask = df[col].isna()
-                    invalid_original_values = original_values[invalid_mask].unique()
+                    invalid_original_values = original_values[invalid_mask]
+                    unique_invalid_values = pd.Series(invalid_original_values).unique()
                     logger.warning(f"Found {invalid_dates} invalid dates in column {col}. Coerced to NaT.")
-                    logger.warning(f"Invalid date values in {col}: {invalid_original_values.tolist()}")
+                    logger.warning(f"Invalid date values in {col}: {unique_invalid_values.tolist()}")
 
         logger.info("Data cleaning completed successfully")
         logger.debug(f"Output DataFrame shape: {df.shape}")

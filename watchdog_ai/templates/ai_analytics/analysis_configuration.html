@@ -22,6 +22,56 @@
                             <button type="submit" id="begin-analysis" class="btn btn-primary btn-lg">Begin Analysis<i class="fas fa-arrow-right ms-2"></i></button>
                         </div>
                     </form>
+                    
+                    <!-- Contamination Parameter Explanation -->
+                    <div class="alert alert-info mt-4">
+                        <div class="row">
+                            <div class="col-md-2 text-center">
+                                <i class="fas fa-cogs fa-2x text-info"></i>
+                            </div>
+                            <div class="col-md-10">
+                                <h6 class="mb-2"><strong>Understanding the Contamination Parameter</strong></h6>
+                                <p class="mb-2">The contamination parameter tells the AI model how many anomalies to expect in the data. Think of it as setting the sensitivity level:</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card border-success mb-2">
+                                            <div class="card-body p-2">
+                                                <small class="text-success">
+                                                    <i class="fas fa-shield-alt me-1"></i>
+                                                    <strong>Conservative (0.01-0.1):</strong><br>
+                                                    • Fewer false alarms<br>
+                                                    • May miss some issues<br>
+                                                    • Good for clean datasets
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card border-warning mb-2">
+                                            <div class="card-body p-2">
+                                                <small class="text-warning">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                    <strong>Sensitive (0.2-0.5):</strong><br>
+                                                    • Catches more potential issues<br>
+                                                    • May flag normal transactions<br>
+                                                    • Good for high-risk scenarios
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mb-0 text-muted">
+                                    <small><i class="fas fa-lightbulb me-1"></i><strong>Tip:</strong> Start with 0.05 (5%) and adjust based on your results. If you find too many false positives, try a lower value. If you're missing obvious issues, try a higher value.</small>
+                                </p>
+                                <div id="contamination-explanation" class="mt-3 p-2 bg-light rounded" style="display: none;">
+                                    <small class="text-info">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        <span id="explanation-text"></span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -50,6 +100,47 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Analysis configuration page loaded');
+    
+    // Add real-time contamination explanation
+    const contaminationField = document.getElementById('id_contamination');
+    const explanationDiv = document.getElementById('contamination-explanation');
+    const explanationText = document.getElementById('explanation-text');
+    
+    if (contaminationField && explanationDiv && explanationText) {
+        function updateExplanation() {
+            const value = parseFloat(contaminationField.value);
+            if (isNaN(value) || value < 0.01 || value > 0.5) {
+                explanationDiv.style.display = 'none';
+                return;
+            }
+            
+            const percentage = Math.round(value * 100);
+            let explanation = '';
+            
+            if (value <= 0.05) {
+                explanation = `Very conservative setting (${percentage}%). The AI will only flag the most obvious anomalies. Good for datasets where you expect very few issues.`;
+            } else if (value <= 0.1) {
+                explanation = `Conservative setting (${percentage}%). The AI will flag clear anomalies while avoiding false alarms. Recommended for most procurement datasets.`;
+            } else if (value <= 0.2) {
+                explanation = `Moderate setting (${percentage}%). The AI will catch more potential issues but may include some borderline cases.`;
+            } else if (value <= 0.3) {
+                explanation = `Sensitive setting (${percentage}%). The AI will flag many potential issues, including borderline cases. Good for high-risk scenarios.`;
+            } else {
+                explanation = `Very sensitive setting (${percentage}%). The AI will flag most unusual transactions. May include many false positives but catches most issues.`;
+            }
+            
+            explanationText.textContent = explanation;
+            explanationDiv.style.display = 'block';
+        }
+        
+        contaminationField.addEventListener('input', updateExplanation);
+        contaminationField.addEventListener('change', updateExplanation);
+        
+        // Show explanation on page load if there's a default value
+        if (contaminationField.value) {
+            updateExplanation();
+        }
+    }
     
     const analysisForm = document.getElementById('analysis-form');
     const analysisModal = document.getElementById('analysis-modal');
