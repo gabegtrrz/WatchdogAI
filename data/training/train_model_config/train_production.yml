@@ -5,7 +5,7 @@
 data_source:
   # Use CSV file with labeled data for research mode
   # !! MAKE SURE TO USE ABSOLUTE PATH  AND **NO QUOTES**
-  csv_path: D:\Projects\WatchdogAI\data\training\training_data\16_0.05\labeled\training.csv
+  csv_path: D:\Projects\WatchdogAI\data\training\training_data\17_0.05\labeled\training.csv
   
   actual_contamination: 0.05
 

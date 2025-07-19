@@ -1,5 +1,257 @@
 [
   {
+    "training_date": "2025-07-19T20:45:57.500320",
+    "training_mode": "standard",
+    "configuration": {
+      "data_source": {
+        "csv_path": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\17_0.05\\labeled\\training.csv",
+        "actual_contamination": 0.05
+      },
+      "model": {
+        "contamination_range": [
+          0.05
+        ],
+        "n_estimators": 100,
+        "random_state": 10,
+        "max_samples": 700,
+        "bootstrap": false,
+        "n_jobs": null,
+        "verbose": 0,
+        "warm_start": false,
+        "max_features": 1.0
+      },
+      "training": {
+        "research_mode": false,
+        "actual_contamination": null
+      },
+      "output": {
+        "model_path": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/iforest.joblib",
+        "columns_path": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/columns.joblib",
+        "research_log_path": "D:/Projects/WatchdogAI/data/training/results/training_results.json"
+      }
+    },
+    "dataset_info": {
+      "sample_count": 700,
+      "feature_count": 29,
+      "feature_columns": [
+        "quantity",
+        "price_per_unit_efficiency",
+        "quantity_efficiency_ratio",
+        "unit_price_deviation_from_avg",
+        "budget_efficiency_score",
+        "price_variance_coefficient",
+        "quantity_price_correlation_feature",
+        "budget_utilization_ratio",
+        "price_deviation_from_avg",
+        "price_competitiveness_score",
+        "contract_signing_day_of_week",
+        "bid_opening_day_of_week",
+        "transaction_month",
+        "bidding_period_number_of_days",
+        "award_decision_days",
+        "contract_signing_days",
+        "total_procurement_cycle_days",
+        "supplier_frequency",
+        "price_per_supplier_freq",
+        "price_deviation_from_supplier_avg",
+        "timeline_efficiency",
+        "weekend_activity",
+        "procurement_method_Competitive Bidding",
+        "procurement_method_Direct Contracting",
+        "procurement_method_Negotiated Procurement (Agency-to-Agency)",
+        "procurement_method_Negotiated Procurement (Small Value Procurement)",
+        "procurement_method_Negotiated Procurement (Two Failed Biddings)",
+        "procurement_method_Repeat Order",
+        "procurement_method_nan"
+      ]
+    },
+    "model_parameters": {
+      "contamination": 0.05,
+      "random_state": 10,
+      "n_estimators": 100,
+      "max_samples": 700,
+      "bootstrap": false,
+      "verbose": 0,
+      "warm_start": false,
+      "max_features": 1.0
+    },
+    "training_summary": {
+      "contamination_used": 0.05,
+      "training_completed_at": "2025-07-19T20:45:57.500333",
+      "model_saved_to": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/iforest.joblib",
+      "columns_saved_to": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/columns.joblib"
+    },
+    "training_timestamp": "2025-07-19T20:45:57.517217"
+  },
+  {
+    "training_date": "2025-07-19T20:43:04.438462",
+    "training_mode": "standard",
+    "configuration": {
+      "data_source": {
+        "csv_path": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\17_0.05\\labeled\\training.csv",
+        "actual_contamination": 0.05
+      },
+      "model": {
+        "contamination_range": [
+          0.05
+        ],
+        "n_estimators": 100,
+        "random_state": 10,
+        "max_samples": 700,
+        "bootstrap": false,
+        "n_jobs": null,
+        "verbose": 0,
+        "warm_start": false,
+        "max_features": 1.0
+      },
+      "training": {
+        "research_mode": false,
+        "actual_contamination": null
+      },
+      "output": {
+        "model_path": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/iforest.joblib",
+        "columns_path": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/columns.joblib",
+        "research_log_path": "D:/Projects/WatchdogAI/data/training/results/training_results.json"
+      }
+    },
+    "dataset_info": {
+      "sample_count": 700,
+      "feature_count": 29,
+      "feature_columns": [
+        "quantity",
+        "price_per_unit_efficiency",
+        "quantity_efficiency_ratio",
+        "unit_price_deviation_from_avg",
+        "budget_efficiency_score",
+        "price_variance_coefficient",
+        "quantity_price_correlation_feature",
+        "budget_utilization_ratio",
+        "price_deviation_from_avg",
+        "price_competitiveness_score",
+        "contract_signing_day_of_week",
+        "bid_opening_day_of_week",
+        "transaction_month",
+        "bidding_period_number_of_days",
+        "award_decision_days",
+        "contract_signing_days",
+        "total_procurement_cycle_days",
+        "supplier_frequency",
+        "price_per_supplier_freq",
+        "price_deviation_from_supplier_avg",
+        "timeline_efficiency",
+        "weekend_activity",
+        "procurement_method_Competitive Bidding",
+        "procurement_method_Direct Contracting",
+        "procurement_method_Negotiated Procurement (Agency-to-Agency)",
+        "procurement_method_Negotiated Procurement (Small Value Procurement)",
+        "procurement_method_Negotiated Procurement (Two Failed Biddings)",
+        "procurement_method_Repeat Order",
+        "procurement_method_nan"
+      ]
+    },
+    "model_parameters": {
+      "contamination": 0.05,
+      "random_state": 10,
+      "n_estimators": 100,
+      "max_samples": 700,
+      "bootstrap": false,
+      "verbose": 0,
+      "warm_start": false,
+      "max_features": 1.0
+    },
+    "training_summary": {
+      "contamination_used": 0.05,
+      "training_completed_at": "2025-07-19T20:43:04.438473",
+      "model_saved_to": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/iforest.joblib",
+      "columns_saved_to": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/columns.joblib"
+    },
+    "training_timestamp": "2025-07-19T20:43:04.454633"
+  },
+  {
+    "training_date": "2025-07-19T20:26:18.313486",
+    "training_mode": "standard",
+    "configuration": {
+      "data_source": {
+        "csv_path": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\17_0.05\\labeled\\training.csv",
+        "actual_contamination": 0.05
+      },
+      "model": {
+        "contamination_range": [
+          0.05
+        ],
+        "n_estimators": 100,
+        "random_state": 10,
+        "max_samples": 700,
+        "bootstrap": false,
+        "n_jobs": null,
+        "verbose": 0,
+        "warm_start": false,
+        "max_features": 1.0
+      },
+      "training": {
+        "research_mode": false,
+        "actual_contamination": null
+      },
+      "output": {
+        "model_path": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/iforest.joblib",
+        "columns_path": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/columns.joblib",
+        "research_log_path": "D:/Projects/WatchdogAI/data/training/results/training_results.json"
+      }
+    },
+    "dataset_info": {
+      "sample_count": 700,
+      "feature_count": 29,
+      "feature_columns": [
+        "quantity",
+        "price_per_unit_efficiency",
+        "quantity_efficiency_ratio",
+        "unit_price_deviation_from_avg",
+        "budget_efficiency_score",
+        "price_variance_coefficient",
+        "quantity_price_correlation_feature",
+        "budget_utilization_ratio",
+        "price_deviation_from_avg",
+        "price_competitiveness_score",
+        "contract_signing_day_of_week",
+        "bid_opening_day_of_week",
+        "transaction_month",
+        "bidding_period_number_of_days",
+        "award_decision_days",
+        "contract_signing_days",
+        "total_procurement_cycle_days",
+        "supplier_frequency",
+        "price_per_supplier_freq",
+        "price_deviation_from_supplier_avg",
+        "timeline_efficiency",
+        "weekend_activity",
+        "procurement_method_Competitive Bidding",
+        "procurement_method_Direct Contracting",
+        "procurement_method_Negotiated Procurement (Agency-to-Agency)",
+        "procurement_method_Negotiated Procurement (Small Value Procurement)",
+        "procurement_method_Negotiated Procurement (Two Failed Biddings)",
+        "procurement_method_Repeat Order",
+        "procurement_method_nan"
+      ]
+    },
+    "model_parameters": {
+      "contamination": 0.05,
+      "random_state": 10,
+      "n_estimators": 100,
+      "max_samples": 700,
+      "bootstrap": false,
+      "verbose": 0,
+      "warm_start": false,
+      "max_features": 1.0
+    },
+    "training_summary": {
+      "contamination_used": 0.05,
+      "training_completed_at": "2025-07-19T20:26:18.313500",
+      "model_saved_to": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/iforest.joblib",
+      "columns_saved_to": "D:/Projects/WatchdogAI/watchdog_ai/apps/ai_analytics/model_files/columns.joblib"
+    },
+    "training_timestamp": "2025-07-19T20:26:18.327226"
+  },
+  {
     "training_date": "2025-07-19T18:41:07.904654",
     "training_mode": "standard",
     "configuration": {
