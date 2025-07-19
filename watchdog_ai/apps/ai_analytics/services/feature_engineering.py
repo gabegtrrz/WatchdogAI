@@ -231,8 +231,8 @@ def _create_date_based_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Day of week features
     # Help detect suspicious timing patterns in procurement activities.
-    df['contract_signing_dayofweek'] = df['contract_signing_date'].dt.dayofweek
-    df['bid_opening_dayofweek'] = df['bid_opening_date'].dt.dayofweek
+    df['contract_signing_day_of_week'] = df['contract_signing_date'].dt.dayofweek
+    df['bid_opening_day_of_week'] = df['bid_opening_date'].dt.dayofweek
 
     # Month feature
     # Identifies seasonal patterns and end-of-year rush spending.
@@ -248,7 +248,7 @@ def _create_date_based_features(df: pd.DataFrame) -> pd.DataFrame:
     # These features measure the efficiency and transparency of procurement processes.
     # Unusually short timelines might indicate rushed or non-competitive processes,
     # while excessively long timelines could suggest bureaucratic delays or manipulation.
-    df['bidding_period_days'] = df.apply(
+    df['bidding_period_number_of_days'] = df.apply(
         lambda r: safe_date_diff(r['bid_submission_deadline'], r['invitation_to_bid_posting_date']),
         axis=1
     )
@@ -439,15 +439,15 @@ def _create_efficiency_features(df: pd.DataFrame) -> pd.DataFrame:
     # Very short timelines might indicate rushed processes, while very long ones might indicate delays.
     epsilon = 1e-6  # Small value to prevent division by zero
     df['timeline_efficiency'] = df['total_procurement_cycle_days'] / (
-        df['bidding_period_days'] + df['award_decision_days'] + df['contract_signing_days'] + epsilon
+        df['bidding_period_number_of_days'] + df['award_decision_days'] + df['contract_signing_days'] + epsilon
     )
 
     # Weekend activity indicator
     # Binary feature indicating if any key procurement activity occurred on weekends.
     # Weekend activity might indicate irregular or rushed processes.
     df['weekend_activity'] = (
-        (df['contract_signing_dayofweek'] >= 5) |
-        (df['bid_opening_dayofweek'] >= 5)
+        (df['contract_signing_day_of_week'] >= 5) |
+        (df['bid_opening_day_of_week'] >= 5)
     ).astype(int)
 
     return df
@@ -477,8 +477,8 @@ def _impute_missing_values(df: pd.DataFrame) -> pd.DataFrame:
         'budget_utilization_ratio', 'price_deviation_from_avg', 'price_competitiveness_score',
         
         # Date-based features
-        'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
-        'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
+        'contract_signing_day_of_week', 'bid_opening_day_of_week', 'transaction_month',
+        'bidding_period_number_of_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
         
         # Supplier features
         'supplier_frequency',
@@ -526,8 +526,8 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
         'budget_utilization_ratio', 'price_deviation_from_avg', 'price_competitiveness_score',
         
         # Date-based features
-        'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
-        'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
+        'contract_signing_day_of_week', 'bid_opening_day_of_week', 'transaction_month',
+        'bidding_period_number_of_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
         
         # Supplier features
         'supplier_frequency',
