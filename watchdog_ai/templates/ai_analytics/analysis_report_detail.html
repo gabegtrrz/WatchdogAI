@@ -501,9 +501,9 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingSpinner.style.display = 'none';
         }
         
-        // Convert flat dictionary to structured format
+        // Convert flat dictionary to structured format and scale values by 100
         const featureNames = Object.keys(shapValuesData);
-        const shapValues = Object.values(shapValuesData);
+        const shapValues = Object.values(shapValuesData).map(value => value * 100); // Scale once at the beginning
         
         // Create SHAP chart visualization
         createShapChart(featureNames, shapValues);
@@ -564,7 +564,7 @@ function createShapChart(featureNames, shapValues) {
     
     // Prepare data for Chart.js
     const labels = topFeatures.map(f => formatFeatureName(f.name));
-    const values = topFeatures.map(f => f.value * 100); // Multiply by 100 for percentage display
+    const values = topFeatures.map(f => f.value); // Values already scaled at the beginning
     // FIXED: Higher positive SHAP values = more anomalous (red), lower/negative = less anomalous (green)
     const colors = values.map(v => v > 0 ? 'rgba(220, 53, 69, 0.8)' : 'rgba(40, 167, 69, 0.8)');
     
@@ -648,8 +648,8 @@ function populateShapTable(featureNames, shapValues) {
     // Create array of feature data for sorting
     const featureData = featureNames.map((name, index) => ({
         name: name,
-        value: shapValues[index] * 100, // Scale by 100 for consistency
-        absValue: Math.abs(shapValues[index] * 100)
+        value: shapValues[index], // Values already scaled at the beginning
+        absValue: Math.abs(shapValues[index])
     }));
     
     // Sort by SHAP value (descending) - higher positive values = more anomalous
@@ -702,8 +702,8 @@ function updateAnomalyExplanation(featureNames, shapValues) {
     // Find top contributing features
     const featureData = featureNames.map((name, index) => ({
         name: name,
-        value: shapValues[index] * 100, // Scale by 100 for consistency
-        absValue: Math.abs(shapValues[index] * 100)
+        value: shapValues[index], // Values already scaled at the beginning
+        absValue: Math.abs(shapValues[index])
     }));
     
     // Sort by SHAP value (descending) - higher positive values = more anomalous
@@ -749,7 +749,7 @@ function updateRecommendedActions(topFeatures) {
     
     // FIXED: Focus on features with high positive SHAP values (more anomalous)
     topFeatures.forEach(feature => {
-        if (feature.value > 5) { // High positive values indicate more anomalous behavior (scaled x100)
+        if (feature.value > 5) { // High positive values indicate more anomalous behavior
             const action = getSpecificAction(feature.name);
             if (action && !specificActions.includes(action)) {
                 specificActions.push(action);
@@ -876,7 +876,7 @@ function getDetailedFeatureExplanation(featureName, shapValue) {
     }
     
     // Default explanation
-    return `This feature ${direction} the risk score by ${(magnitude * 100).toFixed(2)}, ${shapValue > 0 ? 'suggesting unusual patterns' : 'indicating normal behavior'} in the procurement data.`;
+    return `This feature ${direction} the risk score by ${magnitude.toFixed(2)}, ${shapValue > 0 ? 'suggesting unusual patterns' : 'indicating normal behavior'} in the procurement data.`;
 }
 
 function getFeatureExplanation(featureName, shapValue) {
