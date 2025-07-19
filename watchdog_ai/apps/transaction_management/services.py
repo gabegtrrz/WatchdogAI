@@ -46,6 +46,13 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
         present_columns = set(df.columns)
         required_columns = set(REQUIRED_COLUMNS)
         
+        # Add debugging information
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Present columns: {sorted(list(present_columns))}")
+        logger.debug(f"Required columns: {sorted(list(required_columns))}")
+        logger.debug(f"Missing columns: {sorted(list(required_columns - present_columns))}")
+        
         if not required_columns.issubset(present_columns):
             missing_cols = sorted(list(required_columns - present_columns)) # sorting guarantees that for the same set of missing columns, the error message will always be identical
             parsing_error = [{'type': 'File Parsing Error', 'message': f'Missing required columns: {", ".join(missing_cols)}'}]

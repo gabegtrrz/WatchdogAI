@@ -128,6 +128,19 @@ def get_transaction_dataframe_from_csv(csv_path: Union[str, Path]) -> pd.DataFra
     try:
         # Read the CSV file as a file stream
         with open(csv_path, 'rb') as file_stream:
+            # Add debugging information
+            logger.debug(f"File size: {csv_path.stat().st_size} bytes")
+            
+            # Read the first few lines to debug column headers
+            file_stream.seek(0)
+            first_lines = file_stream.read(1000).decode('utf-8').split('\n')[:3]
+            logger.debug(f"First few lines of CSV:")
+            for i, line in enumerate(first_lines):
+                logger.debug(f"Line {i+1}: {repr(line)}")
+            
+            # Reset file stream position
+            file_stream.seek(0)
+            
             # Use the existing CSV processing function
             valid_data, validation_errors = process_transaction_csv(file_stream)
         

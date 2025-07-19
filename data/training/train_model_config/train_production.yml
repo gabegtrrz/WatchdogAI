@@ -4,7 +4,8 @@
 # Data source configuration
 data_source:
   # Use CSV file with labeled data for research mode
-  csv_path: 'D:\Projects\WatchdogAI\data\training\training_data\13_0.05\2025-07-17_14-47-46\labeled\training.csv'
+  # !! MAKE SURE TO USE ABSOLUTE PATH  AND **NO QUOTES**
+  csv_path: D:\Projects\WatchdogAI\data\training\training_data\14_0.05\labeled\training.csv
   
   actual_contamination: 0.05
 
@@ -14,14 +15,21 @@ model:
   contamination_range: [0.05]
   
   # Optional:Isolation Forest parameters
-  n_estimators: 200
+  n_estimators: 100 # n_estimators specifies the number of individual trees to build in the forest.
   random_state: 10
   max_samples: "auto"
   bootstrap: false
   n_jobs: null
   verbose: 0
   warm_start: false
-  max_features: 1.0
+  max_features: 1.0 
+
+  # You can set its value in a couple of ways:
+      # As an integer: This specifies the exact number of features to draw. For example, max_features=5 means five features will be randomly selected at each split.
+
+      # As a float (percentage): This specifies the proportion of the total features to draw. For example, max_features=0.5 means 50% of the features will be randomly selected at each split.
+
+      # The default value in many libraries, like scikit-learn, is 1.0, which means all features are considered at every split.
   
 
 # Training configuration

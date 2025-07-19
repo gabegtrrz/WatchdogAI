@@ -1,7 +1,7 @@
 # Data source configuration
 data_source:
   # Path to CSV file for evaluation (optional - will use database if not specified)
-  csv_path: D:\Projects\WatchdogAI\data\training\training_data\13_0.05\2025-07-17_14-47-46\labeled\testing.csv
+  # !! MAKE SURE TO USE ABSOLUTE PATH  AND **NO QUOTES**  csv_path: D:\Projects\WatchdogAI\data\training\training_data\14_0.05\labeled\eval.csv
   
   # Database configuration (used if csv_path is not specified)
   database:
@@ -10,6 +10,7 @@ data_source:
 # Model configuration
 model:
   # Path to the trained model file (optional - uses default if not specified)
+  # !! MAKE SURE TO USE ABSOLUTE PATH  AND **NO QUOTES**
   model_path: D:\Projects\WatchdogAI\watchdog_ai\apps\ai_analytics\model_files\iforest.joblib
   
   # Path to training columns file (optional - uses default if not specified)
