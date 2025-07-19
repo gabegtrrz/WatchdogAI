@@ -340,6 +340,32 @@ class Command(BaseCommand):
         except (OverflowError, ValueError):
             return 0.0
 
+    def _generate_fallback_unit_prices(self, size, config):
+        """
+        Generates fallback unit prices using log-normal distribution based on YAML configuration.
+        Uses unit_purchase_price field_rules from config, with sensible defaults if not found.
+        """
+        # Get unit_purchase_price configuration from field_rules
+        field_rules = config.get('field_rules', {})
+        unit_price_config = field_rules.get('unit_purchase_price', {})
+        
+        # Extract parameters from YAML config, with sensible defaults
+        mean = unit_price_config.get('mean', 6.3)  # Default to realistic lab equipment prices
+        std_dev = unit_price_config.get('std_dev', 0.3)
+        
+        # Generate prices using log-normal distribution
+        realistic_prices = np.random.lognormal(mean=mean, sigma=std_dev, size=size)
+        
+        # Clamp to reasonable bounds for procurement prices
+        UPPER_LIMIT = 999999999999.99
+        MIN_PRICE = 100.0  # Minimum reasonable price in pesos
+        realistic_prices = np.clip(realistic_prices, MIN_PRICE, UPPER_LIMIT)
+        
+        # Replace infinite values with NaN
+        realistic_prices = np.where(np.isfinite(realistic_prices), realistic_prices, np.nan)
+        
+        return realistic_prices.round(2)
+
     def _calculate_derived_prices(self, df, config, n_samples):
         """
         Calculates total_purchase_price and approved_budget based on unit_purchase_price.
@@ -350,35 +376,19 @@ class Command(BaseCommand):
         # Ensure unit_purchase_price exists and is valid (generate realistic fallback if needed)
         if 'unit_purchase_price' not in df.columns:
             self.stdout.write("  - WARNING: unit_purchase_price not found. Generating realistic prices using log-normal distribution.")
-            # Generate realistic unit prices using log-normal distribution (similar to field_rules)
-            # Parameters for realistic procurement prices: mean=5.0, sigma=0.8 gives prices roughly 50-500
-            realistic_prices = np.random.lognormal(mean=5.0, sigma=0.8, size=len(df))
-            # Clamp to reasonable bounds for procurement prices
-            UPPER_LIMIT = 999999999999.99
-            realistic_prices = np.clip(realistic_prices, 10.0, UPPER_LIMIT)
-            # Replace infinite values with NaN
-            realistic_prices = np.where(np.isfinite(realistic_prices), realistic_prices, np.nan)
-            df['unit_purchase_price'] = realistic_prices.round(2)
+            df['unit_purchase_price'] = self._generate_fallback_unit_prices(len(df), config)
         else:
             # Check if all values are the same fallback value (like 1.0)
             if df['unit_purchase_price'].nunique() == 1 and df['unit_purchase_price'].iloc[0] == 1.0:
                 self.stdout.write("  - WARNING: All unit_purchase_price values are 1.0. Generating realistic prices using log-normal distribution.")
-                # Generate realistic unit prices using log-normal distribution
-                realistic_prices = np.random.lognormal(mean=5.0, sigma=0.8, size=len(df))
-                UPPER_LIMIT = 999999999999.99
-                realistic_prices = np.clip(realistic_prices, 10.0, UPPER_LIMIT)
-                realistic_prices = np.where(np.isfinite(realistic_prices), realistic_prices, np.nan)
-                df['unit_purchase_price'] = realistic_prices.round(2)
+                df['unit_purchase_price'] = self._generate_fallback_unit_prices(len(df), config)
             else:
                 # Fill any remaining NaN values with realistic prices
                 nan_mask = df['unit_purchase_price'].isna()
                 if nan_mask.sum() > 0:
                     self.stdout.write(f"  - Filling {nan_mask.sum()} NaN unit_purchase_price values with realistic prices using log-normal distribution.")
-                    realistic_prices = np.random.lognormal(mean=5.0, sigma=0.8, size=nan_mask.sum())
-                    UPPER_LIMIT = 999999999999.99
-                    realistic_prices = np.clip(realistic_prices, 10.0, UPPER_LIMIT)
-                    realistic_prices = np.where(np.isfinite(realistic_prices), realistic_prices, np.nan)
-                    df.loc[nan_mask, 'unit_purchase_price'] = realistic_prices.round(2)
+                    fallback_prices = self._generate_fallback_unit_prices(nan_mask.sum(), config)
+                    df.loc[nan_mask, 'unit_purchase_price'] = fallback_prices
         
         # Ensure quantity exists and is valid (fallback to 1 if needed)
         if 'quantity' not in df.columns:
@@ -641,9 +651,9 @@ class Command(BaseCommand):
             if df['unit_purchase_price'].nunique() == 1 and df['unit_purchase_price'].iloc[0] == 1.0:
                 self.stdout.write("  - WARNING: All unit_purchase_price values are 1.0. Generating realistic prices using log-normal distribution.")
                 # Generate realistic unit prices using log-normal distribution
-                realistic_prices = np.random.lognormal(mean=5.0, sigma=0.8, size=len(df))
+                realistic_prices = np.random.lognormal(mean=6.3, sigma=0.3, size=len(df))
                 UPPER_LIMIT = 999999999999.99
-                realistic_prices = np.clip(realistic_prices, 10.0, UPPER_LIMIT)
+                realistic_prices = np.clip(realistic_prices, 100.0, UPPER_LIMIT)
                 realistic_prices = np.where(np.isfinite(realistic_prices), realistic_prices, np.nan)
                 df['unit_purchase_price'] = realistic_prices.round(2)
             return df
@@ -687,9 +697,9 @@ class Command(BaseCommand):
         if no_average_mask.sum() > 0:
             self.stdout.write(f"  - Generating realistic fallback prices for {no_average_mask.sum()} records without average_price using log-normal distribution")
             # Generate realistic unit prices using log-normal distribution for records without average_price
-            fallback_prices = np.random.lognormal(mean=5.0, sigma=0.8, size=no_average_mask.sum())
+            fallback_prices = np.random.lognormal(mean=6.3, sigma=0.3, size=no_average_mask.sum())
             UPPER_LIMIT = 999999999999.99
-            fallback_prices = np.clip(fallback_prices, 10.0, UPPER_LIMIT)
+            fallback_prices = np.clip(fallback_prices, 100.0, UPPER_LIMIT)
             fallback_prices = np.where(np.isfinite(fallback_prices), fallback_prices, np.nan)
             df.loc[no_average_mask, 'unit_purchase_price'] = fallback_prices.round(2)
         
