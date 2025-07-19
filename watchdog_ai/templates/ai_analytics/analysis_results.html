@@ -113,7 +113,7 @@
                                     <td><strong class="font-monospace">{{ report.transaction.transaction_id }}</strong></td>
                                     <td>{{ report.transaction.item_name }}</td>
                                     <td>{{ report.transaction.supplier }}</td>
-                                    <td class="text-end">${{ report.transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
+                                    <td class="text-end">₱{{ report.transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
                                     <td class="text-end">
                                         <span class="badge bg-danger">{{ report.anomaly_score|floatformat:4 }}</span>
                                     </td>

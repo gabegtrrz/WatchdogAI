@@ -339,7 +339,7 @@
                                         </td>
                                         <td style="word-break: break-all; max-width: 200px;"><strong class="text-dark font-monospace">{{ transaction.transaction_id }}</strong></td>
                                         <td>{{ transaction.item_name }}</td>
-                                        <td>${{ transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
+                                        <td>₱{{ transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
                                         <td>{{ transaction.supplier }}</td>
                                         <td>{{ transaction.transaction_date|date:"M d, Y" }}</td>
                                         <td>
@@ -403,11 +403,11 @@
                                                         <div class="row mb-3">
                                                             <div class="col-12 col-md-6 mb-2 mb-md-0">
                                                                 <small class="text-muted d-block">Unit Price</small>
-                                                                <strong class="d-block text-break">${{ transaction.unit_purchase_price|floatformat:2|default:"-" }}</strong>
+                                                                <strong class="d-block text-break">₱{{ transaction.unit_purchase_price|floatformat:2|default:"-" }}</strong>
                                                             </div>
                                                             <div class="col-12 col-md-6 mb-2 mb-md-0">
                                                                 <small class="text-muted d-block">Total Price</small>
-                                                                <strong class="d-block text-break">${{ transaction.total_purchase_price|floatformat:2|default:"-" }}</strong>
+                                                                <strong class="d-block text-break">₱{{ transaction.total_purchase_price|floatformat:2|default:"-" }}</strong>
                                                             </div>
                                                         </div>
                                                         <div class="row mb-3">
@@ -417,13 +417,13 @@
                                                             </div>
                                                             <div class="col-12 col-sm-6">
                                                                 <small class="text-muted d-block">Average Price</small>
-                                                                <strong>${{ transaction.average_price|floatformat:2|default:"-" }}</strong>
+                                                                <strong>₱{{ transaction.average_price|floatformat:2|default:"-" }}</strong>
                                                             </div>
                                                         </div>
                                                         <div class="row mb-3">
                                                             <div class="col-12 col-sm-6">
                                                                 <small class="text-muted d-block">Approved Budget</small>
-                                                                <strong>${{ transaction.approved_budget|floatformat:2|default:"-" }}</strong>
+                                                                <strong>₱{{ transaction.approved_budget|floatformat:2|default:"-" }}</strong>
                                                             </div>
                                                         </div>
                                                     </div>

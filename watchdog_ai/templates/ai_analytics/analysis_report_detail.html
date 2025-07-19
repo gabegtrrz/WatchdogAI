@@ -304,11 +304,11 @@
                             <div class="row mb-3">
                                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                                     <small class="text-muted d-block">Unit Price</small>
-                                    <strong class="d-block text-break">${{ report.transaction.unit_purchase_price|floatformat:2|default:"-" }}</strong>
+                                    <strong class="d-block text-break">₱{{ report.transaction.unit_purchase_price|floatformat:2|default:"-" }}</strong>
                                 </div>
                                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                                     <small class="text-muted d-block">Total Price</small>
-                                    <strong class="text-danger d-block text-break">${{ report.transaction.total_purchase_price|floatformat:2|default:"-" }}</strong>
+                                    <strong class="text-danger d-block text-break">₱{{ report.transaction.total_purchase_price|floatformat:2|default:"-" }}</strong>
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -318,13 +318,13 @@
                                 </div>
                                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                                     <small class="text-muted d-block">Average Price</small>
-                                    <strong class="d-block text-break">${{ report.transaction.average_price|floatformat:2|default:"-" }}</strong>
+                                    <strong class="d-block text-break">₱{{ report.transaction.average_price|floatformat:2|default:"-" }}</strong>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                                     <small class="text-muted d-block">Approved Budget</small>
-                                    <strong class="d-block text-break">${{ report.transaction.approved_budget|floatformat:2|default:"-" }}</strong>
+                                    <strong class="d-block text-break">₱{{ report.transaction.approved_budget|floatformat:2|default:"-" }}</strong>
                                 </div>
                             </div>
                         </div>
