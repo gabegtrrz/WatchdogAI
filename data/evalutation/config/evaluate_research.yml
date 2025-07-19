@@ -34,6 +34,21 @@ evaluation:
   
   # Log filename format (optional - will use default if not specified)
   log_filename_format: "evaluation_{timestamp}.json"
+    
+  # Output DataFrame configuration
+  output:
+    # Directory to save anomaly detection results DataFrame
+    output_directory: D:\Projects\WatchdogAI\data\evalutation\log  # e.g., "data/evaluation_output"
+    
+    # Filename for the output DataFrame (optional - will use timestamp if not specified)
+    output_filename: iforest_eval_results.csv  # e.g., "anomaly_detection_results.csv"
+    
+    # Include original features in output DataFrame
+    include_original_features: true
+    
+    # Include anomaly detection columns in output DataFrame
+    include_anomaly_columns: true
+
   
   # Evaluation metrics to calculate
   metrics:
