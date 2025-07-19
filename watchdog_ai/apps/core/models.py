@@ -2,7 +2,7 @@ from django.db import models
 import uuid
 import json
 import hashlib
-
+from decimal import Decimal, InvalidOperation
 from django.core.exceptions import ValidationError
 import logging
 
@@ -82,7 +82,7 @@ class Transaction(models.Model):
         db_index=True,
         help_text="Name or description of the item being procured."
     )
-    quantity = models.IntegerField(
+    quantity = models.PositiveIntegerField(
         null=False, 
         blank=False,
         help_text="Number of units of the item being procured."
@@ -90,28 +90,28 @@ class Transaction(models.Model):
 
     # --- Pricing ---
     unit_purchase_price = models.DecimalField(
-        max_digits=15,
+        max_digits=22,
         decimal_places=4,
         null=False,
         blank=False,
         help_text="Price per unit of the item being procured."
     )
     total_purchase_price = models.DecimalField(
-        max_digits=20,
+        max_digits=22,
         decimal_places=4,
         null=True, # can be null if price or quantity are null
         blank=True,
         help_text="Total price for the transaction (quantity * unit_purchase_price)."
     )
     average_price = models.DecimalField(
-        max_digits=15,
+        max_digits=22,
         decimal_places=4,
         null=True, # Can be null/blank if not available
         blank=True,
         help_text="Average price per unit across similar transactions (if available)."
     ) 
     approved_budget = models.DecimalField(
-        max_digits=15,
+        max_digits=22,
         decimal_places=4,
         null=True,
         blank=True,
@@ -247,12 +247,17 @@ class Transaction(models.Model):
         return f"Transaction {self.transaction_id} for {self.item_name} ({self.quantity} units)"
 
     @property
-    def calculated_total_purchase_price(self):
+    def calculated_total_purchase_price(self) -> Optional[Decimal]:
         """
         Calculates the total purchase price from quantity and unit price.
+        Returns Decimal or None if calculation is not possible.
         """
         if self.quantity is not None and self.unit_purchase_price is not None:
-            return self.quantity * self.unit_purchase_price
+            try:
+                return Decimal(str(self.quantity)) * Decimal(str(self.unit_purchase_price))
+            except (InvalidOperation, TypeError):
+                logger.warning(f"Failed to calculate total price for transaction {self.transaction_id}")
+                return None
         return None
 
     def calculate_transaction_hash(self):
@@ -314,27 +319,56 @@ class Transaction(models.Model):
     def clean(self):
         """
         Custom validation for the Transaction model before saving.
-        Ensures quantity and prices are positive.
+        Ensures quantity and prices are positive and within reasonable bounds.
         """
+        # Validate quantity
         if self.quantity is not None and self.quantity <= 0:
             raise ValidationError({'quantity': 'Quantity must be a positive integer.'})
-        if self.unit_purchase_price is not None and self.unit_purchase_price <= 0:
-            raise ValidationError({'unit_purchase_price': 'Unit purchase price must be a positive value.'})
-        # Note: average_price can be null, so only validate if it's not null
-        if self.average_price is not None and self.average_price <= 0:
-            raise ValidationError({'average_price': 'Average price must be a positive value if provided.'})
-        # Validate approved_budget if provided
-        if self.approved_budget is not None and self.approved_budget <= 0:
-            raise ValidationError({'approved_budget': 'Approved budget must be a positive value if provided.'})
+        
+        # Validate unit purchase price
+        if self.unit_purchase_price is not None:
+            if self.unit_purchase_price <= 0:
+                raise ValidationError({'unit_purchase_price': 'Unit purchase price must be a positive value.'})
+            if self.unit_purchase_price > Decimal('99999999999999999999.9999'):  # Max value for max_digits=22, decimal_places=4
+                raise ValidationError({'unit_purchase_price': 'Unit purchase price exceeds maximum allowed value.'})
+        
+        # Validate total purchase price if provided
+        if self.total_purchase_price is not None:
+            if self.total_purchase_price <= 0:
+                raise ValidationError({'total_purchase_price': 'Total purchase price must be a positive value.'})
+            if self.total_purchase_price > Decimal('99999999999999999999.9999'):  # Max value for max_digits=22, decimal_places=4
+                raise ValidationError({'total_purchase_price': 'Total purchase price exceeds maximum allowed value.'})
+        
+        # Validate average price if provided
+        if self.average_price is not None:
+            if self.average_price <= 0:
+                raise ValidationError({'average_price': 'Average price must be a positive value if provided.'})
+            if self.average_price > Decimal('99999999999999999999.9999'):
+                raise ValidationError({'average_price': 'Average price exceeds maximum allowed value.'})
+        
+        # Validate approved budget if provided
+        if self.approved_budget is not None:
+            if self.approved_budget <= 0:
+                raise ValidationError({'approved_budget': 'Approved budget must be a positive value if provided.'})
+            if self.approved_budget > Decimal('99999999999999999999.9999'):
+                raise ValidationError({'approved_budget': 'Approved budget exceeds maximum allowed value.'})
+        
+        # Validate price consistency
+        if self.quantity and self.unit_purchase_price and self.total_purchase_price:
+            calculated_total = self.calculated_total_purchase_price
+            if calculated_total and abs(calculated_total - Decimal(str(self.total_purchase_price))) > Decimal('0.01'):
+                raise ValidationError({
+                    'total_purchase_price': f'Total purchase price ({self.total_purchase_price}) does not match calculated value ({calculated_total}) from quantity and unit price.'
+                })
         
     def save(self, *args, **kwargs):
-
         # Generate a unique transaction_id if one isn't provided
         if not self.transaction_id:
             self.transaction_id = uuid.uuid4().hex[:32]
 
-        # Calculate total_purchase_price before saving
-        # self.total_purchase_price = self.calculated_total_purchase_price
+        # Auto-calculate total_purchase_price if not provided but quantity and unit_price are available
+        if self.total_purchase_price is None and self.quantity and self.unit_purchase_price:
+            self.total_purchase_price = self.calculated_total_purchase_price
 
         # ensures validation runs on every save.
         self.full_clean()
@@ -430,15 +464,20 @@ class AnalysisReport(models.Model):
         # unique_together = ['transaction']
     
     def __str__(self):
-        return f"Analysis Report for Transaction {self.transaction.transaction_id} - {'Anomaly' if self.is_anomaly else 'Normal'}"
+        transaction_id = getattr(self.transaction, 'transaction_id', 'Unknown')
+        return f"Analysis Report for Transaction {transaction_id} - {'Anomaly' if self.is_anomaly else 'Normal'}"
     
     @property
-    def anomaly_percentage(self):
+    def anomaly_percentage(self) -> Optional[float]:
         """
         Convert anomaly score to percentage for easier interpretation.
         Lower scores indicate higher anomaly probability.
         """
         if self.anomaly_score is not None:
-            # Convert to percentage (assuming score is between 0 and 1)
-            return (1 - self.anomaly_score) * 100
+            try:
+                # Convert to percentage (assuming score is between 0 and 1)
+                return float(1 - float(self.anomaly_score)) * 100
+            except (TypeError, ValueError):
+                logger.warning(f"Failed to calculate anomaly percentage for analysis report {getattr(self, 'id', 'Unknown')}")
+                return None
         return None
