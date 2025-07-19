@@ -38,7 +38,7 @@ venv/
 tests/
 
 # ignore data files
-*joblib
+
 
 
 # Ignore sqlite3 database
