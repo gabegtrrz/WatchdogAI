@@ -52,6 +52,10 @@ class Command(BaseCommand):
             if not model or training_columns is None:
                 return
 
+            # Get the actual model file path for metadata
+            model_config = config.get('model', {})
+            actual_model_path = self._resolve_path(model_config.get('model_path', DEFAULT_MODEL_PATH))
+
             # Process evaluation data
             df_processed, true_labels = self._process_evaluation_data(config)
             if df_processed is None or true_labels is None:
@@ -60,7 +64,7 @@ class Command(BaseCommand):
             # Perform evaluation
             evaluation_results = self._evaluate_model(
                 model, df_processed, training_columns, config, 
-                options['config'], true_labels
+                actual_model_path, true_labels
             )
             if not evaluation_results:
                 return
@@ -444,6 +448,14 @@ class Command(BaseCommand):
             
         evaluation_results['model_info'] = model_info
         
+        # Add anomaly configuration from YAML
+        evaluation_results['anomaly_configuration'] = {
+            'model_config': config.get('model', {}),
+            'data_source_config': config.get('data_source', {}),
+            'evaluation_config': config.get('evaluation', {}),
+            'advanced_config': config.get('advanced', {})
+        }
+        
         return evaluation_results
 
     def _output_results(self, evaluation_results: Dict[str, Any], config: Dict[str, Any]):
@@ -565,9 +577,27 @@ class Command(BaseCommand):
         model_info = evaluation_results.get('model_info', {})
         self.stdout.write(f'\nModel Information:')
         self.stdout.write(f'  - Model type: {model_info.get("model_type", "N/A")}')
+        self.stdout.write(f'  - Model path: {model_info.get("model_path", "N/A")}')
         self.stdout.write(f'  - Model Contamination: {model_info.get("contamination", "N/A")}')
         self.stdout.write(f'  - Configured Contamination: {model_info.get("config_contamination", "N/A")}')
         self.stdout.write(f'  - Estimators: {model_info.get("n_estimators", "N/A")}')
+        
+        # Print anomaly configuration summary
+        anomaly_config = evaluation_results.get('anomaly_configuration', {})
+        if anomaly_config:
+            self.stdout.write(f'\nAnomaly Configuration:')
+            model_config = anomaly_config.get('model_config', {})
+            if model_config:
+                self.stdout.write(f'  - Model path: {model_config.get("model_path", "Default")}')
+                self.stdout.write(f'  - Contamination: {model_config.get("contamination", "Default")}')
+            
+            data_source = anomaly_config.get('data_source_config', {})
+            if data_source:
+                csv_path = data_source.get('csv_path')
+                if csv_path:
+                    self.stdout.write(f'  - Data source: CSV ({csv_path})')
+                else:
+                    self.stdout.write(f'  - Data source: Database')
 
     def _print_performance_metrics(self, evaluation_results: Dict[str, Any]):
         """Print performance metrics."""
@@ -767,7 +797,12 @@ class Command(BaseCommand):
             
             # Reorder the DataFrame
             if ordered_columns:
-                output_df = output_df[ordered_columns]
+                reordered_df = output_df[ordered_columns]
+                # Ensure we return a DataFrame, not a Series
+                if isinstance(reordered_df, pd.Series):
+                    output_df = reordered_df.to_frame().T
+                else:
+                    output_df = reordered_df
                 logger.info(f'Reordered columns with {len(ordered_columns)} total columns')
             
             return output_df
