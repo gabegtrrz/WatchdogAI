@@ -10,13 +10,244 @@
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 class="mb-1"><i class="fas fa-search-plus me-2"></i>Analysis Report Detail</h2>
+                    <h2 class="mb-1"><i class="fas fa-search-plus me-2"></i>Details</h2>
                     <p class="text-muted mb-0">Transaction ID: <strong class="font-monospace">{{ report.transaction.transaction_id }}</strong></p>
                 </div>
-                <div class="text-end">
-                    <span class="badge bg-danger fs-6">Anomaly Score: {{ report.anomaly_score|floatformat:4 }}</span>
+            </div>
+
+            <!-- AI Analysis Summary -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>Analysis Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if report.is_anomaly %}
+                        <div class="alert alert-danger border-start border-5 border-danger">
+                            <div class="d-flex">
+                                <i class="fas fa-exclamation-triangle me-3 mt-1 text" style="font-size: 1.2em;"></i>
+                                <div class="flex-grow-1">
+                                    <div >
+                                        <span class="badge bg-danger fs-6">Anomaly Score: {{ report.anomaly_score|floatformat:4 }}</span>
+                                    </div>
+                                    <p class="mb-3">Here are the top properties that make this transaction anomalous:</p>
+                                    
+                                    
+                                    
+                                    <div id="anomaly-reasons-container">
+                                        <!-- Default explanations (will be replaced by JavaScript if SHAP data available) -->
+                                        <ul class="mb-3" id="anomaly-reasons">
+                                            <li><strong>Price Analysis:</strong> The transaction pricing shows significant deviation from expected ranges.</li>
+                                            <li><strong>Pattern Recognition:</strong> Unusual patterns detected compared to historical procurement data.</li>
+                                            <li><strong>Risk Assessment:</strong> Multiple factors contribute to the elevated risk score.</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="mt-3 p-3 bg-light rounded">
+                                        <h6 class="text-primary mb-2">
+                                            <i class="fas fa-clipboard-check me-1"></i>Recommended Actions:
+                                        </h6>
+                                        <div id="recommended-actions">
+                                            <ul class="mb-0 small">
+                                                <li>Review transaction documentation and supporting evidence</li>
+                                                <li>Verify supplier credentials and contract terms</li>
+                                                <li>Compare pricing with recent similar procurements</li>
+                                                <li>Escalate to procurement supervisor if concerns persist</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success border-start border-5 border-success">
+                            <div class="d-flex">
+                                <i class="fas fa-check-circle me-3 mt-1 text-success" style="font-size: 1.2em;"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="alert-heading text-success">
+                                        ✅ Normal Transaction Pattern
+                                        <small class="text-muted ms-2">(Confidence: <span id="confidence-score">{{ report.anomaly_score|floatformat:2 }}</span>)</small>
+                                    </h6>
+                                    <div id="normal-explanation">
+                                        <p class="mb-3">This transaction exhibits normal patterns consistent with standard procurement practices. The AI analysis indicates:</p>
+                                        
+                                        <ul class="mb-3" id="normal-reasons">
+                                            <li><strong>Price Compliance:</strong> Pricing is within expected ranges for this type of procurement.</li>
+                                            <li><strong>Standard Patterns:</strong> Transaction follows typical procurement workflows and patterns.</li>
+                                            <li><strong>Risk Assessment:</strong> Low risk profile with no significant red flags identified.</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="mt-3 p-3 bg-light rounded">
+                                        <h6 class="text-success mb-2">
+                                            <i class="fas fa-thumbs-up me-1"></i>Assessment Summary:
+                                        </h6>
+                                        <p class="mb-0 small">This transaction appears to be legitimate and follows standard procurement procedures. No immediate action required, but regular monitoring continues.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Analysis Metadata -->
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="row text-muted small">
+                            <div class="col-md-3">
+                                <strong>Model:</strong> Isolation Forest
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Contamination:</strong> {{ report.contamination_param|floatformat:3|default:"N/A" }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Analysis ID:</strong> {{ report.analysis_run_id}}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Analysis Date:</strong> {{ report.created_at|date:"M d, Y H:i" }}
+                            </div>
+                        </div>
+                        <div class="row text-muted small mt-2">
+                            <div class="col-md-3">
+                                <strong>Report ID:</strong> {{ report.id }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Model Type:</strong> Isolation Forest
+                            </div>
+                            {% if report.error_message %}
+                            <div class="col-md-6">
+                                <strong>Error Message:</strong> <span class="text-danger">{{ report.error_message }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
+
+
+
+            <!-- Quick Actions Navigation -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-compass me-2"></i>Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <a href="{% url 'analysis_results' analysis_run_id=report.analysis_run_id %}" class="btn btn-secondary w-100">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Results
+                                    </a>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <a href="{% url 'transaction_list' %}" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-list me-2"></i>Transaction List
+                                    </a>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-success w-100">
+                                        <i class="fas fa-flask-vial me-2"></i>New Analysis
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SHAP Values Visualization -->
+            {% if report.shap_values %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>Anomaly Score Analysis
+                    </h5>
+                    <span class="badge bg-info">SHAP Explanations</span>
+                </div>
+                <div class="card-body">
+                    <!-- Introduction -->
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex">
+                            <i class="fas fa-info-circle me-2 mt-1"></i>
+                            <div>
+                                <strong>Understanding Anomaly Scores:</strong>
+                                <p class="mb-0 mt-1">These scores show how each transaction property contributed to the anomaly prediction. 
+                                <br> Negative values (red) suggest likelihood of an anomaly, while positive values (green) suggest more normal behavior.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SHAP Visualization Container -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="text-primary mb-0">Feature Impact Visualization</h6>
+                            <small class="text-muted">Top 10 most influential features</small>
+                        </div>
+                        <div id="shap-chart" class="border rounded p-3 bg-light" style="min-height: 400px;">
+                            <div class="text-center d-flex flex-column justify-content-center h-100">
+                                <div class="spinner-border text-primary mb-3" role="status" id="shap-loading">
+                                    <span class="visually-hidden">Loading SHAP visualization...</span>
+                                </div>
+                                <p class="text-muted">Loading feature importance visualization...</p>
+                                <small class="text-muted">This may take a moment to process</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SHAP Values Table -->
+                    <div class="mt-4">
+                        <!-- SHAP Value Guide -->
+                        <div class="mb-3">
+                            <div class="row">
+                                
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="bg-danger rounded me-2" style="width: 20px; height: 15px; opacity: 0.8;"></div>
+                                        <small><strong>Negative SHAP values</strong> = More likely to be anomalous. (More suspicious)</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="bg-success rounded me-2" style="width: 20px; height: 15px; opacity: 0.8;"></div>
+                                        <small><strong>Positive SHAP values</strong> = Less likely to be anomalous. (More normal)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="text-primary mb-0"><strong>Detailed Feature Contributions</strong></h6>
+                            <small class="text-muted">Sorted by importance</small>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="shap-table">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 50%;">
+                                            <i class="fas fa-cog me-1"></i>Feature
+                                        </th>
+                                        <th class="text-end" style="width: 25%;">
+                                            <i class="fas fa-calculator me-1"></i>SHAP Value
+                                        </th>
+                                        <th class="text-end" style="width: 25%;">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Impact Level
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+
+                </div>
+            </div>
+            {% endif %}
+
+
 
             <!-- Transaction Details -->
             <div class="card shadow-sm mb-4">
@@ -225,251 +456,7 @@
                 </div>
             </div>
 
-            <!-- Analysis Results -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Analysis Results</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-primary mb-3">Anomaly Detection</h6>
-                            <div class="row mb-3">
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Is Anomaly</small>
-                                    <strong class="text-danger">
-                                        {% if report.is_anomaly %}
-                                            <i class="fas fa-exclamation-triangle me-1"></i>Yes
-                                        {% else %}
-                                            <i class="fas fa-check-circle me-1"></i>No
-                                        {% endif %}
-                                    </strong>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Anomaly Score</small>
-                                    <strong class="text-danger">{{ report.anomaly_score|floatformat:4 }}</strong>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Contamination Parameter</small>
-                                    <strong>{{ report.contamination_param|floatformat:3 }}</strong>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Analysis Date</small>
-                                    <strong>{{ report.created_at|date:"M d, Y H:i" }}</strong>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-primary mb-3">Analysis Metadata</h6>
-                            <div class="row mb-3">
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Analysis Run ID</small>
-                                    <strong class="font-monospace">{{ report.analysis_run_id|default:"-" }}</strong>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Report ID</small>
-                                    <strong class="font-monospace">{{ report.id }}</strong>
-                                </div>
-                            </div>
-                            {% if report.error_message %}
-                            <div class="row mb-3">
-                                <div class="col-12">
-                                    <small class="text-muted d-block">Error Message</small>
-                                    <strong class="text-danger">{{ report.error_message }}</strong>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SHAP Values Visualization -->
-            {% if report.shap_values %}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-bar me-2 text-primary"></i>Feature Importance Analysis
-                    </h5>
-                    <span class="badge bg-info">SHAP Explanations</span>
-                </div>
-                <div class="card-body">
-                    <!-- Introduction -->
-                    <div class="alert alert-info mb-4">
-                        <div class="d-flex">
-                            <i class="fas fa-info-circle me-2 mt-1"></i>
-                            <div>
-                                <strong>Understanding SHAP Values:</strong>
-                                <p class="mb-0 mt-1">SHAP (SHapley Additive exPlanations) values show how each feature contributed to the anomaly prediction. 
-                                <br> Negative values (red) suggest likelihood of an anomaly, while positive values (green) suggest more normal behavior.</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- SHAP Visualization Container -->
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="text-primary mb-0">Feature Impact Visualization</h6>
-                            <small class="text-muted">Top 10 most influential features</small>
-                        </div>
-                        <div id="shap-chart" class="border rounded p-3 bg-light" style="min-height: 400px;">
-                            <div class="text-center d-flex flex-column justify-content-center h-100">
-                                <div class="spinner-border text-primary mb-3" role="status" id="shap-loading">
-                                    <span class="visually-hidden">Loading SHAP visualization...</span>
-                                </div>
-                                <p class="text-muted">Loading feature importance visualization...</p>
-                                <small class="text-muted">This may take a moment to process</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- SHAP Values Table -->
-                    <div class="mt-4">
-                        <!-- SHAP Value Guide -->
-                        <div class="mb-3">
-                            <div class="row">
-                                
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="bg-danger rounded me-2" style="width: 20px; height: 15px; opacity: 0.8;"></div>
-                                        <small><strong>Negative SHAP values</strong> = More likely to be anomalous. (More suspicious)</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="bg-success rounded me-2" style="width: 20px; height: 15px; opacity: 0.8;"></div>
-                                        <small><strong>Positive SHAP values</strong> = Less likely to be anomalous. (More normal)</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="text-primary mb-0"><strong>Detailed Feature Contributions</strong></h6>
-                            <small class="text-muted">Sorted by importance</small>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table table-hover" id="shap-table">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th style="width: 50%;">
-                                            <i class="fas fa-cog me-1"></i>Feature
-                                        </th>
-                                        <th class="text-end" style="width: 25%;">
-                                            <i class="fas fa-calculator me-1"></i>SHAP Value
-                                        </th>
-                                        <th class="text-end" style="width: 25%;">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>Impact Level
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Will be populated by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Anomaly Explanation -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-lightbulb me-2 text-warning"></i>AI Analysis Explanation
-                    </h5>
-                    <span class="badge bg-secondary">Score: {{ report.anomaly_score|floatformat:4 }}</span>
-                </div>
-                <div class="card-body">
-                    {% if report.is_anomaly %}
-                        <div class="alert alert-danger border-start border-5 border-danger">
-                            <div class="d-flex">
-                                <i class="fas fa-exclamation-triangle me-3 mt-1 text-danger" style="font-size: 1.2em;"></i>
-                                <div class="flex-grow-1">
-                                    <h6 class="alert-heading text-danger">
-                                        ⚠️ Anomalous Transaction Detected
-                                    </h6>
-                                    <p class="mb-3">Our AI model has identified unusual patterns in this procurement transaction. Based on the analysis of key features, here are the primary concerns:</p>
-                                    
-                                    <div id="anomaly-reasons-container">
-                                        <!-- Default explanations (will be replaced by JavaScript if SHAP data available) -->
-                                        <ul class="mb-3" id="anomaly-reasons">
-                                            <li><strong>Price Analysis:</strong> The transaction pricing shows significant deviation from expected ranges.</li>
-                                            <li><strong>Pattern Recognition:</strong> Unusual patterns detected compared to historical procurement data.</li>
-                                            <li><strong>Risk Assessment:</strong> Multiple factors contribute to the elevated risk score.</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="mt-3 p-3 bg-light rounded">
-                                        <h6 class="text-primary mb-2">
-                                            <i class="fas fa-clipboard-check me-1"></i>Recommended Actions:
-                                        </h6>
-                                        <div id="recommended-actions">
-                                            <ul class="mb-0 small">
-                                                <li>Review transaction documentation and supporting evidence</li>
-                                                <li>Verify supplier credentials and contract terms</li>
-                                                <li>Compare pricing with recent similar procurements</li>
-                                                <li>Escalate to procurement supervisor if concerns persist</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-success border-start border-5 border-success">
-                            <div class="d-flex">
-                                <i class="fas fa-check-circle me-3 mt-1 text-success" style="font-size: 1.2em;"></i>
-                                <div class="flex-grow-1">
-                                    <h6 class="alert-heading text-success">
-                                        ✅ Normal Transaction Pattern
-                                        <small class="text-muted ms-2">(Confidence: <span id="confidence-score">{{ report.anomaly_score|floatformat:2 }}</span>)</small>
-                                    </h6>
-                                    <div id="normal-explanation">
-                                        <p class="mb-3">This transaction exhibits normal patterns consistent with standard procurement practices. The AI analysis indicates:</p>
-                                        
-                                        <ul class="mb-3" id="normal-reasons">
-                                            <li><strong>Price Compliance:</strong> Pricing is within expected ranges for this type of procurement.</li>
-                                            <li><strong>Standard Patterns:</strong> Transaction follows typical procurement workflows and patterns.</li>
-                                            <li><strong>Risk Assessment:</strong> Low risk profile with no significant red flags identified.</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="mt-3 p-3 bg-light rounded">
-                                        <h6 class="text-success mb-2">
-                                            <i class="fas fa-thumbs-up me-1"></i>Assessment Summary:
-                                        </h6>
-                                        <p class="mb-0 small">This transaction appears to be legitimate and follows standard procurement procedures. No immediate action required, but regular monitoring continues.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-                    
-                    <!-- Analysis Metadata -->
-                    <div class="mt-4 pt-3 border-top">
-                        <div class="row text-muted small">
-                            <div class="col-md-4">
-                                <strong>Model:</strong> Isolation Forest
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Contamination:</strong> {{ report.contamination_param|floatformat:3|default:"N/A" }}
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Analysis ID:</strong> {{ report.analysis_run_id|slice:":8" }}...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Navigation -->
+            <!-- Bottom Navigation -->
             <div class="text-center">
                 <a href="{% url 'analysis_results' analysis_run_id=report.analysis_run_id %}" class="btn btn-secondary me-2">
                     <i class="fas fa-arrow-left me-2"></i>Back to Results
