@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 # Model file paths - centralized configuration for easy maintenance
-MODEL_PATH = 'watchdog_ai/apps/ai_analytics/model_files/iforest.joblib'
-COLUMNS_PATH = 'watchdog_ai/apps/ai_analytics/model_files/columns.joblib'
+MODEL_PATH = 'watchdog_ai/apps/ai_analytics/model_files/isolation_forest.joblib'
+COLUMNS_PATH = 'watchdog_ai/apps/ai_analytics/model_files/training_columns.joblib'
 
 # Global model state variables
 model_loaded: bool = False
@@ -80,7 +80,7 @@ def _load_model_files():
 _load_model_files()
 
 
-def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05, analysis_run_id: uuid.UUID = None) -> Dict[str, Any]:
+def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05, analysis_run_id: Optional[uuid.UUID] = None) -> Dict[str, Any]:
     """
     Run the complete anomaly detection pipeline for all selected transactions.
 
@@ -88,14 +88,17 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
     0. Model files already loaded.
 
     1. Convert the transaction data to a DataFrame
-    2. Preprocesses the data
-    3. Generates features (using the training columns)
-    5. Performs anomaly detection
-    6. Saves the results for each transaction into an AnalysisReport
+    2. Extract labels and remove is_anomaly column if present
+    3. Preprocesses the data
+    4. Generates features (using the training columns)
+    5. Aligns columns with training data
+    6. Performs anomaly detection
+    7. Saves the results for each transaction into an AnalysisReport
 
     Args:
         transactions_qs: QuerySet of transactions to analyze.
         contamination: The proportion of outliers in the data set.
+        analysis_run_id: UUID for the analysis run.
 
     Returns:
         A dictionary containing the results of the analysis.
@@ -114,42 +117,45 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         raw_df = preprocessing.get_transaction_dataframe(transactions_qs)
         logger.info(f"Raw data converted to DataFrame in {time.time() - step_start:.2f} seconds")
         
-        ### 2. Preprocess the data
+        ### 2. Extract labels and remove is_anomaly column if present
+        # This matches the evaluate_model.py flow
+        if 'is_anomaly' in raw_df.columns:
+            logger.info("Removing is_anomaly column from raw data for inference")
+            raw_df = raw_df.drop('is_anomaly', axis=1)
+        
+        ### 3. Preprocess the data
         cleaned_df = preprocessing.clean_raw_data(raw_df)
         
         step_start = time.time()
         logger.info(f"Preprocessing completed in {time.time() - step_start:.2f} seconds")
 
-        ### 3. Generate features
+        ### 4. Generate features
         featured_df, feature_columns_list = feature_engineering.create_features(cleaned_df)
 
-        ### 4. Align columns with the model's training columns
-        final_df = featured_df[feature_columns_list] #reorders columns to match the order of the training columns and discards columns that are no longer needed.
+        ### 5. Align columns with the model's training columns (IMPROVED)
+        final_df = _prepare_features_for_prediction(featured_df, feature_columns_list)
 
-        # 5. Perform anomaly detection
+        # 6. Perform anomaly detection
         anomaly_labels, anomaly_scores = analyze_anomalies(final_df, contamination)
         
         if anomaly_labels is None or anomaly_scores is None:
             raise ValueError("Anomaly detection failed, received no labels or scores.")
 
-        # Step 6: SHAP Analysis - Generate explainability
+        # Step 7: SHAP Analysis - Generate explainability
         logger.debug("Generating SHAP values for explainability...")
         step_start = time.time()
         
         shap_values = generate_shap_values(model, final_df)
         # shape: (n_samples, n_features)
 
-
-
         logger.debug("SHAP values generated successfully")
         logger.info(f"SHAP values generated in {time.time() - step_start:.2f} seconds")
 
-        # Step 7: Generate Inverse Anomaly Scores and to make it easier to understand.
+        # Step 8: Generate Inverse Anomaly Scores and to make it easier to understand.
         # Invert anomaly scores: higher values now indicate more anomalous (easier to interpret)
         final_anomaly_scores = -anomaly_scores # applies element-wise negation to all values in the nparray
         
-        # 7. Unpack SHAP and Save to Database
-        analysis_run_id = analysis_run_id 
+        # 9. Unpack SHAP and Save to Database
         if not analysis_run_id:
             raise ValueError("Analysis run ID is required")
 
@@ -159,11 +165,14 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         for i, transaction in enumerate(transactions_list):
             step_start = time.time()
             
-            shap_values_for_transaction = dict(zip(final_df.columns, shap_values[i].tolist()))
+            if shap_values is not None:
+                shap_values_for_transaction = dict(zip(final_df.columns, shap_values[i].tolist()))
                 # shap_values[i] gets the SHAP values for the i-th transaction
                 # .tolist() converts the numpy array to a Python list
                 # zip() pairs each column name with its corresponding SHAP value
                 # dict() creates a dictionary from these pairs
+            else:
+                shap_values_for_transaction = {}
 
             reports_to_create.append(
                 AnalysisReport(
@@ -199,6 +208,61 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             "status": "error",
             "message": str(e)
         }
+
+def _prepare_features_for_prediction(featured_df: pd.DataFrame, feature_columns_list: List[str]) -> pd.DataFrame:
+    """
+    Prepare features for model prediction with proper column handling.
+    
+    **Process:**
+    1. Handles missing columns by adding them with default values
+    2. Removes extra columns not in training data
+    3. Ensures exact column match with training data
+    4. Validates DataFrame type safety
+    
+    Args:
+        featured_df: DataFrame with engineered features
+        feature_columns_list: List of feature columns from feature engineering
+        
+    Returns:
+        pd.DataFrame: Properly aligned DataFrame for model prediction
+    """
+    features_df = featured_df.copy()
+    
+    # Debug column information
+    logger.info(f'Columns after feature engineering: {list(features_df.columns)}')
+    logger.info(f'Training columns: {list(training_columns)}')
+    
+    # Handle column mismatches
+    missing_columns = set(training_columns) - set(features_df.columns)
+    extra_columns = set(features_df.columns) - set(training_columns)
+    
+    logger.info(f'Missing columns: {missing_columns}')
+    logger.info(f'Extra columns: {extra_columns}')
+    
+    # Add missing columns with default value
+    if missing_columns:
+        logger.warning(f'Missing columns in prediction data: {missing_columns}')
+        for col in missing_columns:
+            features_df[col] = 0.0  # Default value for missing features
+    
+    # Remove extra columns
+    if extra_columns:
+        logger.warning(f'Extra columns in prediction data: {extra_columns}')
+        features_df = features_df[training_columns]
+    
+    # Safety check: Ensure is_anomaly is not in features
+    if 'is_anomaly' in features_df.columns:
+        logger.error('is_anomaly column still present in features! Removing it...')
+        features_df = features_df.drop('is_anomaly', axis=1)
+    
+    logger.info(f'Features shape for prediction: {features_df.shape}')
+    logger.info(f'Final feature columns: {list(features_df.columns)}')
+    
+    # Ensure we return a DataFrame, not a Series
+    if isinstance(features_df, pd.Series):
+        features_df = features_df.to_frame().T
+    
+    return features_df
 
 # ============================================================================
 # UTILITY FUNCTIONS
@@ -288,7 +352,7 @@ def generate_shap_values(model: Any, final_df: pd.DataFrame) -> Optional[np.ndar
         
     except Exception as e:
         logger.error(f"Error generating SHAP values: {e}", exc_info=True)
-        return
+        return None
 
 
 def _get_fallback_result() -> Dict[str, Any]:
