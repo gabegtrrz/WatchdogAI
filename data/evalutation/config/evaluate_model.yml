@@ -2,7 +2,7 @@
 data_source:
   # Path to CSV file for evaluation (optional - will use database if not specified)
   # !! MAKE SURE TO USE ABSOLUTE PATH  AND **NO QUOTES**  csv_path: D:\Projects\WatchdogAI\data\training\training_data\14_0.05\labeled\eval.csv
-  csv_path: D:\Projects\WatchdogAI\data\training\training_data\14_0.05\labeled\eval.csv
+  csv_path: D:\Projects\WatchdogAI\data\training\training_data\16_0.05\labeled\eval.csv
   # Database configuration (used if csv_path is not specified)
   database:
     use_database: false
