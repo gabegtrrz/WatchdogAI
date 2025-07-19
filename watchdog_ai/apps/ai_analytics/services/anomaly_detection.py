@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 # Model file paths - centralized configuration for easy maintenance
-MODEL_PATH = 'watchdog_ai/apps/ai_analytics/model_files/isolation_forest.joblib'
-COLUMNS_PATH = 'watchdog_ai/apps/ai_analytics/model_files/training_columns.joblib'
+MODEL_PATH = 'watchdog_ai/apps/ai_analytics/model_files/iforest.joblib'
+COLUMNS_PATH = 'watchdog_ai/apps/ai_analytics/model_files/columns.joblib'
 
 # Global model state variables
 model_loaded: bool = False
