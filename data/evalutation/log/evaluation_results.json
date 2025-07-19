@@ -61,6 +61,131 @@
       "labeled_data_count": 100,
       "true_anomalies": 4,
       "true_normal": 96,
+      "evaluation_date": "2025-07-20T00:31:52.450960"
+    },
+    "model_info": {
+      "model_type": "IsolationForest",
+      "model_path": "D:\\Projects\\WatchdogAI\\watchdog_ai\\apps\\ai_analytics\\model_files\\iforest.joblib",
+      "contamination": 0.05,
+      "n_estimators": 100,
+      "max_samples": 700,
+      "bootstrap": false,
+      "random_state": 10,
+      "config_contamination": 0.04
+    },
+    "anomaly_configuration": {
+      "model_config": {
+        "model_path": "D:\\Projects\\WatchdogAI\\watchdog_ai\\apps\\ai_analytics\\model_files\\iforest.joblib",
+        "columns_path": "D:\\Projects\\WatchdogAI\\watchdog_ai\\apps\\ai_analytics\\model_files\\columns.joblib",
+        "contamination": 0.04
+      },
+      "data_source_config": {
+        "csv_path": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\19_0.05\\labeled\\eval.csv",
+        "database": {
+          "use_database": false
+        }
+      },
+      "evaluation_config": {
+        "output_format": "both",
+        "log_directory": "D:\\Projects\\WatchdogAI\\data\\evalutation\\log",
+        "include_timestamp": true,
+        "log_filename_format": "evaluation_{timestamp}.json",
+        "output": {
+          "output_directory": "D:\\Projects\\WatchdogAI\\data\\evalutation\\log",
+          "output_filename": "iforest_eval_results.csv",
+          "include_original_features": true,
+          "include_anomaly_columns": true,
+          "include_specific_columns": [],
+          "exclude_specific_columns": []
+        },
+        "metrics": [
+          "precision",
+          "recall",
+          "f1_score",
+          "accuracy",
+          "specificity",
+          "balanced_accuracy",
+          "confusion_matrix"
+        ],
+        "reporting": {
+          "include_dataset_info": true,
+          "include_model_info": true,
+          "include_prediction_summary": true,
+          "include_confusion_matrix": true
+        }
+      },
+      "advanced_config": {
+        "handle_missing_columns": true,
+        "missing_column_default": 0,
+        "remove_extra_columns": true,
+        "validate_data": true,
+        "continue_on_metric_error": false
+      }
+    },
+    "evaluation_timestamp": "2025-07-20T00:31:52.707097"
+  },
+  {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "accuracy": 1.0,
+    "specificity": 1.0,
+    "balanced_accuracy": 1.0,
+    "confusion_matrix": [
+      [
+        96,
+        0
+      ],
+      [
+        0,
+        4
+      ]
+    ],
+    "predicted_anomalies": 4,
+    "predicted_normal": 96,
+    "true_anomalies": 4,
+    "true_normal": 96,
+    "true_positives": 4,
+    "false_positives": 0,
+    "false_negatives": 0,
+    "true_negatives": 96,
+    "dataset_info": {
+      "sample_count": 100,
+      "feature_count": 29,
+      "feature_columns": [
+        "quantity",
+        "price_per_unit_efficiency",
+        "quantity_efficiency_ratio",
+        "unit_price_deviation_from_avg",
+        "budget_efficiency_score",
+        "price_variance_coefficient",
+        "quantity_price_correlation_feature",
+        "budget_utilization_ratio",
+        "price_deviation_from_avg",
+        "price_competitiveness_score",
+        "contract_signing_day_of_week",
+        "bid_opening_day_of_week",
+        "transaction_month",
+        "bidding_period_number_of_days",
+        "award_decision_days",
+        "contract_signing_number_of_days",
+        "total_procurement_cycle_days",
+        "supplier_frequency",
+        "price_per_supplier_freq",
+        "price_deviation_from_supplier_avg",
+        "timeline_efficiency",
+        "weekend_activity",
+        "procurement_method_Competitive Bidding",
+        "procurement_method_Direct Contracting",
+        "procurement_method_Negotiated Procurement (Agency-to-Agency)",
+        "procurement_method_Negotiated Procurement (Small Value Procurement)",
+        "procurement_method_Negotiated Procurement (Two Failed Biddings)",
+        "procurement_method_Repeat Order",
+        "procurement_method_nan"
+      ],
+      "labeled_data_count": 100,
+      "true_anomalies": 4,
+      "true_normal": 96,
       "evaluation_date": "2025-07-20T00:24:28.783032"
     },
     "model_info": {
