@@ -85,6 +85,12 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
 
     for i, row in enumerate(df.to_dict(orient='records')): #alternate method for large files (unlikely) is itterrows() which gives overhead for processing each row at a time. to_dict() is faster but loads all data into memory.
         row_num = i + 2  # For user-friendly error reporting
+        
+        # Log the raw row from the CSV reader
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Row {row_num} (raw): {row}")
+
         errors_in_row = []
         cleaned_row_data = {}
 
