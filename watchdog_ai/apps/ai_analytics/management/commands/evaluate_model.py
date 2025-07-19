@@ -217,10 +217,12 @@ class Command(BaseCommand):
             if features_df is None:
                 return None
 
-            # Get predictions
-            predicted_labels = self._get_predictions(model, features_df, config)
-            if predicted_labels is None:
+            # Get predictions and anomaly scores
+            prediction_results = self._get_predictions_and_scores(model, features_df, config)
+            if prediction_results is None:
                 return None
+            
+            predicted_labels, anomaly_scores, threshold = prediction_results
 
             # Calculate metrics
             evaluation_results = self._calculate_metrics(true_labels, predicted_labels, config)
@@ -228,6 +230,12 @@ class Command(BaseCommand):
             # Add metadata
             evaluation_results = self._add_metadata(evaluation_results, df_processed, training_columns, 
                                                  true_labels, model, model_path, config)
+            
+            # Create output DataFrame with anomaly detection results
+            output_df = self._create_output_dataframe(df_processed, predicted_labels, anomaly_scores, 
+                                                    threshold, true_labels, config)
+            if output_df is not None:
+                self._save_output_dataframe(output_df, config)
             
             return evaluation_results
 
@@ -277,29 +285,38 @@ class Command(BaseCommand):
         logger.info(f'Features shape for prediction: {features_df.shape}')
         logger.info(f'Final feature columns: {list(features_df.columns)}')
         
+        # Ensure we return a DataFrame, not a Series
+        if isinstance(features_df, pd.Series):
+            features_df = features_df.to_frame().T
+        
         return features_df
 
-    def _get_predictions(self, model, features_df: pd.DataFrame, config: Dict[str, Any]) -> Optional[np.ndarray]:
-        """Get predictions from the trained model."""
+    def _get_predictions_and_scores(self, model, features_df: pd.DataFrame, config: Dict[str, Any]) -> Optional[tuple[np.ndarray, np.ndarray, float]]:
+        """Get predictions and anomaly scores from the trained model."""
+        logger.info('Getting predictions and anomaly scores from trained model...')
 
-        logger.info('Getting predictions from trained model...')
+        try:
+            # Get raw anomaly scores (lower score means more anomalous)
+            anomaly_scores = model.score_samples(features_df)
 
-        # Get raw anomaly scores (lower score means more anomalous)
-        anomaly_scores = model.score_samples(features_df)
+            # Determine contamination rate for thresholding
+            contamination_rate = self._get_contamination_rate(model, config)
+            
+            # Calculate threshold based on contamination rate
+            threshold = np.percentile(anomaly_scores, contamination_rate * 100)
 
-        # Determine contamination rate for thresholding
-        contamination_rate = self._get_contamination_rate(model, config)
-        
-        # Calculate threshold based on contamination rate
-        threshold = np.percentile(anomaly_scores, contamination_rate * 100)
+            # Classify samples as anomalies (1) or normal (0)
+            predicted_labels = (anomaly_scores <= threshold).astype(int)
 
-        # Classify samples as anomalies (1) or normal (0)
-        predicted_labels = (anomaly_scores <= threshold).astype(int)
+            logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)} '
+                       f'using contamination rate of {contamination_rate:.4f} and threshold of {threshold:.4f}')
 
-        logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)} '
-                   f'using contamination rate of {contamination_rate:.4f} and threshold of {threshold:.4f}')
-
-        return predicted_labels
+            return predicted_labels, anomaly_scores, threshold
+            
+        except Exception as e:
+            logger.error(f'Error getting predictions and scores: {e}', exc_info=True)
+            self.stderr.write(f'Error getting predictions and scores: {e}')
+            return None
 
     def _get_contamination_rate(self, model, config: Dict[str, Any]) -> float:
         """Get the contamination rate from the config, falling back to the model's default."""
@@ -614,3 +631,289 @@ class Command(BaseCommand):
             self.stderr.write(f'{file_description.capitalize()} not found at {file_path}. Please train the model first.')
             return False
         return True
+
+    def _create_output_dataframe(self, df_processed: pd.DataFrame, predicted_labels: np.ndarray, 
+                                anomaly_scores: np.ndarray, threshold: float, true_labels: np.ndarray, 
+                                config: Dict[str, Any]) -> Optional[pd.DataFrame]:
+        """Create output DataFrame with original data plus anomaly detection results."""
+        try:
+            # Get the original raw data to include original columns
+            original_df = self._get_original_data_for_output(config)
+            
+            # Start with the processed data
+            output_df = df_processed.copy()
+            
+            # Add original columns if available and different from processed data
+            if original_df is not None and not original_df.empty:
+                # Get original columns that are not in processed data
+                original_cols = [col for col in original_df.columns if col not in output_df.columns]
+                if original_cols:
+                    # Add original columns to output DataFrame
+                    for col in original_cols:
+                        if col in original_df.columns:
+                            output_df[col] = original_df[col].values[:len(output_df)]
+                    logger.info(f'Added {len(original_cols)} original columns to output DataFrame')
+            
+            # Filter columns based on configuration
+            output_df = self._filter_output_columns(output_df, config)
+            
+            # Add anomaly detection columns
+            output_df['anomaly_score'] = anomaly_scores
+            output_df['predicted_anomaly'] = predicted_labels
+            output_df['anomaly_threshold'] = threshold
+            
+            # Add true labels if available
+            if true_labels is not None:
+                output_df['true_anomaly'] = true_labels
+                output_df['prediction_correct'] = (predicted_labels == true_labels).astype(int)
+            
+            # Add contamination rate used for prediction
+            contamination_rate = self._get_contamination_rate_from_config(config)
+            output_df['contamination_rate'] = contamination_rate
+            
+            # Add prediction confidence (distance from threshold)
+            output_df['prediction_confidence'] = np.abs(anomaly_scores - threshold)
+            
+            # Add anomaly severity (how far below threshold)
+            output_df['anomaly_severity'] = threshold - anomaly_scores
+            output_df['anomaly_severity'] = output_df['anomaly_severity'].clip(lower=0)  # Only positive values
+            
+            # Ensure proper column ordering
+            output_df = self._reorder_columns(output_df)
+            
+            logger.info(f'Created output DataFrame with {output_df.shape[0]} rows and {output_df.shape[1]} columns')
+            return output_df
+            
+        except Exception as e:
+            logger.error(f'Error creating output DataFrame: {e}', exc_info=True)
+            self.stderr.write(f'Error creating output DataFrame: {e}')
+            return None
+
+    def _filter_output_columns(self, output_df: pd.DataFrame, config: Dict[str, Any]) -> pd.DataFrame:
+        """Filter columns based on configuration settings."""
+        evaluation_config = config.get('evaluation', {})
+        output_config = evaluation_config.get('output', {})
+        
+        # Get column inclusion settings
+        include_original_features = output_config.get('include_original_features', True)
+        include_anomaly_columns = output_config.get('include_anomaly_columns', True)
+        include_specific_columns = output_config.get('include_specific_columns', [])
+        exclude_specific_columns = output_config.get('exclude_specific_columns', [])
+        
+        # Define anomaly detection columns
+        anomaly_columns = [
+            'anomaly_score', 'predicted_anomaly', 'anomaly_threshold', 'contamination_rate',
+            'prediction_confidence', 'anomaly_severity', 'true_anomaly', 'prediction_correct'
+        ]
+        
+        # Start with all columns
+        available_columns = list(output_df.columns)
+        columns_to_keep = []
+        
+        # Add original features if requested
+        if include_original_features:
+            original_columns = [col for col in available_columns if col not in anomaly_columns]
+            columns_to_keep.extend(original_columns)
+        
+        # Add specific columns if requested
+        if include_specific_columns:
+            for col in include_specific_columns:
+                if col in available_columns and col not in columns_to_keep:
+                    columns_to_keep.append(col)
+                    logger.info(f'Including specific column: {col}')
+        
+        # Remove excluded columns
+        if exclude_specific_columns:
+            for col in exclude_specific_columns:
+                if col in columns_to_keep:
+                    columns_to_keep.remove(col)
+                    logger.info(f'Excluding specific column: {col}')
+        
+        # Filter the DataFrame
+        if columns_to_keep:
+            filtered_df = output_df[columns_to_keep]
+            # Ensure we return a DataFrame, not a Series
+            if isinstance(filtered_df, pd.Series):
+                output_df = filtered_df.to_frame().T
+            else:
+                output_df = filtered_df
+            logger.info(f'Filtered output DataFrame to {len(columns_to_keep)} columns')
+        
+        return output_df
+
+    def _reorder_columns(self, output_df: pd.DataFrame) -> pd.DataFrame:
+        """Reorder columns to ensure proper ordering, especially procurement_method__name before is_anomaly."""
+        try:
+            # Define priority columns that should appear first
+            priority_columns = [
+                'transaction_id',
+                'item_name', 
+                'quantity',
+                'unit_purchase_price',
+                'procurement_method__name',  # Ensure this comes before is_anomaly
+                'supplier',
+                'transaction_date'
+            ]
+            
+            # Get all available columns
+            all_columns = list(output_df.columns)
+            
+            # Start with priority columns that exist in the DataFrame
+            ordered_columns = [col for col in priority_columns if col in all_columns]
+            
+            # Add remaining columns (excluding priority columns already added)
+            remaining_columns = [col for col in all_columns if col not in ordered_columns]
+            ordered_columns.extend(remaining_columns)
+            
+            # Reorder the DataFrame
+            if ordered_columns:
+                output_df = output_df[ordered_columns]
+                logger.info(f'Reordered columns with {len(ordered_columns)} total columns')
+            
+            return output_df
+            
+        except Exception as e:
+            logger.warning(f'Error reordering columns: {e}')
+            return output_df
+
+    def _get_original_data_for_output(self, config: Dict[str, Any]) -> Optional[pd.DataFrame]:
+        """Get original raw data for including original columns in output."""
+        try:
+            # Get raw data using the same method as in _get_raw_data
+            csv_source = config.get('data_source', {}).get('csv_path')
+            
+            if csv_source:
+                logger.info(f'Getting original data from CSV: {csv_source}')
+                return preprocessing.get_dataframe(csv_source)
+            else:
+                logger.info('Getting original data from database')
+                return preprocessing.get_dataframe()
+                
+        except Exception as e:
+            logger.warning(f'Could not retrieve original data for output: {e}')
+            return None
+
+    def _get_contamination_rate_from_config(self, config: Dict[str, Any]) -> float:
+        """Get contamination rate from config or return default."""
+        contamination_from_config = config.get('model', {}).get('contamination', None)
+        
+        if contamination_from_config is not None:
+            try:
+                if str(contamination_from_config).lower() == 'auto':
+                    return 0.05  # Default auto value
+                return float(contamination_from_config)
+            except (ValueError, TypeError):
+                pass
+        
+        return 0.05  # Default fallback
+
+    def _save_output_dataframe(self, output_df: pd.DataFrame, config: Dict[str, Any]):
+        """Save the output DataFrame with anomaly detection results to CSV."""
+        try:
+            # Get output configuration
+            evaluation_config = config.get('evaluation', {})
+            output_config = evaluation_config.get('output', {})
+            
+            # Determine output path
+            output_directory = output_config.get('output_directory', 'data/evaluation_output')
+            output_filename = output_config.get('output_filename', '')
+            if output_filename:
+                output_filename = f'{output_filename}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            else:
+                output_filename = f'iforest_results_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            
+            # Create directory if it doesn't exist
+            os.makedirs(output_directory, exist_ok=True)
+            output_path = os.path.join(output_directory, output_filename)
+            
+            # Save DataFrame to CSV
+            output_df.to_csv(output_path, index=False)
+            
+            logger.info(f'Anomaly detection results saved to: {output_path}')
+            self.stdout.write(f'Anomaly detection results saved to: {output_path}')
+            
+            # Print summary statistics
+            self._print_output_summary(output_df)
+            
+        except Exception as e:
+            logger.error(f'Error saving output DataFrame: {e}', exc_info=True)
+            self.stderr.write(f'Error saving output DataFrame: {e}')
+
+    def _print_output_summary(self, output_df: pd.DataFrame):
+        """Print summary of the output DataFrame."""
+        self.stdout.write('\n' + '='*60)
+        self.stdout.write('ANOMALY DETECTION OUTPUT SUMMARY')
+        self.stdout.write('='*60)
+        
+        # Basic statistics
+        total_samples = len(output_df)
+        predicted_anomalies = output_df['predicted_anomaly'].sum()
+        predicted_normal = total_samples - predicted_anomalies
+        
+        self.stdout.write(f'\nDataset Summary:')
+        self.stdout.write(f'  - Total samples: {total_samples}')
+        self.stdout.write(f'  - Predicted anomalies: {predicted_anomalies}')
+        self.stdout.write(f'  - Predicted normal: {predicted_normal}')
+        self.stdout.write(f'  - Anomaly rate: {predicted_anomalies/total_samples:.2%}')
+        
+        # Column information
+        all_columns = list(output_df.columns)
+        original_columns = [col for col in all_columns if col not in [
+            'anomaly_score', 'predicted_anomaly', 'anomaly_threshold', 'contamination_rate',
+            'prediction_confidence', 'anomaly_severity', 'true_anomaly', 'prediction_correct'
+        ]]
+        
+        self.stdout.write(f'\nOutput DataFrame Columns:')
+        self.stdout.write(f'  - Total columns: {len(all_columns)}')
+        self.stdout.write(f'  - Original columns: {len(original_columns)}')
+        self.stdout.write(f'  - Anomaly detection columns: {len(all_columns) - len(original_columns)}')
+        
+        if original_columns:
+            self.stdout.write(f'  - Original columns: {", ".join(original_columns[:5])}')
+            if len(original_columns) > 5:
+                self.stdout.write(f'    ... and {len(original_columns) - 5} more')
+        
+        # Anomaly score statistics
+        if 'anomaly_score' in output_df.columns:
+            scores = output_df['anomaly_score']
+            self.stdout.write(f'\nAnomaly Score Statistics:')
+            self.stdout.write(f'  - Mean: {scores.mean():.4f}')
+            self.stdout.write(f'  - Std: {scores.std():.4f}')
+            self.stdout.write(f'  - Min: {scores.min():.4f}')
+            self.stdout.write(f'  - Max: {scores.max():.4f}')
+            self.stdout.write(f'  - Threshold: {output_df["anomaly_threshold"].iloc[0]:.4f}')
+        
+        # Prediction confidence statistics
+        if 'prediction_confidence' in output_df.columns:
+            confidence = output_df['prediction_confidence']
+            self.stdout.write(f'\nPrediction Confidence Statistics:')
+            self.stdout.write(f'  - Mean: {confidence.mean():.4f}')
+            self.stdout.write(f'  - Std: {confidence.std():.4f}')
+            self.stdout.write(f'  - Min: {confidence.min():.4f}')
+            self.stdout.write(f'  - Max: {confidence.max():.4f}')
+        
+        # Anomaly severity statistics
+        if 'anomaly_severity' in output_df.columns:
+            severity = output_df['anomaly_severity']
+            anomaly_severity = severity[severity > 0]
+            if len(anomaly_severity) > 0:
+                self.stdout.write(f'\nAnomaly Severity Statistics (for detected anomalies):')
+                self.stdout.write(f'  - Mean: {anomaly_severity.mean():.4f}')
+                self.stdout.write(f'  - Std: {anomaly_severity.std():.4f}')
+                self.stdout.write(f'  - Min: {anomaly_severity.min():.4f}')
+                self.stdout.write(f'  - Max: {anomaly_severity.max():.4f}')
+        
+        # Accuracy if true labels are available
+        if 'prediction_correct' in output_df.columns:
+            accuracy = output_df['prediction_correct'].mean()
+            self.stdout.write(f'\nPrediction Accuracy: {accuracy:.2%}')
+        
+        self.stdout.write('\n' + '='*60)
+
+    def _get_predictions(self, model, features_df: pd.DataFrame, config: Dict[str, Any]) -> Optional[np.ndarray]:
+        """Get predictions from the trained model (deprecated - use _get_predictions_and_scores instead)."""
+        prediction_results = self._get_predictions_and_scores(model, features_df, config)
+        if prediction_results is None:
+            return None
+        predicted_labels, _, _ = prediction_results
+        return predicted_labels

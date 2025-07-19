@@ -70,6 +70,12 @@ evaluation:
     
     # Include anomaly detection columns in output DataFrame
     include_anomaly_columns: true
+    
+    # Specific columns to include (optional - will include all if not specified)
+    include_specific_columns: []  # e.g., ["transaction_id", "item_name", "unit_price"]
+    
+    # Specific columns to exclude (optional)
+    exclude_specific_columns: []  # e.g., ["internal_id", "temp_column"]
 
 # Logging configuration
 logging:
