@@ -144,7 +144,7 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
             errors_in_row.append({'field': 'unit_purchase_price', 'error': 'Unit purchase price is required.'})
         else:
             try:
-                price = Decimal(str(raw_price))
+                price = Decimal(str(raw_price).strip())
                 if price <= 0:
                     errors_in_row.append({'field': 'unit_purchase_price', 'error': 'Unit purchase price must be a positive number.'})
                 cleaned_row_data['unit_purchase_price'] = price
