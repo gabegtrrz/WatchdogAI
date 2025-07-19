@@ -38,7 +38,6 @@ venv/
 tests/
 
 # ignore data files
-data/
 *joblib
 
 
