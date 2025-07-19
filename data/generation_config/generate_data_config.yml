@@ -16,9 +16,17 @@ data_generator:
   # OUTPUT & SOURCE FILES
   # =============================
   
-  split_mode: true                                       # If true, saves single files instead of train-test-eval split
+  # If true, saves single files instead of train-test-eval split
+  split_mode: true      
+  
+  # Split ratios for train-test-eval split
+  split_ratios:
+    training: 0.7
+    testing: 0.2
+    evaluation: 0.1
+
   # !! MAKE SURE TO USE ABSOLUTE PATH !!
-  output_folder_path: D:\Projects\WatchdogAI\data\training\training_data\18_0.05      # Path where CSV files will be saved 
+  output_folder_path: D:\Projects\WatchdogAI\data\training\training_data\19_0.05      # Path where CSV files will be saved 
   log_directory: "data/generation_config"                     # Path where JSON logs will be saved
 
   item_source_file: "data/lab_equipment.txt" # Text file with one item name per line

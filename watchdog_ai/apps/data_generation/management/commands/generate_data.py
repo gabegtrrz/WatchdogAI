@@ -826,9 +826,8 @@ class Command(BaseCommand):
         # Determine output directory
         output_folder_path = config.get('output_folder_path', 'generated_data')
         
-        # Create timestamp for unique subfolder
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        output_dir = os.path.join(output_folder_path, str(timestamp))
+        # Use the output folder path directly without timestamp
+        output_dir = output_folder_path
         os.makedirs(output_dir, exist_ok=True)
 
         # Check if no_split mode is enabled
@@ -888,18 +887,33 @@ class Command(BaseCommand):
         self.stdout.write(f"  - No splitting applied (single file mode)")
 
     def _save_split_data(self, df_raw, df_labeled, output_dir, is_training_data, config):
-        """Saves the data split into training (70%), testing (20%), and evaluation (10) datasets."""
+        """Saves the data split into training, testing, and evaluation datasets based on YAML configuration."""
         # Create separate subdirectories for labeled and unlabeled data
         labeled_dir = os.path.join(output_dir, 'labeled')
         unlabeled_dir = os.path.join(output_dir, 'unlabeled')
         os.makedirs(labeled_dir, exist_ok=True)
         os.makedirs(unlabeled_dir, exist_ok=True)
 
-        # Split data into training (70%), testing (20%), and evaluation (10%) datasets.
+        # Get split ratios from YAML configuration with defaults
+        split_config = config.get('split_ratios', {})
+        train_ratio = split_config.get('training', 0.7)
+        test_ratio = split_config.get('testing', 0.2)
+        eval_ratio = split_config.get('evaluation', 0.1)
+        
+        # Validate that ratios sum to 1.0
+        total_ratio = train_ratio + test_ratio + eval_ratio
+        if abs(total_ratio - 1.0) > 0.001:  # Allow small floating point differences
+            self.stdout.write(f"WARNING: Split ratios sum to {total_ratio:.3f}, not 1.0. Normalizing...")
+            # Normalize ratios to sum to 1.0
+            train_ratio = train_ratio / total_ratio
+            test_ratio = test_ratio / total_ratio
+            eval_ratio = eval_ratio / total_ratio
+        
+        # Split data based on configured ratios
         total_samples = len(df_raw)
-        train_size = int(total_samples * 0.7)
-        test_size = int(total_samples * 0.2)
-        # eval_size = total_samples - train_size - test_size  # Remaining 10%
+        train_size = int(total_samples * train_ratio)
+        test_size = int(total_samples * test_ratio)
+        eval_size = total_samples - train_size - test_size  # Remaining samples go to evaluation
         
         # Create indices for splitting
         indices = np.random.permutation(total_samples)
@@ -958,9 +972,9 @@ class Command(BaseCommand):
 
         # Print split summary
         self.stdout.write(f"\nData split summary:")
-        self.stdout.write(f"  - Training: {len(df_raw_train)} samples (70%)")
-        self.stdout.write(f"  - Testing: {len(df_raw_test)} samples (20%)")
-        self.stdout.write(f"  - Evaluation: {len(df_raw_eval)} samples (10%)")
+        self.stdout.write(f"  - Training: {len(df_raw_train)} samples ({train_ratio:.1%})")
+        self.stdout.write(f"  - Testing: {len(df_raw_test)} samples ({test_ratio:.1%})")
+        self.stdout.write(f"  - Evaluation: {len(df_raw_eval)} samples ({eval_ratio:.1%})")
         self.stdout.write(f"  - Total: {total_samples} samples")
 
     def _save_generation_log(self, df_raw, df_labeled, config_path, config, is_training_data, output_dir, split_mode):
@@ -1007,15 +1021,21 @@ class Command(BaseCommand):
                         os.path.join(output_dir, 'unlabeled', 'eval.csv')
                     ]
                 }
+                # Get split ratios from config for logging
+                split_config = config.get('split_ratios', {})
+                train_ratio = split_config.get('training', 0.7)
+                test_ratio = split_config.get('testing', 0.2)
+                eval_ratio = split_config.get('evaluation', 0.1)
+                
                 data_split_info = {
                     'mode': 'split',
-                    'training_samples': int(len(df_raw) * 0.7),
-                    'testing_samples': int(len(df_raw) * 0.2),
-                    'evaluation_samples': len(df_raw) - int(len(df_raw) * 0.7) - int(len(df_raw) * 0.2),
+                    'training_samples': int(len(df_raw) * train_ratio),
+                    'testing_samples': int(len(df_raw) * test_ratio),
+                    'evaluation_samples': len(df_raw) - int(len(df_raw) * train_ratio) - int(len(df_raw) * test_ratio),
                     'split_ratios': {
-                        'training': 0.7,
-                        'testing': 0.2,
-                        'evaluation': 0.1
+                        'training': train_ratio,
+                        'testing': test_ratio,
+                        'evaluation': eval_ratio
                     }
                 }
                 total_files_created = 6  # 3 labeled + 3 unlabeled
