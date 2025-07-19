@@ -49,13 +49,13 @@
             {% if contamination_param %}
             <div class="alert alert-light border mb-4">
                 <div class="row align-items-center">
-                    <div class="col-md-2 text-center">
-                        <i class="fas fa-sliders-h fa-2x text-info"></i>
-                    </div>
+                    {% comment %} <div class="col-md-2 text-center">
+                        <i class="fas fa-sliders fa-2x text-secondary"></i>
+                    </div> {% endcomment %}
                     <div class="col-md-10">
-                        <h6 class="mb-2"><strong>How the Contamination Parameter Affects Results</strong></h6>
+                        <h6 class="mb-2"><i class="fas fa-sliders me-1"></i> <strong>How the Sensitivity Parameter Affects Results</strong></h6>
                         <p class="mb-2 text-muted">
-                            The contamination parameter of <strong>{{ contamination_param|floatformat:3 }}</strong> tells the AI model to expect that approximately 
+                            The sensitivity (a.k.a. contamination) parameter of <strong>{{ contamination_param|floatformat:3 }}</strong> tells the AI model to expect that approximately 
                             <strong>{{ contamination_param|contamination_to_percentage }}%</strong> 
                             of transactions in your dataset are likely to be anomalies.
                         </p>

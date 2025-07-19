@@ -12,7 +12,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="mb-1"><i class="fas fa-search-plus me-2"></i>Details</h2>
-                    <p class="text-muted mb-0">Transaction ID: <strong class="font-monospace">{{ report.transaction.transaction_id }}</strong></p>
+                    <p class="text-muted mb-0">of Transaction ID: <strong class="font-monospace">{{ report.transaction.transaction_id }}</strong></p>
                 </div>
             </div>
 
@@ -20,7 +20,7 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="fas fa-lightbulb me-2 text-warning"></i>Analysis Summary
+                        <i class="fas fa-lightbulb me-2"></i>Analysis Summary
                     </h5>
                 </div>
                 <div class="card-body">
@@ -627,7 +627,7 @@ function createShapChart(featureNames, shapValues) {
                 y: {
                     title: {
                         display: true,
-                        text: 'Features'
+                        text: 'Factors'
                     }
                 }
             }
