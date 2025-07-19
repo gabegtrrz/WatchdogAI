@@ -140,6 +140,10 @@ class Command(BaseCommand):
 
         df = pd.DataFrame(data)
 
+        # Check if DataFrame is empty
+        if df.empty:
+            raise CommandError("No data was generated. Check your field_rules configuration.")
+
         # --- Generate fields that are not based on simple rules ---
         df['item_name'] = np.random.choice(items, size=n_samples)
         df['invoice_number'] = [f"INV-{uuid.uuid4().hex[:8].upper()}" for _ in range(n_samples)]
@@ -179,7 +183,13 @@ class Command(BaseCommand):
         df['quantity'] = df['quantity'].round().abs().clip(lower=1).astype(int)
 
         # --- Calculate total_purchase_price ---
-        df['total_purchase_price'] = (df['quantity'] * df['unit_purchase_price']).round(4)
+        # Ensure quantity is valid to avoid division by zero issues
+        valid_quantity_mask = (df['quantity'] > 0) & df['quantity'].notna()
+        df['total_purchase_price'] = np.nan  # Initialize with NaN
+        df.loc[valid_quantity_mask, 'total_purchase_price'] = (
+            df.loc[valid_quantity_mask, 'quantity'] * 
+            df.loc[valid_quantity_mask, 'unit_purchase_price']
+        ).round(4)
 
         # --- Handle average_price based on configuration ---
         average_price_config = config.get('average_price', {})
@@ -530,7 +540,10 @@ class Command(BaseCommand):
         return df[final_column_order]
 
     def _inject_anomalies(self, df, config):
-        """Applies anomaly blueprints to a fraction of the DataFrame."""
+        """Applies anomaly blueprints to a fraction of the DataFrame.
+        
+        Ensures each transaction can only have one anomaly blueprint applied to it.
+        """
         df['is_anomaly'] = 0
         n_anomalies = int(len(df) * config['anomaly_fraction'])
         if n_anomalies == 0:
@@ -550,11 +563,19 @@ class Command(BaseCommand):
         probabilities = [bp.weight / total_weight for bp in active_blueprints]
 
         # --- Select anomaly indices and apply blueprints ---
+        # Use replace=False to ensure no transaction gets selected multiple times
         anomaly_indices = np.random.choice(df.index, size=n_anomalies, replace=False)
         df.loc[anomaly_indices, 'is_anomaly'] = 1
 
+        # Track which transactions have been modified to prevent multiple blueprint applications
+        modified_transactions = set()
+
         # For each selected anomaly, randomly choose a blueprint and apply it
         for idx in anomaly_indices:
+            # Skip if this transaction has already been modified
+            if idx in modified_transactions:
+                continue
+                
             # Choose a blueprint based on the normalized weights
             chosen_blueprint = np.random.choice(active_blueprints, p=probabilities)
             
@@ -563,6 +584,9 @@ class Command(BaseCommand):
             record = df.loc[idx].copy()
             modified_record = chosen_blueprint.apply(record)
             df.loc[idx] = modified_record
+            
+            # Mark this transaction as modified to prevent further blueprint applications
+            modified_transactions.add(idx)
 
         return df
 
@@ -808,7 +832,15 @@ class Command(BaseCommand):
                 else:
                     return obj
             
+            # Ensure generation_results is a dictionary before conversion
+            if not isinstance(generation_results, dict):
+                generation_results = {}
+            
             serializable_results = convert_numpy_types(generation_results)
+            
+            # Ensure serializable_results is a dictionary
+            if not isinstance(serializable_results, dict):
+                serializable_results = {}
             
             # Define log file path in JSON directory
             log_filename = 'generation_log.json'
