@@ -282,8 +282,18 @@
                                     <strong>{{ report.transaction.item_name|default:"-" }}</strong>
                                 </div>
                                 <div class="col-12 col-sm-6">
-                                    <small class="text-muted d-block">Quantity</small>
-                                    <strong>{{ report.transaction.quantity|default:"-" }}</strong>
+                                    <small class="text-muted d-block">Invoice Number</small>
+                                    <strong>{{ report.transaction.invoice_number|default:"-" }}</strong>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-12 col-sm-6">
+                                    <small class="text-muted d-block">Payment Receipt</small>
+                                    <strong>{{ report.transaction.payment_receipt_number|default:"-" }}</strong>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <small class="text-muted d-block">Transaction ID</small>
+                                    <strong class="font-monospace">{{ report.transaction.transaction_id }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -303,9 +313,15 @@
                             </div>
                             <div class="row mb-3">
                                 <div class="col-12 col-sm-6">
+                                    <small class="text-muted d-block">Quantity</small>
+                                    <strong>{{ report.transaction.quantity|default:"-" }}</strong>
+                                </div>
+                                <div class="col-12 col-sm-6">
                                     <small class="text-muted d-block">Average Price</small>
                                     <strong>₱{{ report.transaction.average_price|floatformat:2|default:"-" }}</strong>
                                 </div>
+                            </div>
+                            <div class="row mb-3">
                                 <div class="col-12 col-sm-6">
                                     <small class="text-muted d-block">Approved Budget</small>
                                     <strong>₱{{ report.transaction.approved_budget|floatformat:2|default:"-" }}</strong>
@@ -367,41 +383,6 @@
                             </div>
                         </div>
                         <div class="col-12 col-lg-6">
-                            <h6 class="text-primary mb-3"><i class="fas fa-receipt me-2"></i>Documentation</h6>
-                            <div class="row mb-3">
-                                <div class="col-12 col-sm-6">
-                                    <small class="text-muted d-block">Invoice Number</small>
-                                    <strong>{{ report.transaction.invoice_number|default:"-" }}</strong>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <small class="text-muted d-block">Payment Receipt</small>
-                                    <strong>{{ report.transaction.payment_receipt_number|default:"-" }}</strong>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-12 col-sm-6">
-                                    <small class="text-muted d-block">Transaction ID</small>
-                                    <strong class="font-monospace">{{ report.transaction.transaction_id }}</strong>
-                                </div>
-                                {% if report.transaction.block %}
-                                <div class="col-12 col-sm-6">
-                                    <small class="text-muted d-block">Block ID</small>
-                                    <strong>{{ report.transaction.block.id }}</strong>
-                                </div>
-                                {% endif %}
-                            </div>
-                            {% if report.transaction.block__index %}
-                            <div class="row mb-3">
-                                <div class="col-12 col-sm-6">
-                                    <small class="text-muted d-block">Block Index</small>
-                                    <strong>{{ report.transaction.block__index }}</strong>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 col-lg-6">
                             <h6 class="text-primary mb-3"><i class="fas fa-link me-2"></i>Blockchain Status</h6>
                             <div class="row mb-3">
                                 <div class="col-12 col-sm-6">
@@ -432,6 +413,8 @@
                             </div>
                             {% endif %}
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-12 col-lg-6">
                             <h6 class="text-primary mb-3"><i class="fas fa-database me-2"></i>System Information</h6>
                             <div class="row mb-3">
@@ -439,7 +422,21 @@
                                     <small class="text-muted d-block">Created At</small>
                                     <strong>{{ report.transaction.created_at|date:"M d, Y H:i"|default:"-" }}</strong>
                                 </div>
+                                {% if report.transaction.block %}
+                                <div class="col-12 col-sm-6">
+                                    <small class="text-muted d-block">Block ID</small>
+                                    <strong>{{ report.transaction.block.id }}</strong>
+                                </div>
+                                {% endif %}
                             </div>
+                            {% if report.transaction.block__index %}
+                            <div class="row mb-3">
+                                <div class="col-12 col-sm-6">
+                                    <small class="text-muted d-block">Block Index</small>
+                                    <strong>{{ report.transaction.block__index }}</strong>
+                                </div>
+                            </div>
+                            {% endif %}
                             {% if report.transaction.transaction_hash %}
                             <div class="row mb-3">
                                 <div class="col-12">
