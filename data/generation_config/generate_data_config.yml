@@ -21,8 +21,8 @@ data_generator:
   
   # Split ratios for train-test-eval split
   split_ratios:
-    training: 0.7
-    testing: 0.2
+    training: 0.9
+    testing: 0.0
     evaluation: 0.1
 
   # !! MAKE SURE TO USE ABSOLUTE PATH !!
