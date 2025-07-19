@@ -137,11 +137,18 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         step_start = time.time()
         
         shap_values = generate_shap_values(model, final_df)
+        # shape: (n_samples, n_features)
+
+
 
         logger.debug("SHAP values generated successfully")
         logger.info(f"SHAP values generated in {time.time() - step_start:.2f} seconds")
+
+        # Step 7: Generate Inverse Anomaly Scores and to make it easier to understand.
+        # Invert anomaly scores: higher values now indicate more anomalous (easier to interpret)
+        final_anomaly_scores = -anomaly_scores # applies element-wise negation to all values in the nparray
         
-        # 7. Unpack and Save to Database
+        # 7. Unpack SHAP and Save to Database
         analysis_run_id = analysis_run_id 
         if not analysis_run_id:
             raise ValueError("Analysis run ID is required")
@@ -199,13 +206,21 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
 
 def analyze_anomalies(final_df: pd.DataFrame, contamination: float=0.05):
     """
-    Performs anomaly detection on the final DataFrame.
+    Performs anomaly detection on the final DataFrame using the trained Isolation Forest model.
+    
+    **Process:**
+    1. Uses the loaded model to calculate anomaly scores for each transaction
+    2. Determines threshold based on contamination rate (percentage of outliers)
+    3. Classifies transactions as anomalous (1) or normal (0) based on threshold
     
     Args:
-        final_df: The final DataFrame with all features.
+        final_df: The final DataFrame with all features aligned to training columns.
+        contamination: The proportion of outliers expected in the dataset (default: 0.05).
         
     Returns:
-        np.ndarray: Array of 1s and 0s indicating anomalies.
+        tuple: (predicted_labels, anomaly_scores)
+            - predicted_labels: np.ndarray of 1s (anomaly) and 0s (normal)
+            - anomaly_scores: np.ndarray of raw anomaly scores (lower = more anomalous)
     """
 
     try:
@@ -237,24 +252,25 @@ def analyze_anomalies(final_df: pd.DataFrame, contamination: float=0.05):
 
 
 
-def generate_shap_values(model: Any, final_df: pd.DataFrame):
+def generate_shap_values(model: Any, final_df: pd.DataFrame) -> Optional[np.ndarray]:
     """
     Generate SHAP values for model explainability and feature importance analysis.
     
     **Process:**
     1. Creates TreeExplainer for the Isolation Forest model.
     2. Calculates SHAP values for the input data.
-    3. Handles various expected_value formats (scalar, array, list).
-    4. Returns JSON-formatted explanation data.
+    3. Returns numpy array with SHAP values for each sample-feature combination.
     
-    **Error Handling:** Returns structured error response if SHAP calculation fails.
+    **Error Handling:** Returns None if SHAP calculation fails.
     
     Args:
         model: The trained Isolation Forest model.
         final_df: Preprocessed DataFrame ready for model inference.
         
     Returns:
-        str: JSON string containing SHAP values and feature explanations.
+        Optional[np.ndarray]: SHAP values array with shape (n_samples, n_features),
+            where shap_values[i, j] is the SHAP value for the i-th sample and j-th feature.
+            Returns None if calculation fails.
     """
     try:
         # Create SHAP explainer for tree-based model

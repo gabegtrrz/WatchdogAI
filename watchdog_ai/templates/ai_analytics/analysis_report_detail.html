@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load ai_analytics_extras %}
 
 {% block title %}Analysis Report Detail - {{ report.transaction.transaction_id }}{% endblock %}
 
@@ -29,7 +30,7 @@
                                 <i class="fas fa-exclamation-triangle me-3 mt-1 text" style="font-size: 1.2em;"></i>
                                 <div class="flex-grow-1">
                                     <div >
-                                        <span class="badge bg-danger fs-6">Anomaly Score: {{ report.anomaly_score|floatformat:4 }}</span>
+                                        <span class="badge bg-danger fs-6">Risk Score: {{ report.anomaly_score|abs_multiply:100|floatformat:2 }}</span>
                                     </div>
                                     <p class="mb-3">Here are the top properties that make this transaction anomalous:</p>
                                     
@@ -160,9 +161,8 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-bar me-2 text-primary"></i>Anomaly Score Analysis
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>Risk Score Analysis
                     </h5>
-                    <span class="badge bg-info">SHAP Explanations</span>
                 </div>
                 <div class="card-body">
                     <!-- Introduction -->
@@ -170,9 +170,12 @@
                         <div class="d-flex">
                             <i class="fas fa-info-circle me-2 mt-1"></i>
                             <div>
-                                <strong>Understanding Anomaly Scores:</strong>
-                                <p class="mb-0 mt-1">These scores show how each transaction property contributed to the anomaly prediction. 
-                                <br> Negative values (red) suggest likelihood of an anomaly, while positive values (green) suggest more normal behavior.</p>
+                                <strong>Understanding Risk Scores:</strong>
+                                <p class="mb-0 mt-1">These scores break down the AI's decision:</p>
+                                <ul class="mb-0 mt-1">
+                                    <li>A <strong>higher score</strong> indicates that a characteristic is more different/anomalous compared to normal values.</li>
+                                    <li>A <strong>lower score</strong> indicates that a characteristic is less different from normal values.</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -181,8 +184,8 @@
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="text-primary mb-0">Feature Impact Visualization</h6>
-                            <small class="text-muted">Top 10 most influential features</small>
                         </div>
+                        
                         <div id="shap-chart" class="border rounded p-3 bg-light" style="min-height: 400px;">
                             <div class="text-center d-flex flex-column justify-content-center h-100">
                                 <div class="spinner-border text-primary mb-3" role="status" id="shap-loading">
@@ -196,28 +199,22 @@
                     
                     <!-- SHAP Values Table -->
                     <div class="mt-4">
-                        <!-- SHAP Value Guide -->
-                        <div class="mb-3">
-                            <div class="row">
-                                
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="bg-danger rounded me-2" style="width: 20px; height: 15px; opacity: 0.8;"></div>
-                                        <small><strong>Negative SHAP values</strong> = More likely to be anomalous. (More suspicious)</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="bg-success rounded me-2" style="width: 20px; height: 15px; opacity: 0.8;"></div>
-                                        <small><strong>Positive SHAP values</strong> = Less likely to be anomalous. (More normal)</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="text-primary mb-0"><strong>Detailed Feature Contributions</strong></h6>
-                            <small class="text-muted">Sorted by importance</small>
+                            <small class="text-muted">Sorted by risk score </small>
+                        </div>
+                        <!-- SHAP Value Guide -->
+                        <div class="mb-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="bg-danger rounded me-2" style="width: 20px; height: 15px; opacity: 0.8;"></div>
+                                        <small><strong>Higher Value</strong> = More Anomalous (different from usual)</small>
+                                    </div>
+                                </div>
+                                
+                            </div>
                         </div>
                         
                         <div class="table-responsive">
@@ -228,10 +225,10 @@
                                             <i class="fas fa-cog me-1"></i>Feature
                                         </th>
                                         <th class="text-end" style="width: 25%;">
-                                            <i class="fas fa-calculator me-1"></i>SHAP Value
+                                            <i class="fas fa-calculator me-1"></i>Risk Score
                                         </th>
                                         <th class="text-end" style="width: 25%;">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>Impact Level
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Risk Level
                                         </th>
                                     </tr>
                                 </thead>
@@ -549,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add score interpretation tooltip
     const scoreBadge = document.querySelector('.badge.bg-danger');
     if (scoreBadge) {
-        scoreBadge.title = `Anomaly score: ${anomalyScore.toFixed(4)}. ${isAnomaly ? 'This transaction was flagged as anomalous.' : 'This transaction appears normal.'}`;
+        scoreBadge.title = `Risk score: ${anomalyScore.toFixed(4)}. ${isAnomaly ? 'This transaction was flagged as anomalous.' : 'This transaction appears normal.'}`;
     }
 });
 
@@ -561,14 +558,15 @@ function createShapChart(featureNames, shapValues) {
         absValue: Math.abs(shapValues[index])
     }));
     
-    // Sort by absolute SHAP value (descending) and take top 10
-    featureData.sort((a, b) => b.absValue - a.absValue);
+    // Sort by SHAP value (descending) - higher positive values = more anomalous
+    featureData.sort((a, b) => b.value - a.value);
     const topFeatures = featureData.slice(0, 10);
     
     // Prepare data for Chart.js
     const labels = topFeatures.map(f => formatFeatureName(f.name));
-    const values = topFeatures.map(f => f.value);
-    const colors = values.map(v => v > 0 ? 'rgba(40, 167, 69, 0.8)' : 'rgba(220, 53, 69, 0.8)');
+    const values = topFeatures.map(f => f.value * 100); // Multiply by 100 for percentage display
+    // FIXED: Higher positive SHAP values = more anomalous (red), lower/negative = less anomalous (green)
+    const colors = values.map(v => v > 0 ? 'rgba(220, 53, 69, 0.8)' : 'rgba(40, 167, 69, 0.8)');
     
     // Create horizontal bar chart
     const ctx = document.createElement('canvas');
@@ -598,7 +596,7 @@ function createShapChart(featureNames, shapValues) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Top 10 Feature Contributions to Anomaly Score',
+                    text: 'Top 10 Factors Contributing to Risk Score',
                     font: { size: 16, weight: 'bold' }
                 },
                 legend: { display: false },
@@ -609,8 +607,9 @@ function createShapChart(featureNames, shapValues) {
                         },
                         label: function(context) {
                             const value = context.parsed.x;
-                            const impact = value > 0 ? 'decreases' : 'increases';
-                            return `SHAP Value: ${value.toFixed(4)} (${impact} anomaly likelihood)`;
+                            // FIXED: Higher positive values = more anomalous
+                            const impact = value > 0 ? 'increases' : 'decreases';
+                            return `SHAP Value: ${value.toFixed(2)} (${impact} anomaly likelihood)`;
                         },
                         afterLabel: function(context) {
                             return getFeatureExplanation(featureNames[context.dataIndex], context.parsed.x);
@@ -622,7 +621,7 @@ function createShapChart(featureNames, shapValues) {
                 x: {
                     title: {
                         display: true,
-                        text: 'SHAP Value (Impact on Anomaly Score)'
+                        text: 'SHAP Value (Impact on Risk Score) - Scaled x100'
                     },
                     grid: {
                         color: 'rgba(0,0,0,0.1)'
@@ -649,31 +648,34 @@ function populateShapTable(featureNames, shapValues) {
     // Create array of feature data for sorting
     const featureData = featureNames.map((name, index) => ({
         name: name,
-        value: shapValues[index],
-        absValue: Math.abs(shapValues[index])
+        value: shapValues[index] * 100, // Scale by 100 for consistency
+        absValue: Math.abs(shapValues[index] * 100)
     }));
     
-    // Sort by absolute SHAP value (descending)
-    featureData.sort((a, b) => b.absValue - a.absValue);
+    // Sort by SHAP value (descending) - higher positive values = more anomalous
+    featureData.sort((a, b) => b.value - a.value);
+    
+    // Take only top 10 features for the table
+    const topFeatures = featureData.slice(0, 10);
     
     // Populate table
-    featureData.forEach(feature => {
+    topFeatures.forEach(feature => {
         const row = document.createElement('tr');
         
         // Determine impact level and color
         let impactClass = 'bg-info';
         let impactText = 'Low';
         
-        if (Math.abs(feature.value) > 0.1) {
+        if (Math.abs(feature.value) > 10) {
             impactClass = 'bg-danger';
             impactText = 'High';
-        } else if (Math.abs(feature.value) > 0.05) {
+        } else if (Math.abs(feature.value) > 5) {
             impactClass = 'bg-warning';
             impactText = 'Medium';
         }
         
-        // Determine text color for SHAP value
-        let valueClass = feature.value > 0 ? 'text-success' : 'text-danger';
+        // FIXED: Higher positive SHAP values = more anomalous (red), lower/negative = less anomalous (green)
+        let valueClass = feature.value > 0 ? 'text-danger' : 'text-success';
         
         row.innerHTML = `
             <td>
@@ -681,7 +683,7 @@ function populateShapTable(featureNames, shapValues) {
                 <br><small class="text-muted">${getFeatureDescription(feature.name)}</small>
             </td>
             <td class="text-end ${valueClass}">
-                ${feature.value > 0 ? '+' : ''}${feature.value.toFixed(4)}
+                ${feature.value > 0 ? '+' : ''}${feature.value.toFixed(2)}
             </td>
             <td class="text-end">
                 <span class="badge ${impactClass}">${impactText}</span>
@@ -700,12 +702,12 @@ function updateAnomalyExplanation(featureNames, shapValues) {
     // Find top contributing features
     const featureData = featureNames.map((name, index) => ({
         name: name,
-        value: shapValues[index],
-        absValue: Math.abs(shapValues[index])
+        value: shapValues[index] * 100, // Scale by 100 for consistency
+        absValue: Math.abs(shapValues[index] * 100)
     }));
     
-    // Sort by absolute value and get top 3
-    featureData.sort((a, b) => b.absValue - a.absValue);
+    // Sort by SHAP value (descending) - higher positive values = more anomalous
+    featureData.sort((a, b) => b.value - a.value);
     const topFeatures = featureData.slice(0, 3);
     
     if (isAnomaly && anomalyReasons) {
@@ -725,8 +727,9 @@ function updateAnomalyExplanation(featureNames, shapValues) {
         normalReasons.innerHTML = '';
         topFeatures.forEach(feature => {
             const li = document.createElement('li');
+            // FIXED: Higher positive values = more anomalous, so for normal transactions we explain the opposite
             const explanation = feature.value > 0 
-                ? `While ${formatFeatureName(feature.name).toLowerCase()} slightly increases the anomaly score, it remains within acceptable ranges.`
+                ? `While ${formatFeatureName(feature.name).toLowerCase()} shows some unusual patterns, other factors contribute to the normal classification.`
                 : `${formatFeatureName(feature.name)} contributes to the normal classification, indicating standard procurement behavior.`;
             li.innerHTML = `<strong>${formatFeatureName(feature.name)}:</strong> ${explanation}`;
             normalReasons.appendChild(li);
@@ -744,8 +747,9 @@ function updateRecommendedActions(topFeatures) {
     // Generate specific actions based on top contributing features
     const specificActions = [];
     
+    // FIXED: Focus on features with high positive SHAP values (more anomalous)
     topFeatures.forEach(feature => {
-        if (feature.value > 0.05) { // Only for significant positive contributions
+        if (feature.value > 5) { // High positive values indicate more anomalous behavior (scaled x100)
             const action = getSpecificAction(feature.name);
             if (action && !specificActions.includes(action)) {
                 specificActions.push(action);
@@ -835,35 +839,35 @@ function getDetailedFeatureExplanation(featureName, shapValue) {
     const direction = shapValue > 0 ? 'increased' : 'decreased';
     const magnitude = Math.abs(shapValue);
     
-    // Procurement-specific explanations
+    // FIXED: Procurement-specific explanations with correct SHAP interpretation
     const explanations = {
         'unit_purchase_price': shapValue > 0 
-            ? `The unit price is unusually low, which may indicate potential issues or exceptional value.`
-            : `The unit price is significantly higher than expected for this type of item, contributing to the anomaly detection.`,
+            ? `The unit price shows unusual patterns that contribute to the anomaly detection.`
+            : `The unit price aligns with expected ranges for this type of item.`,
         
         'total_purchase_price': shapValue > 0
-            ? `The total purchase amount is lower than expected, which may warrant verification of quantities or pricing.`
-            : `The total purchase amount is substantially higher than typical transactions, raising flags for potential overspending.`,
+            ? `The total purchase amount shows unusual patterns that contribute to the anomaly detection.`
+            : `The total purchase amount aligns with typical transaction patterns.`,
             
         'quantity': shapValue > 0
-            ? `The quantity is smaller than typical orders, which may indicate special circumstances or urgent needs.`
-            : `The quantity ordered is much larger than usual for this type of procurement, suggesting bulk purchasing or potential overordering.`,
+            ? `The quantity shows unusual patterns that contribute to the anomaly detection.`
+            : `The quantity ordered aligns with typical procurement patterns.`,
             
         'average_price': shapValue > 0
-            ? `The market average price indicates this transaction aligns better with expected pricing ranges.`
-            : `The market average price data suggests this transaction deviates significantly from market norms.`,
+            ? `The market average price comparison shows unusual patterns.`
+            : `The market average price comparison aligns with expected ranges.`,
             
         'procurement_method_encoded': shapValue > 0
-            ? `The procurement method used follows standard practices and reduces anomaly likelihood.`
-            : `The procurement method used is associated with higher risk or unusual patterns compared to standard practices.`,
+            ? `The procurement method shows unusual patterns compared to standard practices.`
+            : `The procurement method follows standard practices and reduces anomaly likelihood.`,
             
         'supplier_encoded': shapValue > 0
-            ? `This supplier demonstrates consistent, expected behavior patterns in the procurement process.`
-            : `This supplier has patterns that differ from typical vendor behavior, potentially indicating relationship concerns.`,
+            ? `This supplier shows unusual patterns compared to typical vendor behavior.`
+            : `This supplier demonstrates consistent, expected behavior patterns.`,
             
         'price_to_average_ratio': shapValue > 0
-            ? `The price is well within or below market averages, suggesting appropriate pricing.`
-            : `The price significantly exceeds market averages, indicating potential overpricing or premium purchases.`
+            ? `The price ratio shows unusual patterns compared to market averages.`
+            : `The price ratio aligns well with market averages.`
     };
     
     const specificExplanation = explanations[featureName];
@@ -872,11 +876,12 @@ function getDetailedFeatureExplanation(featureName, shapValue) {
     }
     
     // Default explanation
-    return `This feature ${direction} the anomaly score by ${magnitude.toFixed(4)}, ${shapValue > 0 ? 'indicating normal behavior' : 'suggesting unusual patterns'} in the procurement data.`;
+    return `This feature ${direction} the risk score by ${(magnitude * 100).toFixed(2)}, ${shapValue > 0 ? 'suggesting unusual patterns' : 'indicating normal behavior'} in the procurement data.`;
 }
 
 function getFeatureExplanation(featureName, shapValue) {
-    const impact = shapValue > 0 ? 'reduces suspicion' : 'increases suspicion';
+    // FIXED: Higher positive SHAP values = more anomalous
+    const impact = shapValue > 0 ? 'increases suspicion' : 'reduces suspicion';
     return `This ${impact} of anomalous behavior.`;
 }
 </script>
