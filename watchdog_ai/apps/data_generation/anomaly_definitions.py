@@ -43,9 +43,10 @@ class BudgetEfficiencyAnomaly:
             utilization_rate = np.random.uniform(0.97, 0.999)
             record['total_purchase_price'] = record['approved_budget'] * utilization_rate
             
-            # Update unit price if quantity is available
-            if record.get('quantity', 0) > 0:
-                record['unit_purchase_price'] = record['total_purchase_price'] / record['quantity']
+            # Update unit price if quantity is available and valid
+            quantity = record.get('quantity', 0)
+            if quantity and quantity > 0:
+                record['unit_purchase_price'] = record['total_purchase_price'] / quantity
             
             record['supplier'] = 'Precision Budget Solutions Inc.'
             record['project_description'] = 'Strategic procurement with optimal budget utilization.'
@@ -57,9 +58,10 @@ class BudgetEfficiencyAnomaly:
             utilization_rate = np.random.uniform(0.05, 0.20)
             record['total_purchase_price'] = record['approved_budget'] * utilization_rate
             
-            # Update unit price if quantity is available
-            if record.get('quantity', 0) > 0:
-                record['unit_purchase_price'] = record['total_purchase_price'] / record['quantity']
+            # Update unit price if quantity is available and valid
+            quantity = record.get('quantity', 0)
+            if quantity and quantity > 0:
+                record['unit_purchase_price'] = record['total_purchase_price'] / quantity
             
             record['supplier'] = 'Budget Underutilization Co.'
             record['project_description'] = 'Procurement with significant budget savings and market-based pricing.'
@@ -89,8 +91,9 @@ class SuspiciousOverpricing:
         record['unit_purchase_price'] *= np.random.uniform(7.5, 12.5)
         
         # Recalculate total price to maintain consistency
-        if 'quantity' in record and record['quantity'] > 0:
-            record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
+        quantity = record.get('quantity', 0)
+        if quantity and quantity > 0:
+            record['total_purchase_price'] = quantity * record['unit_purchase_price']
         
         record['supplier'] = 'Premium Imports LLC'
         
@@ -124,8 +127,9 @@ class BidCeilingCollusion:
         record['total_purchase_price'] = total_price
         
         # Update unit price based on the manipulated total price
-        if record.get('quantity', 0) > 0:
-            record['unit_purchase_price'] = total_price / record['quantity']
+        quantity = record.get('quantity', 0)
+        if quantity and quantity > 0:
+            record['unit_purchase_price'] = total_price / quantity
         return record
 
 class PriceExceedsBudget:
@@ -149,8 +153,9 @@ class PriceExceedsBudget:
         record['total_purchase_price'] = total_price
         
         # Update unit price accordingly
-        if record.get('quantity', 0) > 0:
-            record['unit_purchase_price'] = total_price / record['quantity']
+        quantity = record.get('quantity', 0)
+        if quantity and quantity > 0:
+            record['unit_purchase_price'] = total_price / quantity
         return record
 
 class ExtremePriceAnomaly:
@@ -171,7 +176,7 @@ class ExtremePriceAnomaly:
         # 50% chance of extreme overpricing, 50% chance of suspicious underpricing
         if np.random.random() < 0.5:
             # Extreme overpricing: 100-500x multiplier
-            record['unit_purchase_price'] *= np.random.uniform(100.0, 500.0)
+            record['unit_purchase_price'] *= np.random.uniform(10.0, 15.0)
             record['supplier'] = 'Luxury Premium Suppliers Ltd.'
             record['project_description'] = 'Premium quality items with exceptional specifications.'
         else:
@@ -211,7 +216,7 @@ class UnusualBulkOrder:
             return record
             
         # Much more extreme quantity increase: 50-200x multiplier
-        record['quantity'] *= np.random.randint(50, 200)
+        record['quantity'] *= np.random.randint(50, 100)
         
         # Recalculate total price to maintain consistency
         if 'unit_purchase_price' in record and record['unit_purchase_price'] > 0:
