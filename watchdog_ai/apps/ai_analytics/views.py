@@ -418,14 +418,16 @@ def analysis_results(request, analysis_run_id):
     if all_reports.exists():
         first_report = all_reports.first()
         contamination_param = first_report.contamination_param
-    
-    return render(request, 'ai_analytics/analysis_results.html', {
+
+    context = {
         'reports': anomalous_reports,
         'analysis_run_id': analysis_run_id,
         'total_transactions': total_transactions,
         'anomaly_count': anomaly_count,
         'contamination_param': contamination_param,
-    })
+    }
+    
+    return render(request, 'ai_analytics/analysis_results.html', context)
 
 def analysis_report_detail(request, report_id):
     """
