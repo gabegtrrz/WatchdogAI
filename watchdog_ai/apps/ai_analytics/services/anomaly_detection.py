@@ -312,36 +312,23 @@ def _get_predictions_and_scores(final_df: pd.DataFrame, contamination: float = 0
             
             # Get raw anomaly scores (lower score means more anomalous)
             anomaly_scores = model.score_samples(final_df)
-            
-            # Determine contamination rate for thresholding
-            
-            try:
-                # Use the provided contamination parameter if it's valid
-                if 0.01 <= contamination <= 0.5:
-                    logger.info(f"Using provided contamination rate: {contamination}")
-                else:
-                    # If invalid, fall back to model's default
-                    contamination = model.contamination
-                    logger.warning(f"Invalid contamination parameter '{contamination}'. "
-                                f"Falling back to model's default.")
-                
-            except (ValueError, TypeError):
-                logger.warning(f"Invalid contamination parameter '{contamination}'. "
-                                f"Falling back to model's default.")
-                
-                # Fallback to model's default contamination rate
-                contamination = model.contamination
 
+            logger.debug(f'Anomaly scores: {anomaly_scores}')
             
             # Calculate threshold based on contamination rate
             threshold = np.percentile(anomaly_scores, contamination * 100)
 
+            logger.debug(f'Threshold: {threshold}')
+
             # Classify samples as anomalies (1) or normal (0)
             predicted_labels = (anomaly_scores <= threshold).astype(int)
 
+            logger.debug(f'Predicted labels: {predicted_labels}')
+
             logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
+            
             logger.info(f'Contamination rate: {contamination:.4f}')
-            logger.info(f'Threshold: {threshold:.4f}')
+            logger.info(f'Final Threshold: {threshold:.4f}')
 
             return predicted_labels, anomaly_scores, threshold
 
