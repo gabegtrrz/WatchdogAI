@@ -9,7 +9,7 @@ class ItemAveragePrice(models.Model):
     """
     item_name = models.CharField(max_length=255, db_index=True)
     date = models.DateField(default=timezone.now, db_index=True)
-    average_price = models.DecimalField(max_digits=15, decimal_places=4)
+    average_price = models.DecimalField(max_digits=15, decimal_places=2)
     
     # Stores supplementary information like source URLs, number of sources, etc.
     details = models.JSONField(default=dict)

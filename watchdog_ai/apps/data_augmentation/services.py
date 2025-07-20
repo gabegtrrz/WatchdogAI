@@ -18,7 +18,7 @@ USD_TO_PHP_RATE = 56
 logger = logging.getLogger(__name__)
 
 # Set precision for Decimal
-getcontext().prec = 17 # max_digits=15, decimal_places=4 needs precision
+getcontext().prec = 17 # max_digits=15, decimal_places=2 needs precision
 
 def get_scrapeops_url(url, location="us", render_js=False):
     """Generates a ScrapeOps proxy URL."""
