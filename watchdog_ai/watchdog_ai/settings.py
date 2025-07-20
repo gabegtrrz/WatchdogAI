@@ -6,6 +6,9 @@ This file contains settings optimized for production deployment on Railway.
 import os
 from pathlib import Path
 from .settings import *
+import dj_database_url
+
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -21,26 +24,22 @@ ALLOWED_HOSTS = [
     '.up.railway.app',
 ]
 
+
 # Database configuration for Railway PostgreSQL
 # Check if we're on Railway and have database variables
-if os.getenv('DATABASE_URL'):
-    # Use DATABASE_URL if provided (Railway sometimes provides this)
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
-    }
-elif all(os.getenv(var) for var in ['PGDATABASE', 'PGUSER', 'PGPASSWORD', 'PGHOST']):
-    # Use individual PostgreSQL variables
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('PGDATABASE'),
-            'USER': os.getenv('PGUSER'),
-            'PASSWORD': os.getenv('PGPASSWORD'),
-            'HOST': os.getenv('PGHOST'),
-            'PORT': os.getenv('PGPORT', '5432'),
-        }
-    }
+DATABASES = {
+    'default': dj_database_url.config(
+        # Get the DATABASE_URL from the environment variables
+        default=os.environ.get('DATABASE_URL'),
+
+        # Optional: settings for connection pooling
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+}
+
+
+
 
 # Static files configuration for production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
