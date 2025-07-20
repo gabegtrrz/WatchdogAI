@@ -22,16 +22,25 @@ ALLOWED_HOSTS = [
 ]
 
 # Database configuration for Railway PostgreSQL
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE'),
-        'USER': os.getenv('PGUSER'),
-        'PASSWORD': os.getenv('PGPASSWORD'),
-        'HOST': os.getenv('PGHOST'),
-        'PORT': os.getenv('PGPORT', '5432'),
+# Check if we're on Railway and have database variables
+if os.getenv('DATABASE_URL'):
+    # Use DATABASE_URL if provided (Railway sometimes provides this)
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
     }
-}
+elif all(os.getenv(var) for var in ['PGDATABASE', 'PGUSER', 'PGPASSWORD', 'PGHOST']):
+    # Use individual PostgreSQL variables
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('PGDATABASE'),
+            'USER': os.getenv('PGUSER'),
+            'PASSWORD': os.getenv('PGPASSWORD'),
+            'HOST': os.getenv('PGHOST'),
+            'PORT': os.getenv('PGPORT', '5432'),
+        }
+    }
 
 # Static files configuration for production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
