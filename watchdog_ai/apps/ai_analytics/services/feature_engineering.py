@@ -544,15 +544,15 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
         for category in categories:
             one_hot_cols.append(f'{column}_{category}')
 
-    # Combine expected features
-    REQUIRED_COLUMNS.extend(
+    # Combine expected features (don't modify global REQUIRED_COLUMNS)
+    expected_features = (
         origin_features + 
         engineered_features + 
         one_hot_cols
     )
 
     # Filter expected features to only those present in the dataframe
-    present_expected_features = [col for col in REQUIRED_COLUMNS if col in df_processed.columns]
+    present_expected_features = [col for col in expected_features if col in df_processed.columns]
 
     # Identify all numeric columns in the processed dataframe
     all_numeric_features = df_processed.select_dtypes(include=np.number).columns.tolist()
