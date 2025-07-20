@@ -90,7 +90,14 @@ if not DB_LIVE:
 else:
     # Use dj_database_url to parse the DATABASE_URL from the environment
     DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=False)
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get("PGDATABASE", "railway"),
+            'USER': os.environ.get("PGUSER","postgres"),
+            'PASSWORD': os.environ.get("PGPASSWORD","ZnUCtwKnntZvumjMwkbJXwDHMOaSVFPB"),
+            'HOST': os.environ.get("PGHOST","hopper.proxy.rlwy.net"),
+            'PORT': os.environ.get("PGPORT","16899"),
+        }
 }
 
 
