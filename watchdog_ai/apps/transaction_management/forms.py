@@ -59,18 +59,21 @@ class SingleTransactionUploadForm(forms.ModelForm):
     item_name = forms.ChoiceField(
         choices=ITEM_NAME_CHOICES,
         required=True,
+        initial='BEAKER – LOW FORM GRIFFIN, 250 ML, BOROSILICATE GLASS 3.3, WITH SPOUT AND PRINTED GRADUATIONS',
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     
     end_user_unit = forms.ChoiceField(
         choices=END_USER_UNIT_CHOICES,
         required=True,
+        initial='DEPED - Division of City Schools',
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     
     procurement_method = forms.ChoiceField(
         choices=PROCUREMENT_METHOD_CHOICES,
         required=True,
+        initial='Competitive Bidding',
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     
