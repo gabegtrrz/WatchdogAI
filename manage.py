@@ -7,7 +7,7 @@ import sys
 def main():
     """Run administrative tasks."""
     # Use production settings by default for Railway deployment
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "watchdog_ai.settings_production")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "watchdog_ai.settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
