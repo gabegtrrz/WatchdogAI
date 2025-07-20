@@ -149,7 +149,7 @@ class Command(BaseCommand):
                 return None, None
 
             # Clean and process data
-            df_processed = self._clean_and_process_data(df)
+            df_processed = self._clean_and_add_features(df)
             if df_processed is None:
                 return None, None
 
@@ -191,7 +191,7 @@ class Command(BaseCommand):
             self.stderr.write(f'Error extracting labels: {e}')
             return None
 
-    def _clean_and_process_data(self, df: pd.DataFrame) -> Optional[pd.DataFrame]:
+    def _clean_and_add_features(self, df: pd.DataFrame) -> Optional[pd.DataFrame]:
         """Clean and process the raw data."""
         try:
             logger.info('Cleaning raw data...')
