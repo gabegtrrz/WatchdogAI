@@ -312,8 +312,9 @@ class Command(BaseCommand):
             # Classify samples as anomalies (1) or normal (0)
             predicted_labels = (anomaly_scores <= threshold).astype(int)
 
-            logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)} '
-                       f'using contamination rate of {contamination_rate:.4f} and threshold of {threshold:.4f}')
+            logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
+            logger.info(f'Contamination rate: {contamination:.4f}')
+            logger.info(f'Threshold: {threshold:.4f}')
 
             return predicted_labels, anomaly_scores, threshold
             
