@@ -1,3 +1,5 @@
+dev_manage.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -194,7 +196,6 @@ Thumbs.db
 .railway/
 
 # Model files (if they contain sensitive data)
-*.joblib
 *.pkl
 *.pickle
 
