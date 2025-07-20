@@ -26,147 +26,129 @@
                 <form method="post">
                     {% csrf_token %}
                     
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Please correct the following errors:</h6>
+                            {{ form.non_field_errors }}
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <div class="mb-2">
+                                        <strong>{{ field.label }}:</strong>
+                                        {{ field.errors }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
                     <!-- Project Information -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="project_name" class="form-label">Project Name</label>
-                            <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Enter project name">
+                            <label for="{{ form.project_name.id_for_label }}" class="form-label">{{ form.project_name.label }}</label>
+                            {{ form.project_name }}
                         </div>
                         <div class="col-md-6">
-                            <label for="end_user_unit" class="form-label">End User Unit</label>
-                            <input type="text" class="form-control" id="end_user_unit" name="end_user_unit" placeholder="Enter end user unit">
+                            <label for="{{ form.end_user_unit.id_for_label }}" class="form-label">{{ form.end_user_unit.label }}</label>
+                            {{ form.end_user_unit }}
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="project_description" class="form-label">Project Description</label>
-                        <textarea class="form-control" id="project_description" name="project_description" rows="3" placeholder="Enter project description"></textarea>
+                        <label for="{{ form.project_description.id_for_label }}" class="form-label">{{ form.project_description.label }}</label>
+                        {{ form.project_description }}
                     </div>
                     
                     <!-- Item Details -->
                     <div class="row mb-3">
                         <div class="col-md-8">
-                            <label for="item_name" class="form-label">Item Name *</label>
-                            <select class="form-select" id="item_name" name="item_name" required>
-                                <option value="">Select an item...</option>
-                                <option value="BEAKER – LOW FORM GRIFFIN, 250 ML, BOROSILICATE GLASS 3.3, WITH SPOUT AND PRINTED GRADUATIONS">BEAKER – LOW FORM GRIFFIN, 250 ML, BOROSILICATE GLASS 3.3, WITH SPOUT AND PRINTED GRADUATIONS</option>
-                                <option value="GRADUATED CYLINDER – 100 ML CAPACITY, CLASS B, POLYPROPYLENE, WITH HEXAGONAL BASE AND MOLDED GRADUATIONS">GRADUATED CYLINDER – 100 ML CAPACITY, CLASS B, POLYPROPYLENE, WITH HEXAGONAL BASE AND MOLDED GRADUATIONS</option>
-                                <option value="TEST TUBE – 16 × 150 MM, BOROSILICATE GLASS 3.3, RIMMED, REUSABLE">TEST TUBE – 16 × 150 MM, BOROSILICATE GLASS 3.3, RIMMED, REUSABLE</option>
-                                <option value="ERLENMEYER FLASK – 250 ML, BOROSILICATE GLASS 3.3, NARROW MOUTH, WITH PRINTED GRADUATIONS">ERLENMEYER FLASK – 250 ML, BOROSILICATE GLASS 3.3, NARROW MOUTH, WITH PRINTED GRADUATIONS</option>
-                                <option value="FUNNEL – UTILITY TYPE, POLYPROPYLENE PLASTIC, 100 MM TOP DIAMETER">FUNNEL – UTILITY TYPE, POLYPROPYLENE PLASTIC, 100 MM TOP DIAMETER</option>
-                                <option value="WATCH GLASS – 100 MM DIAMETER, SODA-LIME GLASS, FIRE-POLISHED WITH BEVELED EDGES">WATCH GLASS – 100 MM DIAMETER, SODA-LIME GLASS, FIRE-POLISHED WITH BEVELED EDGES</option>
-                                <option value="TRIPLE BEAM BALANCE – MECHANICAL, 610 G CAPACITY, 0.1 G READABILITY, STAINLESS STEEL PAN">TRIPLE BEAM BALANCE – MECHANICAL, 610 G CAPACITY, 0.1 G READABILITY, STAINLESS STEEL PAN</option>
-                                <option value="ALCOHOL LAMP – 150 ML CAPACITY, GLASS BODY, WITH METAL SHIELD AND ADJUSTABLE WICK CAP">ALCOHOL LAMP – 150 ML CAPACITY, GLASS BODY, WITH METAL SHIELD AND ADJUSTABLE WICK CAP</option>
-                                <option value="METER STICK – 100 CM, HARDWOOD WITH METAL END CAPS, DUAL SCALE IN CM AND INCHES">METER STICK – 100 CM, HARDWOOD WITH METAL END CAPS, DUAL SCALE IN CM AND INCHES</option>
-                                <option value="STOPWATCH – DIGITAL LCD, 1/100TH SECOND PRECISION, WATER-RESISTANT, LAP/SPLIT FUNCTION">STOPWATCH – DIGITAL LCD, 1/100TH SECOND PRECISION, WATER-RESISTANT, LAP/SPLIT FUNCTION</option>
-                                <option value="STIRRING ROD – 200 MM × 7 MM, BOROSILICATE GLASS, ROUNDED ENDS">STIRRING ROD – 200 MM × 7 MM, BOROSILICATE GLASS, ROUNDED ENDS</option>
-                                <option value="TEST TUBE BRUSH – FOR 16–20 MM TUBES, NYLON BRISTLES, GALVANIZED STEEL WIRE HANDLE WITH LOOPED END">TEST TUBE BRUSH – FOR 16–20 MM TUBES, NYLON BRISTLES, GALVANIZED STEEL WIRE HANDLE WITH LOOPED END</option>
-                                <option value="DRY CELL BATTERY – SIZE D, CARBON-ZINC (HEAVY DUTY), 1.5 VOLTS, SHRINK-WRAPPED PACK OF 2">DRY CELL BATTERY – SIZE D, CARBON-ZINC (HEAVY DUTY), 1.5 VOLTS, SHRINK-WRAPPED PACK OF 2</option>
-                                <option value="PH INDICATOR PAPER – UNIVERSAL RANGE (PH 1–14), PLASTIC DISPENSER ROLL, 5 METERS LENGTH">PH INDICATOR PAPER – UNIVERSAL RANGE (PH 1–14), PLASTIC DISPENSER ROLL, 5 METERS LENGTH</option>
-                                <option value="WIRE GAUZE – 125 × 125 MM (5" × 5"), WOVEN STEEL MESH WITH CERAMIC FIBER CENTER">WIRE GAUZE – 125 × 125 MM (5" × 5"), WOVEN STEEL MESH WITH CERAMIC FIBER CENTER</option>
-                            </select>
+                            <label for="{{ form.item_name.id_for_label }}" class="form-label">{{ form.item_name.label }} *</label>
+                            {{ form.item_name }}
                         </div>
                         <div class="col-md-4">
-                            <label for="quantity" class="form-label">Quantity *</label>
-                            <input type="number" class="form-control" id="quantity" name="quantity" min="1" required placeholder="Enter quantity">
+                            <label for="{{ form.quantity.id_for_label }}" class="form-label">{{ form.quantity.label }} *</label>
+                            {{ form.quantity }}
                         </div>
                     </div>
                     
                     <!-- Pricing -->
                     <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="unit_purchase_price" class="form-label">Unit Purchase Price *</label>
+                        <div class="col-md-6">
+                            <label for="{{ form.unit_purchase_price.id_for_label }}" class="form-label">{{ form.unit_purchase_price.label }} *</label>
                             <div class="input-group">
                                 <span class="input-group-text">₱</span>
-                                <input type="number" class="form-control" id="unit_purchase_price" name="unit_purchase_price" step="0.01" min="0" required placeholder="0.00">
+                                {{ form.unit_purchase_price }}
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <label for="average_price" class="form-label">Average Price</label>
+                        <div class="col-md-6">
+                            <label for="{{ form.approved_budget.id_for_label }}" class="form-label">{{ form.approved_budget.label }}</label>
                             <div class="input-group">
                                 <span class="input-group-text">₱</span>
-                                <input type="number" class="form-control" id="average_price" name="average_price" step="0.01" min="0" placeholder="0.00">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="approved_budget" class="form-label">Approved Budget</label>
-                            <div class="input-group">
-                                <span class="input-group-text">₱</span>
-                                <input type="number" class="form-control" id="approved_budget" name="approved_budget" step="0.01" min="0" placeholder="0.00">
+                                {{ form.approved_budget }}
                             </div>
                         </div>
                     </div>
                     
                     <!-- Procurement Method -->
                     <div class="mb-3">
-                        <label for="procurement_method" class="form-label">Procurement Method *</label>
-                        <select class="form-select" id="procurement_method" name="procurement_method" required>
-                            <option value="">Select procurement method...</option>
-                            <option value="Competitive Bidding">Competitive Bidding</option>
-                            <option value="Direct Contracting">Direct Contracting</option>
-                            <option value="Limited Source Bidding">Limited Source Bidding</option>
-                            <option value="Negotiated Procurement (Agency-to-Agency)">Negotiated Procurement (Agency-to-Agency)</option>
-                            <option value="Negotiated Procurement (Small Value Procurement)">Negotiated Procurement (Small Value Procurement)</option>
-                            <option value="Negotiated Procurement (Two Failed Biddings)">Negotiated Procurement (Two Failed Biddings)</option>
-                            <option value="Repeat Order">Repeat Order</option>
-                        </select>
+                        <label for="{{ form.procurement_method.id_for_label }}" class="form-label">{{ form.procurement_method.label }} *</label>
+                        {{ form.procurement_method }}
                     </div>
                     
                     <!-- Supplier & Officer -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="supplier" class="form-label">Supplier *</label>
-                            <input type="text" class="form-control" id="supplier" name="supplier" required placeholder="Enter supplier name">
+                            <label for="{{ form.supplier.id_for_label }}" class="form-label">{{ form.supplier.label }} *</label>
+                            {{ form.supplier }}
                         </div>
                         <div class="col-md-6">
-                            <label for="procurement_officer" class="form-label">Procurement Officer</label>
-                            <input type="text" class="form-control" id="procurement_officer" name="procurement_officer" placeholder="Enter procurement officer name">
+                            <label for="{{ form.procurement_officer.id_for_label }}" class="form-label">{{ form.procurement_officer.label }}</label>
+                            {{ form.procurement_officer }}
                         </div>
                     </div>
                     
                     <!-- Financial Tracking -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="invoice_number" class="form-label">Invoice Number *</label>
-                            <input type="text" class="form-control" id="invoice_number" name="invoice_number" required placeholder="Enter invoice number">
+                            <label for="{{ form.invoice_number.id_for_label }}" class="form-label">{{ form.invoice_number.label }} *</label>
+                            {{ form.invoice_number }}
                         </div>
                         <div class="col-md-6">
-                            <label for="payment_receipt_number" class="form-label">Payment Receipt Number *</label>
-                            <input type="text" class="form-control" id="payment_receipt_number" name="payment_receipt_number" required placeholder="Enter payment receipt number">
+                            <label for="{{ form.payment_receipt_number.id_for_label }}" class="form-label">{{ form.payment_receipt_number.label }} *</label>
+                            {{ form.payment_receipt_number }}
                         </div>
                     </div>
                     
                     <!-- Procurement Timeline -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="invitation_to_bid_posting_date" class="form-label">Invitation to Bid Posting Date</label>
-                            <input type="date" class="form-control" id="invitation_to_bid_posting_date" name="invitation_to_bid_posting_date">
+                            <label for="{{ form.invitation_to_bid_posting_date.id_for_label }}" class="form-label">{{ form.invitation_to_bid_posting_date.label }}</label>
+                            {{ form.invitation_to_bid_posting_date }}
                         </div>
                         <div class="col-md-6">
-                            <label for="bid_submission_deadline" class="form-label">Bid Submission Deadline</label>
-                            <input type="date" class="form-control" id="bid_submission_deadline" name="bid_submission_deadline">
+                            <label for="{{ form.bid_submission_deadline.id_for_label }}" class="form-label">{{ form.bid_submission_deadline.label }}</label>
+                            {{ form.bid_submission_deadline }}
                         </div>
                     </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label for="bid_opening_date" class="form-label">Bid Opening Date</label>
-                            <input type="date" class="form-control" id="bid_opening_date" name="bid_opening_date">
+                            <label for="{{ form.bid_opening_date.id_for_label }}" class="form-label">{{ form.bid_opening_date.label }}</label>
+                            {{ form.bid_opening_date }}
                         </div>
                         <div class="col-md-4">
-                            <label for="notice_of_award_date" class="form-label">Notice of Award Date</label>
-                            <input type="date" class="form-control" id="notice_of_award_date" name="notice_of_award_date">
+                            <label for="{{ form.notice_of_award_date.id_for_label }}" class="form-label">{{ form.notice_of_award_date.label }}</label>
+                            {{ form.notice_of_award_date }}
                         </div>
                         <div class="col-md-4">
-                            <label for="contract_signing_date" class="form-label">Contract Signing Date</label>
-                            <input type="date" class="form-control" id="contract_signing_date" name="contract_signing_date">
+                            <label for="{{ form.contract_signing_date.id_for_label }}" class="form-label">{{ form.contract_signing_date.label }}</label>
+                            {{ form.contract_signing_date }}
                         </div>
                     </div>
                     
                     <!-- Transaction Date -->
                     <div class="mb-3">
-                        <label for="transaction_date" class="form-label">Transaction Date *</label>
-                        <input type="date" class="form-control" id="transaction_date" name="transaction_date" required>
+                        <label for="{{ form.transaction_date.id_for_label }}" class="form-label">{{ form.transaction_date.label }} *</label>
+                        {{ form.transaction_date }}
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -177,12 +159,19 @@
                             <i class="fas fa-save me-2"></i>Save Transaction
                         </button>
                     </div>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Upon upload, the system searches for the item's average market price online. The difference between the market price and the transaction's unit price is used as one of the factors for anomaly detection.
+                        </small>
+                    </div>
                 </form>
             </div>
             <div class="card-footer bg-light">
                 <div class="alert alert-info mb-0">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Demo Purpose:</strong> This form is designed for demonstration purposes of the thesis scenario: the procurement or purchase of school lab equipment. All item names are pre-defined from a list and all procurement methods are standard PH government procurement methods.
+                    <strong>Demo Purpose:</strong> This form is designed for demo purposes of the thesis scenario: procurement or purchase of school lab equipment. All item names are pre-defined from a list and all procurement methods are standard PH government procurement methods.
                 </div>
             </div>
         </div>
