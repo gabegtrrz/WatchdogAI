@@ -138,7 +138,7 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         del training_columns_copy  # Clean up the copy after use
         
 
-
+        
         # 6. Perform anomaly detection with sophisticated contamination handling
         prediction_results = _get_predictions_and_scores(final_df, contamination)
         
@@ -335,12 +335,13 @@ def _get_predictions_and_scores(final_df: pd.DataFrame, contamination: float = 0
             
             # Calculate threshold based on contamination rate
             threshold = np.percentile(anomaly_scores, contamination * 100)
-            
+
             # Classify samples as anomalies (1) or normal (0)
             predicted_labels = (anomaly_scores <= threshold).astype(int)
 
             logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
-            logger.info(f'using contamination rate of {contamination:.4f} and threshold of {threshold:.4f}')
+            logger.info(f'Contamination rate: {contamination:.4f}')
+            logger.info(f'Threshold: {threshold:.4f}')
 
             return predicted_labels, anomaly_scores, threshold
 
