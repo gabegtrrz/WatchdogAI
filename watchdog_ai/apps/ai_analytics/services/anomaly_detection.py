@@ -309,11 +309,13 @@ def _get_predictions_and_scores(final_df: pd.DataFrame, contamination: float = 0
     try:
         if model is not None:
             logger.info('Getting predictions and anomaly scores from trained model...')
-            
+
             # Get raw anomaly scores (lower score means more anomalous)
             anomaly_scores = model.score_samples(final_df)
 
-            logger.debug(f'Anomaly scores: {anomaly_scores}')
+            logger.debug(f'Anomaly scores:\n{chr(10).join([f"  [{i}]: {score}" for i, score in enumerate(anomaly_scores)])}')
+            
+            logger.debug(f'Contamination before thresholding: {contamination}')
             
             # Calculate threshold based on contamination rate
             threshold = np.percentile(anomaly_scores, contamination * 100)
@@ -323,10 +325,10 @@ def _get_predictions_and_scores(final_df: pd.DataFrame, contamination: float = 0
             # Classify samples as anomalies (1) or normal (0)
             predicted_labels = (anomaly_scores <= threshold).astype(int)
 
-            logger.debug(f'Predicted labels: {predicted_labels}')
+            logger.debug(f'Predicted labels:\n{chr(10).join([f"  [{i}]: {label}" for i, label in enumerate(predicted_labels)])}')
 
             logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
-            
+
             logger.info(f'Contamination rate: {contamination:.4f}')
             logger.info(f'Final Threshold: {threshold:.4f}')
 

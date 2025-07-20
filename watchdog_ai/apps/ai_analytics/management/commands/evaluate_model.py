@@ -303,11 +303,12 @@ class Command(BaseCommand):
             # Get raw anomaly scores (lower score means more anomalous)
             anomaly_scores = model.score_samples(features_df)
 
-            logger.debug(f'Anomaly scores: {anomaly_scores}')
+            logger.debug(f'Anomaly scores:\n{chr(10).join([f"  [{i}]: {score}" for i, score in enumerate(anomaly_scores)])}')
 
             # Determine contamination rate for thresholding
             contamination = self._get_contamination_rate(model, config)
             
+            logger.debug(f'Contamination before thresholding: {contamination}')
 
             # Calculate threshold based on contamination rate
             threshold = np.percentile(anomaly_scores, contamination * 100)
@@ -317,7 +318,7 @@ class Command(BaseCommand):
             # Classify samples as anomalies (1) or normal (0)
             predicted_labels = (anomaly_scores <= threshold).astype(int)
 
-            logger.debug(f'Predicted labels: {predicted_labels}')
+            logger.debug(f'Predicted labels:\n{chr(10).join([f"  [{i}]: {label}" for i, label in enumerate(predicted_labels)])}')
 
             logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
             logger.info(f'Contamination rate: {contamination:.4f}')
