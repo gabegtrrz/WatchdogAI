@@ -56,6 +56,26 @@ evaluation:
     
     # Include confusion matrix in results
     include_confusion_matrix: true
+  
+  # Output DataFrame configuration
+  output:
+    # Directory to save anomaly detection results DataFrame
+    output_directory: "data/evaluation_output"  # e.g., "data/evaluation_output"
+    
+    # Filename for the output DataFrame (optional - will use timestamp if not specified)
+    output_filename: null  # e.g., "anomaly_detection_results.csv"
+    
+    # Include original features in output DataFrame
+    include_original_features: true
+    
+    # Include anomaly detection columns in output DataFrame
+    include_anomaly_columns: true
+    
+    # Specific columns to include (optional - will include all if not specified)
+    include_specific_columns: []  # e.g., ["transaction_id", "item_name", "unit_price"]
+    
+    # Specific columns to exclude (optional)
+    exclude_specific_columns: []  # e.g., ["internal_id", "temp_column"]
 
 # Logging configuration
 logging:

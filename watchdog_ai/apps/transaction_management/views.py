@@ -4,12 +4,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
+from decimal import Decimal
+from datetime import datetime
+from django.db import transaction
 
 from .serializers import TransactionCSVUploadSerializer
+from .forms import SingleTransactionUploadForm
 from .services import process_transaction_csv, create_transactions_from_data
 from apps.data_augmentation.services import enrich_transaction_list
 from apps.blockchain.integration import integrate_transaction_batch, retry_failed_blockchain_integrations, get_blockchain_status_summary
 from apps.blockchain.integrity_service import integrity_service
+from apps.core.models import Transaction, ProcurementMethod
 
 def transaction_upload_ui(request):
     """
@@ -214,3 +219,43 @@ class TransactionUploadAPIView(APIView):
                 {'error': f'An unexpected error occurred: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+def single_transaction_upload(request):
+    """
+    Handles single transaction upload form for demo purposes using Django forms.
+    Creates a single transaction from form data and integrates it with blockchain.
+    """
+    if request.method == 'POST':
+        form = SingleTransactionUploadForm(request.POST)
+        if form.is_valid():
+            try:
+                # Save the transaction
+                new_transaction = form.save()
+                
+                # Calculate total purchase price
+                new_transaction.total_purchase_price = new_transaction.calculated_total_purchase_price
+                new_transaction.save()
+                
+                # Integrate with blockchain
+                blockchain_success, blockchain_result = integrate_transaction_batch([new_transaction])
+                
+                if blockchain_success:
+                    messages.success(request, f'Transaction created successfully and integrated with blockchain!')
+                    if blockchain_result.get('block_info'):
+                        block_info = blockchain_result['block_info']
+                        messages.info(request, f"Block {block_info['index']} created with hash {block_info['hash'][:16]}...")
+                else:
+                    messages.warning(request, f'Transaction created but blockchain integration failed. You can retry later.')
+                
+                messages.success(request, f'Transaction ID: {new_transaction.transaction_id}')
+                
+            except Exception as e:
+                messages.error(request, f'An error occurred while creating the transaction: {str(e)}')
+        else:
+            # Form has errors, they will be displayed in the template
+            pass
+    else:
+        form = SingleTransactionUploadForm()
+    
+    return render(request, 'transaction_management/single_upload.html', {'form': form})

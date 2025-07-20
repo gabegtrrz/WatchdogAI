@@ -4,6 +4,7 @@ import datetime
 import yaml
 import json
 import logging
+import math
 import pandas as pd
 import numpy as np
 from django.core.management.base import BaseCommand, CommandError
@@ -23,6 +24,11 @@ class Command(BaseCommand):
     This command reads a YAML configuration file to produce realistic transaction
     data suitable for database population and for training a separate feature
     engineering component. It does NOT perform feature engineering itself.
+
+    Configuration Options:
+    - include_total_purchase_price: (bool, default: True) 
+      Controls whether total_purchase_price column is included in output files.
+      Set to false to exclude this column for scenarios where it's not needed.
 
     -----------------
     Usage:
@@ -76,8 +82,19 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Injecting anomalies..."))  # type: ignore
         df_with_labels = self._inject_anomalies(df.copy(), config)
 
-        # --- 4. Save Outputs ---
-        self._save_output_files(df, df_with_labels, config_path, config, is_training_data)
+        # --- 4. Create unlabeled dataset from labeled dataset (ensures identical data) ---
+        df_raw = df_with_labels.copy()
+        if 'is_anomaly' in df_raw.columns:
+            df_raw = df_raw.drop(columns=['is_anomaly'])
+
+        # --- 5. Save Outputs ---
+        self._save_output_files(
+            df_raw=df_raw, 
+            df_labeled=df_with_labels, 
+            config_path=config_path, 
+            config=config, 
+            is_training_data=is_training_data
+        )
 
     def _load_config_and_items(self, config_path):
         """Loads the main YAML config and the item list from its source file."""
@@ -120,9 +137,25 @@ class Command(BaseCommand):
                 elif rule_type == 'categorical':
                     data[field] = np.random.choice(rule['values'], size=n_samples, p=rule.get('weights'))
                 elif rule_type == 'normal':
-                    data[field] = np.random.normal(loc=rule['mean'], scale=rule['std_dev'], size=n_samples)
+                    # Safe normal distribution generation with bounds checking
+                    raw_data = np.random.normal(loc=rule['mean'], scale=rule['std_dev'], size=n_samples)
+                    # Replace infinite values with NaN
+                    raw_data = np.where(np.isfinite(raw_data), raw_data, np.nan)
+                    # Clamp to reasonable bounds for price fields
+                    if 'price' in field.lower() or 'budget' in field.lower():
+                        UPPER_LIMIT = 999999999999.99
+                        raw_data = np.clip(raw_data, 0, UPPER_LIMIT)
+                    data[field] = raw_data
                 elif rule_type == 'log-normal':
-                    data[field] = np.random.lognormal(mean=rule['mean'], sigma=rule['std_dev'], size=n_samples)
+                    # Safe log-normal distribution generation with bounds checking
+                    raw_data = np.random.lognormal(mean=rule['mean'], sigma=rule['std_dev'], size=n_samples)
+                    # Replace infinite values with NaN
+                    raw_data = np.where(np.isfinite(raw_data), raw_data, np.nan)
+                    # Clamp to reasonable bounds for price fields
+                    if 'price' in field.lower() or 'budget' in field.lower():
+                        UPPER_LIMIT = 999999999999.99
+                        raw_data = np.clip(raw_data, 0, UPPER_LIMIT)
+                    data[field] = raw_data
                 elif rule_type == 'date_range':
                     start = datetime.date.fromisoformat(rule['start_date'])
                     end = datetime.date.fromisoformat(rule['end_date'])
@@ -139,6 +172,23 @@ class Command(BaseCommand):
                 continue
 
         df = pd.DataFrame(data)
+
+        # Check if DataFrame is empty
+        if df.empty:
+            raise CommandError("No data was generated. Check your field_rules configuration.")
+
+        # --- Immediate safety check for infinite values ---
+        # Replace any infinite values with NaN across all numeric columns
+        numeric_columns = df.select_dtypes(include=[np.number]).columns
+        for col in numeric_columns:
+            if col in df.columns:
+                # Replace infinite values with NaN
+                df[col] = df[col].replace([np.inf, -np.inf], np.nan)
+                
+                # For price-related fields, also clamp to reasonable bounds
+                if 'price' in col.lower() or 'budget' in col.lower():
+                    UPPER_LIMIT = 999999999999.99
+                    df[col] = df[col].clip(upper=UPPER_LIMIT)
 
         # --- Generate fields that are not based on simple rules ---
         df['item_name'] = np.random.choice(items, size=n_samples)
@@ -175,11 +225,8 @@ class Command(BaseCommand):
 
         # --- Data Cleaning & Type Enforcement (BEFORE derived calculations) ---
         # Convert negative values to positive for price fields
-        df['unit_purchase_price'] = df['unit_purchase_price'].round(4).abs()
+        df['unit_purchase_price'] = df['unit_purchase_price'].round(2).abs()
         df['quantity'] = df['quantity'].round().abs().clip(lower=1).astype(int)
-
-        # --- Calculate total_purchase_price ---
-        df['total_purchase_price'] = (df['quantity'] * df['unit_purchase_price']).round(4)
 
         # --- Handle average_price based on configuration ---
         average_price_config = config.get('average_price', {})
@@ -213,46 +260,192 @@ class Command(BaseCommand):
             if 'average_price' in df.columns:
                 df = df.drop('average_price', axis=1)
 
-        # --- Calculate approved_budget from average_price with fallback to unit_purchase_price ---
-        budget_config = config.get('approved_budget', {})
-        markup_config = budget_config.get('markup', {})
-        min_markup = markup_config.get('min', 0.15)
-        max_markup = markup_config.get('max', 0.22)
-        
-        budget_markup = np.random.uniform(min_markup, max_markup, size=n_samples)
-        df['approved_budget'] = np.nan
+        # --- Calculate total_purchase_price and approved_budget ---
+        df = self._calculate_derived_prices(df, config, n_samples)
 
-        # Primary source: average_price, if it exists and is not null
-        if 'average_price' in df.columns:
-            primary_mask = df['average_price'].notna()
-            if primary_mask.sum() > 0:
-                df.loc[primary_mask, 'approved_budget'] = (df.loc[primary_mask, 'average_price'] * df.loc[primary_mask, 'quantity'] * (1 + budget_markup[primary_mask])).round(2)
-
-        # Backup source: unit_purchase_price, for all records where approved_budget is still NaN
-        backup_mask = df['approved_budget'].isna()
-        if backup_mask.sum() > 0 and 'unit_purchase_price' in df.columns:
-            unit_price_mask = df['unit_purchase_price'].notna()
-            valid_backup_mask = backup_mask & unit_price_mask
-            if valid_backup_mask.sum() > 0:
-                df.loc[valid_backup_mask, 'approved_budget'] = (df.loc[valid_backup_mask, 'unit_purchase_price'] * df.loc[valid_backup_mask, 'quantity'] * (1 + budget_markup[valid_backup_mask])).round(2)
-        
-        # If still no approved_budget values, set to NaN
-        if bool(df['approved_budget'].isna().all()):
-            self.stdout.write(self.style.WARNING("WARNING: No valid average_price or unit_purchase_price found. approved_budget will be blank.")) # type: ignore
-
-        # --- Final safety check: ensure all price fields are positive (only for non-empty values) ---
-        price_fields = ['unit_purchase_price', 'average_price', 'approved_budget']
+        # --- Final comprehensive safety check: ensure all price fields are positive and finite ---
+        price_fields = ['unit_purchase_price', 'average_price', 'approved_budget', 'total_purchase_price']
         for field in price_fields:
             if field in df.columns:
+                # Replace inf with NaN - avoid chained assignment
+                df[field] = df[field].replace([np.inf, -np.inf], np.nan)
+
+                # Clamp unreasonably high values.
+                # The value 999,999,999,999.99 is chosen as a safe upper limit
+                # for a DecimalField with max_digits=15 and decimal_places=2.
+                UPPER_LIMIT = 999999999999.99
+                df[field] = df[field].clip(upper=UPPER_LIMIT)
+
+                # Ensure all non-NaN values are positive
                 non_empty_mask = df[field].notna()
                 if non_empty_mask.sum() > 0:
                     df.loc[non_empty_mask, field] = df.loc[non_empty_mask, field].abs()
+                    
+                    # Final check: replace any remaining infinite values with NaN
+                    temp_series = df.loc[non_empty_mask, field].replace([np.inf, -np.inf], np.nan)
+                    df.loc[non_empty_mask, field] = temp_series
             else:
-                # If field doesn't exist, create it as NaN (for scrape mode)
+                # If field doesn't exist, create it as NaN
                 df[field] = np.nan
+
+        # --- Additional safety check for all numeric columns ---
+        numeric_columns = df.select_dtypes(include=[np.number]).columns
+        for col in numeric_columns:
+            if col in df.columns:
+                # Replace any remaining infinite values with NaN
+                df[col] = df[col].replace([np.inf, -np.inf], np.nan)
 
         df = self._rearrange_columns(df)
 
+        # --- Final validation: ensure all data is safe for database insertion ---
+        df = self._validate_and_clean_final_data(df)
+
+        return df
+
+    def _validate_and_clean_final_data(self, df):
+        """
+        Final validation and cleaning of data to ensure it's safe for database insertion.
+        This function performs comprehensive checks for infinite values, NaN values,
+        and ensures all price fields are within acceptable bounds.
+        """
+        self.stdout.write("Performing final data validation and cleaning...")
+        
+        price_fields = ['unit_purchase_price', 'average_price', 'approved_budget', 'total_purchase_price']
+
+        for field in price_fields:
+            if field in df.columns:
+                # Ensure the column is numeric, coercing errors to NaN
+                df[field] = pd.to_numeric(df[field], errors='coerce')
+
+                # Replace infinite values with NaN and clamp to a safe upper limit
+                upper_limit = 999999999999.99
+                df[field] = df[field].replace([np.inf, -np.inf], np.nan).clip(upper=upper_limit)
+
+                # Ensure all non-NaN values are positive and round to 2 decimal places
+                df[field] = df[field].abs().round(2)
+        
+        self.stdout.write("  - Final data validation and cleaning complete.")
+        return df
+
+    def _safe_multiplication(self, a, b, upper_limit=999999999999.99):
+        """
+        Safely multiplies two values, handling infinite and NaN cases.
+        Returns 0 if inputs are invalid, otherwise returns clamped result.
+        """
+        # Handle NaN or infinite inputs
+        if pd.isna(a) or pd.isna(b) or not math.isfinite(a) or not math.isfinite(b):
+            return 0.0
+        
+        # Handle zero or negative inputs
+        if a <= 0 or b <= 0:
+            return 0.0
+        
+        # Perform multiplication with overflow protection
+        try:
+            result = float(a) * float(b)
+            # Check for overflow/infinite result
+            if not math.isfinite(result):
+                return 0.0
+            # Clamp to upper limit
+            return min(result, upper_limit)
+        except (OverflowError, ValueError):
+            return 0.0
+
+    def _generate_fallback_unit_prices(self, size, config):
+        """
+        Generates fallback unit prices using log-normal distribution based on YAML configuration.
+        Uses unit_purchase_price field_rules from config, with sensible defaults if not found.
+        """
+        # Get unit_purchase_price configuration from field_rules
+        field_rules = config.get('field_rules', {})
+        unit_price_config = field_rules.get('unit_purchase_price', {})
+        
+        # Extract parameters from YAML config, with sensible defaults
+        mean = unit_price_config.get('mean', 6.3)  # Default to realistic lab equipment prices
+        std_dev = unit_price_config.get('std_dev', 0.3)
+        
+        # Generate prices using log-normal distribution
+        realistic_prices = np.random.lognormal(mean=mean, sigma=std_dev, size=size)
+        
+        # Clamp to reasonable bounds for procurement prices
+        UPPER_LIMIT = 999999999999.99
+        MIN_PRICE = 100.0  # Minimum reasonable price in pesos
+        realistic_prices = np.clip(realistic_prices, MIN_PRICE, UPPER_LIMIT)
+        
+        # Replace infinite values with NaN
+        realistic_prices = np.where(np.isfinite(realistic_prices), realistic_prices, np.nan)
+        
+        return realistic_prices.round(2)
+
+    def _calculate_derived_prices(self, df, config, n_samples):
+        """
+        Calculates total_purchase_price and approved_budget based on unit_purchase_price.
+        Ensures neither field can be null or blank by using robust fallbacks.
+        """
+        self.stdout.write("Calculating derived prices...")
+        
+        # Ensure unit_purchase_price exists and is valid (generate realistic fallback if needed)
+        if 'unit_purchase_price' not in df.columns:
+            self.stdout.write("  - WARNING: unit_purchase_price not found. Generating realistic prices using log-normal distribution.")
+            df['unit_purchase_price'] = self._generate_fallback_unit_prices(len(df), config)
+        else:
+            # Check if all values are the same fallback value (like 1.0)
+            if df['unit_purchase_price'].nunique() == 1 and df['unit_purchase_price'].iloc[0] == 1.0:
+                self.stdout.write("  - WARNING: All unit_purchase_price values are 1.0. Generating realistic prices using log-normal distribution.")
+                df['unit_purchase_price'] = self._generate_fallback_unit_prices(len(df), config)
+            else:
+                # Fill any remaining NaN values with realistic prices
+                nan_mask = df['unit_purchase_price'].isna()
+                if nan_mask.sum() > 0:
+                    self.stdout.write(f"  - Filling {nan_mask.sum()} NaN unit_purchase_price values with realistic prices using log-normal distribution.")
+                    fallback_prices = self._generate_fallback_unit_prices(nan_mask.sum(), config)
+                    df.loc[nan_mask, 'unit_purchase_price'] = fallback_prices
+        
+        # Ensure quantity exists and is valid (fallback to 1 if needed)
+        if 'quantity' not in df.columns:
+            df['quantity'] = 1
+        df['quantity'] = df['quantity'].fillna(1).abs().clip(lower=1).astype(int)
+        
+        # --- Calculate total_purchase_price using safe multiplication ---
+        total_prices = []
+        for i in range(len(df)):
+            unit_price = df.loc[i, 'unit_purchase_price']
+            quantity = df.loc[i, 'quantity']
+            total_price = self._safe_multiplication(unit_price, quantity)
+            total_prices.append(round(total_price, 2))
+        
+        df['total_purchase_price'] = total_prices
+        self.stdout.write(f"  - Calculated total_purchase_price for {len(df)} records")
+        
+        # --- Calculate approved_budget with markup ---
+        budget_config = config.get('approved_budget', {})
+        markup_config = budget_config.get('markup', {})
+        min_markup = markup_config.get('min', 0.15)  # Default 15% markup
+        max_markup = markup_config.get('max', 0.22)  # Default 22% markup
+        
+        # Generate random markup for each record
+        budget_markups = np.random.uniform(min_markup, max_markup, size=n_samples)
+        
+        approved_budgets = []
+        for i in range(len(df)):
+            unit_price = df.loc[i, 'unit_purchase_price']
+            quantity = df.loc[i, 'quantity']
+            markup = budget_markups[i]
+            
+            # Calculate base budget (unit_price * quantity)
+            base_budget = self._safe_multiplication(unit_price, quantity)
+            # Apply markup: base_budget * (1 + markup)
+            markup_factor = 1.0 + markup
+            final_budget = self._safe_multiplication(base_budget, markup_factor)
+            approved_budgets.append(round(final_budget, 2))
+        
+        df['approved_budget'] = approved_budgets
+        self.stdout.write(f"  - Calculated approved_budget for {len(df)} records with {min_markup:.1%}-{max_markup:.1%} markup")
+        
+        # --- Final safety check: ensure no null values ---
+        df['total_purchase_price'] = df['total_purchase_price'].fillna(0.0)
+        df['approved_budget'] = df['approved_budget'].fillna(0.0)
+        
         return df
 
     def _generate_office_day_dates(self, start_date, end_date, n_samples):
@@ -319,19 +512,19 @@ class Command(BaseCommand):
                 # Check if any prices were actually scraped
                 scraped_count = ItemAveragePrice.objects.filter(date=today).count() # type: ignore
                 if scraped_count == 0:
-                    self.stdout.write(self.style.WARNING( # type: ignore
+                    self.stdout.write(
                         "WARNING: Scraping completed but no prices were found. "
                         "This could be due to network issues, API limits, or items not found on the platform. "
                         "Proceeding with blank average_price values."
-                    ))
+                    )
                 else:
                     self.stdout.write(f"Successfully scraped {scraped_count} prices.")
                     
             except Exception as e:
-                self.stdout.write(self.style.ERROR( # type: ignore
+                self.stdout.write(
                     f"ERROR: Failed to run scraping command: {e}. "
                     "Proceeding with blank average_price values."
-                ))
+                )
         else:
             self.stdout.write(f"Found {existing_prices} existing scraped prices for today.")
         
@@ -376,14 +569,31 @@ class Command(BaseCommand):
         found_count = 0
         missing_count = 0
         
-        # Apply prices to the DataFrame
+        # Apply prices to the DataFrame with safety checks
         average_prices = []
         for item_name in df['item_name']:
             # Convert to uppercase for case-insensitive matching
             item_name_upper = item_name.upper()
             if item_name_upper in item_price_map:
-                average_prices.append(float(item_price_map[item_name_upper]))
-                found_count += 1
+                # Safe conversion with bounds checking
+                raw_price = item_price_map[item_name_upper]
+                try:
+                    price_float = float(raw_price)
+                    # Check for finite and positive values
+                    if np.isfinite(price_float) and price_float > 0:
+                        # Clamp to reasonable bounds
+                        UPPER_LIMIT = 999999999999.99
+                        price_float = min(price_float, UPPER_LIMIT)
+                        average_prices.append(price_float)
+                        found_count += 1
+                    else:
+                        # Invalid price, set to NaN
+                        average_prices.append(np.nan)
+                        missing_count += 1
+                except (ValueError, TypeError):
+                    # Invalid conversion, set to NaN
+                    average_prices.append(np.nan)
+                    missing_count += 1
             else:
                 # Set to NaN (blank) if no scraped price is available
                 average_prices.append(np.nan)
@@ -408,16 +618,19 @@ class Command(BaseCommand):
         self.stdout.write(f"  - Missing prices (set to blank): {missing_count}")
         
         if found_count == 0:
-            self.stdout.write(self.style.WARNING( # type: ignore
+            self.stdout.write(
                 "WARNING: No scraped prices found for any items. "
-                "All average_price values will be blank. "
+                "All average_price values will be blank (NaN). "
                 "This is normal if scraping failed or items are not available on the platform."
-            ))
+            )
         elif missing_count > 0:
-            self.stdout.write(self.style.WARNING( # type: ignore
-                f"WARNING: {missing_count} items had no scraped prices and will be blank. "
+            self.stdout.write(
+                f"WARNING: {missing_count} items had no scraped prices and will be blank (NaN). "
                 "This is normal for some items that may not be available on the platform."
-            ))
+            )
+        
+        # Ensure average_price column is properly typed as float with NaN values
+        df['average_price'] = pd.to_numeric(df['average_price'], errors='coerce')
         
         return df
 
@@ -445,6 +658,15 @@ class Command(BaseCommand):
         if valid_mask.sum() == 0:
             self.stdout.write("  - No valid average_price found. Using field_rules fallback for unit_purchase_price.")
             # Keep the existing unit_purchase_price from field_rules as fallback
+            # But ensure it's not all 1.0 - generate realistic prices if needed
+            if df['unit_purchase_price'].nunique() == 1 and df['unit_purchase_price'].iloc[0] == 1.0:
+                self.stdout.write("  - WARNING: All unit_purchase_price values are 1.0. Generating realistic prices using log-normal distribution.")
+                # Generate realistic unit prices using log-normal distribution
+                realistic_prices = np.random.lognormal(mean=6.3, sigma=0.3, size=len(df))
+                UPPER_LIMIT = 999999999999.99
+                realistic_prices = np.clip(realistic_prices, 100.0, UPPER_LIMIT)
+                realistic_prices = np.where(np.isfinite(realistic_prices), realistic_prices, np.nan)
+                df['unit_purchase_price'] = realistic_prices.round(2)
             return df
         
         # Generate unit prices based on average_price with configurable variation
@@ -453,18 +675,48 @@ class Command(BaseCommand):
         # Get the average prices for valid records
         valid_average_prices = df.loc[valid_mask, 'average_price'].values
         
-        # Calculate unit prices with variation
-        unit_prices = valid_average_prices * variation_factor
+        # Check for finite values in all inputs
+        valid_calc_mask = (
+            np.isfinite(valid_average_prices) & 
+            np.isfinite(variation_factor) &
+            (valid_average_prices > 0) & 
+            (variation_factor > 0)
+        )
         
-        # Update unit_purchase_price for valid records (derived from average_price)
-        df.loc[valid_mask, 'unit_purchase_price'] = unit_prices.round(4)
+        if valid_calc_mask.sum() > 0:
+            # Calculate only for valid inputs
+            safe_average_prices = valid_average_prices[valid_calc_mask]
+            safe_variation_factors = variation_factor[valid_calc_mask]
+            
+            # Calculate unit prices with variation
+            unit_prices = safe_average_prices * safe_variation_factors
+            
+            # Check for infinite results and clamp if necessary
+            UPPER_LIMIT = 999999999999.99
+            unit_prices = np.clip(unit_prices, 0, UPPER_LIMIT)
+            
+            # Replace infinite values with NaN
+            unit_prices = np.where(np.isfinite(unit_prices), unit_prices, np.nan)
+            
+            # Get the indices for valid calculations
+            valid_indices = df.loc[valid_mask].index[valid_calc_mask]
+            df.loc[valid_indices, 'unit_purchase_price'] = unit_prices.round(2)
         
-        # For records without average_price, keep the field_rules fallback
-        # (unit_purchase_price already exists from field_rules)
+        # For records without average_price, generate realistic fallback prices
+        # instead of keeping the field_rules fallback (which might be all 1.0)
+        no_average_mask = ~valid_mask
+        if no_average_mask.sum() > 0:
+            self.stdout.write(f"  - Generating realistic fallback prices for {no_average_mask.sum()} records without average_price using log-normal distribution")
+            # Generate realistic unit prices using log-normal distribution for records without average_price
+            fallback_prices = np.random.lognormal(mean=6.3, sigma=0.3, size=no_average_mask.sum())
+            UPPER_LIMIT = 999999999999.99
+            fallback_prices = np.clip(fallback_prices, 100.0, UPPER_LIMIT)
+            fallback_prices = np.where(np.isfinite(fallback_prices), fallback_prices, np.nan)
+            df.loc[no_average_mask, 'unit_purchase_price'] = fallback_prices.round(2)
         
         variation_percent = int((max_factor - min_factor) * 50)  # Calculate percentage for display
-        self.stdout.write(f"  - Derived unit_purchase_price from average_price for {valid_mask.sum()} records")
-        self.stdout.write(f"  - Used field_rules fallback for {len(df) - valid_mask.sum()} records (no average_price)")
+        self.stdout.write(f"  - Derived unit_purchase_price from average_price for {valid_calc_mask.sum()} records")
+        self.stdout.write(f"  - Generated realistic fallback prices for {no_average_mask.sum()} records (no average_price)")
         self.stdout.write(f"  - Variation range: ±{variation_percent}% from average_price (min: {min_factor}, max: {max_factor})")
         
         return df
@@ -530,7 +782,10 @@ class Command(BaseCommand):
         return df[final_column_order]
 
     def _inject_anomalies(self, df, config):
-        """Applies anomaly blueprints to a fraction of the DataFrame."""
+        """Applies anomaly blueprints to a fraction of the DataFrame.
+        
+        Ensures each transaction can only have one anomaly blueprint applied to it.
+        """
         df['is_anomaly'] = 0
         n_anomalies = int(len(df) * config['anomaly_fraction'])
         if n_anomalies == 0:
@@ -550,11 +805,19 @@ class Command(BaseCommand):
         probabilities = [bp.weight / total_weight for bp in active_blueprints]
 
         # --- Select anomaly indices and apply blueprints ---
+        # Use replace=False to ensure no transaction gets selected multiple times
         anomaly_indices = np.random.choice(df.index, size=n_anomalies, replace=False)
         df.loc[anomaly_indices, 'is_anomaly'] = 1
 
+        # Track which transactions have been modified to prevent multiple blueprint applications
+        modified_transactions = set()
+
         # For each selected anomaly, randomly choose a blueprint and apply it
         for idx in anomaly_indices:
+            # Skip if this transaction has already been modified
+            if idx in modified_transactions:
+                continue
+                
             # Choose a blueprint based on the normalized weights
             chosen_blueprint = np.random.choice(active_blueprints, p=probabilities)
             
@@ -563,6 +826,9 @@ class Command(BaseCommand):
             record = df.loc[idx].copy()
             modified_record = chosen_blueprint.apply(record)
             df.loc[idx] = modified_record
+            
+            # Mark this transaction as modified to prevent further blueprint applications
+            modified_transactions.add(idx)
 
         return df
 
@@ -571,9 +837,8 @@ class Command(BaseCommand):
         # Determine output directory
         output_folder_path = config.get('output_folder_path', 'generated_data')
         
-        # Create timestamp for unique subfolder
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        output_dir = os.path.join(output_folder_path, str(timestamp))
+        # Use the output folder path directly without timestamp
+        output_dir = output_folder_path
         os.makedirs(output_dir, exist_ok=True)
 
         # Check if no_split mode is enabled
@@ -581,15 +846,15 @@ class Command(BaseCommand):
         
         if not split_mode:
             # Save data without splitting - single files
-            self._save_unsplit_data(df_raw, df_labeled, output_dir, is_training_data)
+            self._save_unsplit_data(df_raw, df_labeled, output_dir, is_training_data, config)
         else:
             # Save data with train-test-eval split (existing behavior)
-            self._save_split_data(df_raw, df_labeled, output_dir, is_training_data)
+            self._save_split_data(df_raw, df_labeled, output_dir, is_training_data, config)
         
         # Save generation log
         self._save_generation_log(df_raw, df_labeled, config_path, config, is_training_data, output_dir, split_mode)
 
-    def _save_unsplit_data(self, df_raw, df_labeled, output_dir, is_training_data):
+    def _save_unsplit_data(self, df_raw, df_labeled, output_dir, is_training_data, config):
         """Saves data as single files without splitting into train-test-eval."""
         # Create separate subdirectories for labeled and unlabeled data
         labeled_dir = os.path.join(output_dir, 'labeled')
@@ -601,45 +866,65 @@ class Command(BaseCommand):
         df_raw_copy = df_raw.copy()
         df_labeled_copy = df_labeled.copy()
 
-        # Conditionally remove the 'total_purchase_price' column for non-training data
-        if not is_training_data:
+        # Check if total_purchase_price should be included based on YAML configuration
+        include_total_price = config.get('include_total_purchase_price', True)
+        
+        if not include_total_price:
             if 'total_purchase_price' in df_raw_copy.columns:
                 df_raw_copy.drop(columns=['total_purchase_price'], inplace=True)
             if 'total_purchase_price' in df_labeled_copy.columns:
                 df_labeled_copy.drop(columns=['total_purchase_price'], inplace=True)
+            self.stdout.write("  - Removed total_purchase_price column as per configuration")
+        else:
+            self.stdout.write("  - Included total_purchase_price column as per configuration")
 
         # Save unlabeled data (raw data without anomaly labels)
         raw_path = os.path.join(unlabeled_dir, 'transactions.csv')
         df_raw_copy.to_csv(raw_path, index=False)
         
-        self.stdout.write(self.style.SUCCESS(f"Unlabeled data saved to {unlabeled_dir}:"))  # type: ignore
+        self.stdout.write(f"Unlabeled data saved to {unlabeled_dir}:")
         self.stdout.write(f"  - Transactions: {raw_path} ({len(df_raw_copy)} samples)")
 
         # Save labeled data (with anomaly labels)
         labeled_path = os.path.join(labeled_dir, 'transactions.csv')
         df_labeled_copy.to_csv(labeled_path, index=False)
         
-        self.stdout.write(self.style.SUCCESS(f"Labeled data saved to {labeled_dir}:"))  # type: ignore
+        self.stdout.write(f"Labeled data saved to {labeled_dir}:")
         self.stdout.write(f"  - Transactions: {labeled_path} ({len(df_labeled_copy)} samples)")
 
         # Print summary
-        self.stdout.write(self.style.SUCCESS(f"\nData summary:"))  # type: ignore
+        self.stdout.write(f"\nData summary:")
         self.stdout.write(f"  - Total transactions: {len(df_raw_copy)} samples")
         self.stdout.write(f"  - No splitting applied (single file mode)")
 
-    def _save_split_data(self, df_raw, df_labeled, output_dir, is_training_data):
-        """Saves the data split into training (70%), testing (20%), and evaluation (10) datasets."""
+    def _save_split_data(self, df_raw, df_labeled, output_dir, is_training_data, config):
+        """Saves the data split into training, testing, and evaluation datasets based on YAML configuration."""
         # Create separate subdirectories for labeled and unlabeled data
         labeled_dir = os.path.join(output_dir, 'labeled')
         unlabeled_dir = os.path.join(output_dir, 'unlabeled')
         os.makedirs(labeled_dir, exist_ok=True)
         os.makedirs(unlabeled_dir, exist_ok=True)
 
-        # Split data into training (70%), testing (20%), and evaluation (10%) datasets.
+        # Get split ratios from YAML configuration with defaults
+        split_config = config.get('split_ratios', {})
+        train_ratio = split_config.get('training', 0.7)
+        test_ratio = split_config.get('testing', 0.2)
+        eval_ratio = split_config.get('evaluation', 0.1)
+        
+        # Validate that ratios sum to 1.0
+        total_ratio = train_ratio + test_ratio + eval_ratio
+        if abs(total_ratio - 1.0) > 0.001:  # Allow small floating point differences
+            self.stdout.write(f"WARNING: Split ratios sum to {total_ratio:.3f}, not 1.0. Normalizing...")
+            # Normalize ratios to sum to 1.0
+            train_ratio = train_ratio / total_ratio
+            test_ratio = test_ratio / total_ratio
+            eval_ratio = eval_ratio / total_ratio
+        
+        # Split data based on configured ratios
         total_samples = len(df_raw)
-        train_size = int(total_samples * 0.7)
-        test_size = int(total_samples * 0.2)
-        # eval_size = total_samples - train_size - test_size  # Remaining 10%
+        train_size = int(total_samples * train_ratio)
+        test_size = int(total_samples * test_ratio)
+        eval_size = total_samples - train_size - test_size  # Remaining samples go to evaluation
         
         # Create indices for splitting
         indices = np.random.permutation(total_samples)
@@ -656,11 +941,17 @@ class Command(BaseCommand):
         df_labeled_test = df_labeled.iloc[test_indices].reset_index(drop=True)
         df_labeled_eval = df_labeled.iloc[eval_indices].reset_index(drop=True)
 
-        # Conditionally remove the 'total_purchase_price' column for non-training data
-        if not is_training_data:
-            for df_list in [df_raw_test, df_raw_eval, df_labeled_test, df_labeled_eval]:
+        # Check if total_purchase_price should be included based on YAML configuration
+        include_total_price = config.get('include_total_purchase_price', True)
+        
+        if not include_total_price:
+            # Remove total_purchase_price from all split datasets
+            for df_list in [df_raw_train, df_raw_test, df_raw_eval, df_labeled_train, df_labeled_test, df_labeled_eval]:
                 if 'total_purchase_price' in df_list.columns:
                     df_list.drop(columns=['total_purchase_price'], inplace=True)
+            self.stdout.write("  - Removed total_purchase_price column from all datasets as per configuration")
+        else:
+            self.stdout.write("  - Included total_purchase_price column in all datasets as per configuration")
 
         # Save unlabeled data (raw data without anomaly labels)
         train_raw_path = os.path.join(unlabeled_dir, 'training.csv')
@@ -671,7 +962,7 @@ class Command(BaseCommand):
         df_raw_test.to_csv(test_raw_path, index=False)
         df_raw_eval.to_csv(eval_raw_path, index=False)
         
-        self.stdout.write(self.style.SUCCESS(f"Unlabeled data saved to {unlabeled_dir}:"))  # type: ignore
+        self.stdout.write(f"Unlabeled data saved to {unlabeled_dir}:")
         self.stdout.write(f"  - Training: {train_raw_path} ({len(df_raw_train)} samples)")
         self.stdout.write(f"  - Testing: {test_raw_path} ({len(df_raw_test)} samples)")
         self.stdout.write(f"  - Evaluation: {eval_raw_path} ({len(df_raw_eval)} samples)")
@@ -685,16 +976,16 @@ class Command(BaseCommand):
         df_labeled_test.to_csv(test_labeled_path, index=False)
         df_labeled_eval.to_csv(eval_labeled_path, index=False)
         
-        self.stdout.write(self.style.SUCCESS(f"Labeled data saved to {labeled_dir}:"))  # type: ignore
+        self.stdout.write(f"Labeled data saved to {labeled_dir}:")
         self.stdout.write(f"  - Training: {train_labeled_path} ({len(df_labeled_train)} samples)")
         self.stdout.write(f"  - Testing: {test_labeled_path} ({len(df_labeled_test)} samples)")
         self.stdout.write(f"  - Evaluation: {eval_labeled_path} ({len(df_labeled_eval)} samples)")
 
         # Print split summary
-        self.stdout.write(self.style.SUCCESS(f"\nData split summary:"))  # type: ignore
-        self.stdout.write(f"  - Training: {len(df_raw_train)} samples (70%)")
-        self.stdout.write(f"  - Testing: {len(df_raw_test)} samples (20%)")
-        self.stdout.write(f"  - Evaluation: {len(df_raw_eval)} samples (10%)")
+        self.stdout.write(f"\nData split summary:")
+        self.stdout.write(f"  - Training: {len(df_raw_train)} samples ({train_ratio:.1%})")
+        self.stdout.write(f"  - Testing: {len(df_raw_test)} samples ({test_ratio:.1%})")
+        self.stdout.write(f"  - Evaluation: {len(df_raw_eval)} samples ({eval_ratio:.1%})")
         self.stdout.write(f"  - Total: {total_samples} samples")
 
     def _save_generation_log(self, df_raw, df_labeled, config_path, config, is_training_data, output_dir, split_mode):
@@ -741,15 +1032,21 @@ class Command(BaseCommand):
                         os.path.join(output_dir, 'unlabeled', 'eval.csv')
                     ]
                 }
+                # Get split ratios from config for logging
+                split_config = config.get('split_ratios', {})
+                train_ratio = split_config.get('training', 0.7)
+                test_ratio = split_config.get('testing', 0.2)
+                eval_ratio = split_config.get('evaluation', 0.1)
+                
                 data_split_info = {
                     'mode': 'split',
-                    'training_samples': int(len(df_raw) * 0.7),
-                    'testing_samples': int(len(df_raw) * 0.2),
-                    'evaluation_samples': len(df_raw) - int(len(df_raw) * 0.7) - int(len(df_raw) * 0.2),
+                    'training_samples': int(len(df_raw) * train_ratio),
+                    'testing_samples': int(len(df_raw) * test_ratio),
+                    'evaluation_samples': len(df_raw) - int(len(df_raw) * train_ratio) - int(len(df_raw) * test_ratio),
                     'split_ratios': {
-                        'training': 0.7,
-                        'testing': 0.2,
-                        'evaluation': 0.1
+                        'training': train_ratio,
+                        'testing': test_ratio,
+                        'evaluation': eval_ratio
                     }
                 }
                 total_files_created = 6  # 3 labeled + 3 unlabeled
@@ -808,7 +1105,15 @@ class Command(BaseCommand):
                 else:
                     return obj
             
+            # Ensure generation_results is a dictionary before conversion
+            if not isinstance(generation_results, dict):
+                generation_results = {}
+            
             serializable_results = convert_numpy_types(generation_results)
+            
+            # Ensure serializable_results is a dictionary
+            if not isinstance(serializable_results, dict):
+                serializable_results = {}
             
             # Define log file path in JSON directory
             log_filename = 'generation_log.json'
@@ -832,7 +1137,7 @@ class Command(BaseCommand):
             all_results = [serializable_results] + existing_results
             
             # Write all results back to file
-            with open(log_path, 'w') as f:
+            with open(log_path, 'w', encoding='utf-8') as f:
                 json.dump(all_results, f, indent=2)
             
             logger.info(f'Generation results appended to top of {log_path}')

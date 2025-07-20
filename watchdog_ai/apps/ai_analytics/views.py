@@ -33,8 +33,8 @@ SELECT_RATE_LIMIT_MAX_ATTEMPTS = 5  # Max attempts per time window
 SELECT_RATE_LIMIT_WINDOW = 40  # Time window in seconds for max attempts
 
 # Analysis rate limiting (more restrictive due to resource intensity)
-ANALYSIS_RATE_LIMIT_MAX_ATTEMPTS = 2  # Max analysis attempts per time window
-ANALYSIS_RATE_LIMIT_WINDOW = 300  # 5 minutes window for analysis requests
+ANALYSIS_RATE_LIMIT_MAX_ATTEMPTS = 100  # Max analysis attempts per time window
+ANALYSIS_RATE_LIMIT_WINDOW = 200  # 200-sec window for analysis requests
 
 def check_rate_limit(request, action_name):
     """
@@ -418,14 +418,16 @@ def analysis_results(request, analysis_run_id):
     if all_reports.exists():
         first_report = all_reports.first()
         contamination_param = first_report.contamination_param
-    
-    return render(request, 'ai_analytics/analysis_results.html', {
+
+    context = {
         'reports': anomalous_reports,
         'analysis_run_id': analysis_run_id,
         'total_transactions': total_transactions,
         'anomaly_count': anomaly_count,
         'contamination_param': contamination_param,
-    })
+    }
+    
+    return render(request, 'ai_analytics/analysis_results.html', context)
 
 def analysis_report_detail(request, report_id):
     """

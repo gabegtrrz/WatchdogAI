@@ -5,25 +5,32 @@
 
 {% block content %}
 <style>
-    .hero-section {
-        background: url('{% static 'backgrounds/gradient_background.jpg' %}') no-repeat center center;
+    body {
+        background: url('{% static 'backgrounds/gradient_background.jpg' %}') no-repeat center center fixed;
         background-size: cover;
-        min-height: calc(100vh - 70px);
+    }
+    
+    .hero-section {
+        min-height: 100vh;
+        width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
+        margin-top: -70px;
+        padding-top: 70px;
     }
     
-    .hero-section::before {
+    body::before {
         content: '';
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
         background: rgba(0, 0, 0, 0.1);
         z-index: 1;
+        pointer-events: none;
     }
     
     .hero-content {
@@ -58,8 +65,8 @@
     .user-type-buttons {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
-        max-width: 400px;
+        gap: 0.75rem;
+        max-width: 100%;
         margin: 0 auto;
     }
     
@@ -67,12 +74,13 @@
         .user-type-buttons {
             flex-direction: row;
             justify-content: center;
+            gap: 1rem;
         }
     }
     
     .btn-user-type {
-        padding: 1rem 2rem;
-        font-size: 1.1rem;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
         font-weight: 500;
         border-radius: 0.75rem;
         transition: all 0.3s ease;
@@ -81,6 +89,8 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
+        white-space: nowrap;
+        min-width: fit-content;
     }
     
     .btn-user-type:hover {
@@ -92,8 +102,8 @@
 <div class="hero-section">
     <div class="hero-content">
         <div class="welcome-card">
-            <div class="text-center mb-4">
-                <img src="{% static 'img/WATCHDOG AI LOGO.png' %}" alt="WatchdogAI Logo" class="img-fluid" style="max-height: 120px; margin-bottom: 1.5rem;">
+            <div class="text-center mb-3">
+                <img src="{% static 'img/WATCHDOG AI LOGO.png' %}" alt="WatchdogAI Logo" class="img-fluid" style="max-height: 120px; margin-bottom: 1rem;">
             </div>
             <h1 class="welcome-title">Procurement Integrity and Anomaly Detection System</h1>
             <p class="welcome-subtitle">The Power of AI. The Integrity of Blockchain.<br>The Future of Procurement.</p>
@@ -101,11 +111,11 @@
             <div class="user-type-buttons">
                 <a href="{% url 'transaction-upload-ui' %}" class="btn btn-primary btn-user-type">
                     <i class="fas fa-upload"></i>
-                    Procurement Officer
+                    Mission 1
                 </a>
                 <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary btn-user-type">
-                    <i class="fas fa-chart-line"></i>
-                    Stakeholder / Auditor
+                    <i class="fas fa-search"></i>
+                    Mission 2
                 </a>
             </div>
         </div>

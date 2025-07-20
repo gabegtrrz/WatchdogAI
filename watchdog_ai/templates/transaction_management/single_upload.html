@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Single Transaction - WatchdogAI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light border-bottom">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-plus me-2"></i>Transaction Upload Demo
+                </h4>
+                <div class="mt-3">
+                    <div class="card border-secondary">
+                        <div class="card-body py-2">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Typically, transactions like these are processed via bulk upload. This form allows you to add a single record for demo purposes.<br><br>
+                                <strong>Scenario:</strong> You are procuring Educational Lab Equipment for an organization.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="card  mb-3">
+                            <div class="card-body py-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-{% if message.tags == 'success' %}check-circle text-success{% elif message.tags == 'error' %}exclamation-triangle text-danger{% else %}info-circle text-primary{% endif %} me-3 fs-5"></i>
+                                    <div class="flex-grow-1">
+                                        {{ message }}
+                                    </div>
+                                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="card border-danger mb-3">
+                            <div class="card-body py-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-exclamation-triangle text-danger me-3 fs-5 mt-1"></i>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-2 fw-bold">Please correct the following errors:</h6>
+                                        {{ form.non_field_errors }}
+                                        {% for field in form %}
+                                            {% if field.errors %}
+                                                <div class="mb-2">
+                                                    <strong>{{ field.label }}:</strong>
+                                                    {{ field.errors }}
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Project Information -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.project_name.id_for_label }}" class="form-label">{{ form.project_name.label }}</label>
+                            {{ form.project_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.end_user_unit.id_for_label }}" class="form-label">{{ form.end_user_unit.label }}</label>
+                            {{ form.end_user_unit }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.project_description.id_for_label }}" class="form-label">{{ form.project_description.label }}</label>
+                        {{ form.project_description }}
+                    </div>
+                    
+                    <!-- Item Details -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="{{ form.item_name.id_for_label }}" class="form-label">{{ form.item_name.label }} *</label>
+                            {{ form.item_name }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.quantity.id_for_label }}" class="form-label">{{ form.quantity.label }} *</label>
+                            {{ form.quantity }}
+                        </div>
+                    </div>
+                    
+                    <!-- Pricing -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.unit_purchase_price.id_for_label }}" class="form-label">{{ form.unit_purchase_price.label }} *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₱</span>
+                                {{ form.unit_purchase_price }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.approved_budget.id_for_label }}" class="form-label">{{ form.approved_budget.label }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₱</span>
+                                {{ form.approved_budget }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Procurement Method -->
+                    <div class="mb-3">
+                        <label for="{{ form.procurement_method.id_for_label }}" class="form-label">{{ form.procurement_method.label }} *</label>
+                        {{ form.procurement_method }}
+                    </div>
+                    
+                    <!-- Supplier & Officer -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.supplier.id_for_label }}" class="form-label">{{ form.supplier.label }} *</label>
+                            {{ form.supplier }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.procurement_officer.id_for_label }}" class="form-label">{{ form.procurement_officer.label }}</label>
+                            {{ form.procurement_officer }}
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Tracking -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.invoice_number.id_for_label }}" class="form-label">{{ form.invoice_number.label }} *</label>
+                            {{ form.invoice_number }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.payment_receipt_number.id_for_label }}" class="form-label">{{ form.payment_receipt_number.label }} *</label>
+                            {{ form.payment_receipt_number }}
+                        </div>
+                    </div>
+                    
+                    <!-- Procurement Timeline -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.invitation_to_bid_posting_date.id_for_label }}" class="form-label">{{ form.invitation_to_bid_posting_date.label }}</label>
+                            {{ form.invitation_to_bid_posting_date }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.bid_submission_deadline.id_for_label }}" class="form-label">{{ form.bid_submission_deadline.label }}</label>
+                            {{ form.bid_submission_deadline }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.bid_opening_date.id_for_label }}" class="form-label">{{ form.bid_opening_date.label }}</label>
+                            {{ form.bid_opening_date }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.notice_of_award_date.id_for_label }}" class="form-label">{{ form.notice_of_award_date.label }}</label>
+                            {{ form.notice_of_award_date }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.contract_signing_date.id_for_label }}" class="form-label">{{ form.contract_signing_date.label }}</label>
+                            {{ form.contract_signing_date }}
+                        </div>
+                    </div>
+                    
+                    <!-- Transaction Date -->
+                    <div class="mb-3">
+                        <label for="{{ form.transaction_date.id_for_label }}" class="form-label">{{ form.transaction_date.label }} *</label>
+                        {{ form.transaction_date }}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'home' %}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-2"></i>Back
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Transaction
+                        </button>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="card border-light bg-light">
+                            <div class="card-body py-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Upon upload, the system searches for the item's average market price online. The difference between the market price and the transaction's unit price is used as one of the factors for anomaly detection.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -2,6 +2,7 @@
 import numpy as np
 import datetime
 import pandas as pd
+import math
 
 # ---------------------------------------------------
 # Anomaly Blueprint Definitions
@@ -19,6 +20,66 @@ import pandas as pd
 # ============================================================================
 # TYPE 1: PRICING & BIDDING ANOMALIES
 # ============================================================================
+
+def _safe_division(numerator, denominator, default_value=0.0):
+    """
+    Safely perform division to prevent infinity values.
+    
+    Args:
+        numerator: The value to divide
+        denominator: The value to divide by
+        default_value: Value to return if division is not possible
+        
+    Returns:
+        The result of the division or default_value if division would cause infinity
+    """
+    if denominator == 0 or pd.isna(denominator) or denominator <= 0:
+        return default_value
+    
+    result = numerator / denominator
+    
+    # Check for infinity or extremely large values
+    if math.isinf(result) or result > 1e15:  # Reasonable maximum for price values
+        return default_value
+    
+    return result
+
+def _safe_multiplication(a, b, max_value=1e15):
+    """
+    Safely perform multiplication to prevent overflow.
+    
+    Args:
+        a: First value to multiply
+        b: Second value to multiply
+        max_value: Maximum allowed value
+        
+    Returns:
+        The result of multiplication or max_value if result would be too large
+    """
+    if pd.isna(a) or pd.isna(b):
+        return 0.0
+    
+    result = a * b
+    
+    # Check for infinity or extremely large values
+    if math.isinf(result) or result > max_value:
+        return max_value
+    
+    return result
+
+def _validate_quantity(quantity):
+    """
+    Validate quantity to ensure it's safe for mathematical operations.
+    
+    Args:
+        quantity: The quantity value to validate
+        
+    Returns:
+        True if quantity is valid, False otherwise
+    """
+    if pd.isna(quantity) or quantity <= 0 or quantity > 1e10:  # Reasonable maximum for quantity
+        return False
+    return True
 
 class BudgetEfficiencyAnomaly:
     """
@@ -41,11 +102,12 @@ class BudgetEfficiencyAnomaly:
         if np.random.random() < 0.5:
             # Set total price to 99.5-99.9% of budget (extreme utilization)
             utilization_rate = np.random.uniform(0.97, 0.999)
-            record['total_purchase_price'] = record['approved_budget'] * utilization_rate
+            record['total_purchase_price'] = _safe_multiplication(record['approved_budget'], utilization_rate)
             
-            # Update unit price if quantity is available
-            if record.get('quantity', 0) > 0:
-                record['unit_purchase_price'] = record['total_purchase_price'] / record['quantity']
+            # Update unit price if quantity is available and valid
+            quantity = record.get('quantity', 0)
+            if _validate_quantity(quantity):
+                record['unit_purchase_price'] = _safe_division(record['total_purchase_price'], quantity)
             
             record['supplier'] = 'Precision Budget Solutions Inc.'
             record['project_description'] = 'Strategic procurement with optimal budget utilization.'
@@ -55,11 +117,12 @@ class BudgetEfficiencyAnomaly:
         else:
             # Set total price to only 5-15% of budget 
             utilization_rate = np.random.uniform(0.05, 0.20)
-            record['total_purchase_price'] = record['approved_budget'] * utilization_rate
+            record['total_purchase_price'] = _safe_multiplication(record['approved_budget'], utilization_rate)
             
-            # Update unit price if quantity is available
-            if record.get('quantity', 0) > 0:
-                record['unit_purchase_price'] = record['total_purchase_price'] / record['quantity']
+            # Update unit price if quantity is available and valid
+            quantity = record.get('quantity', 0)
+            if _validate_quantity(quantity):
+                record['unit_purchase_price'] = _safe_division(record['total_purchase_price'], quantity)
             
             record['supplier'] = 'Budget Underutilization Co.'
             record['project_description'] = 'Procurement with significant budget savings and market-based pricing.'
@@ -86,11 +149,15 @@ class SuspiciousOverpricing:
         if pd.isna(record.get('unit_purchase_price')) or record.get('unit_purchase_price', 0) <= 0:
             return record
             
-        record['unit_purchase_price'] *= np.random.uniform(7.5, 12.5)
+        # Apply multiplier with bounds checking
+        multiplier = np.random.uniform(7.5, 12.5)
+        new_unit_price = _safe_multiplication(record['unit_purchase_price'], multiplier)
+        record['unit_purchase_price'] = new_unit_price
         
         # Recalculate total price to maintain consistency
-        if 'quantity' in record and record['quantity'] > 0:
-            record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
+        quantity = record.get('quantity', 0)
+        if _validate_quantity(quantity):
+            record['total_purchase_price'] = _safe_multiplication(quantity, record['unit_purchase_price'])
         
         record['supplier'] = 'Premium Imports LLC'
         
@@ -120,12 +187,13 @@ class BidCeilingCollusion:
             
         # Set total price to 99.5% - 99.95% of the approved budget 
         collusion_factor = np.random.uniform(0.995, 0.9995)
-        total_price = approved_budget * collusion_factor
+        total_price = _safe_multiplication(approved_budget, collusion_factor)
         record['total_purchase_price'] = total_price
         
         # Update unit price based on the manipulated total price
-        if record.get('quantity', 0) > 0:
-            record['unit_purchase_price'] = total_price / record['quantity']
+        quantity = record.get('quantity', 0)
+        if _validate_quantity(quantity):
+            record['unit_purchase_price'] = _safe_division(total_price, quantity)
         return record
 
 class PriceExceedsBudget:
@@ -145,12 +213,13 @@ class PriceExceedsBudget:
             
         # Set total price to be 120% - 180% of the approved budget
         escalation_factor = np.random.uniform(1.2, 1.8)
-        total_price = approved_budget * escalation_factor
+        total_price = _safe_multiplication(approved_budget, escalation_factor)
         record['total_purchase_price'] = total_price
         
         # Update unit price accordingly
-        if record.get('quantity', 0) > 0:
-            record['unit_purchase_price'] = total_price / record['quantity']
+        quantity = record.get('quantity', 0)
+        if _validate_quantity(quantity):
+            record['unit_purchase_price'] = _safe_division(total_price, quantity)
         return record
 
 class ExtremePriceAnomaly:
@@ -170,19 +239,17 @@ class ExtremePriceAnomaly:
             
         # 50% chance of extreme overpricing, 50% chance of suspicious underpricing
         if np.random.random() < 0.5:
-            # Extreme overpricing: 100-500x multiplier
-            record['unit_purchase_price'] *= np.random.uniform(100.0, 500.0)
+            # Extreme overpricing: 10-15x multiplier (reduced from 100-500x to prevent overflow)
+            multiplier = np.random.uniform(10.0, 15.0)
+            record['unit_purchase_price'] = _safe_multiplication(record['unit_purchase_price'], multiplier)
             record['supplier'] = 'Luxury Premium Suppliers Ltd.'
             record['project_description'] = 'Premium quality items with exceptional specifications.'
         else:
             # Suspicious underpricing: 0.01-0.1x multiplier (suggesting kickbacks)
-            record['unit_purchase_price'] *= np.random.uniform(0.01, 0.1)
+            multiplier = np.random.uniform(0.01, 0.1)
+            record['unit_purchase_price'] = _safe_multiplication(record['unit_purchase_price'], multiplier)
             record['supplier'] = 'Discount Wholesale Co.'
             record['project_description'] = 'Bulk purchase with significant volume discounts.'
-        
-        # # Recalculate total price
-        # if 'quantity' in record and record['quantity'] > 0:
-        #     record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
         
         # Handle both field name variations
         if 'procurement_method_name' in record:
@@ -210,12 +277,14 @@ class UnusualBulkOrder:
         if pd.isna(record.get('quantity')) or record.get('quantity', 0) <= 0:
             return record
             
-        # Much more extreme quantity increase: 50-200x multiplier
-        record['quantity'] *= np.random.randint(50, 200)
+        # Much more extreme quantity increase: 50-100x multiplier (reduced from 50-200x)
+        multiplier = np.random.randint(50, 101)
+        new_quantity = _safe_multiplication(record['quantity'], multiplier, max_value=1e8)
+        record['quantity'] = int(new_quantity) if new_quantity <= 1e8 else int(1e8)
         
         # Recalculate total price to maintain consistency
         if 'unit_purchase_price' in record and record['unit_purchase_price'] > 0:
-            record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
+            record['total_purchase_price'] = _safe_multiplication(record['quantity'], record['unit_purchase_price'])
         
         record['project_name'] = 'Special Unbudgeted Project'
         record['project_description'] = 'Procurement for unlisted special activities and contingencies.'
@@ -237,10 +306,11 @@ class ContractSplitting:
         total_price = np.random.uniform(800000, 999999)
         record['total_purchase_price'] = total_price
         
-        if record.get('quantity', 0) > 0:
-            record['unit_purchase_price'] = total_price / record['quantity']
+        quantity = record.get('quantity', 0)
+        if _validate_quantity(quantity):
+            record['unit_purchase_price'] = _safe_division(total_price, quantity)
         
-        record['approved_budget'] = total_price * np.random.uniform(1.0, 1.05)
+        record['approved_budget'] = _safe_multiplication(total_price, np.random.uniform(1.0, 1.05))
         
         # Handle both field name variations
         if 'procurement_method_name' in record:
@@ -266,12 +336,14 @@ class MassiveQuantityAnomaly:
         if pd.isna(record.get('quantity')) or record.get('quantity', 0) <= 0:
             return record
             
-        # Extremely large quantities: 500-2000x multiplier
-        record['quantity'] *= np.random.randint(500, 2000)
+        # Extremely large quantities: 500-1000x multiplier (reduced from 500-2000x)
+        multiplier = np.random.randint(500, 1001)
+        new_quantity = _safe_multiplication(record['quantity'], multiplier, max_value=1e9)
+        record['quantity'] = int(new_quantity) if new_quantity <= 1e9 else int(1e9)
         
         # Recalculate total price
         if 'unit_purchase_price' in record and record['unit_purchase_price'] > 0:
-            record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
+            record['total_purchase_price'] = _safe_multiplication(record['quantity'], record['unit_purchase_price'])
         
         record['project_name'] = 'Emergency Stockpile Project'
         record['project_description'] = 'Critical supplies for extended emergency operations and contingencies.'
@@ -622,11 +694,18 @@ class BudgetManipulation:
             
         # Inflate the approved budget significantly
         inflation_factor = np.random.uniform(3.0, 8.0)  # 3-8x inflation instead of 1.5-2.5x
-        record['approved_budget'] = record['unit_purchase_price'] * record.get('quantity', 1) * inflation_factor
+        quantity = record.get('quantity', 1)
+        if _validate_quantity(quantity):
+            record['approved_budget'] = _safe_multiplication(
+                _safe_multiplication(record['unit_purchase_price'], quantity),
+                inflation_factor
+            )
+        else:
+            record['approved_budget'] = _safe_multiplication(record['unit_purchase_price'], inflation_factor)
         
         # Update total purchase price to be close to the inflated budget
         budget_utilization = np.random.uniform(0.85, 0.95)
-        record['total_purchase_price'] = record['approved_budget'] * budget_utilization
+        record['total_purchase_price'] = _safe_multiplication(record['approved_budget'], budget_utilization)
         
         record['project_description'] = 'Budget allocation based on comprehensive market analysis and future requirements.'
         return record
@@ -745,10 +824,14 @@ class MethodMisuse:
             record['procurement_method'] = np.random.choice(inappropriate_methods)
             
         # Inflate quantity or price to make the method choice suspicious
-        if record.get('quantity', 0) > 0:
-            record['quantity'] *= np.random.randint(5, 15)
+        quantity = record.get('quantity', 0)
+        if _validate_quantity(quantity):
+            multiplier = np.random.randint(5, 15)
+            new_quantity = _safe_multiplication(quantity, multiplier, max_value=1e7)
+            record['quantity'] = int(new_quantity) if new_quantity <= 1e7 else int(1e7)
+            
             if 'unit_purchase_price' in record and record['unit_purchase_price'] > 0:
-                record['total_purchase_price'] = record['quantity'] * record['unit_purchase_price']
+                record['total_purchase_price'] = _safe_multiplication(record['quantity'], record['unit_purchase_price'])
         
         record['project_description'] = 'Special procurement arrangement due to unique requirements.'
         return record

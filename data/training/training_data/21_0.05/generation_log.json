@@ -1,0 +1,261 @@
+[
+  {
+    "test_name": "Unnamed Test",
+    "generation_date": "2025-07-20T12:00:21.364547",
+    "configuration": {
+      "data_generator": {
+        "n_samples": 1000,
+        "random_state": 77,
+        "anomaly_fraction": 0.05,
+        "split_mode": true,
+        "split_ratios": {
+          "training": 0.9,
+          "testing": 0.0,
+          "evaluation": 0.1
+        },
+        "output_folder_path": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05",
+        "log_directory": "data/generation_config",
+        "item_source_file": "data/lab_equipment.txt",
+        "average_price": {
+          "mode": "scrape",
+          "unit_price_variation": {
+            "min_factor": 0.8,
+            "max_factor": 1.2
+          }
+        },
+        "include_total_purchase_price": true,
+        "approved_budget": {
+          "markup": {
+            "min": 0.15,
+            "max": 0.25
+          }
+        },
+        "field_rules": {
+          "project_name": {
+            "type": "categorical",
+            "values": [
+              "AghamYaman Labs Project",
+              "DepEd Lingap Labs Project",
+              "DepEd Likha-Agham Project",
+              "Science Lab Enhancement Program",
+              "Laboratory Equipment Modernization",
+              "STEM Lab Development Initiative",
+              "Chemistry Lab Upgrade Project",
+              "Physics Lab Equipment Procurement",
+              "Biology Lab Enhancement Program",
+              "Science Education Modernization",
+              "Lab Safety Equipment Project",
+              "Science Equipment Replacement Program",
+              "STEM Learning Center Development",
+              "Laboratory Infrastructure Upgrade",
+              "Science Lab Renovation Project"
+            ]
+          },
+          "end_user_unit": {
+            "type": "categorical",
+            "values": [
+              "DEPED - Division of City Schools",
+              "DEPED - Division of Provincial Schools",
+              "DEPED - Science and Technology Education Center",
+              "DEPED - Regional Science High School",
+              "DEPED - National Science High School",
+              "DEPED - Special Science Elementary School",
+              "DEPED - Science and Technology School",
+              "DEPED - Laboratory School",
+              "DEPED - Science Education Center",
+              "DEPED - STEM Learning Center"
+            ]
+          },
+          "project_description": {
+            "type": "faker",
+            "provider": "catch_phrase"
+          },
+          "quantity": {
+            "type": "log-normal",
+            "mean": 3,
+            "std_dev": 1
+          },
+          "unit_purchase_price": {
+            "type": "log-normal",
+            "mean": 6.3,
+            "std_dev": 0.3
+          },
+          "average_price": {
+            "type": "log-normal",
+            "mean": 6.35,
+            "std_dev": 0.25
+          },
+          "procurement_method_name": {
+            "type": "categorical",
+            "values": [
+              "Competitive Bidding",
+              "Negotiated Procurement (Small Value Procurement)",
+              "Negotiated Procurement (Agency-to-Agency)",
+              "Repeat Order",
+              "Negotiated Procurement (Two Failed Biddings)",
+              "Direct Contracting"
+            ],
+            "weights": [
+              0.66,
+              0.225,
+              0.075,
+              0.03,
+              0.005,
+              0.005
+            ]
+          },
+          "supplier": {
+            "type": "faker",
+            "provider": "company"
+          },
+          "procurement_officer": {
+            "type": "categorical",
+            "values": [
+              "Miguel Antonio Cruz",
+              "Isabella Makalimot",
+              "Daniel Joseph Santos",
+              "Patricia Rose Alcaraz",
+              "Luis Saktonggwapo Reyes",
+              "Katherine May Alam",
+              "Josephine Mae Navarro",
+              "Andrei Tomas Mendoza"
+            ]
+          },
+          "transaction_date": {
+            "type": "date_range",
+            "start_date": "2022-01-01",
+            "end_date": "2024-12-31"
+          }
+        },
+        "active_anomalies": [
+          "Suspicious Overpricing",
+          "Budget Efficiency Anomaly",
+          "Bid Ceiling Collusion",
+          "Price Exceeds Budget",
+          "Budget Manipulation",
+          "Extreme Price Anomaly",
+          "Unusual Bulk Order",
+          "Contract Splitting",
+          "Massive Quantity Anomaly",
+          "End of Year Rush",
+          "Compressed Timeline",
+          "Weekend Activity",
+          "Insufficient Bidding Period",
+          "Delayed Award Notice",
+          "Premature Contract Signing",
+          "Backdated Documents",
+          "Expedited Procurement",
+          "Irregular Timeline Sequence",
+          "Multiple Timeline Violations",
+          "Impossible Timeline",
+          "Unjustified Direct Contracting",
+          "Favored Supplier",
+          "Fictitious Winner",
+          "Supplier Monopoly",
+          "Method Misuse"
+        ]
+      }
+    },
+    "dataset_info": {
+      "total_samples": 1000,
+      "columns_count": 20,
+      "columns": [
+        "transaction_date",
+        "invoice_number",
+        "payment_receipt_number",
+        "project_name",
+        "end_user_unit",
+        "project_description",
+        "item_name",
+        "quantity",
+        "unit_purchase_price",
+        "total_purchase_price",
+        "average_price",
+        "approved_budget",
+        "procurement_method_name",
+        "supplier",
+        "procurement_officer",
+        "invitation_to_bid_posting_date",
+        "bid_opening_date",
+        "bid_submission_deadline",
+        "notice_of_award_date",
+        "contract_signing_date"
+      ],
+      "labeled_data_count": 1000,
+      "true_anomalies": 50,
+      "true_normal": 950,
+      "anomaly_fraction": 0.05
+    },
+    "data_split": {
+      "mode": "split",
+      "training_samples": 900,
+      "testing_samples": 0,
+      "evaluation_samples": 100,
+      "split_ratios": {
+        "training": 0.9,
+        "testing": 0.0,
+        "evaluation": 0.1
+      }
+    },
+    "output_structure": {
+      "output_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05",
+      "labeled_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05\\labeled",
+      "unlabeled_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05\\unlabeled",
+      "log_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05",
+      "files_created": {
+        "labeled": [
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05\\labeled\\training.csv",
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05\\labeled\\testing.csv",
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05\\labeled\\eval.csv"
+        ],
+        "unlabeled": [
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05\\unlabeled\\training.csv",
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05\\unlabeled\\testing.csv",
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05\\unlabeled\\eval.csv"
+        ]
+      }
+    },
+    "generation_settings": {
+      "is_training_data": false,
+      "split_mode": true,
+      "random_state": 77,
+      "n_samples": 1000,
+      "anomaly_fraction": 0.05,
+      "active_anomalies": [
+        "Suspicious Overpricing",
+        "Budget Efficiency Anomaly",
+        "Bid Ceiling Collusion",
+        "Price Exceeds Budget",
+        "Budget Manipulation",
+        "Extreme Price Anomaly",
+        "Unusual Bulk Order",
+        "Contract Splitting",
+        "Massive Quantity Anomaly",
+        "End of Year Rush",
+        "Compressed Timeline",
+        "Weekend Activity",
+        "Insufficient Bidding Period",
+        "Delayed Award Notice",
+        "Premature Contract Signing",
+        "Backdated Documents",
+        "Expedited Procurement",
+        "Irregular Timeline Sequence",
+        "Multiple Timeline Violations",
+        "Impossible Timeline",
+        "Unjustified Direct Contracting",
+        "Favored Supplier",
+        "Fictitious Winner",
+        "Supplier Monopoly",
+        "Method Misuse"
+      ],
+      "average_price_mode": "scrape"
+    },
+    "generation_summary": {
+      "generation_completed_at": "2025-07-20T12:00:21.364569",
+      "output_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05",
+      "log_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\21_0.05",
+      "total_files_created": 6
+    },
+    "generation_timestamp": "2025-07-20T12:00:21.364670"
+  }
+]

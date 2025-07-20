@@ -231,8 +231,8 @@ def _create_date_based_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Day of week features
     # Help detect suspicious timing patterns in procurement activities.
-    df['contract_signing_dayofweek'] = df['contract_signing_date'].dt.dayofweek
-    df['bid_opening_dayofweek'] = df['bid_opening_date'].dt.dayofweek
+    df['contract_signing_day_of_week'] = df['contract_signing_date'].dt.dayofweek
+    df['bid_opening_day_of_week'] = df['bid_opening_date'].dt.dayofweek
 
     # Month feature
     # Identifies seasonal patterns and end-of-year rush spending.
@@ -248,19 +248,19 @@ def _create_date_based_features(df: pd.DataFrame) -> pd.DataFrame:
     # These features measure the efficiency and transparency of procurement processes.
     # Unusually short timelines might indicate rushed or non-competitive processes,
     # while excessively long timelines could suggest bureaucratic delays or manipulation.
-    df['bidding_period_days'] = df.apply(
+    df['bidding_period_number_of_days'] = df.apply(
         lambda r: safe_date_diff(r['bid_submission_deadline'], r['invitation_to_bid_posting_date']),
         axis=1
     )
-    df['award_decision_days'] = df.apply(
+    df['award_decision_duration'] = df.apply(
         lambda r: safe_date_diff(r['notice_of_award_date'], r['bid_opening_date']),
         axis=1
     )
-    df['contract_signing_days'] = df.apply(
+    df['contract_signing_number_of_days'] = df.apply(
         lambda r: safe_date_diff(r['contract_signing_date'],r['notice_of_award_date']),
         axis=1
     )
-    df['total_procurement_cycle_days'] = df.apply(
+    df['total_procurement_duration'] = df.apply(
         lambda r: safe_date_diff(r['contract_signing_date'], r['invitation_to_bid_posting_date']),
         axis=1
     )
@@ -293,14 +293,14 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
     # Quantity efficiency ratio
     # Measures the relationship between quantity purchased and total price.
     # Unusual ratios might indicate bulk purchase anomalies or pricing irregularities.
-    df['quantity_efficiency_ratio'] = df['quantity'] / (df['total_purchase_price'] + epsilon)
+    df['quantity_per_peso_ratio'] = df['quantity'] / (df['total_purchase_price'] + epsilon)
 
     
     # Unit price deviation from average
     # Measures how much each transaction's unit price deviates from the overall average.
     # Large deviations might indicate price manipulation or quality differences.
     overall_avg_unit_price = df['unit_purchase_price'].mean()
-    df['unit_price_deviation_from_avg'] = df['unit_purchase_price'] - overall_avg_unit_price
+    df['unit_price_vs_market_average'] = df['unit_purchase_price'] - overall_avg_unit_price
     
     # Budget utilization ratio
     # This feature measures how much of the approved budget is actually spent.
@@ -314,19 +314,20 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
     # Budget efficiency score
     # Combines budget utilization with price efficiency.
     # Values close to 1 indicate good budget utilization, while very high or low values might indicate issues.
-    df['budget_efficiency_score'] = (df['total_purchase_price'] / safe_budget) * (1 / (1 + abs(df['unit_price_deviation_from_avg'])))
+    df['budget_efficiency_score'] = (df['total_purchase_price'] / safe_budget) * (1 / (1 + abs(df['unit_price_vs_market_average'])))
     
     # Price variance indicator
     # Measures the coefficient of variation for unit prices across the dataset.
     # High variance might indicate inconsistent pricing or potential manipulation.
     unit_price_std = df['unit_purchase_price'].std()
     unit_price_mean = df['unit_purchase_price'].mean()
-    df['price_variance_coefficient'] = unit_price_std / (unit_price_mean + epsilon)
+    df['price_volatility_index'] = unit_price_std / (unit_price_mean + epsilon)
     
-    # Quantity-price correlation feature
-    # Measures the relationship between quantity and unit price.
-    # Negative correlation might indicate bulk discounts, while positive might indicate scarcity pricing.
-    df['quantity_price_correlation_feature'] = df['quantity'] * df['unit_purchase_price']
+    # Total transaction value
+    # Measures the total monetary value of each transaction (quantity × unit price).
+    # This helps identify unusually large or small transactions that might indicate
+    # bulk purchase anomalies, pricing irregularities, or procurement scale issues.
+    df['total_transaction_value'] = df['quantity'] * df['unit_purchase_price']
     
     # Average price deviation (if average_price column exists)
     # Measures how much each transaction's total price deviates from the average price for similar items.
@@ -339,13 +340,13 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
 
         average_price = df['average_price'].fillna(imputed_average_price).infer_objects(copy=False)
         
-        df['price_deviation_from_avg'] = df['unit_purchase_price'] - average_price
+        df['price_vs_market_average'] = df['unit_purchase_price'] - average_price
 
         df['price_competitiveness_score'] = df['unit_purchase_price'] / (average_price + epsilon)
         
     else:
         # If 'average_price' column is missing entirely, create neutral features
-        df['price_deviation_from_avg'] = 0
+        df['price_vs_market_average'] = 0
         df['price_competitiveness_score'] = 1.0
     
     return df
@@ -413,7 +414,7 @@ def _create_supplier_features(df: pd.DataFrame) -> pd.DataFrame:
     # Large deviations might indicate price manipulation or quality differences.
     # Use safe mapping to handle suppliers not in the stats
     supplier_mean_prices = supplier_price_stats['mean'].to_dict()
-    df['price_deviation_from_supplier_avg'] = df['unit_purchase_price'] - df['supplier'].map(supplier_mean_prices).fillna(0).infer_objects(copy=False)
+    df['price_vs_supplier_average'] = df['unit_purchase_price'] - df['supplier'].map(supplier_mean_prices).fillna(0).infer_objects(copy=False)
     # .infer_objects(copy=False) converts the data type to float64.
 
     return df
@@ -432,22 +433,22 @@ def _create_efficiency_features(df: pd.DataFrame) -> pd.DataFrame:
     # Values close to 1 indicate good budget utilization, while very high or low values might indicate issues.
     df['budget_efficiency_score'] = (
         df['total_purchase_price'] / df['approved_budget']
-    ) * (1 / (1 + df['price_deviation_from_supplier_avg'].abs()))
+    ) * (1 / (1 + df['price_vs_supplier_average'].abs()))
 
     # Timeline efficiency
     # Measures how efficiently the procurement timeline is used.
     # Very short timelines might indicate rushed processes, while very long ones might indicate delays.
     epsilon = 1e-6  # Small value to prevent division by zero
-    df['timeline_efficiency'] = df['total_procurement_cycle_days'] / (
-        df['bidding_period_days'] + df['award_decision_days'] + df['contract_signing_days'] + epsilon
+    df['procurement_timeline_speed_ratio'] = df['total_procurement_duration'] / (
+        df['bidding_period_number_of_days'] + df['award_decision_duration'] + df['contract_signing_number_of_days'] + epsilon
     )
 
     # Weekend activity indicator
     # Binary feature indicating if any key procurement activity occurred on weekends.
     # Weekend activity might indicate irregular or rushed processes.
-    df['weekend_activity'] = (
-        (df['contract_signing_dayofweek'] >= 5) |
-        (df['bid_opening_dayofweek'] >= 5)
+    df['transaction_on_a_weekend'] = (
+        (df['contract_signing_day_of_week'] >= 5) |
+        (df['bid_opening_day_of_week'] >= 5)
     ).astype(int)
 
     return df
@@ -471,22 +472,22 @@ def _impute_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     engineered_features = [
         # Base numerical features
         'price_per_unit_efficiency',
-        'quantity_efficiency_ratio',
-        'unit_price_deviation_from_avg',
-        'budget_efficiency_score', 'price_variance_coefficient', 'quantity_price_correlation_feature',
-        'budget_utilization_ratio', 'price_deviation_from_avg', 'price_competitiveness_score',
+        'quantity_per_peso_ratio',
+        'unit_price_vs_market_average',
+        'budget_efficiency_score', 'price_volatility_index', 'total_transaction_value',
+        'budget_utilization_ratio', 'price_vs_market_average', 'price_competitiveness_score',
         
         # Date-based features
-        'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
-        'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
+        'contract_signing_day_of_week', 'bid_opening_day_of_week', 'transaction_month',
+        'bidding_period_number_of_days', 'award_decision_duration', 'contract_signing_number_of_days', 'total_procurement_duration',
         
         # Supplier features
         'supplier_frequency',
         'price_per_supplier_freq',
-        'price_deviation_from_supplier_avg',
+        'price_vs_supplier_average',
         
         # Efficiency features
-        'timeline_efficiency', 'weekend_activity'
+        'procurement_timeline_speed_ratio', 'transaction_on_a_weekend'
     ]
 
     # Impute missing values with median for each engineered feature
@@ -521,20 +522,20 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
     engineered_features = [
         # Financial features
         'price_per_unit_efficiency',
-        'quantity_efficiency_ratio','unit_price_deviation_from_avg',
-        'budget_efficiency_score', 'price_variance_coefficient', 'quantity_price_correlation_feature',
-        'budget_utilization_ratio', 'price_deviation_from_avg', 'price_competitiveness_score',
+        'quantity_per_peso_ratio','unit_price_vs_market_average',
+        'budget_efficiency_score', 'price_volatility_index', 'total_transaction_value',
+        'budget_utilization_ratio', 'price_vs_market_average', 'price_competitiveness_score',
         
         # Date-based features
-        'contract_signing_dayofweek', 'bid_opening_dayofweek', 'transaction_month',
-        'bidding_period_days', 'award_decision_days', 'contract_signing_days', 'total_procurement_cycle_days',
+        'contract_signing_day_of_week', 'bid_opening_day_of_week', 'transaction_month',
+        'bidding_period_number_of_days', 'award_decision_duration', 'contract_signing_number_of_days', 'total_procurement_duration',
         
         # Supplier features
         'supplier_frequency',
-        'price_per_supplier_freq', 'price_deviation_from_supplier_avg',
+        'price_per_supplier_freq', 'price_vs_supplier_average',
         
         # Efficiency features
-        'timeline_efficiency', 'weekend_activity'
+        'procurement_timeline_speed_ratio', 'transaction_on_a_weekend'
     ]
 
     
@@ -544,15 +545,15 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
         for category in categories:
             one_hot_cols.append(f'{column}_{category}')
 
-    # Combine expected features
-    REQUIRED_COLUMNS.extend(
+    # Combine expected features (don't modify global REQUIRED_COLUMNS)
+    expected_features = (
         origin_features + 
         engineered_features + 
         one_hot_cols
     )
 
     # Filter expected features to only those present in the dataframe
-    present_expected_features = [col for col in REQUIRED_COLUMNS if col in df_processed.columns]
+    present_expected_features = [col for col in expected_features if col in df_processed.columns]
 
     # Identify all numeric columns in the processed dataframe
     all_numeric_features = df_processed.select_dtypes(include=np.number).columns.tolist()

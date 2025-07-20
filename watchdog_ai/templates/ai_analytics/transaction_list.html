@@ -237,7 +237,10 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th style="width: 30px;" class="text-center">
-                                            <input class="form-check-input" type="checkbox" id="select-all-page">
+                                            <div class="d-flex flex-column align-items-center">
+                                                <input class="form-check-input" type="checkbox" id="select-all-page">
+                                                <small class="text-muted mt-1" style="font-size: 0.7rem;">Select All</small>
+                                            </div>
                                         </th>
                                         <th style="width: 50px;"></th>
                                         <th>
@@ -333,11 +336,13 @@
                                             <input class="form-check-input transaction-checkbox" type="checkbox" name="transaction_ids[]" value="{{ transaction.id }}">
                                         </td>
                                         <td class="expand-icon text-center">
-                                            <span class="expand-toggle" style="font-size: 1.2rem; cursor: pointer; display: inline-block; padding: 0.25rem;">➕</span>
+                                            <span class="expand-toggle" style="font-size: 1.2rem; cursor: pointer; display: inline-block; padding: 0.25rem;">
+                                                <i class="fas fa-chevron-down"></i>
+                                            </span>
                                         </td>
                                         <td style="word-break: break-all; max-width: 200px;"><strong class="text-dark font-monospace">{{ transaction.transaction_id }}</strong></td>
                                         <td>{{ transaction.item_name }}</td>
-                                        <td>${{ transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
+                                        <td>₱{{ transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
                                         <td>{{ transaction.supplier }}</td>
                                         <td>{{ transaction.transaction_date|date:"M d, Y" }}</td>
                                         <td>
@@ -353,13 +358,13 @@
                                                     <div class="col-12 col-lg-6">
                                                         <h6 class="text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Project Information</h6>
                                                         <div class="row mb-3">
-                                                            <div class="col-12 col-sm-6">
+                                                            <div class="col-12 col-md-6 mb-2 mb-md-0">
                                                                 <small class="text-muted d-block">Project Name</small>
-                                                                <strong>{{ transaction.project_name|default:"-" }}</strong>
+                                                                <strong class="d-block text-break">{{ transaction.project_name|default:"-" }}</strong>
                                                             </div>
-                                                            <div class="col-12 col-sm-6">
+                                                            <div class="col-12 col-md-6 mb-2 mb-md-0">
                                                                 <small class="text-muted d-block">End User Unit</small>
-                                                                <strong>{{ transaction.end_user_unit|default:"-" }}</strong>
+                                                                <strong class="d-block text-break">{{ transaction.end_user_unit|default:"-" }}</strong>
                                                             </div>
                                                         </div>
                                                         {% if transaction.project_description %}
@@ -374,13 +379,23 @@
                                                     <div class="col-12 col-lg-6">
                                                         <h6 class="text-primary mb-3"><i class="fas fa-box me-2"></i>Item Details</h6>
                                                         <div class="row mb-3">
-                                                            <div class="col-12 col-sm-6">
+                                                            <div class="col-12 col-md-6 mb-2 mb-md-0">
                                                                 <small class="text-muted d-block">Item Name</small>
-                                                                <strong>{{ transaction.item_name|default:"-" }}</strong>
+                                                                <strong class="d-block text-break">{{ transaction.item_name|default:"-" }}</strong>
                                                             </div>
-                                                            <div class="col-12 col-sm-6">
-                                                                <small class="text-muted d-block">Quantity</small>
-                                                                <strong>{{ transaction.quantity|default:"-" }}</strong>
+                                                            <div class="col-12 col-md-6 mb-2 mb-md-0">
+                                                                <small class="text-muted d-block">Invoice Number</small>
+                                                                <strong class="d-block text-break">{{ transaction.invoice_number|default:"-" }}</strong>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mb-3">
+                                                            <div class="col-12 col-md-6 mb-2 mb-md-0">
+                                                                <small class="text-muted d-block">Payment Receipt</small>
+                                                                <strong class="d-block text-break">{{ transaction.payment_receipt_number|default:"-" }}</strong>
+                                                            </div>
+                                                            <div class="col-12 col-md-6 mb-2 mb-md-0">
+                                                                <small class="text-muted d-block">Transaction ID</small>
+                                                                <strong class="font-monospace d-block text-break">{{ transaction.transaction_id }}</strong>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -389,20 +404,26 @@
                                                     <div class="col-12 col-lg-6">
                                                         <h6 class="text-primary mb-3"><i class="fas fa-money-bill-wave me-2"></i>Financial Details</h6>
                                                         <div class="row mb-3">
-                                                            <div class="col-12 col-sm-6">
+                                                            <div class="col-12 col-md-6 mb-2 mb-md-0">
                                                                 <small class="text-muted d-block">Unit Price</small>
-                                                                <strong>${{ transaction.unit_purchase_price|floatformat:2|default:"-" }}</strong>
+                                                                <strong class="d-block text-break">₱{{ transaction.unit_purchase_price|floatformat:2|default:"-" }}</strong>
                                                             </div>
-                                                            <div class="col-12 col-sm-6">
+                                                            <div class="col-12 col-md-6 mb-2 mb-md-0">
                                                                 <small class="text-muted d-block">Total Price</small>
-                                                                <strong>₱{{ transaction.total_purchase_price|floatformat:2|default:"-" }}</strong>
+                                                                <strong class="d-block text-break">₱{{ transaction.total_purchase_price|floatformat:2|default:"-" }}</strong>
                                                             </div>
                                                         </div>
                                                         <div class="row mb-3">
                                                             <div class="col-12 col-sm-6">
+                                                                <small class="text-muted d-block">Quantity</small>
+                                                                <strong>{{ transaction.quantity|default:"-" }}</strong>
+                                                            </div>
+                                                            <div class="col-12 col-sm-6">
                                                                 <small class="text-muted d-block">Average Price</small>
                                                                 <strong>₱{{ transaction.average_price|floatformat:2|default:"-" }}</strong>
                                                             </div>
+                                                        </div>
+                                                        <div class="row mb-3">
                                                             <div class="col-12 col-sm-6">
                                                                 <small class="text-muted d-block">Approved Budget</small>
                                                                 <strong>₱{{ transaction.approved_budget|floatformat:2|default:"-" }}</strong>
@@ -464,29 +485,6 @@
                                                         </div>
                                                     </div>
                                                     <div class="col-12 col-lg-6">
-                                                        <h6 class="text-primary mb-3"><i class="fas fa-receipt me-2"></i>Documentation</h6>
-                                                        <div class="row mb-3">
-                                                            <div class="col-12 col-sm-6">
-                                                                <small class="text-muted d-block">Invoice Number</small>
-                                                                <strong>{{ transaction.invoice_number|default:"-" }}</strong>
-                                                            </div>
-                                                            <div class="col-12 col-sm-6">
-                                                                <small class="text-muted d-block">Payment Receipt</small>
-                                                                <strong>{{ transaction.payment_receipt_number|default:"-" }}</strong>
-                                                            </div>
-                                                        </div>
-                                                        {% if transaction.block__index %}
-                                                        <div class="row mb-3">
-                                                            <div class="col-12 col-sm-6">
-                                                                <small class="text-muted d-block">Block Index</small>
-                                                                <strong>{{ transaction.block__index }}</strong>
-                                                            </div>
-                                                        </div>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-12 col-lg-6">
                                                         <h6 class="text-primary mb-3"><i class="fas fa-link me-2"></i>Blockchain Status</h6>
                                                         <div class="row mb-3">
                                                             <div class="col-12 col-sm-6">
@@ -517,6 +515,8 @@
                                                         </div>
                                                         {% endif %}
                                                     </div>
+                                                </div>
+                                                <div class="row">
                                                     <div class="col-12 col-lg-6">
                                                         <h6 class="text-primary mb-3"><i class="fas fa-database me-2"></i>System Information</h6>
                                                         <div class="row mb-3">
@@ -524,9 +524,18 @@
                                                                 <small class="text-muted d-block">Created At</small>
                                                                 <strong>{{ transaction.created_at|date:"M d, Y H:i"|default:"-" }}</strong>
                                                             </div>
+                                                            {% if transaction.block__index %}
+                                                            <div class="col-12 col-sm-6">
+                                                                <small class="text-muted d-block">Block Index</small>
+                                                                <strong>{{ transaction.block__index }}</strong>
+                                                            </div>
+                                                            {% endif %}
                                                         </div>
                                                     </div>
-                                                </div>
+                                                    <div class="col-12 col-lg-6">
+                                                        <!-- Empty column for responsive layout -->
+                                                    </div>
+
                                             </div>
                                         </td>
                                     </tr>
@@ -753,8 +762,8 @@
         user-select: none;
     }
 
-    .transaction-row.expanded .expand-toggle {
-        transform: rotate(45deg);
+    .transaction-row.expanded .expand-toggle i {
+        transform: rotate(180deg);
         transition: transform 0.3s ease;
     }
 
@@ -809,6 +818,42 @@
     .status-integrated { background-color: var(--bs-success); }
     .status-failed { background-color: var(--bs-danger); }
     .status-pending { background-color: var(--bs-warning); }
+
+    /* Responsive transaction details */
+    .transaction-details-content {
+        background-color: #f8f9fc;
+        border-radius: 0.35rem;
+    }
+
+    /* Responsive grid adjustments */
+    @media (max-width: 768px) {
+        .transaction-details-content .row {
+            margin-bottom: 1rem;
+        }
+        
+        .transaction-details-content .col-12.col-lg-6 {
+            margin-bottom: 1.5rem;
+        }
+        
+        .transaction-details-content h6 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .transaction-details-content {
+            padding: 1rem !important;
+        }
+        
+        .transaction-details-content .row {
+            margin-bottom: 0.75rem;
+        }
+        
+        .transaction-details-content .col-12.col-sm-6 {
+            margin-bottom: 0.5rem;
+        }
+    }
 
     /* Enhanced checkbox styling */
     .form-check-input {

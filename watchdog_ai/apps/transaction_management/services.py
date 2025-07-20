@@ -46,6 +46,13 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
         present_columns = set(df.columns)
         required_columns = set(REQUIRED_COLUMNS)
         
+        # Add debugging information
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Present columns: {sorted(list(present_columns))}")
+        logger.debug(f"Required columns: {sorted(list(required_columns))}")
+        logger.debug(f"Missing columns: {sorted(list(required_columns - present_columns))}")
+        
         if not required_columns.issubset(present_columns):
             missing_cols = sorted(list(required_columns - present_columns)) # sorting guarantees that for the same set of missing columns, the error message will always be identical
             parsing_error = [{'type': 'File Parsing Error', 'message': f'Missing required columns: {", ".join(missing_cols)}'}]
@@ -78,6 +85,12 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
 
     for i, row in enumerate(df.to_dict(orient='records')): #alternate method for large files (unlikely) is itterrows() which gives overhead for processing each row at a time. to_dict() is faster but loads all data into memory.
         row_num = i + 2  # For user-friendly error reporting
+        
+        # Log the raw row from the CSV reader
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Row {row_num} (raw): {row}")
+
         errors_in_row = []
         cleaned_row_data = {}
 
@@ -131,7 +144,7 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
             errors_in_row.append({'field': 'unit_purchase_price', 'error': 'Unit purchase price is required.'})
         else:
             try:
-                price = Decimal(str(raw_price))
+                price = Decimal(str(raw_price).strip())
                 if price <= 0:
                     errors_in_row.append({'field': 'unit_purchase_price', 'error': 'Unit purchase price must be a positive number.'})
                 cleaned_row_data['unit_purchase_price'] = price

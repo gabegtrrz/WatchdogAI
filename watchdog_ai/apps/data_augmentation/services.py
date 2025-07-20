@@ -13,6 +13,7 @@ from .models import ItemAveragePrice
 # For now, we will use a placeholder or get it from env.
 SCRAPEOPS_API_KEY = os.getenv("SCRAPEOPS_API_KEY", "YOUR_API_KEY_HERE")
 MAX_SOURCES_PER_ITEM = 5
+USD_TO_PHP_RATE = 56
 
 logger = logging.getLogger(__name__)
 
@@ -120,9 +121,12 @@ def scrape_average_price_for_item(item_name: str) -> Decimal | None:
         return None
         
     average_price = sum(all_prices) / Decimal(len(all_prices))
+
+    # Convert to PHP
+    average_price = average_price * Decimal(str(USD_TO_PHP_RATE))
     
-    # Standardize to 4 decimal places for consistency with the model
-    return average_price.quantize(Decimal('0.0001'))
+    # Standardize to 2 decimal places for consistency with the model
+    return average_price.quantize(Decimal('0.01'))
 
 
 def enrich_transaction_list(transactions: list[Transaction]):

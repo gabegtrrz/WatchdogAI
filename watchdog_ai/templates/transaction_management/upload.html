@@ -9,8 +9,22 @@
         <div class="card shadow-sm">
             <div class="card-header bg-light border-bottom">
                 <h4 class="mb-0 fw-bold">
-                    <i class="fas fa-upload me-2"></i>Upload Transaction CSV File
+                    <i class="fas fa-upload me-2"></i>Upload Bulk Transactions
                 </h4>
+                <div class="mt-3">
+                    <div class="alert alert-success border-success">
+                        <div class="d-flex align-items-center">
+                           
+                            <div class="flex-grow-1">
+                                <strong>Try the Demo:</strong>
+                                <br>Upload a single transaction.
+                            </div>
+                            <a href="{% url 'single-transaction-upload' %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-play-circle me-1"></i>Try Demo
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 {% if messages %}
@@ -31,31 +45,39 @@
                         </h6>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <div class="text-center p-3 bg-light rounded">
-                                    <h5 class="text-primary mb-1">{{ blockchain_status.total_transactions }}</h5>
-                                    <small class="text-muted">Total Transactions</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="text-center p-3 bg-light rounded">
-                                    <h5 class="text-warning mb-1">{{ blockchain_status.pending_integration }}</h5>
-                                    <small class="text-muted">Pending Blockchain Integration</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="text-center p-3 bg-light rounded">
-                                    <h5 class="text-success mb-1">{{ blockchain_status.successfully_integrated }}</h5>
-                                    <small class="text-muted">Successfully Integrated</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="text-center p-3 bg-light rounded">
-                                    <h5 class="text-danger mb-1">{{ blockchain_status.failed_integration }}</h5>
-                                    <small class="text-muted">Failed Integration</small>
-                                </div>
-                            </div>
+                                                 <div class="row g-3">
+                             <div class="col-6 col-md-3">
+                                 <div class="card h-100 border-0 bg-light">
+                                     <div class="card-body text-center py-3">
+                                         <h5 class="text-dark mb-1 fw-bold">{{ blockchain_status.total_transactions }}</h5>
+                                         <small class="text-muted">Total Transactions</small>
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="col-6 col-md-3">
+                                 <div class="card h-100 border-0 bg-light">
+                                     <div class="card-body text-center py-3">
+                                         <h5 class="text-dark mb-1 fw-bold">{{ blockchain_status.pending_integration }}</h5>
+                                         <small class="text-muted">Pending Integration</small>
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="col-6 col-md-3">
+                                 <div class="card h-100 border-0 bg-light">
+                                     <div class="card-body text-center py-3">
+                                         <h5 class="text-dark mb-1 fw-bold">{{ blockchain_status.successfully_integrated }}</h5>
+                                         <small class="text-muted">Successfully Integrated</small>
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="col-6 col-md-3">
+                                 <div class="card h-100 border-0 bg-light">
+                                     <div class="card-body text-center py-3">
+                                         <h5 class="text-dark mb-1 fw-bold">{{ blockchain_status.failed_integration }}</h5>
+                                         <small class="text-muted">Failed Integration</small>
+                                     </div>
+                                 </div>
+                             </div>
                         </div>
                         {% if blockchain_status.failed_integration > 0 %}
                         <div class="mt-3 text-center">
@@ -83,18 +105,18 @@
                         <input type="file" name="csv_file" class="form-control form-control-lg" id="csv_file" accept=".csv" required>
                         <div class="form-text">
                             <i class="fas fa-info-circle me-1"></i>
-                            Please ensure your CSV file contains all required columns.
+                            Please ensure your file is in CSV format and contains all required columns.
                         </div>
                     </div>
 
-                    <div class="mb-4">
+                    {% comment %} <div class="mb-4">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="dry_run" name="dry_run" value="true">
                             <label class="form-check-label" for="dry_run">
                                 <i></i>Test upload only (validate file without saving to database)
                             </label>
                         </div>
-                    </div>
+                    </div> {% endcomment %}
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{% url 'home' %}" class="btn btn-outline-secondary me-md-2">
@@ -107,23 +129,41 @@
                 </form>
             </div>
             <div class="card-footer bg-light">
-                <h6 class="mb-3">
-                    <i class="fas fa-list me-2"></i>Required CSV Columns
-                </h6>
                 <div class="row">
-                    <div class="col-md-6">
-                        <code class="bg-light p-1 rounded">item_name</code>,
-                        <code class="bg-light p-1 rounded">quantity</code>,
-                        <code class="bg-light p-1 rounded">unit_purchase_price</code>,
-                        <code class="bg-light p-1 rounded">transaction_date</code>
-                    </div>
-                    <div class="col-md-6">
-                        <code class="bg-light p-1 rounded">procurement_method_name</code>,
-                        <code class="bg-light p-1 rounded">supplier</code>,
-                        <code class="bg-light p-1 rounded">invoice_number</code>,
-                        <code class="bg-light p-1 rounded">payment_receipt_number</code>
+                    <div class="col-12">
+                        <h6 class="mb-3 fw-bold">
+                            <i class="fas fa-asterisk me-2"></i>Required CSV Columns
+                        </h6>
+                        <small>
+                            
+                            Your CSV file must include these exact column headers. These fields are mandatory for anomaly detection.
+                        </small>
                     </div>
                 </div>
+                
+                <div class="row">
+                    <div class="col-lg-6 mb-3">
+                        <p class="text-primary mb-2">Core Transaction Data</p>
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            <span class="badge bg-primary">item_name</span>
+                            <span class="badge bg-primary">quantity</span>
+                            <span class="badge bg-primary">unit_purchase_price</span>
+                            <span class="badge bg-primary">transaction_date</span>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="col-lg-6 mb-3">
+                        <p class="text-success mb-2">Procurement Details</p>
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            <span class="badge bg-success">procurement_method_name</span>
+                            <span class="badge bg-success">supplier</span>
+                            <span class="badge bg-success">invoice_number</span>
+                            <span class="badge bg-success">payment_receipt_number</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

@@ -9,14 +9,22 @@
         <div class="col-12 col-md-8 col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-light border-bottom">
-                    <h4 class="mb-0 fw-bold"><i class="fas fa-flask-vial me-2"></i>Configure Anomaly Detection</h4>
+                    <h4 class="mb-0 fw-bold"><i class="fas fa-flask-vial me-2"></i>Configure Anomaly Detection Settings</h4>
                 </div>
                 <div class="card-body p-4">
-                    <p class="text-muted">You have selected <strong id="transaction-count">{{ transaction_count }}</strong> transaction(s) for analysis. Please set the analysis parameters below.</p>
+                    <p class="text-muted">You have selected <strong id="transaction-count">{{ transaction_count }}</strong> transaction(s) for analysis.</p>
+                    <p>Enter estimated percentage of unusual purchases (anomalies) in the dataset. This value adjusts the sensitivity of the analysis. A higher value will flag a higher % of transactions as potential anomalies. </p>
                     
+
                     <form id="analysis-form" action="{% url 'run_analysis' %}" method="POST">
                         {% csrf_token %}
                         {{ form.as_p }}
+                        <div id="contamination-explanation" class="mt-3 p-2 bg-light rounded" style="display: none;">
+                            <small>
+                                <i class="fas fa-info-circle me-1"></i>
+                                <span id="explanation-text"></span>
+                            </small>
+                        </div>
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary btn-lg"><i class="fas fa-arrow-left me-2"></i>Back to List</a>
                             <button type="submit" id="begin-analysis" class="btn btn-primary btn-lg">Begin Analysis<i class="fas fa-arrow-right ms-2"></i></button>
@@ -27,51 +35,48 @@
                     <div class="alert alert-info mt-4">
                         <div class="row">
                             <div class="col-md-2 text-center">
-                                <i class="fas fa-cogs fa-2x text-info"></i>
+                                <i class="fas fa-cogs fa-2x text-secondary"></i>
                             </div>
                             <div class="col-md-10">
-                                <h6 class="mb-2"><strong>Understanding the Contamination Parameter</strong></h6>
-                                <p class="mb-2">The contamination parameter tells the AI model how many anomalies to expect in the data. Think of it as setting the sensitivity level:</p>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="card border-success mb-2">
-                                            <div class="card-body p-2">
-                                                <small class="text-success">
-                                                    <i class="fas fa-shield-alt me-1"></i>
-                                                    <strong>Conservative (0.01-0.1):</strong><br>
-                                                    • Fewer false alarms<br>
-                                                    • May miss some issues<br>
-                                                    • Good for clean datasets
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="card border-warning mb-2">
-                                            <div class="card-body p-2">
-                                                <small class="text-warning">
-                                                    <i class="fas fa-exclamation-triangle me-1"></i>
-                                                    <strong>Sensitive (0.2-0.5):</strong><br>
-                                                    • Catches more potential issues<br>
-                                                    • May flag normal transactions<br>
-                                                    • Good for high-risk scenarios
-                                                </small>
-                                            </div>
+                                <h6 class="mb-2"><strong>Understanding the Senstivity Parameter</strong></h6>
+                                <p class="mb-2">The sensitivity (a.k.a. contamination) parameter tells the AI model how many anomalies to expect in the data.</p>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 d-flex">
+                                    <div class="card border-success mb-2 w-100">
+                                        <div class="card-body p-2 d-flex flex-column">
+                                            <small class="text-success">
+                                                <i class="fas fa-shield-alt me-1"></i>
+                                                <strong>Conservative (0.01-0.1):</strong><br>
+                                                • Fewer false alarms<br>
+                                                • May miss some issues<br>
+                                                • Good for clean datasets
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
-                                <p class="mb-0 text-muted">
-                                    <small><i class="fas fa-lightbulb me-1"></i><strong>Tip:</strong> Start with 0.05 (5%) and adjust based on your results. If you find too many false positives, try a lower value. If you're missing obvious issues, try a higher value.</small>
-                                </p>
-                                <div id="contamination-explanation" class="mt-3 p-2 bg-light rounded" style="display: none;">
-                                    <small class="text-info">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        <span id="explanation-text"></span>
-                                    </small>
+                                <div class="col-md-6 d-flex">
+                                    <div class="card border-warning mb-2 w-100">
+                                        <div class="card-body p-2 d-flex flex-column">
+                                            <small>
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                <strong>Sensitive (0.2-0.5):</strong><br>
+                                                • Catches more potential issues<br>
+                                                • May flag normal transactions<br>
+                                                • Good for high-risk scenarios
+                                            </small>
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+                            <p class="mb-0 text-muted">
+                                <small><i class="fas fa-lightbulb me-1"></i><strong>Tip:</strong> Start with 0.05 (5%) and adjust based on your results. If you find too many false positives, try a lower value. If you're missing obvious issues, try a higher contamination value.</small>
+                            </p>
                             </div>
                         </div>
                     </div>
+
+                    
                 </div>
             </div>
         </div>

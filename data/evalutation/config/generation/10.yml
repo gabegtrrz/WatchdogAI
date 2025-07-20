@@ -1,0 +1,296 @@
+# -----------------
+# Contains all configured anomaly types
+# -----------------
+
+
+data_generator:
+  # ========================
+  # MAIN CONFIGURATION
+  # ========================
+  
+  n_samples: 100         # Number of records (rows) to generate
+  random_state: 7         # Seed for reproducibility (same seed = same output)
+  anomaly_fraction: 0.05
+
+  
+  # ============================
+  # OUTPUT & SOURCE FILES
+  # =============================
+  
+  output_folder_path: "data/generated_samples"      # Path where CSV files will be saved (absolute)
+  item_source_file: "data/lab_equipment.txt" # Text file with one item name per line
+  
+  # ============================
+  # AVERAGE PRICE CONFIGURATION
+  # ============================
+  # Three modes for handling average_price:
+  # 1. 'none' - No average_price column generated
+  # 2. 'yaml' - Generate average_price using YAML field rules
+  # 3. 'scrape' - Get average_price from web-scraped data (AUTOMATED)
+  
+  average_price:
+    mode: 'scrape'  # Options: 'none', 'yaml', 'scrape'
+    
+    # Unit price variation configuration (applies to 'yaml' and 'scrape' modes)
+
+    # unit_purchase_price will be derived from average_price with this variation
+    unit_price_variation:
+      min_factor: 0.80  # Unit price can be 85% of average price
+      max_factor: 1.20  # Unit price can be 115% of average price (default ±15%)
+    
+    # Examples of different variation ranges:
+    # - Tight range (±5%): min_factor: 0.95, max_factor: 1.05
+    # - Wide range (±20%): min_factor: 0.80, max_factor: 1.20
+    # - Default range (±15%): min_factor: 0.85, max_factor: 1.15
+  
+  # ============================
+  # APPROVED BUDGET CONFIGURATION
+  # ============================
+
+  # Defines how the approved_budget is calculated.
+  # The budget is derived from either average_price (if available) or unit_purchase_price (Cannot be blank), and is marked up by a random factor within the specified range below.
+  # 
+  # Formula: approved_budget = (base_price * quantity) * (1 + random_markup)
+  
+  approved_budget:
+    markup:
+      min: 0.15  # Default: 15% minimum markup
+      max: 0.25  # Default: 22% maximum markup
+      
+  # ============================
+  # FIELD GENERATION RULES
+  # =============================
+
+  # Defines how each column in the output CSV is created.
+  # IMPORTANT: unit_purchase_price is ALWAYS required as a fallback for calculations.
+  #
+  # NOTE: The following fields are calculated automatically and should NOT be included in the field_rules below:
+
+  # average_price: Include for 'yaml' mode, omit for 'scrape' mode.
+  
+  field_rules:
+
+    # --- Project Information ---
+    project_name: { 
+      type: 'categorical', 
+      values: [
+        'AghamYaman Labs Project', 'DepEd Lingap Labs Project', 'DepEd Likha-Agham Project',
+        'Science Lab Enhancement Program', 'Laboratory Equipment Modernization', 'STEM Lab Development Initiative',
+        'Chemistry Lab Upgrade Project', 'Physics Lab Equipment Procurement', 'Biology Lab Enhancement Program',
+        'Science Education Modernization', 'Lab Safety Equipment Project', 'Science Equipment Replacement Program',
+        'STEM Learning Center Development', 'Laboratory Infrastructure Upgrade', 'Science Lab Renovation Project'
+      ] 
+    }
+    
+    end_user_unit: { 
+      type: 'categorical', 
+      values: [
+        'DEPED - Division of City Schools',
+        'DEPED - Division of Provincial Schools',
+        'DEPED - Science and Technology Education Center',
+        'DEPED - Regional Science High School',
+        'DEPED - National Science High School',
+        'DEPED - Special Science Elementary School',
+        'DEPED - Science and Technology School',
+        'DEPED - Laboratory School',
+        'DEPED - Science Education Center',
+        'DEPED - STEM Learning Center'
+      ] 
+    }
+    
+    project_description: { 
+      type: 'faker', 
+      provider: 'catch_phrase'  # Generates random business phrases
+    }
+    
+    # --- Pricing & Quantity ---
+    # IMPORTANT: Use log-normal for price fields to ensure positive values
+    quantity: { 
+      type: 'log-normal', 
+      mean: 3, 
+      std_dev: 1 
+    }
+    
+    # Unit and average prices
+    # unit_purchase_price: ALWAYS include as fallback.
+    # average_price: Include for 'yaml' mode, omit for 'scrape' mode.
+    unit_purchase_price: { 
+      type: 'log-normal', 
+      mean: 5.3, 
+      std_dev: 0.3 
+    }
+    
+    average_price: { 
+      type: 'log-normal', 
+      mean: 5.35, 
+      std_dev: 0.25 
+    }
+    
+    # --- Procurement Methods ---
+    # Realistic frequency weights based on Philippine procurement practices:
+    # - Competitive Bidding: 66% (standard method for most planned projects)
+    # - Negotiated Procurement (Small Value): 22.5% (routine consumables)
+    # - Negotiated Procurement (Agency-to-Agency): 7.5% (common-use supplies)
+    # - Repeat Order: 3% (additional units of previously procured items)
+    # - Negotiated Procurement (Two Failed Biddings): 0.5% (rare contingency)
+    # - Direct Contracting: 0.5% (very rare, proprietary items only)
+    procurement_method_name: { 
+      type: 'categorical', 
+      values: [
+        'Competitive Bidding', 
+        'Negotiated Procurement (Small Value Procurement)', 
+        'Negotiated Procurement (Agency-to-Agency)', 
+        'Repeat Order', 
+        'Negotiated Procurement (Two Failed Biddings)', 
+        'Direct Contracting'
+      ], 
+      weights: [0.66, 0.225, 0.075, 0.03, 0.005, 0.005] 
+    }
+    
+    # --- Supplier & Personnel ---
+    supplier: { 
+      type: 'faker', 
+      provider: 'company'  # Generates realistic business names
+    }
+    
+    procurement_officer: { 
+      type: 'categorical', 
+      values: [
+        'Jodi Marie Sta. Maria', 'Coco Martin Dela Cruz', 'Bea Alonzo Valera',
+        'Liza Soberano Reyes', 'Carlo Aquino Santos', 'Regine Velasquez Alcasid',
+        'John Lloyd Cruz Miranda', 'Anne Curtis Smith', 'Piolo Pascual Go',
+        'Nadine Lustre Panganiban'
+      ] 
+    }
+    
+    # --- Dates ---
+    # transaction_date is the only date field that needs configuration.
+    # Other procurement timeline dates are generated automatically based on
+    # transaction_date and legal timelines.
+    transaction_date: { 
+      type: 'date_range', 
+      start_date: '2022-01-01', 
+      end_date: '2024-12-31' 
+    }
+  
+  # ============================================================================
+  # ANOMALY GENERATION
+  # ============================================================================
+  # Defines which anomaly scenarios to use. The logic for each scenario is
+  # defined as a Python class in `anomaly_definitions.py`.
+  # Weights are taken from the class definitions in that file.
+  
+  active_anomalies:
+    # --- Pricing & Bidding Anomalies ---
+    - "Suspicious Overpricing"      # Grossly overpriced items with non-competitive methods
+    - "Budget Efficiency Anomaly"   # Unusual combinations of budget utilization and price deviation
+    - "Bid Ceiling Collusion"       # Final price suspiciously close to approved budget
+    - "Price Exceeds Budget"        # Contract price significantly higher than approved budget
+    - "Budget Manipulation"         # Artificially inflated approved budget
+    - "Extreme Price Anomaly"       # Prices so extreme they defy market reality
+    
+    # --- Quantity & Scope Anomalies ---
+    - "Unusual Bulk Order"          # Very large quantities under vague project names
+    - "Contract Splitting"          # Project broken into smaller contracts to bypass bidding
+    - "Massive Quantity Anomaly"    # Quantities so large they defy practical use
+    
+    # --- Timeline & Date Anomalies ---
+    - "End of Year Rush"            # Rushed transactions at fiscal year end
+    - "Compressed Timeline"         # Unnaturally short procurement timelines
+    - "Weekend Activity"            # Key events occurring on weekends
+    - "Insufficient Bidding Period" # Less than legally required bidding period
+    - "Delayed Award Notice"        # Award notice issued much later than legal timeframe
+    - "Premature Contract Signing"  # Contract signed before award notice
+    - "Backdated Documents"         # Logically inconsistent timeline dates
+    - "Expedited Procurement"       # Extremely rushed procurement process
+    - "Irregular Timeline Sequence" # Impossible timeline event sequence
+    - "Multiple Timeline Violations" # Multiple violations simultaneously
+    - "Impossible Timeline"         # Completely impossible timeline sequence
+    
+    # --- Supplier & Method Anomalies ---
+    - "Unjustified Direct Contracting" # Direct contracting for common goods
+    - "Favored Supplier"            # Specific supplier consistently winning
+    - "Fictitious Winner"           # Shell or non-existent company
+    - "Supplier Monopoly"           # Single supplier with inside budget knowledge
+    - "Method Misuse"               # Inappropriate procurement methods
+
+# ============================================================================
+# FIELD RULE TYPES REFERENCE
+# ============================================================================
+#
+# Available field rule types:
+#
+# 1. 'categorical' - Choose from a list of values
+#    Example: { type: 'categorical', values: ['A', 'B', 'C'], weights: [0.5, 0.3, 0.2] }
+#
+# 2. 'fixed' - Same value for all records
+#    Example: { type: 'fixed', value: 'Constant Value' }
+#
+# 3. 'faker' - Generate realistic fake data
+#    Example: { type: 'faker', provider: 'company' }
+#    Common providers: 'company', 'name', 'address', 'phone_number', 'email', 'catch_phrase'
+#
+# 4. 'normal' - Normal distribution
+#    Example: { type: 'normal', mean: 100, std_dev: 10 }
+#
+# 5. 'log-normal' - Log-normal distribution (good for positive values like prices)
+#    Example: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }
+#
+# 6. 'date_range' - Random date within a range
+#    Example: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
+#
+# ============================================================================
+# AVERAGE PRICE MODES EXPLAINED
+# ============================================================================
+#
+# 1. MODE: 'none'
+#    - No average_price column generated
+#    - Use when average_price is not needed for your analysis
+#    - approved_budget will be calculated from unit_purchase_price only
+#
+# 2. MODE: 'yaml'
+#    - Generate average_price using YAML field rules (default)
+#    - Include average_price in field_rules
+#    - unit_purchase_price derived from average_price with configurable variation
+#
+# 3. MODE: 'scrape' (AUTOMATED)
+#    - Get average_price from web-scraped data (Amazon)
+#    - Scraping runs automatically when no cached prices exist
+#    - Do NOT include average_price in field_rules (populated from scraped data)
+#    - ALWAYS include unit_purchase_price in field_rules (used as fallback)
+#    - unit_purchase_price derived from average_price when available, fallback to field_rules
+#    - Robust error handling: continues with fallback values if scraping fails
+#
+# ============================================================================
+# AUTOMATED SCRAPING FEATURES
+# ============================================================================
+#
+# When using mode: 'scrape', the system automatically:
+#
+# 1. Checks if scraped prices exist for today
+# 2. Runs scraping command if no prices found
+# 3. Handles scraping failures gracefully
+# 4. Continues with blank values if no prices available
+# 5. Provides detailed status messages
+#
+# Robust error handling:
+# - Network issues → Continues with blank values
+# - API limits → Continues with blank values  
+# - Items not found → Continues with blank values
+# - Scraping command fails → Continues with blank values
+#
+# ============================================================================
+# WORKFLOW EXAMPLES
+# ============================================================================
+#
+# Example 1: Generate data with YAML-based average_price
+# python manage.py generate_data data/yaml_average_price_config.yml
+#
+# Example 2: Generate data with automated scraping (SINGLE COMMAND)
+# python manage.py generate_data data/scrape_average_price_config.yml
+# (Scraping runs automatically if needed)
+#
+# Example 3: Generate data without average_price
+# python manage.py generate_data data/no_average_price_config.yml
+#
+# ============================================================================ 

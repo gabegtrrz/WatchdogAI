@@ -115,17 +115,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if 'transaction' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'transaction_list' %}">
-                            <i class="fas fa-list me-1"></i>Transactions
+                        <a class="nav-link {% if request.resolver_match.url_name == 'transaction_list' %}active{% endif %}" href="{% url 'transaction_list' %}">
+                            <i class="fas fa-chart-line me-1"></i>Transactions & Analysis
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if 'analysis' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'analysis_configuration' %}">
-                            <i class="fas fa-chart-line me-1"></i>Analysis
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'transaction-upload-ui' %}">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'transaction-upload-ui' or request.resolver_match.url_name == 'single-transaction-upload' %}active{% endif %}" href="{% url 'transaction-upload-ui' %}">
                             <i class="fas fa-upload me-1"></i>Upload
                         </a>
                     </li>
