@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn watchdog_ai.wsgi:application --bind 0.0.0.0:$PORT",
+    "startCommand": "cd watchdog_ai && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn watchdog_ai.wsgi:application --bind 0.0.0.0:$PORT",
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
