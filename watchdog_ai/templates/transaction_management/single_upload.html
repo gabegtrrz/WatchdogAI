@@ -11,20 +11,31 @@
                 <h4 class="mb-0 fw-bold">
                     <i class="fas fa-plus me-2"></i>Transaction Upload Demo
                 </h4>
-                <div class="mt-2">
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Typically, transactions like these are processed via bulk upload. This form allows you to add a single record for demo purposes.<br><br>
-                        <strong>Scenario:</strong> You are procuring Educational Lab Equipment for an organization.
-                    </small>
+                <div class="mt-3">
+                    <div class="card border-secondary">
+                        <div class="card-body py-2">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Typically, transactions like these are processed via bulk upload. This form allows you to add a single record for demo purposes.<br><br>
+                                <strong>Scenario:</strong> You are procuring Educational Lab Equipment for an organization.
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            <i class="fas fa-info-circle me-2"></i>{{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <div class="card  mb-3">
+                            <div class="card-body py-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-{% if message.tags == 'success' %}check-circle text-success{% elif message.tags == 'error' %}exclamation-triangle text-danger{% else %}info-circle text-primary{% endif %} me-3 fs-5"></i>
+                                    <div class="flex-grow-1">
+                                        {{ message }}
+                                    </div>
+                                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            </div>
                         </div>
                     {% endfor %}
                 {% endif %}
@@ -33,17 +44,24 @@
                     {% csrf_token %}
                     
                     {% if form.errors %}
-                        <div class="alert alert-danger">
-                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Please correct the following errors:</h6>
-                            {{ form.non_field_errors }}
-                            {% for field in form %}
-                                {% if field.errors %}
-                                    <div class="mb-2">
-                                        <strong>{{ field.label }}:</strong>
-                                        {{ field.errors }}
+                        <div class="card border-danger mb-3">
+                            <div class="card-body py-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-exclamation-triangle text-danger me-3 fs-5 mt-1"></i>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-2 fw-bold">Please correct the following errors:</h6>
+                                        {{ form.non_field_errors }}
+                                        {% for field in form %}
+                                            {% if field.errors %}
+                                                <div class="mb-2">
+                                                    <strong>{{ field.label }}:</strong>
+                                                    {{ field.errors }}
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
                                     </div>
-                                {% endif %}
-                            {% endfor %}
+                                </div>
+                            </div>
                         </div>
                     {% endif %}
                     
@@ -167,18 +185,23 @@
                     </div>
                     
                     <div class="mt-3">
+                        <div class="card border-light bg-light">
+                            <div class="card-body py-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Upon upload, the system searches for the item's average market price online. The difference between the market price and the transaction's unit price is used as one of the factors for anomaly detection.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
                         <small class="text-muted">
                             <i class="fas fa-info-circle me-1"></i>
                             Upon upload, the system searches for the item's average market price online. The difference between the market price and the transaction's unit price is used as one of the factors for anomaly detection.
                         </small>
                     </div>
                 </form>
-            </div>
-            <div class="card-footer bg-light">
-                <div class="alert alert-info mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Demo Purpose:</strong> This form is designed for demo purposes of the thesis scenario: procurement or purchase of school lab equipment. All item names are pre-defined from a list and all procurement methods are standard PH government procurement methods.
-                </div>
             </div>
         </div>
     </div>
