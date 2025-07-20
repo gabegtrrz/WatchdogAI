@@ -42,13 +42,13 @@ INSTALLED_APPS = [
     'django_celery_results',
     
     # Local apps
-    'watchdog_ai.apps.core',
-    'watchdog_ai.apps.users',
-    'watchdog_ai.apps.ai_analytics',
-    'watchdog_ai.apps.blockchain',
-    'watchdog_ai.apps.transaction_management',
-    'watchdog_ai.apps.data_generation',
-    'watchdog_ai.apps.data_augmentation',
+    'apps.core',
+    'apps.users',
+    'apps.ai_analytics',
+    'apps.blockchain',
+    'apps.transaction_management',
+    'apps.data_generation',
+    'apps.data_augmentation',
 ]
 
 # Add whitenoise middleware for static file serving
