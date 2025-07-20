@@ -82,8 +82,19 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Injecting anomalies..."))  # type: ignore
         df_with_labels = self._inject_anomalies(df.copy(), config)
 
-        # --- 4. Save Outputs ---
-        self._save_output_files(df, df_with_labels, config_path, config, is_training_data)
+        # --- 4. Create unlabeled dataset from labeled dataset (ensures identical data) ---
+        df_raw = df_with_labels.copy()
+        if 'is_anomaly' in df_raw.columns:
+            df_raw = df_raw.drop(columns=['is_anomaly'])
+
+        # --- 5. Save Outputs ---
+        self._save_output_files(
+            df_raw=df_raw, 
+            df_labeled=df_with_labels, 
+            config_path=config_path, 
+            config=config, 
+            is_training_data=is_training_data
+        )
 
     def _load_config_and_items(self, config_path):
         """Loads the main YAML config and the item list from its source file."""
