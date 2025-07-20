@@ -1,0 +1,86 @@
+# Example configuration for model evaluation with output DataFrame
+# This configuration will save anomaly detection results to a CSV file
+
+# Data source configuration
+data_source:
+  # Use database as data source
+  csv_path: null
+
+# Model configuration
+model:
+  # Use default model paths
+  model_path: null
+  columns_path: null
+
+# Evaluation configuration
+evaluation:
+  # Output format for evaluation results
+  output_format: "both"  # Show results in console and save to JSON
+  
+  # Evaluation log directory
+  log_directory: "data/evaluation_logs"
+  
+  # Include timestamp in log filename
+  include_timestamp: true
+  
+  # Evaluation metrics to calculate
+  metrics:
+    - "precision"
+    - "recall" 
+    - "f1_score"
+    - "accuracy"
+    - "specificity"
+    - "balanced_accuracy"
+    - "confusion_matrix"
+  
+  # Detailed reporting options
+  reporting:
+    include_dataset_info: true
+    include_model_info: true
+    include_prediction_summary: true
+    include_confusion_matrix: true
+  
+  # Output DataFrame configuration
+  output:
+    # Directory to save anomaly detection results DataFrame
+    output_directory: "data/evaluation_output"
+    
+    # Use timestamp in filename for unique results
+    output_filename: null  # Will use: iforest_results_YYYYMMDD_HHMMSS.csv
+    
+    # Include original features in output DataFrame
+    include_original_features: true
+    
+    # Include anomaly detection columns in output DataFrame
+    include_anomaly_columns: true
+    
+    # Specific columns to include (optional - will include all if not specified)
+    include_specific_columns: [
+      "transaction_id",
+      "item_name", 
+      "quantity",
+      "unit_purchase_price",
+      "procurement_method__name",
+      "supplier",
+      "transaction_date"
+    ]
+    
+    # Specific columns to exclude (optional)
+    exclude_specific_columns: [
+      "internal_id",
+      "temp_column"
+    ]
+
+# Logging configuration
+logging:
+  level: "INFO"
+  console_output: true
+  file_logging: false
+
+# Advanced configuration
+advanced:
+  handle_missing_columns: true
+  missing_column_default: 0
+  remove_extra_columns: true
+  validate_data: true
+  continue_on_metric_error: true 
