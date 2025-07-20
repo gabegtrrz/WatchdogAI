@@ -1,0 +1,1001 @@
+transaction_id,item_name,quantity,procurement_method,unit_price,average_price,supplier,procurement_officer,transaction_date
+1,Pipette 10ml,2915,Competitive Bidding,964.21,914.14,"Jones, Perez and Carter",Luke Andrew Navarro,2024-10-03
+2,Microscope Slides,9881,Competitive Bidding,486.17,513.74,Hopkins and Sons,Sophia Christine Navarro,2025-03-16
+3,Prism glass,1858,Competitive Bidding,666.51,704.14,Brown PLC,Sophia Christine Navarro,2024-09-17
+4,Beaker 250ml,4039,Competitive Bidding,1089.82,1208.93,"Vance, Love and Smith",Casey Hernandez,2024-10-19
+5,Fire Blanket,9968,Competitive Bidding,1118.4,1134.78,"Rose, Nguyen and Davis",Casey Hernandez,2025-01-23
+6,Microscope Slides,6476,Limited Source Bidding,462.39,513.74,Fischer-Shaw,Angela Renee Mendoza,2024-05-13
+7,Pipette 10ml,6947,Direct Contracting,978.79,914.14,"Ramirez, Forbes and Lloyd",Angela Renee Mendoza,2024-07-18
+8,Laboratory Rubber Stoppers,1705,Limited Source Bidding,491.86,533.34,"Rice, Johnson and Hays",Christine Bautista,2025-01-31
+9,Thermometer (-10 to 110C),3142,Competitive Bidding,898.69,934.64,"Harris, Robinson and Nelson",Casey Hernandez,2025-03-14
+10,Laboratory Gloves nitrile box of 100,7557,Competitive Bidding,537.37,520.13,Reyes and Sons,Taylor Martinez,2025-01-17
+11,Stopwatch digital,7991,Negotiated Procurement,520.63,587.22,"Ibarra, Perkins and Garner",Casey Hernandez,2024-09-23
+12,Microscope Slides,5796,Negotiated Procurement,474.62,513.74,Hamilton-Arnold,Angela Renee Mendoza,2024-04-21
+13,Thermometer (-10 to 110C),2614,Limited Source Bidding,1025.16,934.64,"Colon, Henderson and Rivera",Sophia Christine Navarro,2025-02-21
+14,Universal Indicator Solution 100ml,7048,Competitive Bidding,1246.98,1161.55,Prince LLC,James Patrick Mendoza,2025-02-23
+15,Thermometer (-10 to 110C),8504,Competitive Bidding,866.77,934.64,Mckinney Inc,Christine Bautista,2024-10-02
+16,pH Meter basic,9598,Competitive Bidding,690.38,693.84,Lowery-Walker,Jamie Thompson,2024-12-11
+17,Thermometer (-10 to 110C),2027,Competitive Bidding,977.41,934.64,"Harrington, Gomez and Sanchez",Taylor Martinez,2024-11-12
+18,pH Meter basic,9598,Competitive Bidding,672.21,693.84,"Rodriguez, Page and Cooper",Christine Bautista,2025-01-30
+19,Hydrochloric Acid Science Laboratory,9279,Limited Source Bidding,1902.05,1780.24,Caldwell Group,Angela Ramirez,2024-05-01
+20,Refracting Telescope 70mm,4814,Competitive Bidding,5093.04,4826.42,"Munoz, Valdez and Perry",Taylor Martinez,2024-11-23
+21,Bunsen Burner,3061,Limited Source Bidding,1237.38,1198.4,Chavez LLC,Christine Bautista,2025-01-07
+22,Hot Plate basic,2355,Negotiated Procurement,1702.33,1701.84,Chung Inc,Taylor Martinez,2024-10-28
+23,Universal Indicator Solution 100ml,8612,Competitive Bidding,1199.67,1161.55,Byrd Inc,Casey Hernandez,2024-07-13
+24,Test Tube 15ml,8047,Direct Contracting,917.31,819.28,"Hammond, Holland and Ali",Alex Rivera,2024-06-09
+25,Microscope Coverslips box of 100,9512,Competitive Bidding,652.13,641.2,"Bird, Mcgee and Johnston",Morgan Cruz,2025-01-15
+26,Bar Magnet pair,7732,Limited Source Bidding,469.75,450.69,"Pittman, Wade and Werner",Alex Rivera,2024-09-09
+27,Graduated Cylinder 100ml,2762,Competitive Bidding,605.52,651.28,"Smith, Morris and Chapman",Casey Hernandez,2025-03-07
+28,Microscope Coverslips box of 100,5628,Direct Contracting,705.29,641.2,Zimmerman-Webster,Taylor Martinez,2024-11-29
+29,Lab Manual - Grade 10 Science,6650,Competitive Bidding,1456.91,1436.51,"Thomas, Perez and Johnson",Angela Ramirez,2025-01-26
+30,Laboratory Spatula stainless steel,2182,Negotiated Procurement,506.86,553.62,Torres LLC,Casey Hernandez,2024-08-21
+31,Beaker 50ml,6350,Negotiated Procurement,899.54,836.08,"Martinez, Martinez and Martinez",Angela Ramirez,2025-02-12
+32,Thermometer (-10 to 110C),3904,Limited Source Bidding,966.59,934.64,"Pham, Dixon and Jimenez",Jamie Thompson,2024-04-11
+33,Beaker 50ml,8228,Negotiated Procurement,847.92,836.08,Parks-Nguyen,Angela Renee Mendoza,2024-08-22
+34,Stopwatch digital,2253,Competitive Bidding,601.27,587.22,"Tyler, Newman and Torres",Jamie Thompson,2024-08-01
+35,Funnel plastic 100mm,9542,Direct Contracting,737.78,739.87,Cline-Manning,Sophia Christine Navarro,2024-06-29
+36,Spring Scale 500g,6883,Competitive Bidding,673.62,729.57,Barry Ltd,Christine Bautista,2024-07-03
+37,Petri Dishes pack of 20,7548,Limited Source Bidding,700.18,738.19,Black-Torres,Morgan Cruz,2025-02-17
+38,Test Tube 15ml,1637,Competitive Bidding,761.06,819.28,Jones-Rush,Jamie Thompson,2024-08-13
+39,Tuning Fork 256 Hz,5834,Competitive Bidding,687.05,689.02,Sanders-York,Taylor Martinez,2024-10-01
+40,Erlenmeyer Flask 250ml,9299,Competitive Bidding,1376.55,1280.16,Peters and Sons,Alex Rivera,2024-09-08
+41,Hydrochloric Acid Science Laboratory,2440,Competitive Bidding,1899.65,1780.24,Harding Inc,Sophia Christine Navarro,2025-02-28
+42,Graduated Cylinder 100ml,5963,Competitive Bidding,643.93,651.28,"Leblanc, Chambers and Pierce",Luke Andrew Navarro,2025-03-12
+43,Laboratory Agar Powder 100g,1084,Direct Contracting,1958.69,2046.24,Avila LLC,Casey Hernandez,2024-08-04
+44,Tuning Fork 256 Hz,3159,Competitive Bidding,639.28,689.02,Elliott-Moses,Taylor Martinez,2024-07-05
+45,Graduated Cylinder 100ml,5421,Competitive Bidding,701.33,651.28,Lewis Group,Taylor Martinez,2024-06-17
+46,Voltmeter basic,3538,Competitive Bidding,730.56,777.73,Soto Inc,Casey Hernandez,2024-08-04
+47,Funnel plastic 100mm,7928,Competitive Bidding,674.0,739.87,Woodward Ltd,James Patrick Mendoza,2025-02-16
+48,Microscope Coverslips box of 100,7860,Negotiated Procurement,576.75,641.2,"Dean, Reed and Pruitt",Luke Andrew Navarro,2024-11-19
+49,Lab Manual - Grade 10 Science,2942,Competitive Bidding,1445.55,1436.51,Adams Inc,Angela Ramirez,2025-01-06
+50,Beaker 100ml,3470,Competitive Bidding,934.24,855.46,Gibbs LLC,Sophia Christine Navarro,2025-03-04
+51,pH Meter basic,5563,Negotiated Procurement,766.02,693.84,Deleon-Gomez,James Patrick Mendoza,2024-09-26
+52,Laboratory Agar Powder 100g,7786,Competitive Bidding,1877.16,2046.24,"James, Cruz and Peters",James Patrick Mendoza,2024-09-17
+53,Petri Dishes pack of 20,5248,Limited Source Bidding,782.64,738.19,Castillo PLC,Jamie Thompson,2024-05-19
+54,Funnel plastic 100mm,6325,Competitive Bidding,668.4,739.87,Le Group,Sophia Christine Navarro,2025-02-14
+55,Hydrochloric Acid Science Laboratory,5363,Limited Source Bidding,1847.9,1780.24,"Patterson, Mayo and Perry",Alex Rivera,2024-06-05
+56,Pipette 10ml,2003,Competitive Bidding,855.34,914.14,Lopez-Brown,Morgan Cruz,2024-06-15
+57,Tuning Fork 256 Hz,3816,Competitive Bidding,682.9,689.02,Underwood PLC,Luke Andrew Navarro,2024-04-25
+58,Bunsen Burner,4466,Competitive Bidding,1086.16,1198.4,Brooks-Little,Angela Ramirez,2024-12-22
+59,pH Meter basic,8212,Negotiated Procurement,679.59,693.84,Wise-Green,Morgan Cruz,2025-03-19
+60,Ammeter basic,8936,Competitive Bidding,1149.75,1158.64,Wang Inc,Taylor Martinez,2024-06-01
+61,Copper Sulfate,1854,Limited Source Bidding,1675.83,1804.88,Davis-Chan,Sophia Christine Navarro,2024-10-24
+62,Refracting Telescope 70mm,4527,Competitive Bidding,4595.12,4826.42,Keith and Sons,Angela Renee Mendoza,2024-05-20
+63,Universal Indicator Solution 100ml,5602,Competitive Bidding,1147.93,1161.55,Ortega-Rodriguez,Jamie Thompson,2024-12-04
+64,Lens Set convex concave,8491,Competitive Bidding,796.06,860.27,Allen Ltd,Angela Renee Mendoza,2024-07-21
+65,Pipette 10ml,6633,Direct Contracting,1044.81,914.14,Bates Inc,Christine Bautista,2024-06-09
+66,Litmus Paper,3424,Direct Contracting,449.24,413.84,"Sellers, Lee and Joseph",Angela Renee Mendoza,2025-02-03
+67,Erlenmeyer Flask 250ml,5231,Competitive Bidding,1326.72,1280.16,Myers Group,Alex Rivera,2025-03-02
+68,Filter Paper pack of 100,4301,Negotiated Procurement,632.13,582.4,Mason-Underwood,Taylor Martinez,2024-12-22
+69,Lab Manual - Grade 10 Science,1674,Competitive Bidding,1338.19,1436.51,Lopez LLC,Angela Renee Mendoza,2024-08-22
+70,Pipette 10ml,6480,Negotiated Procurement,925.24,914.14,"Cuevas, Tran and Vincent",Sophia Christine Navarro,2024-11-30
+71,Graduated Cylinder 100ml,3903,Competitive Bidding,640.37,651.28,"Miller, Hunter and Pacheco",Luke Andrew Navarro,2025-01-29
+72,Universal Indicator Solution 100ml,3022,Competitive Bidding,1171.67,1161.55,Clark PLC,Angela Renee Mendoza,2024-06-29
+73,Funnel plastic 100mm,5641,Limited Source Bidding,708.18,739.87,Leach and Sons,Sophia Christine Navarro,2024-11-04
+74,Erlenmeyer Flask 250ml,9243,Negotiated Procurement,1385.22,1280.16,White-Stokes,Morgan Cruz,2024-12-12
+75,Test Tube 15ml,9499,Competitive Bidding,742.11,819.28,Clark-Jones,Christine Bautista,2025-03-31
+76,Fire Blanket,6985,Negotiated Procurement,1124.83,1134.78,"Lopez, Zuniga and Castro",Angela Renee Mendoza,2025-01-10
+77,Voltmeter basic,9283,Competitive Bidding,715.47,777.73,Owens-Chan,Angela Renee Mendoza,2025-01-10
+78,Petri Dishes pack of 20,5826,Negotiated Procurement,818.88,738.19,"Robinson, Diaz and Ramos",James Patrick Mendoza,2024-09-13
+79,Lab Manual - Grade 10 Science,2738,Direct Contracting,1469.82,1436.51,Cooper PLC,Christine Bautista,2025-03-26
+80,Universal Indicator Solution 100ml,7119,Limited Source Bidding,1268.78,1161.55,"Robertson, Brooks and Marshall",Angela Ramirez,2024-11-20
+81,Beaker 100ml,4963,Competitive Bidding,881.6,855.46,Hanna-Frederick,James Patrick Mendoza,2024-05-13
+82,Refracting Telescope 70mm,5437,Direct Contracting,5350.28,4826.42,Young-Lane,Casey Hernandez,2025-04-04
+83,Compound Microscope (1000x),4565,Negotiated Procurement,5523.65,5498.64,Mcdonald Group,Luke Andrew Navarro,2024-11-06
+84,Stopwatch digital,7263,Negotiated Procurement,538.29,587.22,Brown LLC,Luke Andrew Navarro,2024-09-19
+85,Litmus Paper,1160,Limited Source Bidding,374.12,413.84,Jacobson-Gutierrez,Taylor Martinez,2025-03-23
+86,Microscope Coverslips box of 100,7740,Limited Source Bidding,677.39,641.2,"Cameron, Lowery and White",Christine Bautista,2025-01-31
+87,Triple Beam Balance,8694,Direct Contracting,2953.83,3201.97,"Wilson, Jones and Torres",Alex Rivera,2024-10-02
+88,Iron Filings 250g,3852,Negotiated Procurement,850.71,933.07,Pace LLC,Morgan Cruz,2024-10-05
+89,Laboratory Aprons pack of 10,3526,Competitive Bidding,3070.69,3094.0,Tucker-Garcia,Angela Renee Mendoza,2025-04-03
+90,Iron Filings 250g,6483,Competitive Bidding,885.19,933.07,Francis-Campbell,Morgan Cruz,2024-05-12
+91,Laboratory Safety Goggles,1892,Negotiated Procurement,797.42,711.31,"Patterson, Guzman and Underwood",Angela Renee Mendoza,2024-08-05
+92,Dissecting Kit,3244,Competitive Bidding,911.3,856.35,"Burke, Jenkins and Morgan",Jamie Thompson,2024-06-29
+93,Lab Manual - Grade 10 Science,8510,Competitive Bidding,1308.36,1436.51,Dixon-Allen,Jamie Thompson,2024-06-16
+94,Universal Indicator Solution 100ml,8420,Competitive Bidding,1068.57,1161.55,Bradley and Sons,Angela Ramirez,2025-01-03
+95,Laboratory Agar Powder 100g,4845,Competitive Bidding,2212.33,2046.24,Jones-Young,Jamie Thompson,2024-12-16
+96,Thermometer (-10 to 110C),4280,Direct Contracting,812.74,934.64,"Miller, Andrade and Robinson",Angela Ramirez,2024-10-19
+97,Refracting Telescope 70mm,3098,Competitive Bidding,4477.3,4826.42,Singh-Smith,James Patrick Mendoza,2024-04-12
+98,Dropper Bottle 50ml,7018,Limited Source Bidding,404.53,423.92,Harris Group,Angela Ramirez,2024-11-30
+99,Funnel plastic 100mm,8217,Competitive Bidding,713.33,739.87,Proctor Group,Luke Andrew Navarro,2025-04-06
+100,Thermometer (-10 to 110C),5189,Competitive Bidding,843.96,934.64,Bailey-Garcia,James Patrick Mendoza,2024-08-24
+101,Iron Filings 250g,8594,Competitive Bidding,977.73,933.07,Smith Group,Angela Renee Mendoza,2024-06-10
+102,Lens Set convex concave,7771,Competitive Bidding,936.29,860.27,"Fernandez, Lutz and Rojas",Angela Ramirez,2024-12-31
+103,Beaker 250ml,2537,Competitive Bidding,1181.87,1208.93,Schmidt and Sons,Taylor Martinez,2024-06-26
+104,Voltmeter basic,5074,Limited Source Bidding,837.19,777.73,Alexander and Sons,Casey Hernandez,2024-05-08
+105,Petri Dishes pack of 20,4856,Competitive Bidding,765.12,738.19,"Navarro, Hill and Underwood",Angela Renee Mendoza,2024-10-22
+106,Laboratory Alcohol Burner,8566,Competitive Bidding,542.83,574.0,Clarke-Flores,Morgan Cruz,2024-10-05
+107,Bunsen Burner,1204,Direct Contracting,1035.68,1198.4,"Brown, Serrano and Hayes",Casey Hernandez,2025-02-25
+108,Bunsen Burner,1007,Limited Source Bidding,1250.39,1198.4,Cohen-Harris,Angela Ramirez,2025-03-21
+109,Microscope Slides,3893,Competitive Bidding,468.06,513.74,Meyer Group,Jamie Thompson,2024-12-13
+110,Laboratory Safety Goggles,6758,Competitive Bidding,763.16,711.31,"Brown, Collins and Park",Jamie Thompson,2024-11-01
+111,Triple Beam Balance,5702,Competitive Bidding,3105.65,3201.97,Chapman-Greer,Taylor Martinez,2024-08-19
+112,Copper Sulfate,5774,Competitive Bidding,1910.12,1804.88,"Ball, Fuller and Herrera",Sophia Christine Navarro,2024-06-29
+113,Beaker 100ml,8021,Competitive Bidding,925.01,855.46,Quinn-Norris,Luke Andrew Navarro,2024-07-10
+114,Dropper Bottle 50ml,5509,Competitive Bidding,409.81,423.92,Mathews-Barrett,Sophia Christine Navarro,2024-05-03
+115,Lens Set convex concave,1529,Negotiated Procurement,977.75,860.27,"Alexander, Cook and Moody",Sophia Christine Navarro,2024-08-22
+116,Thermometer (-10 to 110C),3040,Competitive Bidding,946.43,934.64,Figueroa-Snyder,Sophia Christine Navarro,2024-10-15
+117,Refracting Telescope 70mm,8306,Limited Source Bidding,5206.5,4826.42,Beard-Contreras,Sophia Christine Navarro,2025-03-07
+118,Laboratory Aprons pack of 10,1198,Competitive Bidding,3146.89,3094.0,"Michael, Thompson and Reynolds",Jamie Thompson,2024-09-10
+119,Stopwatch digital,4733,Competitive Bidding,632.35,587.22,Clay-Copeland,Angela Renee Mendoza,2025-03-07
+120,Laboratory Agar Powder 100g,7552,Competitive Bidding,2241.67,2046.24,Powell-Hull,Taylor Martinez,2024-08-06
+121,Dissecting Kit,7180,Direct Contracting,805.93,856.35,Mcneil PLC,James Patrick Mendoza,2025-03-02
+122,Laboratory Agar Powder 100g,6516,Competitive Bidding,2044.81,2046.24,"Robinson, Clarke and Jones",Morgan Cruz,2024-09-24
+123,Dissecting Kit,2876,Competitive Bidding,780.04,856.35,"Romero, Rubio and Rivas",Angela Ramirez,2024-05-13
+124,Microscope Slides,8322,Competitive Bidding,564.76,513.74,Parker-Daniels,Angela Ramirez,2024-04-22
+125,Laboratory Rubber Stoppers,8689,Negotiated Procurement,523.15,533.34,Benjamin-Christian,Angela Ramirez,2024-11-29
+126,Voltmeter basic,2217,Competitive Bidding,851.21,777.73,Snyder Ltd,Alex Rivera,2024-04-18
+127,Bar Magnet pair,2183,Competitive Bidding,425.87,450.69,"Carter, Williams and Torres",Taylor Martinez,2024-12-30
+128,Laboratory Rubber Stoppers,2951,Direct Contracting,529.33,533.34,Hayden-Kennedy,Casey Hernandez,2024-05-31
+129,Hydrochloric Acid Science Laboratory,5089,Limited Source Bidding,1873.32,1780.24,Raymond-Price,Alex Rivera,2025-02-16
+130,Beaker 250ml,7905,Competitive Bidding,1291.88,1208.93,Schneider-Mcgee,Alex Rivera,2024-06-20
+131,Dropper Bottle 50ml,6706,Competitive Bidding,401.62,423.92,Potts-Sanchez,Luke Andrew Navarro,2024-09-12
+132,Copper Sulfate,6105,Limited Source Bidding,1959.89,1804.88,Myers Ltd,Angela Ramirez,2024-10-04
+133,Compound Microscope (1000x),8029,Competitive Bidding,5942.7,5498.64,Mathis Group,Sophia Christine Navarro,2025-02-04
+134,Iron Filings 250g,4415,Negotiated Procurement,1059.93,933.07,Reed and Sons,Luke Andrew Navarro,2025-04-05
+135,Iron Filings 250g,4416,Competitive Bidding,988.84,933.07,Morrow Ltd,Morgan Cruz,2025-01-07
+136,Prism glass,6568,Competitive Bidding,761.92,704.14,"Richardson, Thompson and Hall",Angela Ramirez,2024-06-23
+137,Lens Set convex concave,7713,Negotiated Procurement,859.58,860.27,Cantu-Davis,Morgan Cruz,2024-08-14
+138,pH Meter basic,4432,Limited Source Bidding,717.47,693.84,Gonzalez PLC,Angela Ramirez,2024-05-26
+139,Copper Sulfate,8413,Competitive Bidding,1933.6,1804.88,Johnson-Guzman,Casey Hernandez,2024-05-01
+140,Voltmeter basic,2190,Direct Contracting,735.65,777.73,Velasquez LLC,Angela Ramirez,2025-03-27
+141,Erlenmeyer Flask 250ml,8226,Competitive Bidding,1178.76,1280.16,Olson LLC,Taylor Martinez,2024-07-19
+142,Beaker 50ml,8234,Negotiated Procurement,731.73,836.08,Brown Inc,Taylor Martinez,2025-01-23
+143,Bunsen Burner,4810,Limited Source Bidding,1096.33,1198.4,"Flores, Young and Gray",Morgan Cruz,2025-01-21
+144,pH Meter basic,5048,Direct Contracting,758.14,693.84,Moore-Griffith,Christine Bautista,2024-07-16
+145,Erlenmeyer Flask 250ml,3111,Limited Source Bidding,1198.96,1280.16,"Smith, Stein and Barnett",Casey Hernandez,2025-01-15
+146,Test Tube Rack,3541,Negotiated Procurement,994.34,1114.18,Bell-Sanchez,Morgan Cruz,2024-05-21
+147,Lens Set convex concave,8789,Limited Source Bidding,849.29,860.27,Fisher Inc,Christine Bautista,2024-08-02
+148,Test Tube Brush,9819,Competitive Bidding,389.87,407.9,"Houston, Parker and Perry",Jamie Thompson,2025-02-20
+149,Pipette 10ml,7685,Competitive Bidding,932.09,914.14,Pruitt-Daniels,Angela Ramirez,2025-03-21
+150,Copper Sulfate,8629,Competitive Bidding,1752.47,1804.88,Lewis Ltd,Casey Hernandez,2024-04-11
+151,Hot Plate basic,5113,Negotiated Procurement,1551.05,1701.84,Harris Group,Jamie Thompson,2024-08-09
+152,Test Tube Rack,4079,Negotiated Procurement,1054.63,1114.18,"Johnston, Curry and Fischer",James Patrick Mendoza,2024-09-08
+153,Laboratory Rubber Stoppers,8272,Negotiated Procurement,516.23,533.34,Sanford PLC,Sophia Christine Navarro,2025-03-04
+154,Laboratory Spatula stainless steel,5485,Negotiated Procurement,489.92,553.62,Gibbs-Stewart,Angela Ramirez,2024-10-08
+155,Beaker 50ml,3966,Limited Source Bidding,904.19,836.08,"Carter, Curtis and Wilson",Casey Hernandez,2025-03-11
+156,Bar Magnet pair,6098,Direct Contracting,403.46,450.69,Branch LLC,James Patrick Mendoza,2025-01-29
+157,Dropper Bottle 50ml,3546,Competitive Bidding,430.85,423.92,Glover LLC,Sophia Christine Navarro,2024-07-16
+158,Prism glass,1058,Limited Source Bidding,743.98,704.14,"Joseph, Fernandez and Henderson",Angela Renee Mendoza,2024-10-29
+159,Lens Set convex concave,1156,Direct Contracting,955.11,860.27,Brown PLC,Taylor Martinez,2024-09-22
+160,Graduated Cylinder 100ml,2240,Negotiated Procurement,601.37,651.28,"Lucero, Wu and Peters",Angela Ramirez,2025-01-13
+161,Test Tube Rack,3984,Direct Contracting,1125.02,1114.18,Moore-Huber,Alex Rivera,2025-02-10
+162,Laboratory Alcohol Burner,8596,Limited Source Bidding,589.99,574.0,"Long, West and Robinson",Angela Renee Mendoza,2024-12-17
+163,Iron Filings 250g,5787,Competitive Bidding,937.08,933.07,Norton Ltd,Casey Hernandez,2024-09-01
+164,Iron Filings 250g,7336,Competitive Bidding,988.3,933.07,Greene-Gardner,Morgan Cruz,2024-12-23
+165,Thermometer (-10 to 110C),9330,Limited Source Bidding,999.74,934.64,Casey-White,Sophia Christine Navarro,2024-05-27
+166,Laboratory Alcohol Burner,7159,Limited Source Bidding,612.66,574.0,Jones PLC,Christine Bautista,2024-06-28
+167,Beaker 100ml,2970,Direct Contracting,778.66,855.46,"Chase, Daniel and Hughes",Sophia Christine Navarro,2024-04-08
+168,Compound Microscope (1000x),8700,Competitive Bidding,4998.03,5498.64,"Hernandez, Heath and Thomas",Jamie Thompson,2024-05-31
+169,Litmus Paper,6750,Competitive Bidding,416.12,413.84,"Johnson, Walker and Reed",Taylor Martinez,2024-08-09
+170,Compound Microscope (1000x),2213,Negotiated Procurement,6102.8,5498.64,Taylor-Kelly,James Patrick Mendoza,2024-05-01
+171,Universal Indicator Solution 100ml,7681,Competitive Bidding,1163.48,1161.55,Campbell and Sons,Angela Renee Mendoza,2024-10-26
+172,Ammeter basic,2676,Direct Contracting,1312.15,1158.64,Gonzalez LLC,Angela Ramirez,2024-05-20
+173,Petri Dishes pack of 20,1604,Competitive Bidding,735.19,738.19,Richardson PLC,Jamie Thompson,2025-04-05
+174,Refracting Telescope 70mm,3527,Competitive Bidding,4772.92,4826.42,Poole-Bautista,Angela Ramirez,2024-04-25
+175,Triple Beam Balance,8388,Limited Source Bidding,3085.08,3201.97,Floyd Inc,Christine Bautista,2024-11-02
+176,Beaker 250ml,6269,Competitive Bidding,1107.5,1208.93,Edwards PLC,James Patrick Mendoza,2024-10-26
+177,Bunsen Burner,6436,Negotiated Procurement,1325.47,1198.4,"Grant, Norman and Conrad",Alex Rivera,2024-08-23
+178,Laboratory Safety Goggles,8547,Competitive Bidding,642.29,711.31,King LLC,Taylor Martinez,2025-01-03
+179,Thermometer (-10 to 110C),1557,Competitive Bidding,897.13,934.64,Miller and Sons,Alex Rivera,2024-05-05
+180,Hydrochloric Acid Science Laboratory,1138,Negotiated Procurement,1660.63,1780.24,Nichols LLC,Sophia Christine Navarro,2024-11-20
+181,Lens Set convex concave,5111,Limited Source Bidding,791.53,860.27,"Taylor, Hardy and Dickson",Alex Rivera,2024-05-24
+182,Test Tube Brush,8973,Competitive Bidding,400.33,407.9,Cooper-Riley,Angela Renee Mendoza,2024-06-15
+183,Voltmeter basic,1534,Competitive Bidding,735.49,777.73,"Miller, Moss and Chan",Casey Hernandez,2025-04-02
+184,Refracting Telescope 70mm,9558,Competitive Bidding,4827.33,4826.42,"Delgado, Edwards and Brooks",Casey Hernandez,2024-07-03
+185,Filter Paper pack of 100,2943,Competitive Bidding,568.25,582.4,Floyd-Smith,James Patrick Mendoza,2024-07-27
+186,Copper Sulfate,1808,Negotiated Procurement,1916.43,1804.88,"Young, Harris and Leon",Alex Rivera,2025-01-30
+187,Laboratory Alcohol Burner,7934,Limited Source Bidding,619.64,574.0,Williams-Rodriguez,Angela Renee Mendoza,2024-06-25
+188,Funnel plastic 100mm,1828,Competitive Bidding,740.13,739.87,Murphy-Clark,Taylor Martinez,2024-07-08
+189,Refracting Telescope 70mm,5426,Competitive Bidding,5020.45,4826.42,Bush Inc,Luke Andrew Navarro,2024-04-13
+190,Copper Sulfate,3595,Limited Source Bidding,1661.1,1804.88,"Williams, Farrell and Miles",Angela Ramirez,2025-01-21
+191,Petri Dishes pack of 20,8499,Competitive Bidding,750.0,738.19,"Wagner, Friedman and Smith",Luke Andrew Navarro,2024-06-23
+192,Microscope Coverslips box of 100,4297,Competitive Bidding,703.7,641.2,Long-Davis,Taylor Martinez,2024-09-19
+193,Litmus Paper,7305,Competitive Bidding,398.12,413.84,Bennett PLC,Jamie Thompson,2024-08-29
+194,Tuning Fork 256 Hz,8449,Competitive Bidding,720.66,689.02,Hicks Group,Angela Ramirez,2024-10-02
+195,Test Tube Brush,3895,Competitive Bidding,395.93,407.9,Walters-Smith,Morgan Cruz,2024-07-10
+196,Funnel plastic 100mm,1435,Limited Source Bidding,741.7,739.87,Rodriguez PLC,James Patrick Mendoza,2024-06-24
+197,Laboratory Gloves nitrile box of 100,9756,Limited Source Bidding,506.47,520.13,"Carroll, Butler and Valencia",Jamie Thompson,2025-01-29
+198,Voltmeter basic,7307,Competitive Bidding,746.41,777.73,Smith and Sons,Luke Andrew Navarro,2024-12-03
+199,Hydrochloric Acid Science Laboratory,2922,Competitive Bidding,1907.73,1780.24,"Powell, Anderson and Navarro",Morgan Cruz,2025-01-30
+200,Laboratory Agar Powder 100g,2148,Competitive Bidding,2028.71,2046.24,Stevens Ltd,Luke Andrew Navarro,2025-01-28
+201,Stopwatch digital,2282,Competitive Bidding,577.08,587.22,Moore-Parsons,Morgan Cruz,2024-07-26
+202,Funnel plastic 100mm,6061,Competitive Bidding,674.61,739.87,"Bowers, Robertson and Hill",Casey Hernandez,2024-07-27
+203,Lens Set convex concave,1682,Limited Source Bidding,915.66,860.27,Mejia Group,James Patrick Mendoza,2024-04-25
+204,Bar Magnet pair,2214,Direct Contracting,478.46,450.69,"Fuentes, Montes and Scott",Casey Hernandez,2024-09-10
+205,Prism glass,7864,Limited Source Bidding,739.0,704.14,Harrison-Mays,James Patrick Mendoza,2024-06-10
+206,Universal Indicator Solution 100ml,2856,Competitive Bidding,1208.68,1161.55,"Bryan, Brown and Mullins",Casey Hernandez,2024-07-22
+207,Erlenmeyer Flask 250ml,8615,Competitive Bidding,1330.88,1280.16,"Leonard, Wood and Allen",Alex Rivera,2025-04-04
+208,Test Tube 15ml,4379,Limited Source Bidding,799.87,819.28,Lawson LLC,Alex Rivera,2024-10-02
+209,Test Tube Brush,1763,Competitive Bidding,421.12,407.9,"Jennings, Allison and Henry",Casey Hernandez,2024-04-18
+210,Laboratory Agar Powder 100g,1561,Competitive Bidding,1945.48,2046.24,"Brown, Stanley and Hall",Angela Renee Mendoza,2024-09-04
+211,Stopwatch digital,5237,Direct Contracting,597.85,587.22,Norris Inc,Casey Hernandez,2024-06-22
+212,Laboratory Alcohol Burner,9342,Competitive Bidding,541.24,574.0,Hunt-Neal,Casey Hernandez,2024-12-18
+213,Beaker 50ml,8813,Competitive Bidding,848.86,836.08,"Norman, Russell and Trevino",James Patrick Mendoza,2024-11-29
+214,Universal Indicator Solution 100ml,6431,Competitive Bidding,1135.55,1161.55,Garrett-Obrien,Angela Renee Mendoza,2024-05-20
+215,Beaker 250ml,2751,Competitive Bidding,1114.98,1208.93,Carlson-Smith,James Patrick Mendoza,2025-01-20
+216,Beaker 100ml,1198,Competitive Bidding,868.31,855.46,"Johnson, Wagner and Morse",Christine Bautista,2024-12-28
+217,Bunsen Burner,5015,Direct Contracting,1365.36,1198.4,"Wilkins, Watson and Moreno",Angela Ramirez,2024-09-17
+218,pH Meter basic,8487,Limited Source Bidding,736.58,693.84,Bartlett Ltd,James Patrick Mendoza,2024-10-20
+219,Laboratory Spatula stainless steel,7249,Limited Source Bidding,575.31,553.62,"Nguyen, Smith and Morales",Jamie Thompson,2024-11-25
+220,Laboratory Gloves nitrile box of 100,3008,Limited Source Bidding,531.99,520.13,Valencia-Le,Casey Hernandez,2024-11-11
+221,Dissecting Kit,4231,Competitive Bidding,907.6,856.35,May PLC,James Patrick Mendoza,2024-04-08
+222,Iron Filings 250g,8809,Competitive Bidding,907.19,933.07,"Martinez, Marshall and Anderson",Casey Hernandez,2024-06-19
+223,Ammeter basic,1989,Competitive Bidding,1252.72,1158.64,"Lowe, Johnson and Martin",Morgan Cruz,2024-08-02
+224,Hot Plate basic,5012,Limited Source Bidding,1572.55,1701.84,Keller PLC,Christine Bautista,2025-02-04
+225,Laboratory Aprons pack of 10,3569,Competitive Bidding,2951.98,3094.0,Richardson Ltd,Angela Renee Mendoza,2024-09-30
+226,Hot Plate basic,7235,Direct Contracting,1890.04,1701.84,George Inc,Jamie Thompson,2024-07-02
+227,Spring Scale 500g,6721,Negotiated Procurement,802.43,729.57,Hinton-Thomas,Jamie Thompson,2024-12-24
+228,Bunsen Burner,8218,Negotiated Procurement,1307.05,1198.4,Bradford-Watson,Casey Hernandez,2024-06-19
+229,Graduated Cylinder 100ml,2477,Competitive Bidding,659.45,651.28,Powers Ltd,James Patrick Mendoza,2024-06-01
+230,Ammeter basic,5399,Competitive Bidding,1210.72,1158.64,Martin-Gonzalez,Casey Hernandez,2024-08-18
+231,Stopwatch digital,1287,Limited Source Bidding,617.84,587.22,"Beltran, Strong and Patton",Alex Rivera,2024-12-19
+232,Pipette 10ml,5633,Competitive Bidding,866.77,914.14,Monroe and Sons,Luke Andrew Navarro,2024-07-02
+233,Microscope Slides,6745,Negotiated Procurement,441.43,513.74,Hall Ltd,Alex Rivera,2024-11-15
+234,Refracting Telescope 70mm,6165,Competitive Bidding,4674.56,4826.42,Briggs Group,Luke Andrew Navarro,2025-03-05
+235,Thermometer (-10 to 110C),4802,Negotiated Procurement,987.11,934.64,Bush LLC,Casey Hernandez,2025-01-31
+236,Hot Plate basic,4057,Competitive Bidding,1556.5,1701.84,Wright-Martinez,Morgan Cruz,2024-10-22
+237,Pipette 10ml,6801,Competitive Bidding,934.72,914.14,Young Group,Christine Bautista,2024-06-26
+238,Tuning Fork 256 Hz,3754,Limited Source Bidding,741.96,689.02,"Rodriguez, Carroll and Alexander",Taylor Martinez,2025-03-22
+239,Laboratory Safety Goggles,4735,Competitive Bidding,696.82,711.31,"Keller, Hopkins and Bryant",James Patrick Mendoza,2025-01-24
+240,Bar Magnet pair,8494,Competitive Bidding,453.26,450.69,Higgins PLC,Alex Rivera,2024-06-01
+241,Stopwatch digital,3587,Competitive Bidding,537.09,587.22,"Lewis, Frank and Powell",James Patrick Mendoza,2024-05-24
+242,Thermometer (-10 to 110C),4654,Limited Source Bidding,901.96,934.64,Evans PLC,James Patrick Mendoza,2024-12-07
+243,Triple Beam Balance,4620,Limited Source Bidding,2948.69,3201.97,Johnson Ltd,Taylor Martinez,2024-07-30
+244,Copper Sulfate,4748,Competitive Bidding,1713.56,1804.88,Jefferson and Sons,Sophia Christine Navarro,2024-06-19
+245,Spring Scale 500g,2097,Negotiated Procurement,682.39,729.57,Thompson Inc,Sophia Christine Navarro,2024-05-13
+246,Pipette 10ml,3532,Competitive Bidding,909.04,914.14,Hammond-Webb,Luke Andrew Navarro,2024-11-06
+247,Erlenmeyer Flask 250ml,4566,Negotiated Procurement,1274.59,1280.16,Roberts-Curtis,Sophia Christine Navarro,2024-07-09
+248,Filter Paper pack of 100,6316,Competitive Bidding,593.73,582.4,Lloyd LLC,Sophia Christine Navarro,2024-10-24
+249,Spring Scale 500g,9489,Competitive Bidding,726.0,729.57,Smith Ltd,Luke Andrew Navarro,2025-01-11
+250,Lens Set convex concave,8651,Limited Source Bidding,909.22,860.27,Becker-Boyer,Angela Ramirez,2025-03-16
+251,Pipette 10ml,9256,Negotiated Procurement,891.48,914.14,Buck-Mitchell,Angela Ramirez,2025-01-09
+252,Test Tube Brush,3508,Negotiated Procurement,371.35,407.9,Vang-Farrell,James Patrick Mendoza,2025-02-26
+253,Microscope Slides,5708,Negotiated Procurement,471.98,513.74,"Velazquez, Cooper and Rogers",Angela Renee Mendoza,2024-08-31
+254,Ammeter basic,2463,Competitive Bidding,1096.45,1158.64,"Rivera, Gonzalez and Alvarez",Taylor Martinez,2024-12-15
+255,Beaker 250ml,5732,Competitive Bidding,1293.08,1208.93,"Murray, Mathis and Curtis",Sophia Christine Navarro,2024-11-11
+256,Triple Beam Balance,8152,Competitive Bidding,3139.24,3201.97,"Lindsey, Anderson and Flores",Sophia Christine Navarro,2024-07-14
+257,Lab Manual - Grade 10 Science,3183,Negotiated Procurement,1328.22,1436.51,Hill-Morales,Angela Ramirez,2024-04-13
+258,Test Tube Brush,2779,Limited Source Bidding,370.62,407.9,Wright PLC,Alex Rivera,2025-02-17
+259,Prism glass,5891,Limited Source Bidding,636.93,704.14,Kaufman-Carney,James Patrick Mendoza,2024-05-10
+260,Laboratory Spatula stainless steel,2328,Competitive Bidding,526.76,553.62,Case Inc,Taylor Martinez,2024-12-28
+261,Voltmeter basic,2001,Competitive Bidding,850.98,777.73,"Zuniga, Parks and Harrison",James Patrick Mendoza,2024-06-09
+262,Laboratory Aprons pack of 10,5841,Competitive Bidding,3021.0,3094.0,Thomas-Joseph,James Patrick Mendoza,2024-05-12
+263,Dropper Bottle 50ml,5353,Competitive Bidding,433.05,423.92,Brooks-Joseph,Sophia Christine Navarro,2024-08-13
+264,Laboratory Spatula stainless steel,9477,Limited Source Bidding,546.53,553.62,"Moss, Barnett and Singh",Casey Hernandez,2024-12-21
+265,Refracting Telescope 70mm,9927,Competitive Bidding,5284.74,4826.42,Davis-Garcia,Alex Rivera,2024-12-25
+266,pH Meter basic,5984,Competitive Bidding,754.83,693.84,"Harris, Knox and Hansen",Casey Hernandez,2024-09-30
+267,Triple Beam Balance,9613,Limited Source Bidding,3111.24,3201.97,Flores-Johnson,Alex Rivera,2024-04-10
+268,Iron Filings 250g,6194,Limited Source Bidding,906.71,933.07,Arnold Ltd,Alex Rivera,2024-10-23
+269,Fire Blanket,6256,Competitive Bidding,1195.21,1134.78,Mason-Smith,Taylor Martinez,2024-06-12
+270,Iron Filings 250g,1309,Direct Contracting,1001.23,933.07,"Rivera, King and Martinez",Christine Bautista,2024-05-10
+271,Hydrochloric Acid Science Laboratory,5602,Negotiated Procurement,1580.94,1780.24,Williams-Collins,Sophia Christine Navarro,2025-03-09
+272,Beaker 250ml,1265,Negotiated Procurement,1059.77,1208.93,Foley-Rosario,Angela Renee Mendoza,2024-05-21
+273,Beaker 100ml,1607,Negotiated Procurement,912.34,855.46,Jackson-Santos,Christine Bautista,2025-02-01
+274,Dissecting Kit,7179,Competitive Bidding,828.24,856.35,Freeman Ltd,Alex Rivera,2025-04-01
+275,Petri Dishes pack of 20,3519,Competitive Bidding,784.91,738.19,Brown-Reese,Morgan Cruz,2024-09-24
+276,Beaker 100ml,1870,Competitive Bidding,892.37,855.46,"Huff, Vega and Allen",Casey Hernandez,2024-11-15
+277,Fire Blanket,5406,Competitive Bidding,1119.54,1134.78,Shaw-Mitchell,Alex Rivera,2024-05-12
+278,Beaker 100ml,9211,Direct Contracting,873.42,855.46,Hall Group,Casey Hernandez,2024-11-06
+279,pH Meter basic,7910,Negotiated Procurement,605.06,693.84,Kaiser Group,Luke Andrew Navarro,2024-06-12
+280,Hydrochloric Acid Science Laboratory,2979,Competitive Bidding,1821.63,1780.24,"James, Hendrix and Higgins",Angela Ramirez,2025-01-23
+281,Laboratory Rubber Stoppers,1499,Limited Source Bidding,497.4,533.34,"Simmons, Hahn and Hogan",Sophia Christine Navarro,2024-09-28
+282,Pipette 10ml,6408,Competitive Bidding,917.53,914.14,Gordon Inc,Jamie Thompson,2024-04-28
+283,Thermometer (-10 to 110C),9367,Limited Source Bidding,920.29,934.64,Stewart Inc,Luke Andrew Navarro,2024-07-22
+284,Test Tube 15ml,5656,Limited Source Bidding,765.69,819.28,Callahan LLC,James Patrick Mendoza,2024-12-10
+285,Thermometer (-10 to 110C),6907,Competitive Bidding,987.49,934.64,"Perez, Bowen and Stewart",Taylor Martinez,2024-07-18
+286,Hydrochloric Acid Science Laboratory,7070,Competitive Bidding,1725.84,1780.24,"Travis, Smith and Holmes",Luke Andrew Navarro,2024-07-04
+287,Graduated Cylinder 100ml,9942,Competitive Bidding,636.54,651.28,Calderon-Gonzalez,Alex Rivera,2024-05-20
+288,Microscope Coverslips box of 100,7399,Negotiated Procurement,564.18,641.2,Stewart LLC,Luke Andrew Navarro,2025-03-16
+289,Pipette 10ml,9155,Competitive Bidding,996.87,914.14,English-Swanson,Jamie Thompson,2024-11-09
+290,pH Meter basic,6165,Limited Source Bidding,676.21,693.84,Ferguson PLC,Christine Bautista,2025-02-09
+291,Thermometer (-10 to 110C),4733,Limited Source Bidding,1001.25,934.64,Ramirez LLC,Angela Ramirez,2024-04-28
+292,pH Meter basic,6689,Competitive Bidding,759.51,693.84,"Gonzales, Bryant and Schneider",Jamie Thompson,2024-12-04
+293,Compound Microscope (1000x),7905,Competitive Bidding,5020.62,5498.64,"Nunez, Wilkinson and Curtis",James Patrick Mendoza,2024-07-22
+294,Filter Paper pack of 100,1648,Competitive Bidding,588.83,582.4,"Kennedy, Rodriguez and Moore",Taylor Martinez,2024-07-24
+295,Laboratory Agar Powder 100g,2908,Competitive Bidding,2220.09,2046.24,Robertson-Griffith,Morgan Cruz,2024-06-30
+296,Triple Beam Balance,7881,Competitive Bidding,2906.09,3201.97,"Walter, Lewis and Strickland",Angela Renee Mendoza,2024-04-23
+297,Triple Beam Balance,2496,Direct Contracting,3674.31,3201.97,"Mcgee, Hall and Jones",Angela Ramirez,2024-08-10
+298,Laboratory Safety Goggles,9050,Competitive Bidding,727.62,711.31,Miller-Mason,James Patrick Mendoza,2024-11-24
+299,Laboratory Rubber Stoppers,9646,Competitive Bidding,564.08,533.34,Garza and Sons,Taylor Martinez,2024-07-01
+300,Microscope Coverslips box of 100,3481,Competitive Bidding,640.0,641.2,Smith-Waller,Angela Ramirez,2024-10-10
+301,Laboratory Gloves nitrile box of 100,5209,Direct Contracting,468.95,520.13,Singleton-Romero,Christine Bautista,2024-07-25
+302,Thermometer (-10 to 110C),8004,Competitive Bidding,916.69,934.64,Gray-Gallagher,Angela Renee Mendoza,2025-03-08
+303,Test Tube Rack,3459,Competitive Bidding,1072.89,1114.18,"Patel, Carter and Smith",Angela Ramirez,2025-03-31
+304,Fire Blanket,5399,Negotiated Procurement,1112.3,1134.78,Johns-Davenport,Taylor Martinez,2024-12-31
+305,Bunsen Burner,8342,Competitive Bidding,1293.16,1198.4,"Richards, Anderson and Martinez",Morgan Cruz,2025-03-22
+306,Laboratory Safety Goggles,2333,Competitive Bidding,674.2,711.31,Cox PLC,James Patrick Mendoza,2024-05-09
+307,Copper Sulfate,5163,Competitive Bidding,1961.35,1804.88,Underwood-Adkins,Sophia Christine Navarro,2024-10-03
+308,Ammeter basic,4395,Limited Source Bidding,1052.16,1158.64,Lopez LLC,Luke Andrew Navarro,2025-04-04
+309,Voltmeter basic,7032,Negotiated Procurement,728.39,777.73,"Torres, Jones and Nielsen",Morgan Cruz,2024-12-04
+310,Laboratory Alcohol Burner,3642,Competitive Bidding,573.69,574.0,Wood-Vance,Luke Andrew Navarro,2024-06-28
+311,Hydrochloric Acid Science Laboratory,6350,Limited Source Bidding,1676.87,1780.24,"Taylor, Montgomery and Robbins",Sophia Christine Navarro,2025-02-15
+312,Thermometer (-10 to 110C),7357,Competitive Bidding,901.46,934.64,Huber PLC,Alex Rivera,2025-02-09
+313,Dissecting Kit,4990,Competitive Bidding,877.98,856.35,Ross-Williams,Sophia Christine Navarro,2024-06-29
+314,Dropper Bottle 50ml,3110,Negotiated Procurement,444.51,423.92,"Scott, Anderson and Adams",Angela Renee Mendoza,2024-05-09
+315,Bunsen Burner,2633,Competitive Bidding,1176.32,1198.4,Sloan-Rodriguez,Morgan Cruz,2025-01-05
+316,Laboratory Spatula stainless steel,4133,Limited Source Bidding,499.0,553.62,"Simpson, Henry and Clark",Morgan Cruz,2025-02-13
+317,Copper Sulfate,4660,Direct Contracting,2071.56,1804.88,Huang PLC,Taylor Martinez,2024-07-08
+318,Microscope Slides,1597,Competitive Bidding,496.6,513.74,Johnson PLC,Taylor Martinez,2024-09-03
+319,Laboratory Spatula stainless steel,6024,Negotiated Procurement,565.29,553.62,Bryant PLC,Casey Hernandez,2025-03-08
+320,Ammeter basic,5527,Negotiated Procurement,1010.62,1158.64,"Knox, Burnett and Dickson",Morgan Cruz,2024-07-12
+321,Laboratory Agar Powder 100g,8535,Direct Contracting,2350.47,2046.24,Peters Ltd,Alex Rivera,2024-10-11
+322,Fire Blanket,3958,Direct Contracting,1201.98,1134.78,"Turner, Holmes and Snyder",Angela Renee Mendoza,2024-05-21
+323,Laboratory Aprons pack of 10,3236,Limited Source Bidding,2911.12,3094.0,"Smith, Black and Foster",Casey Hernandez,2025-02-19
+324,Microscope Slides,4470,Competitive Bidding,560.68,513.74,"Wright, Carter and Rojas",Angela Ramirez,2024-06-15
+325,Prism glass,7302,Negotiated Procurement,648.27,704.14,Rodriguez Inc,Christine Bautista,2025-03-15
+326,Refracting Telescope 70mm,2256,Limited Source Bidding,4574.48,4826.42,Shaw-Lynch,Sophia Christine Navarro,2024-07-26
+327,Refracting Telescope 70mm,1038,Competitive Bidding,4473.58,4826.42,"Jackson, Nichols and Romero",Angela Ramirez,2024-05-11
+328,Refracting Telescope 70mm,6527,Competitive Bidding,5144.59,4826.42,Li LLC,Morgan Cruz,2024-11-02
+329,Bar Magnet pair,3266,Direct Contracting,458.31,450.69,King-Davenport,Casey Hernandez,2024-04-18
+330,Lens Set convex concave,5240,Competitive Bidding,821.38,860.27,Gibson Inc,Angela Renee Mendoza,2024-06-17
+331,Test Tube Rack,9818,Direct Contracting,1183.37,1114.18,Reed LLC,Luke Andrew Navarro,2024-10-03
+332,Lab Manual - Grade 10 Science,5482,Limited Source Bidding,1341.84,1436.51,Ryan-Grimes,Angela Renee Mendoza,2024-11-27
+333,Litmus Paper,6305,Limited Source Bidding,436.4,413.84,Hall LLC,Jamie Thompson,2024-04-23
+334,Prism glass,4856,Competitive Bidding,658.49,704.14,"Miller, Wolfe and Harvey",Casey Hernandez,2024-06-30
+335,Refracting Telescope 70mm,9056,Negotiated Procurement,5041.37,4826.42,"Hanson, Mcgee and Harmon",Angela Ramirez,2024-06-15
+336,Lab Manual - Grade 10 Science,1857,Limited Source Bidding,1447.9,1436.51,Costa Ltd,James Patrick Mendoza,2024-06-01
+337,Bar Magnet pair,1815,Limited Source Bidding,494.33,450.69,"Cummings, Riddle and Hernandez",James Patrick Mendoza,2024-11-22
+338,Laboratory Safety Goggles,3306,Competitive Bidding,766.94,711.31,Patrick LLC,Angela Ramirez,2025-02-04
+339,Universal Indicator Solution 100ml,4537,Limited Source Bidding,1095.97,1161.55,Daniel-Lucas,Jamie Thompson,2025-02-03
+340,Bunsen Burner,8207,Competitive Bidding,1268.81,1198.4,Hernandez-Mitchell,Angela Ramirez,2025-01-24
+341,pH Meter basic,1167,Competitive Bidding,714.05,693.84,Brown LLC,Casey Hernandez,2024-10-11
+342,Bar Magnet pair,5182,Competitive Bidding,492.67,450.69,"Lawrence, Powell and Banks",Luke Andrew Navarro,2024-12-05
+343,Bunsen Burner,1103,Limited Source Bidding,1268.82,1198.4,"Cooke, Smith and Bender",Alex Rivera,2024-05-29
+344,Refracting Telescope 70mm,1485,Competitive Bidding,4758.87,4826.42,Martinez-Valenzuela,Angela Ramirez,2025-03-28
+345,Lab Manual - Grade 10 Science,8654,Limited Source Bidding,1558.07,1436.51,Bailey-Miller,Jamie Thompson,2025-01-23
+346,Bar Magnet pair,4223,Competitive Bidding,443.06,450.69,Brown and Sons,Alex Rivera,2024-07-05
+347,Laboratory Safety Goggles,1844,Competitive Bidding,736.83,711.31,Fuentes PLC,Angela Renee Mendoza,2025-04-05
+348,Litmus Paper,3961,Competitive Bidding,379.18,413.84,"Leon, Sanchez and Bell",Alex Rivera,2024-11-02
+349,Laboratory Agar Powder 100g,8838,Competitive Bidding,2073.39,2046.24,Preston Group,Luke Andrew Navarro,2025-04-04
+350,Ammeter basic,4821,Negotiated Procurement,1190.15,1158.64,Morris Group,Alex Rivera,2024-06-16
+351,Test Tube Rack,7823,Direct Contracting,1076.23,1114.18,Taylor-Fischer,Luke Andrew Navarro,2024-12-01
+352,Laboratory Rubber Stoppers,6469,Competitive Bidding,524.81,533.34,Reid LLC,Jamie Thompson,2024-07-22
+353,Litmus Paper,8772,Competitive Bidding,383.16,413.84,Williams-Rose,James Patrick Mendoza,2024-04-09
+354,Microscope Slides,7728,Negotiated Procurement,548.4,513.74,"Dawson, Cooper and Peck",Casey Hernandez,2024-08-28
+355,Laboratory Rubber Stoppers,9724,Competitive Bidding,567.78,533.34,Morton-King,James Patrick Mendoza,2024-09-07
+356,Filter Paper pack of 100,6081,Direct Contracting,596.53,582.4,"Garcia, Martin and Hall",Angela Renee Mendoza,2025-03-06
+357,Filter Paper pack of 100,6903,Direct Contracting,495.13,582.4,Haley Ltd,Alex Rivera,2024-04-25
+358,Universal Indicator Solution 100ml,2982,Competitive Bidding,1188.14,1161.55,Phillips PLC,Angela Ramirez,2024-04-08
+359,Microscope Coverslips box of 100,3825,Direct Contracting,610.96,641.2,Bolton and Sons,James Patrick Mendoza,2024-05-14
+360,Laboratory Gloves nitrile box of 100,8109,Competitive Bidding,503.25,520.13,Mitchell PLC,Luke Andrew Navarro,2024-10-03
+361,Microscope Slides,5514,Limited Source Bidding,479.94,513.74,Sullivan-White,Sophia Christine Navarro,2024-07-10
+362,Ammeter basic,6055,Competitive Bidding,1134.55,1158.64,"Wilkerson, Welch and Thompson",Morgan Cruz,2024-05-13
+363,Laboratory Aprons pack of 10,4071,Competitive Bidding,3332.34,3094.0,Frazier and Sons,Morgan Cruz,2024-06-22
+364,Spring Scale 500g,8157,Competitive Bidding,733.56,729.57,"Crane, Moore and Downs",Taylor Martinez,2024-05-28
+365,Iron Filings 250g,6464,Competitive Bidding,918.51,933.07,"Phillips, Brown and Hendrix",Luke Andrew Navarro,2025-04-02
+366,Microscope Slides,8341,Direct Contracting,491.35,513.74,Rodriguez-Parker,James Patrick Mendoza,2024-05-12
+367,Fire Blanket,5649,Competitive Bidding,1049.77,1134.78,Nguyen-Kline,Luke Andrew Navarro,2024-05-24
+368,Iron Filings 250g,4276,Limited Source Bidding,901.17,933.07,Taylor PLC,Luke Andrew Navarro,2024-11-09
+369,Copper Sulfate,6702,Competitive Bidding,1754.41,1804.88,Hamilton-Blanchard,Angela Ramirez,2024-10-16
+370,Voltmeter basic,4784,Competitive Bidding,738.85,777.73,"Berry, Townsend and Everett",Morgan Cruz,2024-07-12
+371,Test Tube Rack,1761,Competitive Bidding,1037.48,1114.18,Moody-Burke,Taylor Martinez,2024-09-02
+372,Laboratory Agar Powder 100g,1073,Negotiated Procurement,2177.65,2046.24,Kelly-Griffin,Angela Renee Mendoza,2024-07-25
+373,Beaker 250ml,1008,Negotiated Procurement,1085.74,1208.93,"Lee, Mckenzie and Parker",Luke Andrew Navarro,2024-09-12
+374,Refracting Telescope 70mm,6863,Competitive Bidding,4668.12,4826.42,Pittman-Solis,Morgan Cruz,2024-05-04
+375,Laboratory Agar Powder 100g,6741,Direct Contracting,2013.21,2046.24,Morrow-Jordan,Christine Bautista,2024-12-11
+376,Laboratory Safety Goggles,4939,Competitive Bidding,725.84,711.31,Church-Gray,Angela Ramirez,2025-01-16
+377,Prism glass,5602,Competitive Bidding,635.08,704.14,Perkins-Braun,James Patrick Mendoza,2025-02-06
+378,Lens Set convex concave,6568,Limited Source Bidding,813.34,860.27,"Olson, Carter and Villarreal",Taylor Martinez,2025-03-01
+379,Tuning Fork 256 Hz,6152,Competitive Bidding,739.75,689.02,Mullins-Boyd,Jamie Thompson,2025-03-29
+380,Stopwatch digital,6223,Limited Source Bidding,626.49,587.22,Mason Ltd,Taylor Martinez,2024-04-25
+381,Erlenmeyer Flask 250ml,5332,Limited Source Bidding,1272.36,1280.16,Mccoy Inc,Casey Hernandez,2024-06-28
+382,Ammeter basic,7461,Negotiated Procurement,994.05,1158.64,"Maldonado, Hardy and Chandler",Luke Andrew Navarro,2025-01-18
+383,Microscope Coverslips box of 100,3562,Direct Contracting,666.26,641.2,"Smith, Davis and Bryan",Jamie Thompson,2024-12-28
+384,Fire Blanket,3137,Direct Contracting,1123.47,1134.78,"Wright, Martin and Howard",Taylor Martinez,2024-11-12
+385,Laboratory Alcohol Burner,1061,Competitive Bidding,600.89,574.0,Morris-Rosales,Christine Bautista,2024-09-12
+386,Test Tube 15ml,2260,Negotiated Procurement,812.91,819.28,Johnson LLC,Angela Ramirez,2024-10-22
+387,Laboratory Gloves nitrile box of 100,6859,Negotiated Procurement,527.85,520.13,"Hall, Hansen and Oliver",Sophia Christine Navarro,2024-05-04
+388,Thermometer (-10 to 110C),4081,Negotiated Procurement,949.98,934.64,Brock-Cross,Angela Renee Mendoza,2025-01-17
+389,Erlenmeyer Flask 250ml,4120,Limited Source Bidding,1227.53,1280.16,"Cross, Santos and Torres",Angela Ramirez,2024-08-13
+390,Voltmeter basic,1688,Competitive Bidding,759.32,777.73,Roberts PLC,Sophia Christine Navarro,2024-09-08
+391,Compound Microscope (1000x),8774,Negotiated Procurement,4848.51,5498.64,Stout-Ortega,Luke Andrew Navarro,2025-03-11
+392,Laboratory Gloves nitrile box of 100,6811,Negotiated Procurement,569.93,520.13,King PLC,Casey Hernandez,2025-01-10
+393,Ammeter basic,6458,Competitive Bidding,1044.69,1158.64,Tran-Harris,Sophia Christine Navarro,2025-01-28
+394,Litmus Paper,8696,Negotiated Procurement,472.01,413.84,"Brown, Randall and Cohen",Jamie Thompson,2025-03-21
+395,pH Meter basic,7272,Competitive Bidding,660.97,693.84,"Barry, Gibbs and Scott",Angela Renee Mendoza,2024-06-26
+396,Test Tube 15ml,3996,Competitive Bidding,753.59,819.28,Jefferson LLC,Jamie Thompson,2024-11-23
+397,Universal Indicator Solution 100ml,3801,Direct Contracting,1288.64,1161.55,"Hardin, Butler and Powell",Morgan Cruz,2024-05-27
+398,Compound Microscope (1000x),1444,Competitive Bidding,5543.79,5498.64,"Hill, Wells and Hall",Luke Andrew Navarro,2024-05-25
+399,Funnel plastic 100mm,2587,Direct Contracting,842.61,739.87,Fuller and Sons,Angela Renee Mendoza,2025-02-08
+400,Test Tube Rack,9155,Negotiated Procurement,1093.97,1114.18,Mitchell LLC,Morgan Cruz,2025-01-27
+401,Laboratory Rubber Stoppers,4022,Competitive Bidding,548.96,533.34,"Morrison, Cooper and Rios",Angela Ramirez,2024-04-30
+402,Laboratory Alcohol Burner,8563,Competitive Bidding,556.7,574.0,Holloway-Robinson,James Patrick Mendoza,2024-10-16
+403,Test Tube Rack,1553,Competitive Bidding,1210.85,1114.18,"Diaz, Hendricks and Patterson",Morgan Cruz,2024-05-31
+404,Stopwatch digital,3353,Negotiated Procurement,658.81,587.22,West Inc,Casey Hernandez,2024-07-17
+405,Beaker 50ml,5676,Direct Contracting,936.8,836.08,Lynch PLC,James Patrick Mendoza,2024-06-15
+406,Erlenmeyer Flask 250ml,1390,Limited Source Bidding,1297.26,1280.16,"Navarro, Medina and Howard",Alex Rivera,2025-04-06
+407,Lens Set convex concave,3766,Competitive Bidding,833.13,860.27,Carter-Stevens,Christine Bautista,2025-01-20
+408,Iron Filings 250g,4100,Negotiated Procurement,1065.58,933.07,Gamble-Reed,Angela Renee Mendoza,2024-05-06
+409,Triple Beam Balance,4378,Negotiated Procurement,2854.59,3201.97,"Morris, Bautista and Garcia",Casey Hernandez,2025-02-08
+410,Laboratory Agar Powder 100g,1131,Competitive Bidding,2213.82,2046.24,Obrien-Jones,Luke Andrew Navarro,2024-04-18
+411,Hydrochloric Acid Science Laboratory,3302,Negotiated Procurement,1545.07,1780.24,Ross LLC,Jamie Thompson,2024-06-01
+412,Beaker 250ml,6344,Competitive Bidding,1240.94,1208.93,Crawford-Roman,Angela Ramirez,2024-10-31
+413,Tuning Fork 256 Hz,8220,Limited Source Bidding,707.63,689.02,Osborn-Jackson,Jamie Thompson,2025-03-21
+414,Laboratory Alcohol Burner,5623,Direct Contracting,494.04,574.0,"Hodge, Hamilton and Jackson",Christine Bautista,2025-03-18
+415,Lab Manual - Grade 10 Science,7344,Limited Source Bidding,1492.92,1436.51,Mann-Gonzalez,Alex Rivera,2025-01-25
+416,Filter Paper pack of 100,6120,Competitive Bidding,567.6,582.4,Carter Ltd,Taylor Martinez,2024-08-17
+417,pH Meter basic,3681,Negotiated Procurement,674.46,693.84,"Kim, Stewart and Contreras",Sophia Christine Navarro,2024-05-01
+418,Graduated Cylinder 100ml,3342,Limited Source Bidding,683.88,651.28,Thomas-Reynolds,Angela Ramirez,2025-03-13
+419,Laboratory Safety Goggles,8123,Limited Source Bidding,781.01,711.31,Wagner Group,Casey Hernandez,2024-11-12
+420,Lab Manual - Grade 10 Science,4129,Limited Source Bidding,1471.64,1436.51,Hess-Barnett,Sophia Christine Navarro,2024-07-31
+421,Graduated Cylinder 100ml,8144,Direct Contracting,712.46,651.28,Higgins-Martinez,Christine Bautista,2025-03-02
+422,Triple Beam Balance,3706,Competitive Bidding,2905.66,3201.97,"Murray, Howard and Graham",Luke Andrew Navarro,2024-07-21
+423,Beaker 250ml,2016,Direct Contracting,1053.89,1208.93,James-Ortiz,Angela Ramirez,2024-06-15
+424,Iron Filings 250g,8846,Limited Source Bidding,894.28,933.07,Gonzalez and Sons,Luke Andrew Navarro,2024-08-09
+425,Microscope Coverslips box of 100,5135,Limited Source Bidding,614.78,641.2,Marsh LLC,Taylor Martinez,2024-12-29
+426,pH Meter basic,5571,Direct Contracting,717.9,693.84,"Chambers, Ingram and Grant",Angela Ramirez,2024-04-10
+427,Test Tube Rack,5185,Negotiated Procurement,1160.05,1114.18,Rhodes and Sons,Luke Andrew Navarro,2024-09-14
+428,Universal Indicator Solution 100ml,4298,Limited Source Bidding,1127.3,1161.55,Johnson and Sons,Casey Hernandez,2025-01-27
+429,Fire Blanket,7665,Negotiated Procurement,1093.09,1134.78,Jones LLC,Morgan Cruz,2025-03-11
+430,Refracting Telescope 70mm,5561,Negotiated Procurement,4591.52,4826.42,Cruz-Johnston,Luke Andrew Navarro,2024-10-05
+431,Pipette 10ml,3857,Competitive Bidding,849.43,914.14,Martinez-Bell,Jamie Thompson,2025-03-21
+432,Laboratory Alcohol Burner,2337,Competitive Bidding,521.7,574.0,Lewis-Barr,Morgan Cruz,2025-02-15
+433,Beaker 100ml,7618,Competitive Bidding,809.88,855.46,"Lee, Thompson and Berg",Angela Renee Mendoza,2024-10-06
+434,Fire Blanket,3679,Competitive Bidding,1056.42,1134.78,Harmon-Hill,James Patrick Mendoza,2024-09-17
+435,Dropper Bottle 50ml,6117,Limited Source Bidding,390.16,423.92,Ward-Castro,Alex Rivera,2024-10-02
+436,Beaker 100ml,8466,Limited Source Bidding,865.08,855.46,Garcia Group,Luke Andrew Navarro,2024-12-25
+437,Microscope Coverslips box of 100,9246,Competitive Bidding,639.05,641.2,Ho-Rich,Christine Bautista,2025-03-16
+438,Spring Scale 500g,2394,Competitive Bidding,754.73,729.57,"Wood, Perez and Manning",Taylor Martinez,2024-08-06
+439,Stopwatch digital,6840,Limited Source Bidding,570.36,587.22,Lewis-Whitney,Taylor Martinez,2024-11-18
+440,Thermometer (-10 to 110C),9493,Competitive Bidding,928.09,934.64,"Page, Little and Wallace",Taylor Martinez,2025-03-11
+441,Laboratory Agar Powder 100g,2307,Competitive Bidding,2013.2,2046.24,Johnson and Sons,Morgan Cruz,2024-08-18
+442,Prism glass,9118,Limited Source Bidding,707.62,704.14,"Rivers, Mcdaniel and Anderson",Sophia Christine Navarro,2024-04-13
+443,Thermometer (-10 to 110C),7936,Negotiated Procurement,972.81,934.64,Herman-Wood,James Patrick Mendoza,2024-05-19
+444,Beaker 250ml,8808,Negotiated Procurement,1369.57,1208.93,Wood-Arnold,Angela Ramirez,2025-02-06
+445,Microscope Slides,3839,Competitive Bidding,529.55,513.74,Rush and Sons,Luke Andrew Navarro,2024-07-30
+446,Bar Magnet pair,3456,Competitive Bidding,468.81,450.69,Jacobs-Reed,Angela Ramirez,2024-11-27
+447,Microscope Coverslips box of 100,5254,Competitive Bidding,657.73,641.2,"Larson, Johnson and Brooks",Morgan Cruz,2024-10-21
+448,Laboratory Alcohol Burner,5499,Negotiated Procurement,658.65,574.0,"Flores, Logan and Schultz",Luke Andrew Navarro,2024-06-05
+449,Pipette 10ml,3465,Negotiated Procurement,914.48,914.14,Moreno-Pena,Jamie Thompson,2024-08-28
+450,Universal Indicator Solution 100ml,3226,Limited Source Bidding,1184.7,1161.55,"Gentry, Young and Delgado",Christine Bautista,2024-12-03
+451,Dropper Bottle 50ml,8347,Competitive Bidding,403.37,423.92,"Rodriguez, Wilson and Perez",Luke Andrew Navarro,2024-06-24
+452,Laboratory Aprons pack of 10,1424,Competitive Bidding,3381.71,3094.0,Schneider Inc,Sophia Christine Navarro,2024-07-06
+453,Bar Magnet pair,3954,Competitive Bidding,466.35,450.69,Torres-Vargas,Alex Rivera,2024-06-01
+454,Test Tube Brush,4656,Limited Source Bidding,394.33,407.9,Rivera-Golden,Sophia Christine Navarro,2024-06-15
+455,Filter Paper pack of 100,8989,Direct Contracting,631.93,582.4,Atkins-Flores,Angela Ramirez,2024-07-25
+456,Laboratory Gloves nitrile box of 100,9889,Limited Source Bidding,552.97,520.13,"Griffith, Clark and Humphrey",Alex Rivera,2024-11-06
+457,Laboratory Alcohol Burner,4102,Limited Source Bidding,564.58,574.0,Edwards Group,Angela Renee Mendoza,2024-05-16
+458,Dissecting Kit,6183,Limited Source Bidding,859.17,856.35,Watkins-Hamilton,Sophia Christine Navarro,2024-04-16
+459,Universal Indicator Solution 100ml,7273,Competitive Bidding,1262.59,1161.55,Wilson-Gomez,Taylor Martinez,2024-07-13
+460,Test Tube 15ml,1553,Competitive Bidding,851.94,819.28,Garcia Group,Angela Renee Mendoza,2024-06-22
+461,Spring Scale 500g,4260,Limited Source Bidding,725.73,729.57,Miller Group,Jamie Thompson,2024-12-16
+462,Litmus Paper,9384,Competitive Bidding,377.47,413.84,"Ross, David and Robertson",Taylor Martinez,2025-03-02
+463,Laboratory Alcohol Burner,7493,Competitive Bidding,588.1,574.0,"Landry, Huynh and Walker",Luke Andrew Navarro,2025-02-20
+464,Laboratory Gloves nitrile box of 100,6486,Competitive Bidding,528.64,520.13,Watson LLC,Taylor Martinez,2024-12-16
+465,Copper Sulfate,4172,Competitive Bidding,1787.37,1804.88,"Reed, Simmons and Miller",Morgan Cruz,2025-01-29
+466,Thermometer (-10 to 110C),7885,Limited Source Bidding,852.49,934.64,Swanson Inc,Taylor Martinez,2025-01-11
+467,Laboratory Gloves nitrile box of 100,8050,Competitive Bidding,564.67,520.13,Kelly-Roberts,Taylor Martinez,2025-02-22
+468,Spring Scale 500g,9870,Negotiated Procurement,768.64,729.57,"Wilson, Smith and Fischer",Casey Hernandez,2024-09-04
+469,Laboratory Aprons pack of 10,9911,Competitive Bidding,3256.45,3094.0,"Reed, Kelly and Meyer",Sophia Christine Navarro,2024-09-02
+470,Beaker 100ml,2480,Negotiated Procurement,749.62,855.46,"Reed, Jackson and Davis",Angela Renee Mendoza,2024-06-14
+471,Beaker 250ml,9155,Competitive Bidding,1205.57,1208.93,Singleton-Flynn,Morgan Cruz,2025-01-06
+472,Universal Indicator Solution 100ml,1203,Negotiated Procurement,1114.41,1161.55,"Jackson, Robertson and Walker",Angela Ramirez,2025-02-21
+473,Pipette 10ml,3358,Limited Source Bidding,876.89,914.14,Williams-Peterson,Luke Andrew Navarro,2024-05-12
+474,pH Meter basic,3292,Competitive Bidding,673.22,693.84,Lopez LLC,Casey Hernandez,2024-08-18
+475,Beaker 250ml,8798,Limited Source Bidding,1141.69,1208.93,Chavez PLC,Jamie Thompson,2024-04-15
+476,Ammeter basic,2171,Limited Source Bidding,1178.81,1158.64,Sanchez Ltd,James Patrick Mendoza,2024-10-08
+477,Hydrochloric Acid Science Laboratory,8716,Negotiated Procurement,1674.53,1780.24,Allen Ltd,Taylor Martinez,2024-09-02
+478,Iron Filings 250g,6572,Competitive Bidding,971.05,933.07,Smith-Jones,Jamie Thompson,2024-09-23
+479,Laboratory Spatula stainless steel,7248,Competitive Bidding,579.03,553.62,Hayes-Price,Angela Ramirez,2024-08-23
+480,Laboratory Spatula stainless steel,7718,Negotiated Procurement,531.35,553.62,Hopkins-Dominguez,Alex Rivera,2024-05-06
+481,Dissecting Kit,5263,Competitive Bidding,938.3,856.35,"Cooper, Park and Davis",Angela Ramirez,2024-04-15
+482,Erlenmeyer Flask 250ml,6693,Negotiated Procurement,1282.32,1280.16,Dunn and Sons,Luke Andrew Navarro,2024-05-27
+483,Microscope Slides,3500,Negotiated Procurement,484.48,513.74,Valentine-Rasmussen,Angela Ramirez,2024-04-15
+484,Bunsen Burner,7405,Competitive Bidding,1179.2,1198.4,"Carrillo, Navarro and Gonzalez",Angela Renee Mendoza,2024-09-26
+485,Bunsen Burner,8528,Competitive Bidding,1266.9,1198.4,"Beltran, Pittman and Marsh",James Patrick Mendoza,2024-04-10
+486,Dropper Bottle 50ml,4352,Limited Source Bidding,391.92,423.92,"Arnold, Bowman and Cisneros",Taylor Martinez,2024-07-17
+487,pH Meter basic,9367,Limited Source Bidding,736.54,693.84,Thompson Ltd,Angela Ramirez,2024-06-24
+488,Lens Set convex concave,4975,Competitive Bidding,836.99,860.27,"Armstrong, Phillips and Hood",Angela Ramirez,2024-06-06
+489,Filter Paper pack of 100,4022,Negotiated Procurement,594.48,582.4,Bennett-Robinson,Alex Rivera,2024-06-01
+490,Iron Filings 250g,5979,Competitive Bidding,926.04,933.07,Hancock-Estes,James Patrick Mendoza,2024-08-06
+491,Laboratory Rubber Stoppers,8748,Competitive Bidding,530.14,533.34,Bennett-Wilson,Angela Renee Mendoza,2024-06-05
+492,Spring Scale 500g,5918,Negotiated Procurement,708.5,729.57,Holt-Matthews,James Patrick Mendoza,2025-03-11
+493,Copper Sulfate,1594,Limited Source Bidding,1850.32,1804.88,"Tanner, Rice and Medina",Sophia Christine Navarro,2024-11-11
+494,Litmus Paper,2141,Negotiated Procurement,474.74,413.84,"Hicks, Williams and Santos",Luke Andrew Navarro,2024-10-18
+495,Laboratory Gloves nitrile box of 100,7836,Competitive Bidding,499.18,520.13,"Morgan, Wood and Bishop",Casey Hernandez,2024-04-26
+496,Laboratory Alcohol Burner,8179,Competitive Bidding,622.6,574.0,Smith Group,Sophia Christine Navarro,2024-05-22
+497,Test Tube Rack,7791,Negotiated Procurement,1156.05,1114.18,Nicholson and Sons,Casey Hernandez,2025-01-12
+498,Laboratory Spatula stainless steel,2881,Direct Contracting,560.16,553.62,Hernandez Ltd,Sophia Christine Navarro,2024-06-03
+499,Beaker 100ml,6364,Direct Contracting,810.73,855.46,"Austin, Frank and Smith",James Patrick Mendoza,2024-12-18
+500,Lab Manual - Grade 10 Science,8823,Competitive Bidding,1303.14,1436.51,Peterson-Cowan,Luke Andrew Navarro,2024-10-29
+501,Fire Blanket,8461,Competitive Bidding,1171.5,1134.78,Cannon and Sons,Jamie Thompson,2024-07-01
+502,Laboratory Spatula stainless steel,7042,Negotiated Procurement,567.99,553.62,Smith and Sons,Taylor Martinez,2025-01-25
+503,Test Tube Brush,3656,Competitive Bidding,429.54,407.9,"Perkins, Martin and Edwards",Angela Renee Mendoza,2025-02-01
+504,Laboratory Aprons pack of 10,4983,Negotiated Procurement,2857.07,3094.0,"Byrd, Kim and Burke",Jamie Thompson,2025-02-18
+505,Thermometer (-10 to 110C),4635,Competitive Bidding,912.43,934.64,"Mccarthy, Allen and Anderson",Alex Rivera,2024-05-18
+506,Laboratory Gloves nitrile box of 100,2503,Competitive Bidding,548.12,520.13,"Carroll, Sawyer and Lowe",Luke Andrew Navarro,2024-12-18
+507,Litmus Paper,5243,Competitive Bidding,404.86,413.84,"Barnes, Ward and Young",Christine Bautista,2025-01-13
+508,Litmus Paper,3414,Competitive Bidding,405.48,413.84,Luna and Sons,Morgan Cruz,2025-01-20
+509,Dropper Bottle 50ml,5626,Competitive Bidding,416.05,423.92,"Jackson, Hensley and Jones",Jamie Thompson,2025-03-20
+510,Stopwatch digital,6321,Competitive Bidding,584.86,587.22,Roy Inc,Alex Rivera,2024-04-25
+511,Ammeter basic,4919,Competitive Bidding,1230.45,1158.64,Brown-Meyer,Angela Renee Mendoza,2025-01-06
+512,Laboratory Safety Goggles,3665,Negotiated Procurement,717.87,711.31,"Vazquez, Foster and Reynolds",Taylor Martinez,2025-02-07
+513,Microscope Slides,4382,Limited Source Bidding,510.95,513.74,"Velasquez, Spears and Thomas",Sophia Christine Navarro,2024-04-28
+514,Test Tube 15ml,2499,Competitive Bidding,844.49,819.28,Park-Rose,Angela Renee Mendoza,2024-12-14
+515,Voltmeter basic,2412,Competitive Bidding,764.11,777.73,"Smith, Lambert and Fisher",Sophia Christine Navarro,2024-10-05
+516,Triple Beam Balance,8965,Negotiated Procurement,3399.23,3201.97,Sims-Le,Taylor Martinez,2024-09-26
+517,Bunsen Burner,2952,Competitive Bidding,1138.19,1198.4,Watson-Vazquez,Angela Renee Mendoza,2024-10-03
+518,Microscope Slides,9874,Competitive Bidding,518.45,513.74,Rodriguez-Navarro,Angela Renee Mendoza,2024-07-29
+519,Tuning Fork 256 Hz,3538,Competitive Bidding,676.51,689.02,Moore Ltd,Christine Bautista,2024-04-17
+520,Refracting Telescope 70mm,1947,Negotiated Procurement,4866.18,4826.42,Mercado-Cox,Jamie Thompson,2024-08-06
+521,Laboratory Alcohol Burner,8226,Negotiated Procurement,512.58,574.0,"Hansen, Thompson and Cooke",Angela Ramirez,2025-01-15
+522,Copper Sulfate,7649,Competitive Bidding,1651.93,1804.88,Davis-Gomez,Morgan Cruz,2025-03-31
+523,Beaker 100ml,4088,Competitive Bidding,937.45,855.46,"Roberts, Rodgers and King",Sophia Christine Navarro,2024-07-27
+524,Laboratory Aprons pack of 10,4575,Competitive Bidding,2848.38,3094.0,"Tucker, Gross and Garcia",Alex Rivera,2024-11-06
+525,Test Tube 15ml,8994,Competitive Bidding,873.59,819.28,Roberts-Campbell,Alex Rivera,2024-10-03
+526,Dropper Bottle 50ml,9755,Direct Contracting,482.85,423.92,Garcia Ltd,Christine Bautista,2024-11-29
+527,Universal Indicator Solution 100ml,9690,Competitive Bidding,1258.79,1161.55,Duncan-Larson,Angela Renee Mendoza,2024-06-26
+528,Laboratory Safety Goggles,7004,Negotiated Procurement,792.81,711.31,Gregory-Griffin,Jamie Thompson,2024-07-10
+529,Spring Scale 500g,8746,Competitive Bidding,793.72,729.57,"Ross, Morgan and Thomas",Alex Rivera,2024-08-21
+530,Thermometer (-10 to 110C),4768,Competitive Bidding,970.72,934.64,Doyle Group,Christine Bautista,2024-09-14
+531,Laboratory Alcohol Burner,9508,Competitive Bidding,610.19,574.0,Evans-Williams,Jamie Thompson,2024-05-01
+532,Lab Manual - Grade 10 Science,7276,Competitive Bidding,1513.81,1436.51,Buckley Inc,Angela Renee Mendoza,2025-03-28
+533,Pipette 10ml,8013,Limited Source Bidding,992.51,914.14,"Jones, Cunningham and Gonzales",Angela Renee Mendoza,2025-01-08
+534,Ammeter basic,5984,Limited Source Bidding,1189.63,1158.64,"Frank, Nguyen and Wang",Angela Ramirez,2024-12-22
+535,Laboratory Agar Powder 100g,9060,Direct Contracting,1815.68,2046.24,"Wallace, Young and Sawyer",Sophia Christine Navarro,2024-08-29
+536,Pipette 10ml,9630,Negotiated Procurement,823.62,914.14,Morris-Jackson,James Patrick Mendoza,2024-11-22
+537,Graduated Cylinder 100ml,7794,Competitive Bidding,624.05,651.28,Miller-Clark,Angela Renee Mendoza,2024-10-28
+538,Compound Microscope (1000x),3282,Competitive Bidding,5359.45,5498.64,"Robles, Wilkinson and Cook",Christine Bautista,2024-04-30
+539,Beaker 100ml,2398,Competitive Bidding,877.34,855.46,"Brooks, Hernandez and Perkins",Sophia Christine Navarro,2024-07-19
+540,Spring Scale 500g,4982,Limited Source Bidding,742.25,729.57,"Montgomery, Graham and Diaz",Jamie Thompson,2024-06-24
+541,Litmus Paper,4100,Competitive Bidding,436.25,413.84,Miranda Group,Luke Andrew Navarro,2024-04-25
+542,pH Meter basic,3992,Competitive Bidding,673.67,693.84,"Campbell, Cooper and Davis",Alex Rivera,2024-10-05
+543,Dissecting Kit,9090,Competitive Bidding,903.7,856.35,Raymond and Sons,Angela Ramirez,2024-06-04
+544,Stopwatch digital,2588,Competitive Bidding,601.08,587.22,Webster and Sons,Luke Andrew Navarro,2024-04-08
+545,Dissecting Kit,2630,Negotiated Procurement,744.34,856.35,Schmidt Ltd,James Patrick Mendoza,2025-01-24
+546,Compound Microscope (1000x),6289,Negotiated Procurement,4875.4,5498.64,"Kaiser, Kennedy and Jones",Angela Ramirez,2025-03-17
+547,Triple Beam Balance,5543,Limited Source Bidding,3441.64,3201.97,Flores-Smith,James Patrick Mendoza,2024-12-06
+548,Copper Sulfate,1484,Competitive Bidding,1806.23,1804.88,Butler Group,Angela Renee Mendoza,2025-03-28
+549,Thermometer (-10 to 110C),2114,Limited Source Bidding,943.17,934.64,"Bender, Hampton and Shaw",Luke Andrew Navarro,2024-09-28
+550,Test Tube Brush,8252,Direct Contracting,378.62,407.9,"Hall, Cochran and Gallagher",Casey Hernandez,2025-03-09
+551,Lab Manual - Grade 10 Science,1303,Competitive Bidding,1517.31,1436.51,"House, Wise and Thompson",Angela Renee Mendoza,2024-11-01
+552,Bunsen Burner,6449,Negotiated Procurement,1046.89,1198.4,"Price, Lawson and Armstrong",Luke Andrew Navarro,2025-02-25
+553,Bar Magnet pair,7650,Limited Source Bidding,462.66,450.69,Moore-Carney,Christine Bautista,2024-12-22
+554,Triple Beam Balance,4313,Competitive Bidding,3510.58,3201.97,Buck Group,Casey Hernandez,2024-04-21
+555,Test Tube Rack,8754,Competitive Bidding,1144.66,1114.18,Mccoy-White,Jamie Thompson,2024-08-23
+556,Lens Set convex concave,6328,Competitive Bidding,860.41,860.27,Gordon-Collins,Christine Bautista,2024-07-11
+557,Microscope Slides,3017,Competitive Bidding,476.55,513.74,Johnson and Sons,Angela Renee Mendoza,2025-01-19
+558,Iron Filings 250g,3053,Competitive Bidding,932.06,933.07,"Berg, Jones and Reid",Jamie Thompson,2024-06-17
+559,Thermometer (-10 to 110C),8261,Competitive Bidding,966.02,934.64,"Christensen, Harper and Owens",Casey Hernandez,2025-02-17
+560,Laboratory Spatula stainless steel,4778,Competitive Bidding,513.05,553.62,Hill PLC,Casey Hernandez,2025-03-31
+561,Laboratory Rubber Stoppers,3744,Negotiated Procurement,507.74,533.34,Willis-Jones,Casey Hernandez,2024-07-23
+562,Thermometer (-10 to 110C),5291,Competitive Bidding,1025.08,934.64,Robbins-Bailey,Christine Bautista,2024-04-27
+563,Copper Sulfate,3878,Competitive Bidding,1910.06,1804.88,"Wallace, Valdez and Barker",Alex Rivera,2024-12-13
+564,Litmus Paper,5383,Negotiated Procurement,394.82,413.84,"Estrada, Tran and George",Jamie Thompson,2024-05-13
+565,Dropper Bottle 50ml,4757,Competitive Bidding,396.74,423.92,Potter Ltd,Angela Renee Mendoza,2025-02-16
+566,Tuning Fork 256 Hz,6081,Competitive Bidding,625.65,689.02,Huynh-Williams,Morgan Cruz,2024-06-08
+567,Funnel plastic 100mm,9710,Competitive Bidding,782.38,739.87,Meyers Group,Sophia Christine Navarro,2024-12-07
+568,Hydrochloric Acid Science Laboratory,4440,Competitive Bidding,1822.89,1780.24,Mcgee LLC,James Patrick Mendoza,2024-04-25
+569,Stopwatch digital,1764,Direct Contracting,541.05,587.22,"Cruz, Mitchell and Berry",Angela Renee Mendoza,2025-02-07
+570,Laboratory Gloves nitrile box of 100,3836,Negotiated Procurement,477.51,520.13,"Wilson, Horton and Lowery",Casey Hernandez,2025-03-26
+571,Funnel plastic 100mm,3154,Competitive Bidding,789.33,739.87,Williams-West,Alex Rivera,2024-12-26
+572,Beaker 250ml,6043,Direct Contracting,1319.34,1208.93,"Chung, Patterson and Griffin",Christine Bautista,2025-01-17
+573,Pipette 10ml,1334,Competitive Bidding,882.9,914.14,Moyer LLC,Angela Ramirez,2024-06-28
+574,Filter Paper pack of 100,5299,Negotiated Procurement,570.25,582.4,Thompson-Potter,Taylor Martinez,2024-04-13
+575,Stopwatch digital,6054,Competitive Bidding,586.3,587.22,"Fernandez, Nunez and Wiggins",Angela Renee Mendoza,2024-05-30
+576,Spring Scale 500g,3394,Negotiated Procurement,816.16,729.57,Romero-Webb,Christine Bautista,2025-01-28
+577,Laboratory Agar Powder 100g,6072,Limited Source Bidding,1925.18,2046.24,"Dickerson, Morse and Lewis",Sophia Christine Navarro,2024-07-16
+578,Pipette 10ml,1506,Negotiated Procurement,1029.03,914.14,Savage-Clark,Jamie Thompson,2025-01-30
+579,Hot Plate basic,7800,Competitive Bidding,1797.72,1701.84,Keller and Sons,Jamie Thompson,2024-07-31
+580,Ammeter basic,2369,Competitive Bidding,1269.15,1158.64,"Ellis, Gross and Williams",Taylor Martinez,2024-12-23
+581,Prism glass,9561,Limited Source Bidding,742.02,704.14,"Schultz, Murphy and Jenkins",Jamie Thompson,2024-05-21
+582,Test Tube Rack,3528,Limited Source Bidding,1219.84,1114.18,Munoz-Everett,Angela Ramirez,2024-06-22
+583,Beaker 100ml,5136,Direct Contracting,932.54,855.46,"Wood, Hill and Murray",Luke Andrew Navarro,2024-08-23
+584,Pipette 10ml,2551,Competitive Bidding,946.27,914.14,Reed-Lutz,Alex Rivera,2025-01-24
+585,Dropper Bottle 50ml,1967,Competitive Bidding,410.25,423.92,Parks-Davis,Sophia Christine Navarro,2024-05-14
+586,Laboratory Alcohol Burner,5166,Competitive Bidding,617.09,574.0,"Mcclure, Trujillo and Moore",Angela Renee Mendoza,2024-12-08
+587,Litmus Paper,8734,Negotiated Procurement,458.35,413.84,Harrison-Snyder,Morgan Cruz,2024-07-21
+588,Laboratory Spatula stainless steel,6265,Direct Contracting,592.68,553.62,Douglas-Cook,Morgan Cruz,2025-02-25
+589,Lens Set convex concave,7174,Negotiated Procurement,861.04,860.27,Marks-Thompson,Alex Rivera,2024-11-18
+590,Microscope Slides,5899,Competitive Bidding,557.28,513.74,Garcia PLC,Taylor Martinez,2024-05-13
+591,Laboratory Alcohol Burner,1722,Competitive Bidding,525.14,574.0,"Herrera, Patterson and Santiago",Casey Hernandez,2024-07-01
+592,Laboratory Aprons pack of 10,8163,Competitive Bidding,2820.93,3094.0,Brown-Walker,Sophia Christine Navarro,2024-04-23
+593,Laboratory Spatula stainless steel,5174,Limited Source Bidding,546.81,553.62,Cameron LLC,Angela Renee Mendoza,2025-03-18
+594,Fire Blanket,3127,Negotiated Procurement,1006.06,1134.78,Miller-Walker,Angela Ramirez,2024-06-22
+595,Dropper Bottle 50ml,1237,Competitive Bidding,438.28,423.92,"Miles, Welch and Morgan",Sophia Christine Navarro,2024-06-30
+596,Litmus Paper,2409,Negotiated Procurement,452.51,413.84,Fernandez Inc,Luke Andrew Navarro,2025-03-29
+597,Laboratory Safety Goggles,1711,Limited Source Bidding,662.54,711.31,Watkins-Calhoun,Taylor Martinez,2024-11-10
+598,Pipette 10ml,5543,Limited Source Bidding,858.54,914.14,Calderon Inc,Jamie Thompson,2024-08-23
+599,Laboratory Rubber Stoppers,8229,Competitive Bidding,538.64,533.34,Gay Ltd,Morgan Cruz,2025-01-07
+600,Filter Paper pack of 100,8007,Competitive Bidding,592.07,582.4,"Cherry, Robinson and Woods",Luke Andrew Navarro,2024-04-08
+601,Laboratory Aprons pack of 10,9031,Negotiated Procurement,3439.95,3094.0,"Grant, Nelson and Nelson",Alex Rivera,2024-11-23
+602,Microscope Slides,9513,Negotiated Procurement,475.09,513.74,Martinez-Hall,Christine Bautista,2024-12-30
+603,Test Tube Brush,9313,Negotiated Procurement,382.64,407.9,"Tucker, Marshall and Fuller",Alex Rivera,2025-01-17
+604,Voltmeter basic,1062,Negotiated Procurement,722.45,777.73,"Garrison, Richards and Rodriguez",Morgan Cruz,2024-04-30
+605,Copper Sulfate,9882,Limited Source Bidding,1977.74,1804.88,Martin LLC,Angela Ramirez,2024-06-24
+606,Hydrochloric Acid Science Laboratory,2812,Negotiated Procurement,1997.53,1780.24,Vargas PLC,James Patrick Mendoza,2024-11-08
+607,Stopwatch digital,3678,Limited Source Bidding,620.44,587.22,"Brooks, Johnson and Foley",Alex Rivera,2025-01-17
+608,Lens Set convex concave,2429,Direct Contracting,787.81,860.27,"Perez, Hicks and Curtis",Luke Andrew Navarro,2025-03-08
+609,Test Tube Rack,2336,Competitive Bidding,1217.83,1114.18,Mitchell-Yates,Jamie Thompson,2024-12-21
+610,Hot Plate basic,7854,Negotiated Procurement,1833.38,1701.84,Wade Group,Sophia Christine Navarro,2024-08-19
+611,Graduated Cylinder 100ml,1203,Competitive Bidding,665.9,651.28,"Williams, Wilson and Butler",Luke Andrew Navarro,2024-10-04
+612,Compound Microscope (1000x),6106,Competitive Bidding,5255.18,5498.64,"Jones, Beck and Craig",Angela Renee Mendoza,2024-09-18
+613,Dropper Bottle 50ml,8433,Competitive Bidding,449.43,423.92,Anderson Inc,Jamie Thompson,2024-04-08
+614,Ammeter basic,8959,Limited Source Bidding,1201.2,1158.64,Fisher-Vasquez,Taylor Martinez,2024-08-22
+615,Lens Set convex concave,5850,Competitive Bidding,822.42,860.27,Smith-Price,Christine Bautista,2024-12-08
+616,Universal Indicator Solution 100ml,6514,Competitive Bidding,1212.93,1161.55,Sherman PLC,Angela Renee Mendoza,2024-10-28
+617,Erlenmeyer Flask 250ml,8570,Limited Source Bidding,1166.71,1280.16,Gonzalez PLC,Angela Renee Mendoza,2025-03-02
+618,Petri Dishes pack of 20,6955,Limited Source Bidding,731.57,738.19,Chang-Mason,Jamie Thompson,2024-08-12
+619,Spring Scale 500g,3524,Limited Source Bidding,733.96,729.57,Morris PLC,Luke Andrew Navarro,2024-08-25
+620,Pipette 10ml,5986,Direct Contracting,797.91,914.14,Smith PLC,Jamie Thompson,2025-01-13
+621,Stopwatch digital,7648,Competitive Bidding,593.66,587.22,Decker LLC,Angela Renee Mendoza,2024-09-07
+622,Beaker 50ml,4963,Limited Source Bidding,792.63,836.08,"Morris, Jones and Williams",Luke Andrew Navarro,2024-05-16
+623,Triple Beam Balance,2704,Negotiated Procurement,3651.13,3201.97,Brock-White,Angela Renee Mendoza,2024-12-31
+624,Laboratory Aprons pack of 10,9542,Competitive Bidding,2788.25,3094.0,Harris-Jimenez,Luke Andrew Navarro,2024-11-10
+625,Laboratory Aprons pack of 10,7102,Direct Contracting,3433.92,3094.0,"Mitchell, Lee and Cooke",Christine Bautista,2024-04-07
+626,Fire Blanket,9436,Limited Source Bidding,1119.22,1134.78,"Campos, Gutierrez and Smith",Alex Rivera,2024-05-26
+627,Ammeter basic,9141,Competitive Bidding,1191.34,1158.64,Gross and Sons,Morgan Cruz,2024-10-04
+628,Laboratory Rubber Stoppers,7610,Competitive Bidding,512.77,533.34,Peters and Sons,Sophia Christine Navarro,2025-01-19
+629,Bar Magnet pair,1464,Limited Source Bidding,484.37,450.69,Steele-Larson,James Patrick Mendoza,2024-09-11
+630,Universal Indicator Solution 100ml,4586,Competitive Bidding,1133.69,1161.55,Wagner LLC,Taylor Martinez,2024-05-02
+631,Stopwatch digital,6300,Competitive Bidding,640.32,587.22,Kelly LLC,Angela Renee Mendoza,2024-08-29
+632,Refracting Telescope 70mm,5753,Competitive Bidding,4415.29,4826.42,Woods-Moore,Casey Hernandez,2025-02-20
+633,Graduated Cylinder 100ml,2383,Competitive Bidding,605.8,651.28,Jones LLC,Jamie Thompson,2024-07-03
+634,Bunsen Burner,7838,Negotiated Procurement,1234.94,1198.4,Webb-Walton,Angela Renee Mendoza,2024-10-09
+635,Spring Scale 500g,6524,Limited Source Bidding,766.11,729.57,Garcia PLC,Christine Bautista,2025-04-04
+636,Test Tube 15ml,5795,Competitive Bidding,835.64,819.28,Morgan LLC,Sophia Christine Navarro,2024-08-27
+637,Filter Paper pack of 100,2968,Competitive Bidding,557.2,582.4,Jones Inc,Angela Ramirez,2024-06-14
+638,Laboratory Rubber Stoppers,3926,Negotiated Procurement,517.82,533.34,Hampton-Espinoza,Angela Ramirez,2024-11-19
+639,Voltmeter basic,5154,Direct Contracting,857.37,777.73,Parks PLC,Jamie Thompson,2025-02-03
+640,Laboratory Gloves nitrile box of 100,1032,Direct Contracting,593.44,520.13,Olson Ltd,Luke Andrew Navarro,2025-01-14
+641,pH Meter basic,7321,Competitive Bidding,738.6,693.84,"Aguilar, Johnson and Guzman",James Patrick Mendoza,2024-08-07
+642,Laboratory Agar Powder 100g,2843,Competitive Bidding,1985.92,2046.24,Gonzalez Group,Jamie Thompson,2024-05-11
+643,Iron Filings 250g,3169,Limited Source Bidding,847.12,933.07,"Crane, Robinson and Madden",Morgan Cruz,2024-11-11
+644,Laboratory Spatula stainless steel,8160,Limited Source Bidding,602.66,553.62,Mcneil Ltd,Jamie Thompson,2024-08-04
+645,Test Tube 15ml,1517,Negotiated Procurement,812.47,819.28,Lawson-Lopez,Angela Renee Mendoza,2024-05-29
+646,Microscope Slides,5707,Competitive Bidding,468.95,513.74,Lee-Chung,Morgan Cruz,2025-04-03
+647,Microscope Slides,4512,Competitive Bidding,559.13,513.74,Harrington Ltd,Jamie Thompson,2025-01-12
+648,Thermometer (-10 to 110C),9744,Limited Source Bidding,950.71,934.64,"Jennings, Pace and Acosta",Christine Bautista,2024-11-11
+649,Hydrochloric Acid Science Laboratory,6792,Competitive Bidding,1854.68,1780.24,Cannon and Sons,James Patrick Mendoza,2025-02-04
+650,Petri Dishes pack of 20,8261,Competitive Bidding,668.27,738.19,"Nichols, Nelson and Fields",Sophia Christine Navarro,2025-03-24
+651,Dropper Bottle 50ml,7930,Limited Source Bidding,444.95,423.92,Thomas LLC,Luke Andrew Navarro,2024-05-09
+652,Laboratory Aprons pack of 10,3467,Competitive Bidding,3317.53,3094.0,Walker-Lopez,Casey Hernandez,2024-12-27
+653,Graduated Cylinder 100ml,2017,Direct Contracting,689.72,651.28,Harris-Alvarez,Jamie Thompson,2024-04-21
+654,Erlenmeyer Flask 250ml,8490,Limited Source Bidding,1323.86,1280.16,Rogers Group,Casey Hernandez,2024-11-21
+655,Fire Blanket,1513,Competitive Bidding,1028.43,1134.78,Cruz and Sons,Angela Ramirez,2024-10-07
+656,Dissecting Kit,3592,Limited Source Bidding,863.32,856.35,Nelson-Edwards,Morgan Cruz,2024-09-28
+657,Pipette 10ml,7667,Competitive Bidding,962.72,914.14,Smith Group,Taylor Martinez,2024-08-30
+658,Stopwatch digital,8917,Limited Source Bidding,532.39,587.22,"Rollins, Taylor and Mitchell",Angela Ramirez,2024-07-05
+659,Lab Manual - Grade 10 Science,7858,Competitive Bidding,1314.52,1436.51,"Ryan, Cooke and Reid",Christine Bautista,2024-06-17
+660,Funnel plastic 100mm,3474,Competitive Bidding,716.69,739.87,Perez Group,James Patrick Mendoza,2024-11-03
+661,Spring Scale 500g,6287,Competitive Bidding,676.18,729.57,Green Group,Casey Hernandez,2024-09-15
+662,Hydrochloric Acid Science Laboratory,7003,Direct Contracting,1599.21,1780.24,Mercer Inc,Casey Hernandez,2024-08-27
+663,Tuning Fork 256 Hz,1355,Limited Source Bidding,721.9,689.02,Friedman Inc,Christine Bautista,2025-02-03
+664,Laboratory Rubber Stoppers,5843,Competitive Bidding,534.9,533.34,"Montoya, Gallegos and Woods",Morgan Cruz,2024-10-05
+665,Lens Set convex concave,8339,Limited Source Bidding,805.82,860.27,"Villegas, Montgomery and Marquez",Angela Renee Mendoza,2025-03-07
+666,Laboratory Rubber Stoppers,9329,Competitive Bidding,528.22,533.34,"Wyatt, Dixon and Lawrence",Luke Andrew Navarro,2024-06-29
+667,Lens Set convex concave,9729,Direct Contracting,886.46,860.27,"Stokes, Henderson and Bruce",Casey Hernandez,2025-01-23
+668,Beaker 50ml,4127,Competitive Bidding,803.21,836.08,"Hall, Chapman and Lopez",Angela Ramirez,2025-03-04
+669,Hydrochloric Acid Science Laboratory,2698,Limited Source Bidding,1952.89,1780.24,Hurst Group,Angela Renee Mendoza,2024-05-08
+670,Laboratory Gloves nitrile box of 100,4636,Direct Contracting,573.68,520.13,Lee-Gallagher,Jamie Thompson,2024-07-24
+671,Laboratory Rubber Stoppers,9772,Competitive Bidding,557.56,533.34,Page-Fernandez,Alex Rivera,2024-07-13
+672,Dissecting Kit,2367,Limited Source Bidding,864.75,856.35,"Carpenter, Harris and Daniels",Sophia Christine Navarro,2025-03-31
+673,Beaker 50ml,4748,Competitive Bidding,802.93,836.08,Alexander PLC,Casey Hernandez,2024-10-25
+674,Dropper Bottle 50ml,1869,Competitive Bidding,446.98,423.92,"Fuller, Hogan and Wagner",Angela Renee Mendoza,2024-08-21
+675,Copper Sulfate,1412,Limited Source Bidding,1919.18,1804.88,Roberts PLC,Angela Renee Mendoza,2024-07-12
+676,Universal Indicator Solution 100ml,8793,Competitive Bidding,1107.3,1161.55,Blair-Case,Taylor Martinez,2024-09-09
+677,Universal Indicator Solution 100ml,8704,Competitive Bidding,1236.04,1161.55,"Kim, Stanton and Edwards",Christine Bautista,2024-05-01
+678,Beaker 50ml,2332,Competitive Bidding,886.38,836.08,Crane Inc,Alex Rivera,2024-11-23
+679,Prism glass,1648,Competitive Bidding,707.01,704.14,Curtis-Sanchez,Christine Bautista,2024-10-21
+680,Bunsen Burner,8724,Competitive Bidding,1311.51,1198.4,Allen Group,Christine Bautista,2025-01-01
+681,Prism glass,8653,Competitive Bidding,712.61,704.14,"Russo, Miller and Baldwin",Angela Ramirez,2025-03-03
+682,Iron Filings 250g,7490,Competitive Bidding,1018.62,933.07,"Baker, Parks and Meza",Angela Ramirez,2024-08-13
+683,Laboratory Aprons pack of 10,7998,Competitive Bidding,3132.67,3094.0,Booker Inc,James Patrick Mendoza,2025-03-12
+684,Ammeter basic,4633,Limited Source Bidding,1058.88,1158.64,Harper-Thomas,James Patrick Mendoza,2025-02-18
+685,Filter Paper pack of 100,4703,Direct Contracting,563.52,582.4,Jackson Inc,Luke Andrew Navarro,2024-11-19
+686,Bar Magnet pair,2520,Competitive Bidding,485.72,450.69,Knight-Andrade,Sophia Christine Navarro,2024-07-18
+687,Beaker 250ml,1763,Competitive Bidding,1109.29,1208.93,Trevino Inc,Christine Bautista,2024-11-22
+688,pH Meter basic,9792,Competitive Bidding,654.28,693.84,Matthews-Alexander,Christine Bautista,2024-08-17
+689,Erlenmeyer Flask 250ml,7395,Competitive Bidding,1328.62,1280.16,Smith PLC,Casey Hernandez,2024-12-02
+690,Beaker 100ml,3846,Negotiated Procurement,829.04,855.46,"Palmer, Hicks and Brewer",Angela Ramirez,2024-11-09
+691,Stopwatch digital,6771,Direct Contracting,626.74,587.22,"Brown, Mcclain and Mccarthy",Luke Andrew Navarro,2024-08-17
+692,Iron Filings 250g,1256,Direct Contracting,844.12,933.07,"Irwin, Miller and Fletcher",Angela Ramirez,2024-08-10
+693,Pipette 10ml,7842,Competitive Bidding,840.65,914.14,"Warren, Petty and Singleton",Luke Andrew Navarro,2024-07-29
+694,Triple Beam Balance,6607,Limited Source Bidding,3475.18,3201.97,Melendez-Anderson,Angela Ramirez,2024-06-27
+695,Filter Paper pack of 100,8882,Competitive Bidding,580.68,582.4,Williams-Carroll,James Patrick Mendoza,2025-01-09
+696,Laboratory Alcohol Burner,4619,Competitive Bidding,566.92,574.0,Reynolds-Malone,Angela Renee Mendoza,2024-07-16
+697,Funnel plastic 100mm,6039,Direct Contracting,725.58,739.87,Sullivan PLC,Angela Ramirez,2025-03-06
+698,Filter Paper pack of 100,5007,Competitive Bidding,567.59,582.4,"Smith, Rogers and Thomas",Taylor Martinez,2025-03-18
+699,Funnel plastic 100mm,6259,Negotiated Procurement,659.26,739.87,Roberson-Cannon,Jamie Thompson,2024-10-10
+700,Bar Magnet pair,1626,Negotiated Procurement,498.46,450.69,Johnson Ltd,Morgan Cruz,2024-09-13
+701,Petri Dishes pack of 20,6908,Limited Source Bidding,798.89,738.19,Santos-Garcia,Morgan Cruz,2024-08-20
+702,Beaker 50ml,5925,Competitive Bidding,792.65,836.08,"Huffman, Lucas and Bryant",Angela Ramirez,2025-02-22
+703,Dissecting Kit,7800,Competitive Bidding,881.87,856.35,Scott Inc,Angela Ramirez,2024-06-30
+704,Prism glass,2798,Competitive Bidding,704.58,704.14,"Perez, Crawford and Sanders",Casey Hernandez,2024-05-15
+705,Voltmeter basic,5251,Competitive Bidding,791.07,777.73,Turner Inc,Casey Hernandez,2024-11-14
+706,Spring Scale 500g,4618,Competitive Bidding,657.91,729.57,Garza-Schneider,Sophia Christine Navarro,2024-11-26
+707,Lens Set convex concave,2194,Direct Contracting,834.97,860.27,"Thomas, Johnson and Lynch",James Patrick Mendoza,2024-08-10
+708,Funnel plastic 100mm,5688,Competitive Bidding,702.02,739.87,"Reese, Yang and Hill",Angela Ramirez,2025-02-16
+709,Laboratory Gloves nitrile box of 100,4061,Negotiated Procurement,479.6,520.13,"Perkins, Sloan and Carter",Morgan Cruz,2024-09-04
+710,Test Tube Rack,4087,Competitive Bidding,1028.49,1114.18,Torres Inc,Morgan Cruz,2025-02-02
+711,Prism glass,3277,Competitive Bidding,692.13,704.14,Oconnor Group,Jamie Thompson,2025-02-11
+712,Hot Plate basic,6543,Limited Source Bidding,1815.52,1701.84,Garcia-Lopez,Angela Ramirez,2024-12-21
+713,Test Tube Brush,7025,Competitive Bidding,371.04,407.9,Crawford-Harvey,Taylor Martinez,2024-05-25
+714,Laboratory Alcohol Burner,7814,Limited Source Bidding,589.82,574.0,Conley Ltd,Taylor Martinez,2024-08-26
+715,Laboratory Agar Powder 100g,7049,Negotiated Procurement,1992.73,2046.24,"Riggs, Rivera and Ross",Christine Bautista,2024-12-15
+716,Filter Paper pack of 100,9622,Competitive Bidding,578.83,582.4,Watson-Campos,Morgan Cruz,2024-08-16
+717,Test Tube 15ml,1886,Negotiated Procurement,905.66,819.28,Scott-Howard,Alex Rivera,2024-07-29
+718,Thermometer (-10 to 110C),5682,Negotiated Procurement,858.86,934.64,"Reed, Trevino and Roberts",Casey Hernandez,2024-12-08
+719,Tuning Fork 256 Hz,2211,Direct Contracting,683.45,689.02,Peterson-Turner,Casey Hernandez,2024-11-05
+720,Beaker 50ml,1085,Competitive Bidding,787.97,836.08,Henderson Ltd,Morgan Cruz,2025-01-31
+721,Laboratory Alcohol Burner,2718,Competitive Bidding,524.56,574.0,Patel Ltd,Angela Renee Mendoza,2024-07-11
+722,Laboratory Safety Goggles,1949,Limited Source Bidding,694.99,711.31,"Wheeler, Rodriguez and Dodson",Sophia Christine Navarro,2024-09-11
+723,Ammeter basic,9771,Negotiated Procurement,1303.67,1158.64,Lloyd-Humphrey,Angela Ramirez,2024-06-25
+724,Beaker 100ml,3047,Negotiated Procurement,881.12,855.46,Anderson-Guerrero,Casey Hernandez,2024-05-02
+725,Thermometer (-10 to 110C),3433,Direct Contracting,975.57,934.64,Benson and Sons,Morgan Cruz,2024-11-19
+726,Fire Blanket,7940,Limited Source Bidding,1173.8,1134.78,Saunders-Morton,Christine Bautista,2024-06-22
+727,Laboratory Rubber Stoppers,1557,Competitive Bidding,490.53,533.34,Jones-Jordan,Luke Andrew Navarro,2024-12-23
+728,Laboratory Safety Goggles,8057,Competitive Bidding,736.33,711.31,Joseph LLC,Christine Bautista,2024-09-11
+729,Petri Dishes pack of 20,7257,Negotiated Procurement,824.98,738.19,"Martinez, Long and Arnold",Jamie Thompson,2025-03-03
+730,Laboratory Gloves nitrile box of 100,3002,Limited Source Bidding,566.85,520.13,Brown Inc,Morgan Cruz,2024-10-15
+731,Erlenmeyer Flask 250ml,1425,Limited Source Bidding,1386.41,1280.16,"Hill, Johnson and Love",Luke Andrew Navarro,2024-07-03
+732,Triple Beam Balance,2520,Direct Contracting,2759.1,3201.97,Powers-Sharp,Sophia Christine Navarro,2025-02-07
+733,Laboratory Rubber Stoppers,3193,Competitive Bidding,503.27,533.34,Thompson-Lynch,Jamie Thompson,2024-04-27
+734,Test Tube Rack,3196,Competitive Bidding,1168.93,1114.18,Chambers-Washington,Morgan Cruz,2024-11-25
+735,Laboratory Safety Goggles,3519,Competitive Bidding,650.56,711.31,Snyder and Sons,Morgan Cruz,2024-12-28
+736,Hot Plate basic,7355,Competitive Bidding,1537.65,1701.84,Garrett Inc,Casey Hernandez,2024-10-25
+737,pH Meter basic,5362,Competitive Bidding,759.66,693.84,"Cannon, Wells and Campbell",Luke Andrew Navarro,2024-08-27
+738,Beaker 100ml,8826,Competitive Bidding,829.49,855.46,"Bartlett, Bradley and Kelly",Taylor Martinez,2024-05-21
+739,Stopwatch digital,9329,Competitive Bidding,586.73,587.22,Campos Ltd,Angela Ramirez,2025-01-22
+740,Laboratory Aprons pack of 10,1538,Competitive Bidding,3249.1,3094.0,"Schmidt, Reynolds and Hogan",Angela Renee Mendoza,2024-10-01
+741,Pipette 10ml,7721,Direct Contracting,965.31,914.14,Lopez-Lowe,Angela Renee Mendoza,2025-03-31
+742,Dissecting Kit,8936,Limited Source Bidding,831.37,856.35,Johnson-Hill,Taylor Martinez,2025-03-04
+743,Ammeter basic,3012,Negotiated Procurement,998.57,1158.64,"Nunez, Horn and Jones",Angela Renee Mendoza,2024-09-03
+744,Laboratory Agar Powder 100g,9120,Competitive Bidding,2053.89,2046.24,Bates-Robinson,Taylor Martinez,2025-01-07
+745,Copper Sulfate,2521,Competitive Bidding,1705.85,1804.88,Melton Ltd,Sophia Christine Navarro,2025-03-06
+746,Voltmeter basic,7556,Competitive Bidding,779.6,777.73,"Erickson, Payne and Morgan",Angela Renee Mendoza,2025-03-22
+747,Microscope Coverslips box of 100,4526,Negotiated Procurement,683.81,641.2,Hayes Ltd,Angela Ramirez,2024-11-25
+748,Filter Paper pack of 100,6866,Competitive Bidding,578.36,582.4,"Gutierrez, Johnson and Garcia",Luke Andrew Navarro,2024-05-30
+749,Laboratory Agar Powder 100g,4262,Negotiated Procurement,1989.86,2046.24,Simon-Maddox,Jamie Thompson,2024-07-06
+750,Beaker 100ml,6273,Negotiated Procurement,756.24,855.46,Lopez-Horne,Alex Rivera,2024-08-29
+751,Litmus Paper,1359,Negotiated Procurement,402.59,413.84,Jackson-Hill,Sophia Christine Navarro,2025-04-04
+752,Compound Microscope (1000x),3345,Limited Source Bidding,5455.6,5498.64,Crane-Leblanc,Alex Rivera,2024-06-30
+753,Pipette 10ml,3930,Competitive Bidding,934.02,914.14,Smith Inc,Sophia Christine Navarro,2024-11-10
+754,Triple Beam Balance,5383,Direct Contracting,3207.37,3201.97,"Bishop, Davis and Wall",Casey Hernandez,2024-10-30
+755,Laboratory Spatula stainless steel,6366,Competitive Bidding,556.47,553.62,"Rosario, Watson and Stanton",Alex Rivera,2025-02-26
+756,Ammeter basic,6984,Competitive Bidding,1208.28,1158.64,Arnold-Barron,Angela Renee Mendoza,2024-11-01
+757,Beaker 50ml,2930,Competitive Bidding,854.24,836.08,Miller LLC,Luke Andrew Navarro,2024-11-06
+758,Beaker 100ml,4372,Competitive Bidding,912.74,855.46,"Austin, Vasquez and Perry",Luke Andrew Navarro,2025-02-13
+759,Laboratory Safety Goggles,8986,Limited Source Bidding,669.35,711.31,French and Sons,Christine Bautista,2024-12-14
+760,Dissecting Kit,1451,Limited Source Bidding,863.03,856.35,"Davis, Mcdaniel and Tran",Jamie Thompson,2025-03-16
+761,Dropper Bottle 50ml,2273,Negotiated Procurement,411.1,423.92,Castro LLC,Luke Andrew Navarro,2024-12-30
+762,Microscope Slides,9948,Competitive Bidding,495.43,513.74,Nolan Group,Alex Rivera,2024-04-06
+763,Laboratory Alcohol Burner,4389,Competitive Bidding,550.19,574.0,Gomez PLC,Sophia Christine Navarro,2024-10-19
+764,Tuning Fork 256 Hz,6773,Competitive Bidding,636.91,689.02,Young-Vasquez,Luke Andrew Navarro,2024-08-31
+765,Funnel plastic 100mm,3545,Direct Contracting,649.29,739.87,Larsen-Johnson,Taylor Martinez,2025-01-10
+766,pH Meter basic,3436,Competitive Bidding,689.53,693.84,"Duncan, Lewis and Smith",Casey Hernandez,2025-01-10
+767,Pipette 10ml,7604,Competitive Bidding,851.16,914.14,Newman and Sons,Alex Rivera,2024-04-27
+768,Dropper Bottle 50ml,4835,Limited Source Bidding,401.91,423.92,Kelly-Perez,Angela Ramirez,2024-08-07
+769,Triple Beam Balance,7847,Competitive Bidding,3449.55,3201.97,Thomas-Avila,Sophia Christine Navarro,2025-01-20
+770,Test Tube Brush,3332,Competitive Bidding,420.62,407.9,Anthony Ltd,Sophia Christine Navarro,2024-12-15
+771,Beaker 250ml,3005,Negotiated Procurement,1241.05,1208.93,"Pierce, White and Petty",Casey Hernandez,2024-07-13
+772,Tuning Fork 256 Hz,7051,Negotiated Procurement,708.28,689.02,Morgan-Harris,Luke Andrew Navarro,2024-05-16
+773,Test Tube Rack,1699,Competitive Bidding,1151.33,1114.18,Patrick Inc,Sophia Christine Navarro,2024-10-02
+774,Petri Dishes pack of 20,8224,Competitive Bidding,757.64,738.19,Knapp-Adkins,James Patrick Mendoza,2025-04-02
+775,Laboratory Safety Goggles,2078,Direct Contracting,745.13,711.31,Baker-Smith,Angela Renee Mendoza,2024-06-12
+776,Laboratory Gloves nitrile box of 100,6818,Negotiated Procurement,530.92,520.13,Murphy-Reid,Sophia Christine Navarro,2024-12-19
+777,Erlenmeyer Flask 250ml,1459,Competitive Bidding,1240.1,1280.16,Wagner-Li,Taylor Martinez,2025-04-03
+778,Dissecting Kit,9917,Competitive Bidding,780.16,856.35,Hill and Sons,Casey Hernandez,2024-12-08
+779,Laboratory Spatula stainless steel,9637,Direct Contracting,521.58,553.62,Rodriguez Ltd,Taylor Martinez,2024-05-06
+780,Erlenmeyer Flask 250ml,4593,Direct Contracting,1402.69,1280.16,"Whitehead, Smith and Jacobs",Taylor Martinez,2025-01-04
+781,Ammeter basic,7826,Competitive Bidding,1058.5,1158.64,Bowers Group,Casey Hernandez,2024-05-17
+782,Litmus Paper,9088,Limited Source Bidding,435.86,413.84,"Garcia, Shepherd and Lyons",Alex Rivera,2024-07-16
+783,Laboratory Alcohol Burner,4156,Limited Source Bidding,614.35,574.0,Williams-Lopez,Alex Rivera,2024-05-14
+784,Thermometer (-10 to 110C),7657,Competitive Bidding,915.6,934.64,"Gomez, Rivas and Hoover",Taylor Martinez,2024-09-20
+785,pH Meter basic,2209,Negotiated Procurement,630.24,693.84,Boyd-Brown,Christine Bautista,2024-07-05
+786,Erlenmeyer Flask 250ml,6456,Competitive Bidding,1234.03,1280.16,Rivera PLC,Angela Renee Mendoza,2025-02-13
+787,Prism glass,3328,Negotiated Procurement,739.24,704.14,Mathis Inc,Angela Renee Mendoza,2024-08-18
+788,Laboratory Safety Goggles,1302,Competitive Bidding,698.99,711.31,"Wolfe, Martinez and Hall",Taylor Martinez,2024-05-23
+789,Voltmeter basic,4907,Limited Source Bidding,746.53,777.73,"Adams, Guerrero and Dixon",Jamie Thompson,2024-07-14
+790,Pipette 10ml,8210,Limited Source Bidding,972.91,914.14,Gonzalez Ltd,Angela Ramirez,2025-02-16
+791,Fire Blanket,6092,Limited Source Bidding,1110.72,1134.78,Smith Inc,Luke Andrew Navarro,2025-01-12
+792,Microscope Coverslips box of 100,1253,Competitive Bidding,645.44,641.2,Williams-Rodriguez,Taylor Martinez,2024-10-25
+793,Lab Manual - Grade 10 Science,3786,Competitive Bidding,1298.63,1436.51,Bell-Barnes,Alex Rivera,2024-05-28
+794,Erlenmeyer Flask 250ml,5145,Competitive Bidding,1357.63,1280.16,Blair-Solomon,Angela Renee Mendoza,2024-10-04
+795,Laboratory Agar Powder 100g,4162,Competitive Bidding,2097.9,2046.24,"Carroll, Gonzalez and Bolton",Casey Hernandez,2025-02-14
+796,Hot Plate basic,5061,Negotiated Procurement,1705.49,1701.84,Thomas-Tapia,Sophia Christine Navarro,2025-01-20
+797,Refracting Telescope 70mm,9862,Negotiated Procurement,4456.89,4826.42,Campbell Ltd,Angela Renee Mendoza,2025-04-01
+798,Bunsen Burner,2627,Competitive Bidding,1245.8,1198.4,Fisher Group,Morgan Cruz,2024-07-17
+799,Beaker 250ml,3247,Negotiated Procurement,1140.01,1208.93,Chambers and Sons,Angela Renee Mendoza,2025-03-01
+800,Test Tube Brush,1103,Negotiated Procurement,463.33,407.9,"Wiggins, Jackson and Christensen",Christine Bautista,2024-11-05
+801,Voltmeter basic,3832,Competitive Bidding,715.36,777.73,Wright LLC,James Patrick Mendoza,2024-10-14
+802,Laboratory Spatula stainless steel,9666,Competitive Bidding,566.06,553.62,Matthews-Warner,Luke Andrew Navarro,2024-12-19
+803,Triple Beam Balance,6176,Limited Source Bidding,2901.91,3201.97,"Holder, Morrison and Cabrera",Angela Ramirez,2024-04-10
+804,Laboratory Safety Goggles,2721,Competitive Bidding,703.88,711.31,Gonzalez and Sons,Alex Rivera,2024-12-17
+805,Iron Filings 250g,3923,Negotiated Procurement,1065.66,933.07,Obrien Ltd,Sophia Christine Navarro,2025-01-16
+806,Hot Plate basic,3819,Competitive Bidding,1857.61,1701.84,Roman Inc,Sophia Christine Navarro,2024-11-03
+807,Lens Set convex concave,3018,Competitive Bidding,877.84,860.27,"Holmes, Leach and Maxwell",Angela Renee Mendoza,2025-02-16
+808,Thermometer (-10 to 110C),8063,Competitive Bidding,1010.2,934.64,"Thomas, Marshall and Logan",Angela Ramirez,2025-01-25
+809,Universal Indicator Solution 100ml,2298,Competitive Bidding,1148.5,1161.55,Anderson-Gonzalez,Christine Bautista,2024-04-10
+810,Test Tube 15ml,3494,Competitive Bidding,793.74,819.28,West and Sons,Angela Ramirez,2024-08-25
+811,Test Tube Brush,9026,Limited Source Bidding,403.91,407.9,Cruz-Burnett,Casey Hernandez,2025-01-15
+812,Microscope Slides,5973,Competitive Bidding,498.43,513.74,Morales-Mercer,Angela Renee Mendoza,2024-06-18
+813,pH Meter basic,7035,Limited Source Bidding,715.36,693.84,Armstrong PLC,Angela Ramirez,2024-12-16
+814,Petri Dishes pack of 20,5499,Competitive Bidding,674.91,738.19,Berry Group,Jamie Thompson,2025-02-21
+815,pH Meter basic,9640,Negotiated Procurement,640.54,693.84,"Myers, Greene and Norman",Morgan Cruz,2024-08-07
+816,Petri Dishes pack of 20,9898,Competitive Bidding,786.39,738.19,Payne-Allen,Christine Bautista,2024-04-17
+817,Funnel plastic 100mm,1800,Competitive Bidding,811.84,739.87,"Valencia, Johnson and Adams",Angela Ramirez,2024-04-14
+818,Thermometer (-10 to 110C),2388,Competitive Bidding,854.47,934.64,Carroll Group,Morgan Cruz,2024-07-14
+819,Tuning Fork 256 Hz,8993,Direct Contracting,674.54,689.02,Mullins-Kelly,Angela Renee Mendoza,2024-04-26
+820,Microscope Slides,8372,Competitive Bidding,484.01,513.74,Alvarez Ltd,Angela Renee Mendoza,2025-01-03
+821,Graduated Cylinder 100ml,5591,Competitive Bidding,715.89,651.28,Gay PLC,Luke Andrew Navarro,2024-07-30
+822,Iron Filings 250g,7774,Competitive Bidding,861.5,933.07,Davis-Dickson,James Patrick Mendoza,2024-11-07
+823,Hydrochloric Acid Science Laboratory,5961,Competitive Bidding,1842.51,1780.24,"Copeland, Murray and Doyle",Angela Renee Mendoza,2024-11-14
+824,Bunsen Burner,8383,Competitive Bidding,1108.16,1198.4,"Fuller, Morris and Porter",Angela Ramirez,2024-05-16
+825,Voltmeter basic,6110,Negotiated Procurement,768.33,777.73,Hudson-Morgan,Sophia Christine Navarro,2025-03-03
+826,Filter Paper pack of 100,1381,Negotiated Procurement,549.3,582.4,Perry-Erickson,Casey Hernandez,2024-10-09
+827,Ammeter basic,9674,Negotiated Procurement,987.52,1158.64,Williams-Tanner,James Patrick Mendoza,2024-05-05
+828,Bunsen Burner,9940,Limited Source Bidding,1273.29,1198.4,Paul and Sons,Sophia Christine Navarro,2024-12-01
+829,Petri Dishes pack of 20,8093,Competitive Bidding,770.58,738.19,Reyes-Jackson,Casey Hernandez,2025-01-14
+830,Graduated Cylinder 100ml,4746,Competitive Bidding,586.22,651.28,"Brown, Jacobson and Barry",Angela Ramirez,2024-10-12
+831,Compound Microscope (1000x),9132,Competitive Bidding,5219.06,5498.64,Hill-Evans,Christine Bautista,2024-04-18
+832,Refracting Telescope 70mm,2699,Competitive Bidding,5271.96,4826.42,Keith Group,Taylor Martinez,2025-03-04
+833,Pipette 10ml,3962,Limited Source Bidding,996.01,914.14,"Young, Matthews and Powell",James Patrick Mendoza,2024-05-15
+834,Laboratory Rubber Stoppers,7517,Limited Source Bidding,520.37,533.34,"Keith, Diaz and Mcgee",Angela Renee Mendoza,2024-06-06
+835,Prism glass,1410,Competitive Bidding,639.84,704.14,"Nolan, Holmes and Smith",Christine Bautista,2024-11-05
+836,Laboratory Safety Goggles,9779,Competitive Bidding,723.47,711.31,Collins-Hoffman,Angela Renee Mendoza,2025-02-22
+837,Litmus Paper,6758,Competitive Bidding,428.68,413.84,Golden LLC,Angela Renee Mendoza,2024-06-22
+838,Erlenmeyer Flask 250ml,8393,Competitive Bidding,1294.36,1280.16,Trujillo Group,Alex Rivera,2024-11-29
+839,Erlenmeyer Flask 250ml,7580,Direct Contracting,1274.13,1280.16,Garcia Inc,Casey Hernandez,2025-01-04
+840,Thermometer (-10 to 110C),6169,Limited Source Bidding,961.39,934.64,"Rodriguez, Brown and Shea",Christine Bautista,2024-06-03
+841,Hydrochloric Acid Science Laboratory,6781,Negotiated Procurement,1991.71,1780.24,Alexander-Reyes,Luke Andrew Navarro,2024-04-20
+842,Beaker 100ml,1719,Limited Source Bidding,913.66,855.46,"Valdez, Brown and Solomon",Angela Renee Mendoza,2024-09-27
+843,Bar Magnet pair,8938,Competitive Bidding,441.52,450.69,Ho-Monroe,James Patrick Mendoza,2024-12-18
+844,Laboratory Spatula stainless steel,6367,Negotiated Procurement,556.23,553.62,Duncan Group,Casey Hernandez,2024-11-20
+845,Stopwatch digital,8863,Limited Source Bidding,596.47,587.22,Ellison Ltd,Christine Bautista,2024-04-24
+846,Test Tube 15ml,2214,Limited Source Bidding,796.71,819.28,"Carter, Morris and Schneider",Angela Ramirez,2024-04-19
+847,Graduated Cylinder 100ml,6579,Competitive Bidding,706.42,651.28,Wallace Ltd,James Patrick Mendoza,2024-10-20
+848,Test Tube Rack,6941,Negotiated Procurement,1060.01,1114.18,Allen-Tate,James Patrick Mendoza,2024-11-04
+849,Dissecting Kit,2799,Competitive Bidding,887.15,856.35,Hernandez Ltd,Angela Renee Mendoza,2024-06-25
+850,Voltmeter basic,3504,Direct Contracting,834.78,777.73,"Hall, Ibarra and Bright",Angela Ramirez,2024-07-31
+851,Litmus Paper,4476,Limited Source Bidding,378.61,413.84,Cortez and Sons,Taylor Martinez,2024-10-01
+852,Thermometer (-10 to 110C),2688,Competitive Bidding,868.22,934.64,"Knox, Cohen and Nichols",Angela Ramirez,2024-09-08
+853,Triple Beam Balance,5341,Competitive Bidding,2912.51,3201.97,Turner-Jones,Angela Renee Mendoza,2024-10-14
+854,Prism glass,7883,Negotiated Procurement,663.68,704.14,Kelly-Walker,Taylor Martinez,2025-02-15
+855,Iron Filings 250g,1947,Competitive Bidding,1007.01,933.07,Murphy Inc,Casey Hernandez,2024-09-20
+856,Erlenmeyer Flask 250ml,8786,Competitive Bidding,1370.51,1280.16,Powell Inc,James Patrick Mendoza,2024-11-29
+857,Stopwatch digital,7817,Limited Source Bidding,580.0,587.22,Thompson PLC,Taylor Martinez,2024-07-06
+858,Laboratory Rubber Stoppers,8146,Limited Source Bidding,517.0,533.34,Nichols-Hawkins,Alex Rivera,2024-05-07
+859,Hydrochloric Acid Science Laboratory,3931,Direct Contracting,1513.61,1780.24,"Mitchell, Cline and Wilson",Angela Renee Mendoza,2024-07-06
+860,Test Tube Rack,1487,Direct Contracting,950.63,1114.18,Wilson Inc,Morgan Cruz,2024-09-12
+861,Hydrochloric Acid Science Laboratory,7072,Competitive Bidding,1727.37,1780.24,Russo-Robinson,Angela Ramirez,2024-12-03
+862,Test Tube Rack,5094,Direct Contracting,1075.47,1114.18,Richardson-Howard,James Patrick Mendoza,2024-05-22
+863,Stopwatch digital,8443,Limited Source Bidding,580.33,587.22,Johnson and Sons,Angela Renee Mendoza,2024-11-13
+864,pH Meter basic,6418,Competitive Bidding,718.05,693.84,Morse-Rojas,Luke Andrew Navarro,2024-12-21
+865,Iron Filings 250g,5381,Negotiated Procurement,875.24,933.07,Graham-Green,Casey Hernandez,2024-07-03
+866,Hot Plate basic,1103,Negotiated Procurement,1563.94,1701.84,Webb Group,Luke Andrew Navarro,2024-11-20
+867,Filter Paper pack of 100,8245,Direct Contracting,657.43,582.4,Fitzgerald Ltd,Morgan Cruz,2024-12-17
+868,Thermometer (-10 to 110C),9322,Limited Source Bidding,985.35,934.64,"Rose, Murray and Cannon",Luke Andrew Navarro,2024-09-25
+869,Bunsen Burner,8903,Negotiated Procurement,1141.63,1198.4,"Gonzales, Lee and Jones",Christine Bautista,2024-05-13
+870,Beaker 250ml,7215,Negotiated Procurement,1334.4,1208.93,"Carter, Rose and Garrison",James Patrick Mendoza,2025-01-11
+871,Laboratory Alcohol Burner,4717,Limited Source Bidding,619.16,574.0,"Young, Wong and Bennett",Angela Renee Mendoza,2024-12-18
+872,Filter Paper pack of 100,6362,Direct Contracting,657.13,582.4,Perry-Parker,James Patrick Mendoza,2025-03-31
+873,Iron Filings 250g,8035,Competitive Bidding,917.19,933.07,"Mccarthy, Padilla and Jones",Jamie Thompson,2024-08-31
+874,Hydrochloric Acid Science Laboratory,3527,Competitive Bidding,1812.5,1780.24,Foster-Bell,Luke Andrew Navarro,2024-11-10
+875,Erlenmeyer Flask 250ml,9944,Competitive Bidding,1221.41,1280.16,"Tran, Curtis and Harris",Morgan Cruz,2024-10-22
+876,Microscope Slides,1440,Competitive Bidding,529.05,513.74,Johnson-Spears,Luke Andrew Navarro,2024-05-30
+877,Hot Plate basic,1810,Negotiated Procurement,1587.37,1701.84,"Mays, Parrish and Deleon",Morgan Cruz,2024-11-13
+878,Stopwatch digital,6223,Limited Source Bidding,581.11,587.22,"Mcmahon, Curtis and Nguyen",Luke Andrew Navarro,2024-12-29
+879,Stopwatch digital,9034,Competitive Bidding,625.82,587.22,Maldonado LLC,Morgan Cruz,2024-06-29
+880,Test Tube Rack,4475,Limited Source Bidding,1202.72,1114.18,Brown-Wilson,Alex Rivera,2024-08-25
+881,Hot Plate basic,8533,Competitive Bidding,1738.07,1701.84,Jones Group,Jamie Thompson,2025-03-06
+882,Beaker 100ml,2977,Competitive Bidding,918.78,855.46,Young and Sons,Angela Ramirez,2024-04-17
+883,Pipette 10ml,4822,Negotiated Procurement,847.91,914.14,"Pruitt, Anderson and Stewart",Alex Rivera,2024-09-20
+884,Test Tube Rack,2700,Competitive Bidding,1108.62,1114.18,"Carter, Yu and Lee",James Patrick Mendoza,2025-01-25
+885,Spring Scale 500g,1903,Limited Source Bidding,762.03,729.57,"Morales, Jackson and Terry",Morgan Cruz,2024-10-11
+886,Graduated Cylinder 100ml,1674,Limited Source Bidding,613.14,651.28,Wolf-Decker,Angela Renee Mendoza,2024-08-28
+887,Hot Plate basic,8365,Competitive Bidding,1639.73,1701.84,"Mclaughlin, Massey and Berg",Luke Andrew Navarro,2025-01-08
+888,Litmus Paper,4917,Negotiated Procurement,459.12,413.84,Hopkins-Arellano,Taylor Martinez,2024-04-08
+889,Thermometer (-10 to 110C),4266,Competitive Bidding,979.68,934.64,Torres Ltd,Jamie Thompson,2024-11-10
+890,Lab Manual - Grade 10 Science,2201,Competitive Bidding,1317.78,1436.51,Logan-Ellison,Morgan Cruz,2024-12-11
+891,Lens Set convex concave,9518,Limited Source Bidding,856.62,860.27,Smith-Levine,Alex Rivera,2024-11-01
+892,Laboratory Spatula stainless steel,3060,Negotiated Procurement,545.92,553.62,Jones Inc,Angela Ramirez,2025-01-07
+893,Beaker 50ml,5247,Limited Source Bidding,839.72,836.08,Church-Horton,Morgan Cruz,2025-02-27
+894,Beaker 50ml,4551,Negotiated Procurement,846.79,836.08,Watson-Sanchez,Taylor Martinez,2024-12-09
+895,Petri Dishes pack of 20,8825,Competitive Bidding,760.36,738.19,Perkins-May,Sophia Christine Navarro,2024-07-05
+896,Erlenmeyer Flask 250ml,4742,Direct Contracting,1275.09,1280.16,"Johnson, Chen and Cooper",James Patrick Mendoza,2024-09-06
+897,Hot Plate basic,3830,Competitive Bidding,1797.82,1701.84,Jimenez Group,Sophia Christine Navarro,2024-06-22
+898,Lab Manual - Grade 10 Science,4505,Limited Source Bidding,1354.05,1436.51,"Butler, Hernandez and Wheeler",James Patrick Mendoza,2025-01-11
+899,Bar Magnet pair,7298,Competitive Bidding,483.02,450.69,"Sutton, Johnson and Pearson",Morgan Cruz,2024-07-16
+900,Filter Paper pack of 100,1811,Competitive Bidding,611.67,582.4,Deleon-Francis,Angela Ramirez,2024-07-03
+901,Graduated Cylinder 100ml,7877,Direct Contracting,731.35,651.28,"Lopez, Donovan and Wilson",Jamie Thompson,2024-07-06
+902,Voltmeter basic,4328,Competitive Bidding,830.86,777.73,Wright PLC,Alex Rivera,2024-04-18
+903,Bar Magnet pair,9940,Competitive Bidding,464.1,450.69,"Archer, Henderson and Obrien",Angela Renee Mendoza,2024-05-06
+904,Graduated Cylinder 100ml,9543,Negotiated Procurement,684.84,651.28,Smith Group,Jamie Thompson,2025-04-06
+905,Lens Set convex concave,3513,Negotiated Procurement,734.04,860.27,Gonzalez-Banks,James Patrick Mendoza,2024-09-08
+906,Thermometer (-10 to 110C),9558,Direct Contracting,866.21,934.64,"Collins, Green and Brown",Angela Ramirez,2024-10-12
+907,Laboratory Safety Goggles,6965,Competitive Bidding,672.8,711.31,"Johnson, Leach and Leon",Luke Andrew Navarro,2024-10-18
+908,Lens Set convex concave,6950,Limited Source Bidding,817.72,860.27,"Smith, Jackson and Orozco",Morgan Cruz,2024-10-11
+909,Bunsen Burner,7474,Limited Source Bidding,1179.25,1198.4,Wilson-Sanders,Christine Bautista,2024-10-01
+910,Laboratory Alcohol Burner,2732,Competitive Bidding,519.9,574.0,Young-Thomas,Jamie Thompson,2025-02-07
+911,Spring Scale 500g,2342,Competitive Bidding,737.94,729.57,Cole-Moore,Taylor Martinez,2024-04-21
+912,Test Tube Rack,9327,Negotiated Procurement,1022.32,1114.18,"Brown, Foster and James",Luke Andrew Navarro,2024-11-13
+913,Petri Dishes pack of 20,2037,Direct Contracting,836.07,738.19,"Oliver, Thompson and Walker",Luke Andrew Navarro,2025-01-21
+914,Triple Beam Balance,7538,Competitive Bidding,3085.75,3201.97,Klein PLC,Morgan Cruz,2024-05-24
+915,Laboratory Agar Powder 100g,5722,Negotiated Procurement,2065.0,2046.24,Brown-Harris,Jamie Thompson,2024-06-12
+916,Filter Paper pack of 100,6610,Limited Source Bidding,561.87,582.4,Lewis Group,Alex Rivera,2025-01-28
+917,pH Meter basic,2818,Competitive Bidding,711.42,693.84,"Burgess, Pace and Powell",Sophia Christine Navarro,2024-08-01
+918,Microscope Coverslips box of 100,5987,Negotiated Procurement,587.65,641.2,"Jensen, Allen and Bailey",Christine Bautista,2024-08-04
+919,Beaker 50ml,8948,Limited Source Bidding,887.34,836.08,"Pittman, Walker and Howard",Sophia Christine Navarro,2024-09-11
+920,Bar Magnet pair,8857,Competitive Bidding,417.25,450.69,Acosta-Torres,Sophia Christine Navarro,2024-10-06
+921,Filter Paper pack of 100,4601,Negotiated Procurement,658.4,582.4,"Roman, Oneal and Peterson",Sophia Christine Navarro,2025-03-10
+922,Laboratory Safety Goggles,8201,Competitive Bidding,649.48,711.31,Peterson Ltd,Jamie Thompson,2024-05-23
+923,Iron Filings 250g,2323,Negotiated Procurement,1011.59,933.07,Donovan-West,Christine Bautista,2024-07-26
+924,Laboratory Agar Powder 100g,4104,Competitive Bidding,1845.26,2046.24,Sanchez-Deleon,Taylor Martinez,2024-05-09
+925,Laboratory Rubber Stoppers,8047,Negotiated Procurement,573.16,533.34,Hale Inc,Morgan Cruz,2024-04-08
+926,Bar Magnet pair,5804,Limited Source Bidding,465.71,450.69,"Cook, Scott and Green",Casey Hernandez,2024-10-25
+927,Erlenmeyer Flask 250ml,9580,Limited Source Bidding,1244.35,1280.16,"Turner, Holmes and Harrison",Luke Andrew Navarro,2024-06-11
+928,Tuning Fork 256 Hz,1348,Limited Source Bidding,677.13,689.02,"Kelly, Best and Noble",James Patrick Mendoza,2024-10-27
+929,Tuning Fork 256 Hz,9984,Negotiated Procurement,755.87,689.02,Beard and Sons,Sophia Christine Navarro,2024-11-17
+930,Laboratory Agar Powder 100g,2806,Direct Contracting,2318.84,2046.24,Page-Proctor,Christine Bautista,2024-12-23
+931,Fire Blanket,6696,Competitive Bidding,1138.5,1134.78,Perkins-Smith,Angela Ramirez,2024-07-05
+932,Universal Indicator Solution 100ml,1799,Limited Source Bidding,1132.13,1161.55,Miller-Morris,Morgan Cruz,2024-12-18
+933,pH Meter basic,3914,Competitive Bidding,632.55,693.84,"Douglas, Watson and Everett",Taylor Martinez,2025-02-16
+934,Prism glass,6448,Negotiated Procurement,631.25,704.14,Griffith-Mitchell,Jamie Thompson,2024-06-29
+935,Triple Beam Balance,3988,Direct Contracting,3410.12,3201.97,Walker-Mcgee,Alex Rivera,2025-03-31
+936,Refracting Telescope 70mm,1132,Competitive Bidding,5245.06,4826.42,Scott-Mccoy,Jamie Thompson,2024-07-08
+937,Beaker 100ml,3883,Limited Source Bidding,888.24,855.46,Thomas-Evans,Alex Rivera,2024-07-31
+938,Bar Magnet pair,3780,Negotiated Procurement,392.9,450.69,Mcdaniel Group,Luke Andrew Navarro,2025-03-14
+939,Microscope Coverslips box of 100,6542,Competitive Bidding,640.16,641.2,"Hines, Meza and Harris",Christine Bautista,2024-10-26
+940,Lens Set convex concave,9355,Limited Source Bidding,830.41,860.27,"Robertson, Rivas and Flynn",Luke Andrew Navarro,2024-04-09
+941,Copper Sulfate,2321,Competitive Bidding,1848.94,1804.88,Miller-Ross,Alex Rivera,2025-01-21
+942,Microscope Slides,7843,Limited Source Bidding,517.98,513.74,Wang-Dominguez,Morgan Cruz,2024-04-14
+943,Laboratory Rubber Stoppers,3911,Negotiated Procurement,496.99,533.34,"Washington, Horn and Collins",Alex Rivera,2024-12-11
+944,Petri Dishes pack of 20,9949,Negotiated Procurement,649.43,738.19,Becker Ltd,Casey Hernandez,2025-03-16
+945,Graduated Cylinder 100ml,7558,Negotiated Procurement,720.37,651.28,Roberts-Richards,Taylor Martinez,2024-08-21
+946,Beaker 100ml,1078,Direct Contracting,767.76,855.46,Villa and Sons,Angela Renee Mendoza,2025-01-21
+947,Stopwatch digital,3384,Negotiated Procurement,516.13,587.22,Harris-Walker,Angela Renee Mendoza,2024-11-20
+948,Beaker 50ml,7573,Limited Source Bidding,857.49,836.08,Hudson Group,Alex Rivera,2025-01-16
+949,Laboratory Safety Goggles,6871,Limited Source Bidding,715.32,711.31,"Schmidt, Jordan and Braun",Morgan Cruz,2025-02-11
+950,Beaker 50ml,2385,Negotiated Procurement,769.8,836.08,"Grant, Ritter and Price",Alex Rivera,2024-10-18
+951,Filter Paper pack of 100,4827,Competitive Bidding,566.89,582.4,Robinson-Wilson,James Patrick Mendoza,2024-12-04
+952,Iron Filings 250g,2524,Limited Source Bidding,975.46,933.07,"Reeves, Lopez and Chavez",Sophia Christine Navarro,2024-07-25
+953,Thermometer (-10 to 110C),9049,Limited Source Bidding,893.43,934.64,"Wright, Graham and Dean",James Patrick Mendoza,2024-11-03
+954,Copper Sulfate,2190,Negotiated Procurement,1553.68,1804.88,Bryant Inc,James Patrick Mendoza,2024-05-20
+955,Lab Manual - Grade 10 Science,8283,Direct Contracting,1443.99,1436.51,Stephens and Sons,Angela Ramirez,2024-05-13
+956,Laboratory Aprons pack of 10,7526,Limited Source Bidding,2847.87,3094.0,Mayer-Clements,James Patrick Mendoza,2024-06-06
+957,Lab Manual - Grade 10 Science,1677,Competitive Bidding,1356.96,1436.51,Guzman Ltd,Jamie Thompson,2024-08-03
+958,Refracting Telescope 70mm,6373,Limited Source Bidding,5059.04,4826.42,Banks-Blair,Casey Hernandez,2024-07-25
+959,Laboratory Alcohol Burner,9538,Limited Source Bidding,525.4,574.0,Cain PLC,Jamie Thompson,2024-12-05
+960,Erlenmeyer Flask 250ml,6269,Competitive Bidding,1317.08,1280.16,Rodriguez PLC,Morgan Cruz,2025-02-04
+961,Test Tube Rack,7738,Competitive Bidding,1216.23,1114.18,Rios-Moore,Alex Rivera,2024-11-25
+962,Laboratory Rubber Stoppers,1798,Limited Source Bidding,543.9,533.34,"Santana, Lambert and Mack",James Patrick Mendoza,2024-07-21
+963,Bar Magnet pair,8937,Competitive Bidding,495.06,450.69,Anderson-Kennedy,Angela Ramirez,2025-02-12
+964,Laboratory Gloves nitrile box of 100,5117,Limited Source Bidding,523.48,520.13,"Adams, Brown and Shaffer",Alex Rivera,2024-11-30
+965,Laboratory Agar Powder 100g,4359,Limited Source Bidding,2194.44,2046.24,White LLC,Alex Rivera,2024-06-10
+966,Spring Scale 500g,1232,Competitive Bidding,794.8,729.57,Anderson Inc,Christine Bautista,2025-03-11
+967,Laboratory Agar Powder 100g,8353,Direct Contracting,2323.8,2046.24,"James, Dickerson and Jones",Sophia Christine Navarro,2024-10-13
+968,Fire Blanket,1087,Competitive Bidding,1187.1,1134.78,Johnson-Long,Angela Ramirez,2025-03-04
+969,Iron Filings 250g,4999,Competitive Bidding,924.79,933.07,Martinez Inc,Taylor Martinez,2024-05-10
+970,Stopwatch digital,1572,Direct Contracting,649.54,587.22,Fowler-Thomas,Taylor Martinez,2024-05-28
+971,Compound Microscope (1000x),6431,Limited Source Bidding,5756.29,5498.64,Mcdaniel and Sons,Angela Ramirez,2024-04-07
+972,Copper Sulfate,5659,Negotiated Procurement,2068.49,1804.88,Thomas and Sons,Angela Ramirez,2024-09-16
+973,Litmus Paper,9731,Negotiated Procurement,466.45,413.84,Jimenez-Gill,Christine Bautista,2024-10-13
+974,Universal Indicator Solution 100ml,4528,Competitive Bidding,1211.48,1161.55,"Whitney, Liu and Gilmore",Angela Renee Mendoza,2024-12-14
+975,Spring Scale 500g,6201,Competitive Bidding,757.9,729.57,Patterson Ltd,Angela Ramirez,2024-06-10
+976,Beaker 250ml,7357,Negotiated Procurement,1187.15,1208.93,Miranda-Long,Angela Ramirez,2024-07-02
+977,Test Tube 15ml,7930,Limited Source Bidding,826.46,819.28,"Palmer, Richmond and Elliott",Sophia Christine Navarro,2025-02-10
+978,Refracting Telescope 70mm,4101,Limited Source Bidding,4666.97,4826.42,Lee Inc,Christine Bautista,2024-04-24
+979,Laboratory Gloves nitrile box of 100,4487,Limited Source Bidding,512.31,520.13,Wolfe and Sons,Jamie Thompson,2024-04-22
+980,Laboratory Safety Goggles,3200,Competitive Bidding,656.67,711.31,"Jacobs, Zimmerman and Hogan",Sophia Christine Navarro,2024-04-18
+981,Erlenmeyer Flask 250ml,4136,Competitive Bidding,1389.37,1280.16,Smith-Moran,James Patrick Mendoza,2024-05-10
+982,Graduated Cylinder 100ml,4317,Limited Source Bidding,654.45,651.28,Conley Ltd,Christine Bautista,2024-07-10
+983,Filter Paper pack of 100,3458,Competitive Bidding,572.22,582.4,Smith-Alexander,Sophia Christine Navarro,2024-08-27
+984,Microscope Slides,1504,Competitive Bidding,526.21,513.74,"Woods, Nichols and Smith",Angela Ramirez,2024-09-11
+985,Funnel plastic 100mm,6902,Competitive Bidding,731.04,739.87,Brown-Flowers,Jamie Thompson,2024-06-23
+986,Funnel plastic 100mm,8788,Competitive Bidding,689.18,739.87,"Warner, Meyer and Bates",Angela Ramirez,2024-12-21
+987,Filter Paper pack of 100,2367,Direct Contracting,555.85,582.4,Miller-Jacobs,Luke Andrew Navarro,2024-06-15
+988,Spring Scale 500g,8990,Competitive Bidding,761.36,729.57,Rosario-Alvarado,Taylor Martinez,2024-07-19
+989,Graduated Cylinder 100ml,4895,Negotiated Procurement,671.34,651.28,Bartlett LLC,Alex Rivera,2024-05-17
+990,Bar Magnet pair,6734,Competitive Bidding,410.21,450.69,Lucas-Coleman,Sophia Christine Navarro,2024-05-30
+991,Microscope Slides,2137,Negotiated Procurement,517.51,513.74,"Ochoa, Ramirez and Diaz",Luke Andrew Navarro,2024-08-05
+992,Funnel plastic 100mm,7440,Limited Source Bidding,699.11,739.87,Robertson-Powell,Christine Bautista,2024-04-22
+993,Pipette 10ml,5088,Competitive Bidding,959.66,914.14,Porter-Summers,Angela Renee Mendoza,2024-05-14
+994,Stopwatch digital,6205,Competitive Bidding,621.84,587.22,Kramer and Sons,James Patrick Mendoza,2024-07-10
+995,Beaker 250ml,6003,Negotiated Procurement,1143.03,1208.93,Burch LLC,James Patrick Mendoza,2024-12-15
+996,Lens Set convex concave,8155,Competitive Bidding,812.71,860.27,Mccarthy and Sons,Angela Ramirez,2024-07-31
+997,Laboratory Aprons pack of 10,9785,Negotiated Procurement,3065.34,3094.0,"Haynes, Reyes and Thomas",Alex Rivera,2024-07-18
+998,Laboratory Gloves nitrile box of 100,9284,Competitive Bidding,529.78,520.13,Blake-Graham,Christine Bautista,2025-01-09
+999,Bunsen Burner,2293,Negotiated Procurement,1249.38,1198.4,"Hunt, Morales and Thompson",Jamie Thompson,2024-12-10
+1000,Iron Filings 250g,8426,Competitive Bidding,844.96,933.07,Thompson PLC,Taylor Martinez,2024-12-28

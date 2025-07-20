@@ -11,6 +11,12 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "watchdog_ai.settings")
+# Use production settings for Railway deployment
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'watchdog_ai.settings_production')
 
 application = get_wsgi_application()
+
+# Add whitenoise for static file serving in production
+from whitenoise import WhiteNoise
+application = WhiteNoise(application, root='staticfiles/')
+application.add_files('staticfiles/', prefix='static/')
