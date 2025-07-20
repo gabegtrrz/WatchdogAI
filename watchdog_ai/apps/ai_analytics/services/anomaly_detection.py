@@ -130,16 +130,22 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         logger.info(f"Preprocessing completed in {time.time() - step_start:.2f} seconds")
 
         ### 4. Generate features
-        featured_df, feature_columns_list = feature_engineering.create_features(cleaned_df)
+        featured_df, _ = feature_engineering.create_features(cleaned_df)
 
         ### 5. Align columns with the model's training columns (IMPROVED)
-        final_df = _prepare_features_for_prediction(featured_df, feature_columns_list)
-
-        # 6. Perform anomaly detection
-        anomaly_labels, anomaly_scores = analyze_anomalies(final_df, contamination)
+        training_columns_copy = training_columns.copy()
+        final_df = _prepare_features_for_prediction(featured_df, training_columns_copy)
+        del training_columns_copy  # Clean up the copy after use
         
-        if anomaly_labels is None or anomaly_scores is None:
-            raise ValueError("Anomaly detection failed, received no labels or scores.")
+
+
+        # 6. Perform anomaly detection with sophisticated contamination handling
+        prediction_results = _get_predictions_and_scores(final_df, contamination)
+        
+        if prediction_results is None:
+            raise ValueError("Anomaly detection failed, received no results (None).")
+        
+        predicted_labels, anomaly_scores, threshold = prediction_results
 
         # Step 7: SHAP Analysis - Generate explainability
         logger.debug("Generating SHAP values for explainability...")
@@ -151,11 +157,8 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         logger.debug("SHAP values generated successfully")
         logger.info(f"SHAP values generated in {time.time() - step_start:.2f} seconds")
 
-        # Step 8: Generate Inverse Anomaly Scores and to make it easier to understand.
-        # Invert anomaly scores: higher values now indicate more anomalous (easier to interpret)
-        final_anomaly_scores = -anomaly_scores # applies element-wise negation to all values in the nparray
         
-        # 9. Unpack SHAP and Save to Database
+        # 8. Unpack SHAP and Save to Database
         if not analysis_run_id:
             raise ValueError("Analysis run ID is required")
 
@@ -178,14 +181,15 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
                 AnalysisReport(
                     transaction=transaction,
                     analysis_run_id=analysis_run_id,
-                    is_anomaly=bool(anomaly_labels[i]),
+                    is_anomaly=bool(predicted_labels[i]),
                     anomaly_score=anomaly_scores[i],
                     shap_values=shap_values_for_transaction,
                     contamination_param=contamination,
                 )
             )
 
-        AnalysisReport.objects.bulk_create(reports_to_create)
+        # Use Django's bulk_create method
+        AnalysisReport.objects.bulk_create(reports_to_create)  # type: ignore
         logger.info(f"Successfully saved {len(reports_to_create)} analysis reports.")
 
         # Compile final results
@@ -193,7 +197,9 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             "status": "success",
             "analysis_run_id": str(analysis_run_id),
             "transactions_analyzed": len(transactions_list),
-            "anomalies_found": int(np.sum(anomaly_labels))
+            "anomalies_found": int(np.sum(predicted_labels)),
+            "threshold_used": float(threshold),
+            "contamination_rate": float(contamination)
         }
 
         # Log successful completion
@@ -214,9 +220,9 @@ def _prepare_features_for_prediction(featured_df: pd.DataFrame, feature_columns_
     Prepare features for model prediction with proper column handling.
     
     **Process:**
-    1. Handles missing columns by adding them with default values
-    2. Removes extra columns not in training data
-    3. Ensures exact column match with training data
+    1. Removes extra columns not in training data
+    2. Adds missing columns with default values
+    3. Ensures exact column match with training data in correct order
     4. Validates DataFrame type safety
     
     Args:
@@ -228,16 +234,30 @@ def _prepare_features_for_prediction(featured_df: pd.DataFrame, feature_columns_
     """
     features_df = featured_df.copy()
     
+    # Store original index information for restoration
+    original_index = features_df.index.copy()
+    original_index_name = features_df.index.name
+    
     # Debug column information
     logger.info(f'Columns after feature engineering: {list(features_df.columns)}')
-    logger.info(f'Training columns: {list(training_columns)}')
+    logger.info(f'Training columns: {list(feature_columns_list)}')
     
-    # Handle column mismatches
-    missing_columns = set(training_columns) - set(features_df.columns)
-    extra_columns = set(features_df.columns) - set(training_columns)
+    # Safety check: Ensure is_anomaly is not in features
+    if 'is_anomaly' in features_df.columns:
+        logger.error('is_anomaly column still present in features! Removing it...')
+        features_df = features_df.drop('is_anomaly', axis=1)
+    
+    # Handle column mismatches - FIXED: Remove redundant logic
+    missing_columns = set(feature_columns_list) - set(features_df.columns)
+    extra_columns = set(features_df.columns) - set(feature_columns_list)
     
     logger.info(f'Missing columns: {missing_columns}')
     logger.info(f'Extra columns: {extra_columns}')
+    
+    # Remove extra columns first
+    if extra_columns:
+        logger.info(f'Removing extra columns: {extra_columns}')
+        features_df = features_df.drop(columns=list(extra_columns))
     
     # Add missing columns with default value
     if missing_columns:
@@ -245,22 +265,20 @@ def _prepare_features_for_prediction(featured_df: pd.DataFrame, feature_columns_
         for col in missing_columns:
             features_df[col] = 0.0  # Default value for missing features
     
-    # Remove extra columns
-    if extra_columns:
-        logger.warning(f'Extra columns in prediction data: {extra_columns}')
-        features_df = features_df[training_columns]
-    
-    # Safety check: Ensure is_anomaly is not in features
-    if 'is_anomaly' in features_df.columns:
-        logger.error('is_anomaly column still present in features! Removing it...')
-        features_df = features_df.drop('is_anomaly', axis=1)
+    # Final reordering to match training order exactly
+    features_df = features_df[feature_columns_list]
     
     logger.info(f'Features shape for prediction: {features_df.shape}')
-    logger.info(f'Final feature columns: {list(features_df.columns)}')
+    logger.info(f'Final feature columns (in training order): {list(features_df.columns)}')
     
     # Ensure we return a DataFrame, not a Series
     if isinstance(features_df, pd.Series):
         features_df = features_df.to_frame().T
+        # Restore index for Series case
+        if features_df.index.name != original_index_name:
+            features_df.index = original_index
+            features_df.index.name = original_index_name
+            logger.info("Restored original index after converting to DataFrame")
     
     return features_df
 
@@ -268,7 +286,7 @@ def _prepare_features_for_prediction(featured_df: pd.DataFrame, feature_columns_
 # UTILITY FUNCTIONS
 # =============================================================================
 
-def analyze_anomalies(final_df: pd.DataFrame, contamination: float=0.05):
+def _get_predictions_and_scores(final_df: pd.DataFrame, contamination: float = 0.05) -> Optional[tuple[np.ndarray, np.ndarray, float]]:
     """
     Performs anomaly detection on the final DataFrame using the trained Isolation Forest model.
     
@@ -282,38 +300,57 @@ def analyze_anomalies(final_df: pd.DataFrame, contamination: float=0.05):
         contamination: The proportion of outliers expected in the dataset (default: 0.05).
         
     Returns:
-        tuple: (predicted_labels, anomaly_scores)
+        Optional[tuple]: (predicted_labels, anomaly_scores, threshold)
             - predicted_labels: np.ndarray of 1s (anomaly) and 0s (normal)
             - anomaly_scores: np.ndarray of raw anomaly scores (lower = more anomalous)
+            - threshold: float of the calculated threshold value
     """
 
     try:
         if model is not None:
-        # Get raw anomaly scores. Lower score means more anomalous.
+            logger.info('Getting predictions and anomaly scores from trained model...')
+            
+            # Get raw anomaly scores (lower score means more anomalous)
             anomaly_scores = model.score_samples(final_df)
             
-            # Calculate the threshold based on the contamination rate
-            # This determines the cutoff for what is considered an anomaly.
+            # Determine contamination rate for thresholding
+            
+            try:
+                # Use the provided contamination parameter if it's valid
+                if 0.01 <= contamination <= 0.5:
+                    logger.info(f"Using provided contamination rate: {contamination}")
+                else:
+                    # If invalid, fall back to model's default
+                    contamination = model.contamination
+                    logger.warning(f"Invalid contamination parameter '{contamination}'. "
+                                f"Falling back to model's default.")
+                
+            except (ValueError, TypeError):
+                logger.warning(f"Invalid contamination parameter '{contamination}'. "
+                                f"Falling back to model's default.")
+                
+                # Fallback to model's default contamination rate
+                contamination = model.contamination
+
+            
+            # Calculate threshold based on contamination rate
             threshold = np.percentile(anomaly_scores, contamination * 100)
             
-            # Classify the transaction as anomaly (True) or normal (False) based on the threshold
+            # Classify samples as anomalies (1) or normal (0)
             predicted_labels = (anomaly_scores <= threshold).astype(int)
 
-            
-            logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)} '
-                   f'using contamination rate of {contamination:.4f} and threshold of {threshold:.4f}'
-                   )
+            logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
+            logger.info(f'using contamination rate of {contamination:.4f} and threshold of {threshold:.4f}')
 
-            return predicted_labels, anomaly_scores
+            return predicted_labels, anomaly_scores, threshold
 
         else:
             logger.error("Model is None, cannot perform inference")
-            return None, None
+            return None
     
     except Exception as e:
         logger.error(f"Error in anomaly detection: {e}", exc_info=True)
-        return None, None
-
+        return None
 
 
 def generate_shap_values(model: Any, final_df: pd.DataFrame) -> Optional[np.ndarray]:
@@ -339,7 +376,8 @@ def generate_shap_values(model: Any, final_df: pd.DataFrame) -> Optional[np.ndar
     try:
         # Create SHAP explainer for tree-based model
         explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(final_df) 
+        df_copy = final_df.copy()
+        shap_values = explainer.shap_values(df_copy) 
         # produces a NumPy array with the same shape as the input data
         # shap_values[i, j] is the SHAP value for the i-th sample and the j-th feature.
 
