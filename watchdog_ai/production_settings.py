@@ -82,13 +82,14 @@ WSGI_APPLICATION = 'watchdog_ai.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ["PGDATABASE"],
-        'USER': os.environ["PGUSER"],
-        'PASSWORD': os.environ["PGPASSWORD"],
-        'HOST': os.environ["PGHOST"],
-        'PORT': os.environ["PGPORT"],
+        'NAME': os.environ.get("PGDATABASE", "railway"),
+        'USER': os.environ.get("PGUSER","postgres"),
+        'PASSWORD': os.environ.get("PGPASSWORD","ZnUCtwKnntZvumjMwkbJXwDHMOaSVFPB"),
+        'HOST': os.environ.get("PGHOST","hopper.proxy.rlwy.net"),
+        'PORT': os.environ.get("PGPORT","16899"),
     }
 }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
