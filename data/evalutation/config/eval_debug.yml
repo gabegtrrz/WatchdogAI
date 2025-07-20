@@ -18,7 +18,7 @@ model:
   
   # Contamination parameter for evaluating Isolation Forest model (optional - uses model's default if not specified)
   # Range: 0.0 to 0.5 (0% to 50% of data expected to be anomalous)
-  contamination: 0.01
+  contamination: 0.04
 
 
 # Evaluation configuration
