@@ -4,12 +4,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
+from decimal import Decimal
+from datetime import datetime
+from django.db import transaction
 
 from .serializers import TransactionCSVUploadSerializer
 from .services import process_transaction_csv, create_transactions_from_data
 from apps.data_augmentation.services import enrich_transaction_list
 from apps.blockchain.integration import integrate_transaction_batch, retry_failed_blockchain_integrations, get_blockchain_status_summary
 from apps.blockchain.integrity_service import integrity_service
+from apps.core.models import Transaction, ProcurementMethod
 
 def transaction_upload_ui(request):
     """
@@ -214,3 +218,124 @@ class TransactionUploadAPIView(APIView):
                 {'error': f'An unexpected error occurred: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+def single_transaction_upload(request):
+    """
+    Handles single transaction upload form for demo purposes.
+    Creates a single transaction from form data and integrates it with blockchain.
+    """
+    if request.method == 'POST':
+        try:
+            # Get form data
+            item_name = request.POST.get('item_name')
+            quantity = request.POST.get('quantity')
+            unit_purchase_price = request.POST.get('unit_purchase_price')
+            transaction_date = request.POST.get('transaction_date')
+            procurement_method_name = request.POST.get('procurement_method')
+            supplier = request.POST.get('supplier')
+            invoice_number = request.POST.get('invoice_number')
+            payment_receipt_number = request.POST.get('payment_receipt_number')
+            
+            # Optional fields
+            project_name = request.POST.get('project_name', '')
+            end_user_unit = request.POST.get('end_user_unit', '')
+            project_description = request.POST.get('project_description', '')
+            average_price = request.POST.get('average_price', '')
+            approved_budget = request.POST.get('approved_budget', '')
+            procurement_officer = request.POST.get('procurement_officer', '')
+            
+            # Timeline fields
+            invitation_to_bid_posting_date = request.POST.get('invitation_to_bid_posting_date', '')
+            bid_submission_deadline = request.POST.get('bid_submission_deadline', '')
+            bid_opening_date = request.POST.get('bid_opening_date', '')
+            notice_of_award_date = request.POST.get('notice_of_award_date', '')
+            contract_signing_date = request.POST.get('contract_signing_date', '')
+            
+            # Validate required fields
+            if not all([item_name, quantity, unit_purchase_price, transaction_date, 
+                       procurement_method_name, supplier, invoice_number, payment_receipt_number]):
+                messages.error(request, 'Please fill in all required fields.')
+                return redirect('single-transaction-upload')
+            
+            # Convert and validate data types
+            try:
+                quantity = int(quantity)
+                unit_purchase_price = Decimal(unit_purchase_price)
+                transaction_date = datetime.strptime(transaction_date, '%Y-%m-%d').date()
+                
+                # Convert optional decimal fields
+                if average_price:
+                    average_price = Decimal(average_price)
+                if approved_budget:
+                    approved_budget = Decimal(approved_budget)
+                    
+                # Convert optional date fields
+                if invitation_to_bid_posting_date:
+                    invitation_to_bid_posting_date = datetime.strptime(invitation_to_bid_posting_date, '%Y-%m-%d').date()
+                if bid_submission_deadline:
+                    bid_submission_deadline = datetime.strptime(bid_submission_deadline, '%Y-%m-%d').date()
+                if bid_opening_date:
+                    bid_opening_date = datetime.strptime(bid_opening_date, '%Y-%m-%d').date()
+                if notice_of_award_date:
+                    notice_of_award_date = datetime.strptime(notice_of_award_date, '%Y-%m-%d').date()
+                if contract_signing_date:
+                    contract_signing_date = datetime.strptime(contract_signing_date, '%Y-%m-%d').date()
+                    
+            except (ValueError, TypeError) as e:
+                messages.error(request, f'Invalid data format: {str(e)}')
+                return redirect('single-transaction-upload')
+            
+            # Get or create procurement method
+            procurement_method, created = ProcurementMethod.objects.get_or_create(
+                name=procurement_method_name
+            )
+            
+            # Create transaction within a database transaction
+            with transaction.atomic():
+                new_transaction = Transaction.objects.create(
+                    project_name=project_name or None,
+                    end_user_unit=end_user_unit or None,
+                    project_description=project_description or None,
+                    item_name=item_name,
+                    quantity=quantity,
+                    unit_purchase_price=unit_purchase_price,
+                    average_price=average_price or None,
+                    approved_budget=approved_budget or None,
+                    procurement_method=procurement_method,
+                    supplier=supplier,
+                    procurement_officer=procurement_officer or None,
+                    invoice_number=invoice_number,
+                    payment_receipt_number=payment_receipt_number,
+                    invitation_to_bid_posting_date=invitation_to_bid_posting_date or None,
+                    bid_submission_deadline=bid_submission_deadline or None,
+                    bid_opening_date=bid_opening_date or None,
+                    notice_of_award_date=notice_of_award_date or None,
+                    contract_signing_date=contract_signing_date or None,
+                    transaction_date=transaction_date,
+                )
+                
+                # Calculate total purchase price
+                new_transaction.total_purchase_price = new_transaction.calculated_total_purchase_price
+                new_transaction.save()
+                
+                # Integrate with blockchain
+                blockchain_success, blockchain_result = integrate_transaction_batch([new_transaction])
+                
+                if blockchain_success:
+                    messages.success(request, f'Transaction created successfully and integrated with blockchain!')
+                    if blockchain_result.get('block_info'):
+                        block_info = blockchain_result['block_info']
+                        messages.info(request, f"Block {block_info['index']} created with hash {block_info['hash'][:16]}...")
+                else:
+                    messages.warning(request, f'Transaction created but blockchain integration failed. You can retry later.')
+                
+                messages.success(request, f'Transaction ID: {new_transaction.transaction_id}')
+                
+        except Exception as e:
+            messages.error(request, f'An error occurred while creating the transaction: {str(e)}')
+            return redirect('single-transaction-upload')
+        
+        return redirect('single-transaction-upload')
+    
+    return render(request, 'transaction_management/single_upload.html')

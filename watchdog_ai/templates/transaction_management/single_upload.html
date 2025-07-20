@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Single Transaction - WatchdogAI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light border-bottom">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-plus me-2"></i>Upload Single Transaction
+                </h4>
+                <small class="text-muted">Demo: Procurement of Educational Lab Equipment</small>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>{{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Project Information -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="project_name" class="form-label">Project Name</label>
+                            <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Enter project name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="end_user_unit" class="form-label">End User Unit</label>
+                            <input type="text" class="form-control" id="end_user_unit" name="end_user_unit" placeholder="Enter end user unit">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="project_description" class="form-label">Project Description</label>
+                        <textarea class="form-control" id="project_description" name="project_description" rows="3" placeholder="Enter project description"></textarea>
+                    </div>
+                    
+                    <!-- Item Details -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="item_name" class="form-label">Item Name *</label>
+                            <select class="form-select" id="item_name" name="item_name" required>
+                                <option value="">Select an item...</option>
+                                <option value="BEAKER – LOW FORM GRIFFIN, 250 ML, BOROSILICATE GLASS 3.3, WITH SPOUT AND PRINTED GRADUATIONS">BEAKER – LOW FORM GRIFFIN, 250 ML, BOROSILICATE GLASS 3.3, WITH SPOUT AND PRINTED GRADUATIONS</option>
+                                <option value="GRADUATED CYLINDER – 100 ML CAPACITY, CLASS B, POLYPROPYLENE, WITH HEXAGONAL BASE AND MOLDED GRADUATIONS">GRADUATED CYLINDER – 100 ML CAPACITY, CLASS B, POLYPROPYLENE, WITH HEXAGONAL BASE AND MOLDED GRADUATIONS</option>
+                                <option value="TEST TUBE – 16 × 150 MM, BOROSILICATE GLASS 3.3, RIMMED, REUSABLE">TEST TUBE – 16 × 150 MM, BOROSILICATE GLASS 3.3, RIMMED, REUSABLE</option>
+                                <option value="ERLENMEYER FLASK – 250 ML, BOROSILICATE GLASS 3.3, NARROW MOUTH, WITH PRINTED GRADUATIONS">ERLENMEYER FLASK – 250 ML, BOROSILICATE GLASS 3.3, NARROW MOUTH, WITH PRINTED GRADUATIONS</option>
+                                <option value="FUNNEL – UTILITY TYPE, POLYPROPYLENE PLASTIC, 100 MM TOP DIAMETER">FUNNEL – UTILITY TYPE, POLYPROPYLENE PLASTIC, 100 MM TOP DIAMETER</option>
+                                <option value="WATCH GLASS – 100 MM DIAMETER, SODA-LIME GLASS, FIRE-POLISHED WITH BEVELED EDGES">WATCH GLASS – 100 MM DIAMETER, SODA-LIME GLASS, FIRE-POLISHED WITH BEVELED EDGES</option>
+                                <option value="TRIPLE BEAM BALANCE – MECHANICAL, 610 G CAPACITY, 0.1 G READABILITY, STAINLESS STEEL PAN">TRIPLE BEAM BALANCE – MECHANICAL, 610 G CAPACITY, 0.1 G READABILITY, STAINLESS STEEL PAN</option>
+                                <option value="ALCOHOL LAMP – 150 ML CAPACITY, GLASS BODY, WITH METAL SHIELD AND ADJUSTABLE WICK CAP">ALCOHOL LAMP – 150 ML CAPACITY, GLASS BODY, WITH METAL SHIELD AND ADJUSTABLE WICK CAP</option>
+                                <option value="METER STICK – 100 CM, HARDWOOD WITH METAL END CAPS, DUAL SCALE IN CM AND INCHES">METER STICK – 100 CM, HARDWOOD WITH METAL END CAPS, DUAL SCALE IN CM AND INCHES</option>
+                                <option value="STOPWATCH – DIGITAL LCD, 1/100TH SECOND PRECISION, WATER-RESISTANT, LAP/SPLIT FUNCTION">STOPWATCH – DIGITAL LCD, 1/100TH SECOND PRECISION, WATER-RESISTANT, LAP/SPLIT FUNCTION</option>
+                                <option value="STIRRING ROD – 200 MM × 7 MM, BOROSILICATE GLASS, ROUNDED ENDS">STIRRING ROD – 200 MM × 7 MM, BOROSILICATE GLASS, ROUNDED ENDS</option>
+                                <option value="TEST TUBE BRUSH – FOR 16–20 MM TUBES, NYLON BRISTLES, GALVANIZED STEEL WIRE HANDLE WITH LOOPED END">TEST TUBE BRUSH – FOR 16–20 MM TUBES, NYLON BRISTLES, GALVANIZED STEEL WIRE HANDLE WITH LOOPED END</option>
+                                <option value="DRY CELL BATTERY – SIZE D, CARBON-ZINC (HEAVY DUTY), 1.5 VOLTS, SHRINK-WRAPPED PACK OF 2">DRY CELL BATTERY – SIZE D, CARBON-ZINC (HEAVY DUTY), 1.5 VOLTS, SHRINK-WRAPPED PACK OF 2</option>
+                                <option value="PH INDICATOR PAPER – UNIVERSAL RANGE (PH 1–14), PLASTIC DISPENSER ROLL, 5 METERS LENGTH">PH INDICATOR PAPER – UNIVERSAL RANGE (PH 1–14), PLASTIC DISPENSER ROLL, 5 METERS LENGTH</option>
+                                <option value="WIRE GAUZE – 125 × 125 MM (5" × 5"), WOVEN STEEL MESH WITH CERAMIC FIBER CENTER">WIRE GAUZE – 125 × 125 MM (5" × 5"), WOVEN STEEL MESH WITH CERAMIC FIBER CENTER</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="quantity" class="form-label">Quantity *</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" min="1" required placeholder="Enter quantity">
+                        </div>
+                    </div>
+                    
+                    <!-- Pricing -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="unit_purchase_price" class="form-label">Unit Purchase Price *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₱</span>
+                                <input type="number" class="form-control" id="unit_purchase_price" name="unit_purchase_price" step="0.01" min="0" required placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="average_price" class="form-label">Average Price</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₱</span>
+                                <input type="number" class="form-control" id="average_price" name="average_price" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="approved_budget" class="form-label">Approved Budget</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₱</span>
+                                <input type="number" class="form-control" id="approved_budget" name="approved_budget" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Procurement Method -->
+                    <div class="mb-3">
+                        <label for="procurement_method" class="form-label">Procurement Method *</label>
+                        <select class="form-select" id="procurement_method" name="procurement_method" required>
+                            <option value="">Select procurement method...</option>
+                            <option value="Competitive Bidding">Competitive Bidding</option>
+                            <option value="Direct Contracting">Direct Contracting</option>
+                            <option value="Limited Source Bidding">Limited Source Bidding</option>
+                            <option value="Negotiated Procurement (Agency-to-Agency)">Negotiated Procurement (Agency-to-Agency)</option>
+                            <option value="Negotiated Procurement (Small Value Procurement)">Negotiated Procurement (Small Value Procurement)</option>
+                            <option value="Negotiated Procurement (Two Failed Biddings)">Negotiated Procurement (Two Failed Biddings)</option>
+                            <option value="Repeat Order">Repeat Order</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Supplier & Officer -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="supplier" class="form-label">Supplier *</label>
+                            <input type="text" class="form-control" id="supplier" name="supplier" required placeholder="Enter supplier name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="procurement_officer" class="form-label">Procurement Officer</label>
+                            <input type="text" class="form-control" id="procurement_officer" name="procurement_officer" placeholder="Enter procurement officer name">
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Tracking -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="invoice_number" class="form-label">Invoice Number *</label>
+                            <input type="text" class="form-control" id="invoice_number" name="invoice_number" required placeholder="Enter invoice number">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="payment_receipt_number" class="form-label">Payment Receipt Number *</label>
+                            <input type="text" class="form-control" id="payment_receipt_number" name="payment_receipt_number" required placeholder="Enter payment receipt number">
+                        </div>
+                    </div>
+                    
+                    <!-- Procurement Timeline -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="invitation_to_bid_posting_date" class="form-label">Invitation to Bid Posting Date</label>
+                            <input type="date" class="form-control" id="invitation_to_bid_posting_date" name="invitation_to_bid_posting_date">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="bid_submission_deadline" class="form-label">Bid Submission Deadline</label>
+                            <input type="date" class="form-control" id="bid_submission_deadline" name="bid_submission_deadline">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="bid_opening_date" class="form-label">Bid Opening Date</label>
+                            <input type="date" class="form-control" id="bid_opening_date" name="bid_opening_date">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="notice_of_award_date" class="form-label">Notice of Award Date</label>
+                            <input type="date" class="form-control" id="notice_of_award_date" name="notice_of_award_date">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="contract_signing_date" class="form-label">Contract Signing Date</label>
+                            <input type="date" class="form-control" id="contract_signing_date" name="contract_signing_date">
+                        </div>
+                    </div>
+                    
+                    <!-- Transaction Date -->
+                    <div class="mb-3">
+                        <label for="transaction_date" class="form-label">Transaction Date *</label>
+                        <input type="date" class="form-control" id="transaction_date" name="transaction_date" required>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'home' %}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-2"></i>Back
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Transaction
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer bg-light">
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Demo Purpose:</strong> This form is designed for demonstration purposes of the thesis scenario: the procurement or purchase of school lab equipment. All item names are pre-defined from a list and all procurement methods are standard PH government procurement methods.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
