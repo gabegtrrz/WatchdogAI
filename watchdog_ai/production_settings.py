@@ -87,17 +87,14 @@ WSGI_APPLICATION = 'watchdog_ai.wsgi.application'
 # Database configuration for Railway PostgreSQL
 # Check if we're on Railway and have database variables
 DATABASES = {
-    'default': dj_database_url.config(
-        # Parses the DATABASE_URL environment variable.
-        # If DATABASE_URL is not set, it uses the default value provided.
-        default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}",
-        
-        # Enables persistent connections for better performance.
-        conn_max_age=600,
-        
-        # Proactively checks if the connection is still open.
-        conn_health_checks=True,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ["PGDATABASE"],
+        'USER': os.environ["PGUSER"],
+        'PASSWORD': os.environ["PGPASSWORD"],
+        'HOST': os.environ["PGHOST"],
+        'PORT': os.environ["PGPORT"],
+    }
 }
 
 # Password validation
