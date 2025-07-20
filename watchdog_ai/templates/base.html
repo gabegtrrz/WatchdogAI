@@ -120,7 +120,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'transaction-upload-ui' %}active{% endif %}" href="{% url 'transaction-upload-ui' %}">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'transaction-upload-ui' or request.resolver_match.url_name == 'single-transaction-upload' %}active{% endif %}" href="{% url 'transaction-upload-ui' %}">
                             <i class="fas fa-upload me-1"></i>Upload
                         </a>
                     </li>
