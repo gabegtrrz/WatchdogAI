@@ -1,3 +1,5 @@
+import logging
+from typing import List
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from rest_framework.views import APIView
@@ -7,6 +9,8 @@ from rest_framework import status
 from decimal import Decimal
 from datetime import datetime
 from django.db import transaction
+
+logger = logging.getLogger(__name__)
 
 from .serializers import TransactionCSVUploadSerializer
 from .forms import SingleTransactionUploadForm
@@ -66,12 +70,13 @@ def transaction_upload_ui(request):
 
         # If not a dry run, proceed to save the data.
         try:
-            created_transactions = create_transactions_from_data(valid_data)
+            created_transactions: List[Transaction] = create_transactions_from_data(valid_data)
             messages.success(request, f'Successfully created {len(created_transactions)} transactions.')
-            '''
+            
             # Enrich the newly created transactions
             enrichment_stats = enrich_transaction_list(created_transactions)
-            
+            logger.debug(f"Enrichment stats: {enrichment_stats}")
+
             updated_count = enrichment_stats.get('updated', 0)
             skipped_count = enrichment_stats.get('skipped', 0)
 
@@ -79,11 +84,11 @@ def transaction_upload_ui(request):
                 request, 
                 f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped."
             )
-'''
             messages.info(
                 request,
                 f'Appending to Blockchain...'
             )
+            messages.info(request, f'Starting blockchain integrity checks...')
 
             ### Integrate to Blockchain with Integrity Checks
             blockchain_success, blockchain_result = integrate_transaction_batch(created_transactions)
@@ -95,7 +100,7 @@ def transaction_upload_ui(request):
                 messages.success(request, f"Successfully integrated {blockchain_result['integrated_count']} transactions into blockchain.")
                 if blockchain_result.get('block_info'):
                     block_info = blockchain_result['block_info']
-                    messages.info(request, f"Block {block_info['index']} created with hash {block_info['hash'][:16]}...")
+                    messages.info(request, f"Block {block_info['index']} created with digital fingerprint: {block_info['hash'][:16]}...")
                 
                 # Report integrity check results
                 if integrity_checks.get('before', {}).get('alert_sent'):
@@ -131,16 +136,29 @@ def handle_blockchain_retry(request):
     Handles retry of failed blockchain integrations.
     """
     try:
+        messages.info(request, "Starting blockchain retry process...")
         retry_result = retry_failed_blockchain_integrations()
         
         if retry_result['success']:
             if retry_result['retried_count'] > 0:
                 messages.success(request, f"Retry completed: {retry_result['integrated_count']} transactions integrated, {retry_result['failed_count']} still failed.")
+                
+                # Check for integrity alerts in retry results
+                integrity_checks = retry_result.get('integrity_checks', {})
+                if integrity_checks.get('before', {}).get('alert_sent'):
+                    messages.warning(request, "⚠️ Blockchain integrity alert sent before retry integration.")
+                if integrity_checks.get('after', {}).get('alert_sent'):
+                    messages.warning(request, "⚠️ Blockchain integrity alert sent after retry integration.")
             else:
                 messages.info(request, "No failed transactions to retry.")
         else:
             error_msg = retry_result.get('error_message', 'Retry failed')
             messages.error(request, f"Retry failed: {error_msg}")
+            
+            # Check if failure was due to integrity issues
+            integrity_checks = retry_result.get('integrity_checks', {})
+            if integrity_checks.get('before', {}).get('alert_sent'):
+                messages.error(request, "❌ Retry blocked due to blockchain integrity issues.")
             
     except Exception as e:
         messages.error(request, f"Error during retry: {str(e)}")
@@ -189,24 +207,35 @@ class TransactionUploadAPIView(APIView):
             
         try:
             # Call the service layer to create the transactions
-            created_transactions = create_transactions_from_data(valid_data)
+            created_transactions: List[Transaction] = create_transactions_from_data(valid_data)
             
             # Enrich the newly created transactions
             enrichment_stats = enrich_transaction_list(created_transactions)
 
-            # Integrate to Blockchain
+            # Integrate to Blockchain with Integrity Checks
             blockchain_success, blockchain_result = integrate_transaction_batch(created_transactions)
+            
+            # Check integrity results
+            integrity_checks = blockchain_result.get('integrity_checks', {})
+            
+            # Build blockchain integration response with integrity details
+            blockchain_integration = {
+                'success': blockchain_success,
+                'message': blockchain_result.get('success_message' if blockchain_success else 'error_message', 
+                                               'Blockchain integration completed' if blockchain_success else 'Blockchain integration failed'),
+                'details': blockchain_result,
+                'integrity_checks': {
+                    'before_alert_sent': integrity_checks.get('before', {}).get('alert_sent', False),
+                    'after_alert_sent': integrity_checks.get('after', {}).get('alert_sent', False),
+                    'blocked_by_integrity': integrity_checks.get('before', {}).get('alert_sent', False) and not blockchain_success
+                }
+            }
             
             response_data = {
                 'message': f'Successfully created {len(created_transactions)} transactions.',
                 'created_count': len(created_transactions),
                 'enrichment_stats': enrichment_stats,
-                'blockchain_integration': {
-                    'success': blockchain_success,
-                    'message': blockchain_result.get('success_message' if blockchain_success else 'error_message', 
-                                                   'Blockchain integration completed' if blockchain_success else 'Blockchain integration failed'),
-                    'details': blockchain_result
-                }
+                'blockchain_integration': blockchain_integration
             }
 
             return Response(
@@ -236,17 +265,51 @@ def single_transaction_upload(request):
                 # Calculate total purchase price
                 new_transaction.total_purchase_price = new_transaction.calculated_total_purchase_price
                 new_transaction.save()
+
+                # Enrich the transaction (pass as a list since enrich_transaction_list expects a list)
+                enrichment_stats = enrich_transaction_list([new_transaction])
+                logger.debug(f"Enrichment stats: {enrichment_stats}")
+
+                updated_count = enrichment_stats.get('updated', 0)
+                skipped_count = enrichment_stats.get('skipped', 0)
+
+                messages.info(
+                    request, 
+                    f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped."
+                )
+                messages.info(
+                    request,
+                    f'Appending to Blockchain...'
+                )
                 
                 # Integrate with blockchain
                 blockchain_success, blockchain_result = integrate_transaction_batch([new_transaction])
                 
+                # Check integrity results
+                messages.info(request, f'Starting blockchain integrity checks...')
+                integrity_checks = blockchain_result.get('integrity_checks', {})
+                messages.info(request, f'Blockchain integrity successfully verified. All transactions are intact and secure.')
+                
                 if blockchain_success:
-                    messages.success(request, f'Transaction created successfully and integrated with blockchain!')
+                    messages.success(request, f'Transaction created successfully and integrated with the blockchain!')
                     if blockchain_result.get('block_info'):
                         block_info = blockchain_result['block_info']
-                        messages.info(request, f"Block {block_info['index']} created with hash {block_info['hash'][:16]}...")
+                        messages.info(request, f"Block {block_info['index']} created with digital fingerprint: {block_info['hash'][:16]}...")
+                    
+                    # Report integrity check results
+                    if integrity_checks.get('before', {}).get('alert_sent'):
+                        messages.warning(request, "⚠️ Blockchain integrity alert sent before integration.")
+                    if integrity_checks.get('after', {}).get('alert_sent'):
+                        messages.warning(request, "⚠️ Blockchain integrity alert sent after integration.")
                 else:
-                    messages.warning(request, f'Transaction created but blockchain integration failed. You can retry later.')
+                    error_message = blockchain_result.get('error_message', 'Failed to append transaction to blockchain.')
+                    messages.error(request, error_message)
+                    
+                    # Check if failure was due to integrity issues
+                    if integrity_checks.get('before', {}).get('alert_sent'):
+                        messages.error(request, "❌ Integration blocked due to blockchain integrity issues.")
+                    else:
+                        messages.warning(request, "You can retry blockchain integration using the button below.")
                 
                 messages.success(request, f'Transaction ID: {new_transaction.transaction_id}')
                 
