@@ -46,9 +46,15 @@ INSTALLED_APPS = [
 
 # Add whitenoise middleware for static file serving
 MIDDLEWARE = [
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files in production
-    'corsheaders.middleware.CorsMiddleware',  # CORS middleware
+    # Should be first for security best practices
     'django.middleware.security.SecurityMiddleware',
+    
+    # WhiteNoise is most efficient when placed high up
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    
+    # CORS should come before middleware that can generate responses
+    'corsheaders.middleware.CorsMiddleware',
+    
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -76,6 +82,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'watchdog_ai.wsgi.application'
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 # Database configuration for Railway PostgreSQL
 # Check if we're on Railway and have database variables
@@ -131,6 +138,8 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Static files finders
 STATICFILES_FINDERS = [
