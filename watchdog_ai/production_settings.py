@@ -17,14 +17,7 @@ DEBUG = False
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # Configure allowed hosts for production
-ALLOWED_HOSTS = [
-    os.getenv('RAILWAY_STATIC_URL', 'localhost'),
-    os.getenv('RAILWAY_PUBLIC_DOMAIN', 'localhost'),
-    '.railway.app',
-    '.up.railway.app',
-    'localhost',
-    '127.0.0.1',
-]
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 INSTALLED_APPS = [
