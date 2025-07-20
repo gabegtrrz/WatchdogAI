@@ -415,7 +415,7 @@ class AnalysisReport(models.Model):
     
     # --- Anomaly Detection Results ---
     is_anomaly = models.IntegerField(
-        default=0, # 0 = normal, 1 = anomaly
+        default=0,  # type: ignore # 0 = normal, 1 = anomaly
         db_index=True,
         help_text="Whether this transaction was flagged as an anomaly by the AI model."
     )
