@@ -304,10 +304,10 @@ class Command(BaseCommand):
             anomaly_scores = model.score_samples(features_df)
 
             # Determine contamination rate for thresholding
-            contamination_rate = self._get_contamination_rate(model, config)
+            contamination = self._get_contamination_rate(model, config)
             
             # Calculate threshold based on contamination rate
-            threshold = np.percentile(anomaly_scores, contamination_rate * 100)
+            threshold = np.percentile(anomaly_scores, contamination * 100)
 
             # Classify samples as anomalies (1) or normal (0)
             predicted_labels = (anomaly_scores <= threshold).astype(int)
