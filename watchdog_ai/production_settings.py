@@ -101,9 +101,9 @@ else:
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get("PGDATABASE", "railway"),
             'USER': os.environ.get("PGUSER","postgres"),
-            'PASSWORD': os.environ.get("PGPASSWORD","ZnUCtwKnntZvumjMwkbJXwDHMOaSVFPB"),
-            'HOST': os.environ.get("PGHOST","hopper.proxy.rlwy.net"),
-            'PORT': os.environ.get("PGPORT","16899"),
+            'PASSWORD': os.environ.get("PGPASSWORD"),
+            'HOST': os.environ.get("PGHOST"),
+            'PORT': os.environ.get("PGPORT"),
         }
 }
 
