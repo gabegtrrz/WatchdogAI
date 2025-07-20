@@ -145,6 +145,11 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{os.getenv('RAILWAY_STATIC_URL', 'localhost')}",
+    f"https://{os.getenv('RAILWAY_PUBLIC_DOMAIN', 'localhost')}",
+]
+
 # HTTPS settings (enable when SSL is configured)
 # SECURE_SSL_REDIRECT = True
 # SECURE_HSTS_SECONDS = 31536000
