@@ -16,7 +16,7 @@
                 </div>
                 <div class="card-body">
                     <p class="mb-3">
-                        Great! Now, switch hats and become a rookie detective. Your new character's job is to see suspicious transactions and get a clue what makes them suspicious.
+                        Great! Now, switch hats and become a rookie detective. Your new character's job is to find clues about suspicious transactions with the help of this AI app.
                     </p>
                     
                     <h6 class="fw-bold mb-2">Steps:</h6>
@@ -28,13 +28,6 @@
                 </div>
             </div>
 
-            <!-- Collapsible Filter Button -->
-            <div class="d-grid gap-2 mb-4">
-                <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filter-container" aria-expanded="false" aria-controls="filter-container">
-                    <i class="fas fa-filter me-2"></i>Filter Transactions
-                </button>
-            </div>
-            
             <!-- Filter Form: Now collapsible -->
             <div class="collapse" id="filter-container">
                 <div class="card shadow-sm mb-4">
@@ -207,9 +200,14 @@
                 {% csrf_token %}
                 <header class="d-flex justify-content-between align-items-center mb-4">
                     <h1 class="h2 text-dark">Procurement Transactions</h1>
-                    <button type="submit" id="analyze-button" class="btn btn-primary" disabled>
-                        <i class="fas fa-flask-vial me-2"></i>Analyze Selected
-                    </button>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filter-container" aria-expanded="false" aria-controls="filter-container">
+                            <i class="fas fa-filter me-2"></i>Filter Transactions
+                        </button>
+                        <button type="submit" id="analyze-button" class="btn btn-primary" disabled>
+                            <i class="fas fa-flask-vial me-2"></i>Analyze Selected
+                        </button>
+                    </div>
                 </header>
 
                 {% if request.GET %}
