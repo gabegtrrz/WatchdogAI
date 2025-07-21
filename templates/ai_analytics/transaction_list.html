@@ -30,11 +30,15 @@
 
             <!-- Filter Form: Now separate from the selection form -->
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light border-bottom">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-filter me-2"></i>Filter Transactions</h5>
+                <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-filter me-2"></i>Filter</h5>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#filterForm" aria-expanded="false" aria-controls="filterForm">
+                        <i class="fas fa-chevron-down me-1"></i>Show Filters
+                    </button>
                 </div>
-                <div class="card-body">
-                    <form method="get" id="filter-form">
+                <div class="collapse" id="filterForm">
+                    <div class="card-body">
+                        <form method="get" id="filter-form">
                         <div class="row mb-3">
                             <div class="col-12"><h6 class="text-secondary mb-3">Core Search</h6></div>
                             <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
@@ -192,6 +196,7 @@
                     </form>
                 </div>
             </div>
+        </div>
 
             <!-- Transaction Selection Form -->
             <form id="transaction-selection-form" action="{% url 'select_transactions' %}" method="post">
@@ -931,6 +936,18 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Filter form toggle functionality
+    const filterToggleBtn = document.querySelector('[data-bs-toggle="collapse"][data-bs-target="#filterForm"]');
+    const filterForm = document.getElementById('filterForm');
+    
+    filterForm.addEventListener('show.bs.collapse', function() {
+        filterToggleBtn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Hide Filters';
+    });
+    
+    filterForm.addEventListener('hide.bs.collapse', function() {
+        filterToggleBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Show Filters';
+    });
+    
     const transactionRows = document.querySelectorAll('.transaction-row');
     transactionRows.forEach(row => {
         row.addEventListener('click', function(e) {

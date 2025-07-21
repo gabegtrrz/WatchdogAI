@@ -323,4 +323,10 @@ def single_transaction_upload(request):
     else:
         form = SingleTransactionUploadForm()
     
-    return render(request, 'transaction_management/single_upload.html', {'form': form})
+    # Get blockchain status for display
+    blockchain_status = get_blockchain_status_summary()
+    
+    return render(request, 'transaction_management/single_upload.html', {
+        'form': form,
+        'blockchain_status': blockchain_status
+    })
