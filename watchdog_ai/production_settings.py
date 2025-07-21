@@ -104,9 +104,13 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 
 DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('LCLNAME'),
+        'USER': os.environ.get('LCLUSER'),
+        'PASSWORD': os.environ.get('LCLPASSWORD'),
+        'HOST': os.environ.get('LCLHOST'),
+        'PORT': os.environ.get('LCLPORT', 5432),
+    }
     }
 
 ENVIRONMENT = os.environ.get("ENVIRONMENT")
