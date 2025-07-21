@@ -118,12 +118,12 @@ has_postgres_creds = all([
 print(f"Has PostgreSQL credentials: {has_postgres_creds}")
     
 if (ENVIRONMENT == 'production' or POSTGRES_LOCAL == True) and has_postgres_creds:
-    database_url = os.environ.get('DATABASE_URL')
-    if database_url:
-        # Parse the database URL and convert to dict
-        db_config = dj_database_url.parse(database_url)
-        DATABASES['default'] = dict(db_config)
-    else:
+    # database_url = os.environ.get('DATABASE_URL')
+    # if database_url:
+    #     # Parse the database URL and convert to dict
+    #     db_config = dj_database_url.parse(database_url)
+    #     DATABASES['default'] = dict(db_config)
+    # else:
         # Fallback to PostgreSQL configuration
         DATABASES['default'] = {
             'ENGINE': 'django.db.backends.postgresql',
