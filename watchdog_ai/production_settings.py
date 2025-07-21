@@ -85,29 +85,31 @@ WSGI_APPLICATION = 'watchdog_ai.wsgi.application'
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 # Database configuration for Railway PostgreSQL
-# Check if we're on Railway and have database variables
-DB_LIVE = os.environ.get("DB_LIVE", "false").lower() in ('true', '1', 't')
-print(f"DB_LIVE: {DB_LIVE}")
 
-if not DB_LIVE:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+# # Check if we're on Railway and have database variables
+# DB_LIVE = os.environ.get("DB_LIVE", "false").lower() in ('true', '1', 't')
+# print(f"DB_LIVE: {DB_LIVE}")
+
+# if not DB_LIVE:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
+#     }
+# else:
+#     # Use dj_database_url to parse the DATABASE_URL from the environment
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get("PGDATABASE", "railway"),
+        'USER': os.environ.get("PGUSER","postgres"),
+        'PASSWORD': os.environ.get("PGPASSWORD"),
+        'HOST': os.environ.get("PGHOST"),
+        'PORT': os.environ.get("PGPORT"),
     }
-else:
-    # Use dj_database_url to parse the DATABASE_URL from the environment
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get("PGDATABASE", "railway"),
-            'USER': os.environ.get("PGUSER","postgres"),
-            'PASSWORD': os.environ.get("PGPASSWORD"),
-            'HOST': os.environ.get("PGHOST"),
-            'PORT': os.environ.get("PGPORT"),
-        }
-    }
+}
 
 
 # Password validation
