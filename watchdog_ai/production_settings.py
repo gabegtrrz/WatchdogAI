@@ -87,6 +87,8 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 # Database configuration for Railway PostgreSQL
 # Check if we're on Railway and have database variables
 DB_LIVE = os.environ.get("DB_LIVE", "false").lower() in ('true', '1', 't')
+print(f"DB_LIVE: {DB_LIVE}")
+
 if not DB_LIVE:
     DATABASES = {
         'default': {
@@ -105,7 +107,7 @@ else:
             'HOST': os.environ.get("PGHOST"),
             'PORT': os.environ.get("PGPORT"),
         }
-}
+    }
 
 
 # Password validation
@@ -125,6 +127,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
+# https://docs.djangoproject.com/en/5.2/topics/i18n/
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
