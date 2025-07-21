@@ -267,22 +267,16 @@ def analysis_configuration(request):
         request.session.pop('selected_transaction_ids', None)
         return redirect('transaction_list')
     
-    # Update session with validated IDs
-    request.session['selected_transaction_ids'] = valid_ids
-    transaction_ids = valid_ids
-    transaction_count = len(transaction_ids)
-    logger.info(f"Configuration page loaded with {transaction_count} valid transactions")
+    # Update session with unique, validated IDs
+    unique_ids = list(set(valid_ids))
+    request.session['selected_transaction_ids'] = unique_ids
+    transaction_count = len(unique_ids)
+    logger.info(f"Configuration page loaded with {transaction_count} unique, valid transactions")
 
-# Analysis Configuration Form
-    if request.method == 'POST':
-        form = AnalysisConfigurationForm(request.POST)
-        if form.is_valid():
-            # This logic is now handled by run_analysis view via fetch
-            pass
-    else:
-        form = AnalysisConfigurationForm(initial={
-            'transaction_ids': json.dumps(transaction_ids)
-        })
+    form = AnalysisConfigurationForm(initial={
+        'contamination': 5,  # Default to 5%
+        'transaction_ids': json.dumps(unique_ids)
+    })
 
     return render(request, 'ai_analytics/analysis_configuration.html', {
         'form': form,

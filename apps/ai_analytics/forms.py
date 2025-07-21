@@ -5,17 +5,11 @@ class AnalysisConfigurationForm(forms.Form):
     Validates the contamination parameter for the Isolation Forest model.
     """
     contamination = forms.FloatField(
-    min_value=0.01,
-    max_value=0.5,
-    required=True,
-    widget=forms.NumberInput(attrs={
-        'class': 'form-control form-control-lg',
-        'step': '0.01',
-        'min': '0.01',
-        'max': '0.50'
-    }),
-    label='Sensitivity',
-    help_text='Enter a value between 0.01 (1%) and 0.50 (50%).'
+        min_value=1,
+        max_value=50,
+        required=True,
+        label='Sensitivity',
+        help_text='Select a sensitivity level between 1% and 50%.'
     )
     
     transaction_ids = forms.CharField(
