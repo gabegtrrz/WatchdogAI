@@ -34,4 +34,7 @@ urlpatterns = [
 
     # Include ai_analytics app's URLs
     path('analytics/', include('apps.ai_analytics.urls')),
+    
+    # Include performance monitoring app's URLs
+    path('performance/', include('apps.performance_monitoring.urls')),
 ]

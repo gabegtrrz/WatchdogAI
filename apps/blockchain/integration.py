@@ -26,6 +26,7 @@ from .models import Block
 from .services import create_new_block, verify_blockchain_integrity, create_genesis_block
 from .integrity_service import integrity_service
 from apps.core.models import Transaction
+from apps.performance_monitoring.services import monitor_blockchain_save
 
 # Setup logging for this module
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ class BlockchainIntegrationService:
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         
+    @monitor_blockchain_save
     def integrate_transactions_atomic(self, transactions):
         """
         Atomically integrates transactions into the blockchain.

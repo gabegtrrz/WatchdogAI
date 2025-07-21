@@ -21,6 +21,7 @@ import uuid
 from . import preprocessing
 from . import feature_engineering
 from apps.core.models import Transaction, AnalysisReport
+from apps.performance_monitoring.services import monitor_anomaly_detection
 import numpy as np
 from django.db.models.query import QuerySet
 
@@ -80,6 +81,7 @@ def _load_model_files():
 _load_model_files()
 
 
+@monitor_anomaly_detection
 def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05, analysis_run_id: Optional[uuid.UUID] = None) -> Dict[str, Any]:
     """
     Run the complete anomaly detection pipeline for all selected transactions.

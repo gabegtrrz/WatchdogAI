@@ -19,6 +19,7 @@ from apps.data_augmentation.services import enrich_transaction_list
 from apps.blockchain.integration import integrate_transaction_batch, retry_failed_blockchain_integrations, get_blockchain_status_summary
 from apps.blockchain.integrity_service import integrity_service
 from apps.core.models import Transaction, ProcurementMethod
+from apps.performance_monitoring.services import track_performance
 
 def transaction_upload_ui(request):
     """
@@ -251,6 +252,7 @@ class TransactionUploadAPIView(APIView):
             )
 
 
+@track_performance('single_transaction_upload', transaction_count=1)
 def single_transaction_upload(request):
     """
     Handles single transaction upload form for demo purposes using Django forms.

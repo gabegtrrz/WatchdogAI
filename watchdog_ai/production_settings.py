@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'apps.transaction_management',
     'apps.data_generation',
     'apps.data_augmentation',
+    'apps.performance_monitoring',
 ]
 
 # Add whitenoise middleware for static file serving

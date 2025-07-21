@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     'apps.users.apps.UsersConfig',
     'apps.core.apps.CoreConfig',
     'apps.data_generation.apps.DataGenerationConfig',
+    'apps.performance_monitoring.apps.PerformanceMonitoringConfig',
     
     # Celery Results
     'django_celery_results',
