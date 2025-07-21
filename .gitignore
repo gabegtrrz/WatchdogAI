@@ -1,3 +1,5 @@
+dev_manage.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -121,6 +123,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env_production
 .venv
 env/
 venv/
@@ -194,7 +197,6 @@ Thumbs.db
 .railway/
 
 # Model files (if they contain sensitive data)
-*.joblib
 *.pkl
 *.pickle
 

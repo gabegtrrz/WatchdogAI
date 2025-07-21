@@ -6,6 +6,7 @@ import logging
 import os
 from decimal import Decimal, getcontext
 from django.utils import timezone
+from django.conf import settings
 from apps.core.models import Transaction
 from .models import ItemAveragePrice
 
@@ -55,15 +56,24 @@ def clean_price(price_str) -> Decimal | None:
 def scrape_amazon_prices(product_name: str, location="us", retries=3) -> list[Decimal]:
     """Scrapes a single page of Amazon search results for a product and returns a list of prices."""
     
+    # Check if scraping is enabled
+    if not getattr(settings, 'ENABLE_PRICE_SCRAPING', False):
+        logger.info(f"Price scraping is disabled. Skipping scraping for '{product_name}'.")
+        return []
+    
     search_url = f"https://www.amazon.com/s?k={product_name.replace(' ', '+')}"
     prices = []
+    
+    # Get timeout from settings
+    timeout = getattr(settings, 'SCRAPING_TIMEOUT', 10)
     
     for attempt in range(retries):
         try:
             proxy_url = get_scrapeops_url(search_url, location=location)
             logger.info(f"Attempt {attempt+1}/{retries}: Fetching page for '{product_name}' via proxy.")
             
-            resp = requests.get(proxy_url, timeout=20)
+            # Use timeout from settings
+            resp = requests.get(proxy_url, timeout=timeout)
             resp.raise_for_status()
 
             soup = BeautifulSoup(resp.text, 'html.parser')
@@ -134,17 +144,28 @@ def enrich_transaction_list(transactions: list[Transaction]):
     Enriches a list of transactions with an average price and returns enrichment stats.
     
     It uses a caching mechanism to avoid re-scraping for the same item on the same day.
+    Includes improved error handling and timeout management to prevent worker timeouts.
 
     Returns:
         A dictionary with counts of updated and skipped transactions.
-        Example: {'updated': 10, 'skipped': 2}
+        Example: {'updated': 10, 'skipped': 2, 'errors': 0}
     """
     logger.info(f"Starting enrichment for {len(transactions)} transactions.")
 
+    # Check if scraping is enabled
+    if not getattr(settings, 'ENABLE_PRICE_SCRAPING', False):
+        logger.info("Price scraping is disabled. Skipping enrichment process.")
+        return {
+            'updated': 0,
+            'skipped': len(transactions),
+            'errors': 0
+        }
+
     transactions_to_update = []
     skipped_count = 0
+    error_count = 0
 
-    for transaction in transactions:
+    for i, transaction in enumerate(transactions):
         item_name = str(transaction.item_name)
         # Use today's date for the cache
         date_to_check = timezone.now().date()
@@ -190,5 +211,6 @@ def enrich_transaction_list(transactions: list[Transaction]):
         
     return {
         'updated': len(transactions_to_update),
-        'skipped': skipped_count
+        'skipped': skipped_count,
+        'errors': error_count
     } 

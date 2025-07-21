@@ -165,16 +165,33 @@ def create_features(df: pd.DataFrame, is_training: bool = False) -> Tuple[pd.Dat
         logger.error(f"An error occurred during feature engineering: {e}", exc_info=True)
         raise
 
-def safe_date_diff(d1: pd.Timestamp, d2: pd.Timestamp) -> float:
-    """Safely calculates the difference in days between two dates, handling NaT."""
+def safe_date_diff(d1, d2) -> float:
+    """Safely calculates the difference in days between two dates, handling NaT and type conversion."""
+    # Handle None/NaN values
     if pd.isna(d1) or pd.isna(d2):
         return np.nan
-    return (d1 - d2).days
+    
+    # Convert to datetime if needed (handles decimal.Decimal types)
+    try:
+        if not isinstance(d1, pd.Timestamp):
+            d1 = pd.to_datetime(d1, errors='coerce')
+        if not isinstance(d2, pd.Timestamp):
+            d2 = pd.to_datetime(d2, errors='coerce')
+        
+        # Check if conversion was successful
+        if pd.isna(d1) or pd.isna(d2):
+            return np.nan
+            
+        return (d1 - d2).days
+    except Exception as e:
+        logger.warning(f"Error calculating date difference: {e}")
+        return np.nan
 
 def _convert_decimal_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Convert decimal columns to float for calculation.
 
     This prevents 'unsupported operand' errors when dividing Decimal types by floats.
+    Excludes date columns to preserve their datetime type.
 
     Args:
         df: Input DataFrame
@@ -183,10 +200,22 @@ def _convert_decimal_columns(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: DataFrame with decimal columns converted to float
     """
     logger.debug("Converting decimal columns to float...")
-    decimal_columns = ['approved_budget', 'total_purchase_price', 'unit_purchase_price']
+    decimal_columns = ['approved_budget', 'total_purchase_price', 'unit_purchase_price', 'average_price']
+    date_columns = [
+        'transaction_date', 'invitation_to_bid_posting_date', 'bid_submission_deadline',
+        'bid_opening_date', 'notice_of_award_date', 'contract_signing_date'
+    ]
+    
     for col in decimal_columns:
         if col in df.columns:
             df[col] = df[col].astype(float)
+    
+    # Ensure date columns are properly converted to datetime
+    for col in date_columns:
+        if col in df.columns:
+            if not pd.api.types.is_datetime64_any_dtype(df[col]):
+                df[col] = pd.to_datetime(df[col], errors='coerce')
+    
     return df
 
 def _perform_one_hot_encoding(df: pd.DataFrame, column_name: str, categories: list) -> pd.DataFrame:
@@ -338,7 +367,8 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
 
         imputed_average_price = df['unit_purchase_price'] * random_variation_arr
 
-        average_price = df['average_price'].fillna(imputed_average_price).infer_objects(copy=False)
+        # Convert average_price to float to prevent decimal.Decimal type errors
+        average_price = df['average_price'].fillna(imputed_average_price).astype(float)
         
         df['price_vs_market_average'] = df['unit_purchase_price'] - average_price
 

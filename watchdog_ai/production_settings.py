@@ -6,25 +6,30 @@ This file contains settings optimized for production deployment on Railway.
 import os
 from pathlib import Path
 import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env file
+load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env'))
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get("DEBUG", False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # Configure allowed hosts for production
-ALLOWED_HOSTS = [
-    os.getenv('RAILWAY_STATIC_URL', 'localhost'),
-    os.getenv('RAILWAY_PUBLIC_DOMAIN', 'localhost'),
-    '.railway.app',
-    '.up.railway.app',
-    'localhost',
-    '127.0.0.1',
-]
+ALLOWED_HOSTS = ["*"]
+
+# Data Augmentation Settings
+ENABLE_PRICE_SCRAPING = os.environ.get('ENABLE_PRICE_SCRAPING', 'false').lower() in ('true', '1', 't')
+SCRAPING_TIMEOUT = int(os.environ.get('SCRAPING_TIMEOUT', 10))  # seconds
+
+# Railway-specific settings
+RAILWAY_STATIC_URL = os.environ.get('RAILWAY_STATIC_URL')
+RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
 
 # Application definition
 INSTALLED_APPS = [
@@ -53,9 +58,15 @@ INSTALLED_APPS = [
 
 # Add whitenoise middleware for static file serving
 MIDDLEWARE = [
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files in production
-    'corsheaders.middleware.CorsMiddleware',  # CORS middleware
+    # Should be first for security best practices
     'django.middleware.security.SecurityMiddleware',
+    
+    # WhiteNoise is most efficient when placed high up
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    
+    # CORS should come before middleware that can generate responses
+    'corsheaders.middleware.CorsMiddleware',
+    
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -83,22 +94,61 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'watchdog_ai.wsgi.application'
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 # Database configuration for Railway PostgreSQL
-# Check if we're on Railway and have database variables
+
+# # Check if we're on Railway and have database variables
+# DB_LIVE = os.environ.get("DB_LIVE", "false").lower() in ('true', '1', 't')
+# print(f"DB_LIVE: {DB_LIVE}")
+
 DATABASES = {
-    'default': dj_database_url.config(
-        # Parses the DATABASE_URL environment variable.
-        # If DATABASE_URL is not set, it uses the default value provided.
-        default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}",
-        
-        # Enables persistent connections for better performance.
-        conn_max_age=600,
-        
-        # Proactively checks if the connection is still open.
-        conn_health_checks=True,
-    )
-}
+        'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('LCLNAME'),
+        'USER': os.environ.get('LCLUSER'),
+        'PASSWORD': os.environ.get('LCLPASSWORD'),
+        'HOST': os.environ.get('LCLHOST'),
+        'PORT': os.environ.get('LCLPORT', 5432),
+    }
+    }
+
+ENVIRONMENT = os.environ.get("ENVIRONMENT")
+POSTGRES_LOCAL = os.environ.get("POSTGRES_LOCAL", "False").lower() in ('true', '1', 't')
+
+print(f"ENVIRONMENT: {ENVIRONMENT}")
+print(f"POSTGRES_LOCAL: {POSTGRES_LOCAL}")
+
+# Check if we have valid PostgreSQL credentials
+has_postgres_creds = all([
+    os.environ.get("PGHOST"),
+    os.environ.get("PGUSER"),
+    os.environ.get("PGPASSWORD"),
+    os.environ.get("PGDATABASE")
+])
+
+print(f"Has PostgreSQL credentials: {has_postgres_creds}")
+    
+if (ENVIRONMENT == 'production' or POSTGRES_LOCAL == True) and has_postgres_creds:
+    # database_url = os.environ.get('DATABASE_URL')
+    # if database_url:
+    #     # Parse the database URL and convert to dict
+    #     db_config = dj_database_url.parse(database_url)
+    #     DATABASES['default'] = dict(db_config)
+    # else:
+        # Fallback to PostgreSQL configuration
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get("PGDATABASE", "railway"),
+            'USER': os.environ.get("PGUSER","postgres"),
+            'PASSWORD': os.environ.get("PGPASSWORD"),
+            'HOST': os.environ.get("PGHOST"),
+            'PORT': os.environ.get("PGPORT"),
+        }
+
+
+
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -117,6 +167,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
+# https://docs.djangoproject.com/en/5.2/topics/i18n/
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -131,6 +182,8 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Static files finders
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -140,10 +193,18 @@ STATICFILES_FINDERS = [
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Session configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
 # Security settings for production
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{os.getenv('RAILWAY_STATIC_URL', 'localhost')}",
+    f"https://{os.getenv('RAILWAY_PUBLIC_DOMAIN', 'localhost')}",
+]
 
 # HTTPS settings (enable when SSL is configured)
 # SECURE_SSL_REDIRECT = True
