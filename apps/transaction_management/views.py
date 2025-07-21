@@ -89,7 +89,7 @@ def transaction_upload_ui(request):
                 request,
                 f'Appending to Blockchain...'
             )
-            messages.info(request, f'Starting blockchain integrity checks...')
+            messages.info(request, f'Verifying blockchain integrity...')
 
             ### Integrate to Blockchain with Integrity Checks
             blockchain_success, blockchain_result = integrate_transaction_batch(created_transactions)
@@ -277,7 +277,7 @@ def single_transaction_upload(request):
 
                 messages.info(
                     request, 
-                    f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped, {error_count} errors."
+                    f"Item market price obtained."
                 )
                 messages.info(
                     request,
@@ -288,12 +288,12 @@ def single_transaction_upload(request):
                 blockchain_success, blockchain_result = integrate_transaction_batch([new_transaction])
                 
                 # Check integrity results
-                messages.info(request, f'Starting blockchain integrity checks...')
+                messages.info(request, f'Verifying blockchain integrity...')
                 integrity_checks = blockchain_result.get('integrity_checks', {})
-                messages.info(request, f'Blockchain integrity successfully verified. All transactions are intact and secure.')
+                messages.info(request, f'Blockchain integrity verified.')
                 
                 if blockchain_success:
-                    messages.success(request, f'Transaction created successfully and integrated with the blockchain!')
+                    messages.success(request, f'Transaction created successfully and integrated into the blockchain!')
                     if blockchain_result.get('block_info'):
                         block_info = blockchain_result['block_info']
                         messages.info(request, f"Block {block_info['index']} created with digital fingerprint: {block_info['hash'][:16]}...")
