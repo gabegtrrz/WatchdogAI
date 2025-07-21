@@ -6,6 +6,26 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-8">
+        <!-- Mission Card -->
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-tasks me-2"></i>Mission 1: The Officer
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    First, imagine you're a purchasing officer. Your job is to add new purchase records to the blockchain system.
+                </p>
+                
+                <h6 class="fw-bold mb-2">Steps:</h6>
+                <ol class="mb-0">
+                    <li class="mb-2">See the transaction details pre-filled? You can click on submit or play around with the values and then submit.</li>
+                    <li class="mb-0">Pay attention to the status messages that appear, which will tell you how the upload went.</li>
+                </ol>
+            </div>
+        </div>
+
         <div class="card shadow-sm">
             <div class="card-header bg-light border-bottom">
                 <h4 class="mb-0 fw-bold">
@@ -16,7 +36,7 @@
                         <div class="card-body py-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                Typically, transactions like these are processed via bulk upload. This form allows you to add a single record for demo purposes.<br><br>
+                                Typically, transactions like these are processed via bulk upload (previous page). For demo purposes, this form allows you to add a single purchase record.<br><br>
                                 <strong>Scenario:</strong> You are procuring Educational Lab Equipment for an organization.
                             </small>
                         </div>
@@ -176,8 +196,9 @@
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{% url 'home' %}" class="btn btn-outline-secondary me-md-2">
-                            <i class="fas fa-arrow-left me-2"></i>Back
+                    
+                        <a href="{% url 'home' %}" class="btn btn-outline-primary me-md-2">
+                            <i class="fas fa-home me-2"></i>Back to Home
                         </a>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>Save Transaction

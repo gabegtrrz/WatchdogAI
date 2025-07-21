@@ -8,11 +8,30 @@
 <div class="container mt-5">
     <div class="row">
         <div class="col-12">
+            <!-- Mission 2 Continuation Card -->
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-search me-2"></i>Mission 2: (Continued)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-0"><strong>Steps:</strong> 5. See if the summary helps you get a clue why the AI flagged the transaction as anomalous.</h6>
+                    <p class="mb-0 text-muted"><br><i class="fas fa-info-circle 
+                        me-1"></i><strong> Terms:</strong>
+                     
+                     <p class="mb-0 text-muted">Anomaly: An event or data point that is unusual and deviates from normal patterns.<br>
+                     Procurement: The official process of buying goods and services for an organization.
+                     </p>
+                </div>
+            </div>
+
+
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 class="mb-1"><i class="fas fa-search-plus me-2"></i>Details</h2>
-                    <p class="text-muted mb-0">of Transaction ID: <strong class="font-monospace">{{ report.transaction.transaction_id }}</strong></p>
+                    <h5 class="mb-0">Analysis Details</h5>
+                    <p class="text-muted mb-0">Transaction ID: <strong class="font-monospace">{{ report.transaction.transaction_id }}</strong></p>
                 </div>
             </div>
 
@@ -23,7 +42,7 @@
                     <div class="card shadow-sm h-100">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
-                                <i class="fas fa-lightbulb me-2"></i>Analysis Summary
+                                <i class="fas fa-lightbulb me-2"></i>Summary
                             </h5>
                         </div>
                         <div class="card-body">
@@ -445,7 +464,7 @@
                             {% if report.transaction.transaction_hash %}
                             <div class="row mb-3">
                                 <div class="col-12">
-                                    <small class="text-muted d-block">Transaction Hash</small>
+                                    <small class="text-muted d-block">Digital Fingerprint</small>
                                     <strong class="font-monospace small">{{ report.transaction.transaction_hash|slice:":4" }}...{{ report.transaction.transaction_hash|slice:"-4:" }}</strong>
                                 </div>
                             </div>
@@ -878,7 +897,7 @@ function getDetailedFeatureExplanation(featureName, shapValue) {
     }
     
     // Default explanation
-    return `This feature ${direction} the risk score by ${magnitude.toFixed(2)}, ${shapValue > 0 ? 'suggesting unusual patterns' : 'indicating normal behavior'} in the procurement data.`;
+    return `${direction} the risk score by ${magnitude.toFixed(2)}, ${shapValue > 0 ? 'suggesting unusual procurement patterns' : 'indicating normal behavior'}.`;
 }
 
 function getFeatureExplanation(featureName, shapValue) {
