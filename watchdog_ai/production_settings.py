@@ -23,6 +23,14 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # Configure allowed hosts for production
 ALLOWED_HOSTS = ["*"]
 
+# Data Augmentation Settings
+ENABLE_PRICE_SCRAPING = os.environ.get('ENABLE_PRICE_SCRAPING', 'false').lower() in ('true', '1', 't')
+SCRAPING_TIMEOUT = int(os.environ.get('SCRAPING_TIMEOUT', 10))  # seconds
+
+# Railway-specific settings
+RAILWAY_STATIC_URL = os.environ.get('RAILWAY_STATIC_URL')
+RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',

@@ -56,6 +56,10 @@ DEBUG = DEBUG_STR.lower() in ('true', '1', 't')
 
 ALLOWED_HOSTS = []
 
+# Data Augmentation Settings
+ENABLE_PRICE_SCRAPING = os.environ.get('ENABLE_PRICE_SCRAPING', 'true').lower() in ('true', '1', 't')
+SCRAPING_TIMEOUT = int(os.environ.get('SCRAPING_TIMEOUT', 10))  # seconds
+
 
 # Application definition
 

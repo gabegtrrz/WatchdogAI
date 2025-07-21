@@ -79,10 +79,11 @@ def transaction_upload_ui(request):
 
             updated_count = enrichment_stats.get('updated', 0)
             skipped_count = enrichment_stats.get('skipped', 0)
+            error_count = enrichment_stats.get('errors', 0)
 
             messages.info(
                 request, 
-                f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped."
+                f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped, {error_count} errors."
             )
             messages.info(
                 request,
@@ -272,10 +273,11 @@ def single_transaction_upload(request):
 
                 updated_count = enrichment_stats.get('updated', 0)
                 skipped_count = enrichment_stats.get('skipped', 0)
+                error_count = enrichment_stats.get('errors', 0)
 
                 messages.info(
                     request, 
-                    f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped."
+                    f"Data enrichment complete: {updated_count} transactions updated, {skipped_count} skipped, {error_count} errors."
                 )
                 messages.info(
                     request,
