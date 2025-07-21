@@ -90,17 +90,13 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 # DB_LIVE = os.environ.get("DB_LIVE", "false").lower() in ('true', '1', 't')
 # print(f"DB_LIVE: {DB_LIVE}")
 
-# if not DB_LIVE:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': BASE_DIR / 'db.sqlite3',
-#         }
-#     }
-# else:
-#     # Use dj_database_url to parse the DATABASE_URL from the environment
+ENVIRONMENT = os.environ.get("ENVIRONMENT")
+POSTGRES_LOCAL = os.environ.get("POSTGRESS_LOCAL", "false").lower() in ('true', '1', 't')
 
-DATABASES = {
+#     DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
+    
+if ENVIRONMENT == 'production' or POSTGRES_LOCAL == True:
+    DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get("PGDATABASE", "railway"),
@@ -109,7 +105,16 @@ DATABASES = {
         'HOST': os.environ.get("PGHOST"),
         'PORT': os.environ.get("PGPORT"),
     }
-}
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+
 
 
 # Password validation
