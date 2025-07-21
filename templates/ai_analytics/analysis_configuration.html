@@ -17,7 +17,7 @@
                     <form id="analysis-form" action="{% url 'run_analysis' %}" method="POST">
                         {% csrf_token %}
                         {{ form.as_p }}
-                        <div class="mt-3 p-2 bg-light rounded">
+                        <div class="mt-3 p-2 bg-warning rounded">
                             <p class="mb-0 text-muted">
                                 <small><i class="fas fa-lightbulb me-1"></i><strong>Tip:</strong> Start with 0.05 (5%) for this demo.</small>
                             </p>
