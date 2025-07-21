@@ -2,7 +2,7 @@ import os
 from celery import Celery
 
 # Set the default Django settings module for the 'celery' program.
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'watchdog_ai.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'watchdog_ai.production_settings')
 
 app = Celery('watchdog_ai')
 

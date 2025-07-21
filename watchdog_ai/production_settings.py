@@ -110,7 +110,19 @@ print(f"POSTGRES_LOCAL: {POSTGRES_LOCAL}")
 #     DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
     
 if ENVIRONMENT == 'production' or POSTGRES_LOCAL == True:
-    DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        DATABASES['default'] = dj_database_url.parse(database_url)
+    else:
+        # Fallback to PostgreSQL configuration
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get("PGDATABASE", "railway"),
+            'USER': os.environ.get("PGUSER","postgres"),
+            'PASSWORD': os.environ.get("PGPASSWORD"),
+            'HOST': os.environ.get("PGHOST"),
+            'PORT': os.environ.get("PGPORT"),
+        }
 
 
 
