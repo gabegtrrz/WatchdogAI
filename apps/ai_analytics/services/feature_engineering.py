@@ -200,7 +200,7 @@ def _convert_decimal_columns(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: DataFrame with decimal columns converted to float
     """
     logger.debug("Converting decimal columns to float...")
-    decimal_columns = ['approved_budget', 'total_purchase_price', 'unit_purchase_price']
+    decimal_columns = ['approved_budget', 'total_purchase_price', 'unit_purchase_price', 'average_price']
     date_columns = [
         'transaction_date', 'invitation_to_bid_posting_date', 'bid_submission_deadline',
         'bid_opening_date', 'notice_of_award_date', 'contract_signing_date'
@@ -367,7 +367,8 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
 
         imputed_average_price = df['unit_purchase_price'] * random_variation_arr
 
-        average_price = df['average_price'].fillna(imputed_average_price).infer_objects(copy=False)
+        # Convert average_price to float to prevent decimal.Decimal type errors
+        average_price = df['average_price'].fillna(imputed_average_price).astype(float)
         
         df['price_vs_market_average'] = df['unit_purchase_price'] - average_price
 
