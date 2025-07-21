@@ -6,12 +6,16 @@ This file contains settings optimized for production deployment on Railway.
 import os
 from pathlib import Path
 import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env file
+load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env'))
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get("DEBUG", False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -90,29 +94,24 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 # DB_LIVE = os.environ.get("DB_LIVE", "false").lower() in ('true', '1', 't')
 # print(f"DB_LIVE: {DB_LIVE}")
 
-ENVIRONMENT = os.environ.get("ENVIRONMENT")
-POSTGRES_LOCAL = os.environ.get("POSTGRESS_LOCAL", "false").lower() in ('true', '1', 't')
-
-#     DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
-    
-if ENVIRONMENT == 'production' or POSTGRES_LOCAL == True:
-    DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get("PGDATABASE", "railway"),
-        'USER': os.environ.get("PGUSER","postgres"),
-        'PASSWORD': os.environ.get("PGPASSWORD"),
-        'HOST': os.environ.get("PGHOST"),
-        'PORT': os.environ.get("PGPORT"),
-    }
-    }
-else:
-    DATABASES = {
+DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+ENVIRONMENT = os.environ.get("ENVIRONMENT")
+POSTGRES_LOCAL = os.environ.get("POSTGRES_LOCAL", False)
+
+print(f"ENVIRONMENT: {ENVIRONMENT}")
+print(f"POSTGRES_LOCAL: {POSTGRES_LOCAL}")
+
+#     DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
+    
+if ENVIRONMENT == 'production' or POSTGRES_LOCAL == True:
+    DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
+
 
 
 
