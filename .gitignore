@@ -1,4 +1,5 @@
 dev_manage.py
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -209,4 +210,5 @@ data/training/results/
 # Logs
 logs/
 *.log
+
 
