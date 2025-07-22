@@ -13,7 +13,7 @@ from itertools import product
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score
 import numpy as np
 import pandas as pd
 
@@ -175,11 +175,12 @@ class Command(BaseCommand):
             'best_models': {
                 'best_f1_score': None,
                 'best_precision': None,
-                'best_recall': None
+                'best_recall': None,
+                'best_auc': None
             }
         }
         
-        best_f1 = best_precision = best_recall = -1
+        best_f1 = best_precision = best_recall = best_auc = -1
         
         # Test each combination
         for i, param_combination in enumerate(param_combinations):
@@ -194,7 +195,7 @@ class Command(BaseCommand):
                 
                 # Evaluate model
                 trial_result = self._evaluate_model(
-                    model, validation_data, training_columns, true_labels, param_dict
+                    model, validation_data, training_columns, true_labels, param_dict, config
                 )
                 
                 if trial_result:
@@ -204,6 +205,7 @@ class Command(BaseCommand):
                     f1 = trial_result['f1_score']
                     precision = trial_result['precision']
                     recall = trial_result['recall']
+                    auc = trial_result.get('auc_score', 0)
                     
                     if f1 > best_f1:
                         best_f1 = f1
@@ -216,6 +218,10 @@ class Command(BaseCommand):
                     if recall > best_recall:
                         best_recall = recall
                         results['best_models']['best_recall'] = trial_result
+                    
+                    if auc > best_auc:
+                        best_auc = auc
+                        results['best_models']['best_auc'] = trial_result
                 
             except Exception as e:
                 logger.error(f'Error testing combination {param_dict}: {e}')
@@ -224,7 +230,7 @@ class Command(BaseCommand):
         return results
 
     def _evaluate_model(self, model, validation_data: pd.DataFrame, training_columns: List[str],
-                       true_labels: np.ndarray, param_dict: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+                       true_labels: np.ndarray, param_dict: Dict[str, Any], config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Evaluate a trained model."""
         try:
             # Prepare features
@@ -257,13 +263,21 @@ class Command(BaseCommand):
                 recall = recall_score(true_labels, predicted_labels, zero_division=0)
                 f1 = f1_score(true_labels, predicted_labels, zero_division=0)
             
+            # Calculate AUC if AUC calculation is enabled in config
+            auc_enabled = config.get('grid_search', {}).get('calculate_auc', True)
+            if auc_enabled:
+                auc = roc_auc_score(true_labels, anomaly_scores)
+            else:
+                auc = 0.0 # AUC is not calculated
+
             return {
                 'parameters': param_dict,
                 'f1_score': float(f1),
                 'precision': float(precision),
                 'recall': float(recall),
                 'predicted_anomalies': int(np.sum(predicted_labels)),
-                'true_anomalies': int(np.sum(true_labels))
+                'true_anomalies': int(np.sum(true_labels)),
+                'auc_score': float(auc) # Add AUC to the result
             }
             
         except Exception as e:
@@ -314,6 +328,8 @@ class Command(BaseCommand):
             self.stdout.write(f'  F1-Score: {best_f1["f1_score"]:.4f}')
             self.stdout.write(f'  Precision: {best_f1["precision"]:.4f}')
             self.stdout.write(f'  Recall: {best_f1["recall"]:.4f}')
+            if 'auc_score' in best_f1:
+                self.stdout.write(f'  AUC: {best_f1["auc_score"]:.4f}')
             self.stdout.write(f'  Parameters: {best_f1["parameters"]}')
         
         # Best Precision
@@ -323,6 +339,8 @@ class Command(BaseCommand):
             self.stdout.write(f'  Precision: {best_precision["precision"]:.4f}')
             self.stdout.write(f'  F1-Score: {best_precision["f1_score"]:.4f}')
             self.stdout.write(f'  Recall: {best_precision["recall"]:.4f}')
+            if 'auc_score' in best_precision:
+                self.stdout.write(f'  AUC: {best_precision["auc_score"]:.4f}')
             self.stdout.write(f'  Parameters: {best_precision["parameters"]}')
         
         # Best Recall
@@ -332,7 +350,19 @@ class Command(BaseCommand):
             self.stdout.write(f'  Recall: {best_recall["recall"]:.4f}')
             self.stdout.write(f'  F1-Score: {best_recall["f1_score"]:.4f}')
             self.stdout.write(f'  Precision: {best_recall["precision"]:.4f}')
+            if 'auc_score' in best_recall:
+                self.stdout.write(f'  AUC: {best_recall["auc_score"]:.4f}')
             self.stdout.write(f'  Parameters: {best_recall["parameters"]}')
+        
+        # Best AUC
+        best_auc = results['best_models']['best_auc']
+        if best_auc and best_auc.get('auc_score', 0) > 0:
+            self.stdout.write(f'\nBest AUC Model:')
+            self.stdout.write(f'  AUC: {best_auc["auc_score"]:.4f}')
+            self.stdout.write(f'  F1-Score: {best_auc["f1_score"]:.4f}')
+            self.stdout.write(f'  Precision: {best_auc["precision"]:.4f}')
+            self.stdout.write(f'  Recall: {best_auc["recall"]:.4f}')
+            self.stdout.write(f'  Parameters: {best_auc["parameters"]}')
         
         self.stdout.write(f'\nTotal combinations tested: {results["total_combinations"]}')
         self.stdout.write(f'Successful evaluations: {len(results["all_results"])}')
