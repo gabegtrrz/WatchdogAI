@@ -178,6 +178,9 @@
                     <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-primary">
                         <i class="fas fa-flask-vial me-2"></i>Run New Analysis
                     </a>
+                    <a href="{% url 'export_analysis_results_csv' analysis_run_id=analysis_run_id %}" class="btn btn-outline-success">
+                        <i class="fas fa-download me-2"></i>Export Results (CSV)
+                    </a>
                 </div>
             </div>
         </div>
