@@ -151,29 +151,29 @@
                     <table class="table table-hover table-striped">
                         <thead class="table-dark">
                             <tr>
-                                <th class="text-nowrap">Transaction ID</th>
+                                <th class="text-nowrap">Action</th>
+                                <th class="text-end text-nowrap">Anomaly Score</th>
                                 <th class="text-nowrap">Item Name</th>
                                 <th class="text-nowrap">Supplier</th>
                                 <th class="text-end text-nowrap">Amount</th>
-                                <th class="text-end text-nowrap">Anomaly Score</th>
-                                <th class="text-nowrap">Action</th>
+                                <th class="text-nowrap">Transaction ID</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for report in reports %}
                                 <tr>
-                                    <td><strong class="font-monospace small">{{ report.transaction.transaction_id }}</strong></td>
-                                    <td class="text-break">{{ report.transaction.item_name }}</td>
-                                    <td class="text-break">{{ report.transaction.supplier }}</td>
-                                    <td class="text-end">₱{{ report.transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
-                                    <td class="text-end">
-                                        <span class="badge bg-danger small">{{ report.anomaly_score|abs_multiply:100|floatformat:2 }}</span>
-                                    </td>
                                     <td>
                                         <a href="{% url 'analysis_report_detail' report.id %}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-search-plus me-1"></i><span class="d-none d-sm-inline">View Details</span>
                                         </a>
                                     </td>
+                                    <td class="text-end">
+                                        <span class="badge bg-danger small">{{ report.anomaly_score|abs_multiply:100|floatformat:2 }}</span>
+                                    </td>
+                                    <td class="text-break">{{ report.transaction.item_name }}</td>
+                                    <td class="text-break">{{ report.transaction.supplier }}</td>
+                                    <td class="text-end">₱{{ report.transaction.total_purchase_price|floatformat:2|default:"-" }}</td>
+                                    <td class="text-wrap" style="max-width: 120px;"><code class="small">{{ report.transaction.transaction_id }}</code></td>
                                 </tr>
                             {% endfor %}
                         </tbody>
