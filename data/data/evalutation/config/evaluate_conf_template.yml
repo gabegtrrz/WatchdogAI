@@ -1,0 +1,107 @@
+# This file configures the model evaluation process
+
+# Data source configuration
+data_source:
+
+  # Path to CSV file for evaluation (optional - will use database if not specified)
+  csv_path: null  # e.g., "data/generated/sample_upload_data/2025-07-15_09-20-03/transactions_with_labels.csv"
+  
+  # Database configuration (used if csv_path is not specified)
+  database:
+    use_database: true
+    
+
+# Model configuration
+model:
+  # Path to the trained model file (optional - uses default if not specified)
+  model_path: null  # e.g., "watchdog_ai/apps/ai_analytics/model_files/isolation_forest.joblib"
+  
+  # Path to training columns file (optional - uses default if not specified)
+  columns_path: null  # e.g., "watchdog_ai/apps/ai_analytics/model_files/training_columns.joblib"
+
+# Evaluation configuration
+evaluation:
+  # Output format for evaluation results
+  output_format: "both"  # Options: "json", "console", "both"
+  
+  # Evaluation log directory (will be created if it doesn't exist)
+  log_directory: "data/evaluation_logs"  # e.g., "data/evaluation_logs"
+  
+  # Include timestamp in log filename
+  include_timestamp: true
+  
+  # Log filename format (optional - will use default if not specified)
+  log_filename_format: "evaluation_{timestamp}.json"  # e.g., "evaluation_2025-01-15_14-30-25.json"
+  
+  # Evaluation metrics to calculate
+  metrics:
+    - "precision"
+    - "recall" 
+    - "f1_score"
+    - "accuracy"
+    - "specificity"
+    - "balanced_accuracy"
+    - "confusion_matrix"
+  
+  # Detailed reporting options
+  reporting:
+    # Include dataset information in results
+    include_dataset_info: true
+    
+    # Include model information in results
+    include_model_info: true
+    
+    # Include prediction summary in results
+    include_prediction_summary: true
+    
+    # Include confusion matrix in results
+    include_confusion_matrix: true
+  
+  # Output DataFrame configuration
+  output:
+    # Directory to save anomaly detection results DataFrame
+    output_directory: "data/evaluation_output"  # e.g., "data/evaluation_output"
+    
+    # Filename for the output DataFrame (optional - will use timestamp if not specified)
+    output_filename: null  # e.g., "anomaly_detection_results.csv"
+    
+    # Include original features in output DataFrame
+    include_original_features: true
+    
+    # Include anomaly detection columns in output DataFrame
+    include_anomaly_columns: true
+    
+    # Specific columns to include (optional - will include all if not specified)
+    include_specific_columns: []  # e.g., ["transaction_id", "item_name", "unit_price"]
+    
+    # Specific columns to exclude (optional)
+    exclude_specific_columns: []  # e.g., ["internal_id", "temp_column"]
+
+# Logging configuration
+logging:
+  # Log level for evaluation process
+  level: "INFO"  # Options: "DEBUG", "INFO", "WARNING", "ERROR"
+  
+  # Include console output during evaluation
+  console_output: true
+  
+  # Include file logging during evaluation
+  file_logging: false
+  log_file_path: null  # e.g., "logs/evaluate_model.log"
+
+# Advanced configuration
+advanced:
+  # Handle missing columns in evaluation data
+  handle_missing_columns: true
+  
+  # Default value for missing columns
+  missing_column_default: 0
+  
+  # Remove extra columns not used in training
+  remove_extra_columns: true
+  
+  # Validate data before evaluation
+  validate_data: true
+  
+  # Continue evaluation even if some metrics fail
+  continue_on_metric_error: true 

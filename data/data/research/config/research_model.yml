@@ -1,0 +1,133 @@
+# USAGE:
+# python watchdog_ai/manage.py research_model --config path/to/your/config.yml
+#
+# This configuration combines training and evaluation settings for research mode
+# using separate datasets for training and evaluation.
+
+# Data source configuration
+data_source:
+  # Training dataset (used for model training)
+  training_csv_path: D:\Projects\WatchdogAI\data\training\training_data\17_0.05\2025-07-19_18-49-54\labeled\train.csv
+  
+  # Evaluation dataset (used for model evaluation)
+  evaluation_csv_path: D:\Projects\WatchdogAI\data\training\training_data\17_0.05\2025-07-19_18-49-54\labeled\eval.csv
+  
+  # Actual contamination rate in the data (optional)
+  actual_contamination: 0.05
+
+# Model configuration
+model:
+  # Required: Range of contamination values to test in research mode
+  contamination_range: [0.01, 0.05, 0.10, 0.15, 0.20]
+  
+  # Optional: Isolation Forest parameters
+  n_estimators: 100  # Number of trees in the forest
+  random_state: 42   # Random seed for reproducibility
+  max_samples: 700   # Number of samples to draw for each tree
+  bootstrap: false   # Whether to use bootstrap samples
+  n_jobs: null       # Number of jobs to run in parallel (null = use all)
+  verbose: 0         # Verbosity level
+  warm_start: false  # Whether to reuse previous solution
+  max_features: 1.0  # Number of features to consider for best split
+
+# Training configuration
+training:
+  # Research mode is always enabled for this command
+  research_mode: true
+  
+  # Training parameters
+  cross_validation: false  # Not used in this implementation
+  actual_contamination: 0.05
+
+# Evaluation configuration
+evaluation:
+  # Output format for evaluation results
+  output_format: "both"  # Options: "json", "console", "both"
+  
+  # Evaluation log directory (will be created if it doesn't exist)
+  log_directory: D:\Projects\WatchdogAI\data\research\evaluation_logs
+  
+  # Include timestamp in log filename
+  include_timestamp: true
+  
+  # Log filename format (optional - will use default if not specified)
+  log_filename_format: "research_evaluation_{timestamp}.json"
+  
+  # Evaluation metrics to calculate
+  metrics:
+    - "precision"
+    - "recall" 
+    - "f1_score"
+    - "accuracy"
+    - "specificity"
+    - "balanced_accuracy"
+    - "confusion_matrix"
+  
+  # Detailed reporting options
+  reporting:
+    # Include dataset information in results
+    include_dataset_info: true
+    
+    # Include model information in results
+    include_model_info: true
+    
+    # Include prediction summary in results
+    include_prediction_summary: true
+    
+    # Include confusion matrix in results
+    include_confusion_matrix: true
+
+# Output configuration - save to custom directory for research experiments
+output:
+  # Option 1: Specify a custom model directory (relative to BASE_DIR)
+  model_dir: D:\Projects\WatchdogAI\data\research\models
+  
+  # Option 2: Specify individual file names (will be saved in model_dir)
+  model_filename: 'research_isolation_forest.joblib'
+  columns_filename: 'research_training_columns.joblib'
+  research_log_filename: 'research_results.json'
+  
+  # Option 3: Specify absolute paths for individual files
+  # model_path: D:\Projects\WatchdogAI\data\research\models\research_isolation_forest.joblib
+  # columns_path: D:\Projects\WatchdogAI\data\research\models\research_training_columns.joblib
+  # research_log_path: D:\Projects\WatchdogAI\data\research\results\research_results.json
+
+# Logging configuration
+logging:
+  # Log level for research process
+  level: "INFO"  # Options: "DEBUG", "INFO", "WARNING", "ERROR"
+  
+  # Include console output during research
+  console_output: true
+  
+  # Include file logging during research
+  file_logging: false
+  log_file_path: null
+
+# Advanced configuration
+advanced:
+  # Handle missing columns in evaluation data
+  handle_missing_columns: true
+  
+  # Default value for missing columns
+  missing_column_default: 0
+  
+  # Remove extra columns not used in training
+  remove_extra_columns: true
+  
+  # Validate data before evaluation
+  validate_data: true
+  
+  # Continue evaluation even if some metrics fail
+  continue_on_metric_error: false
+  
+  # Feature engineering settings
+  feature_engineering:
+    # Include engineered features
+    include_engineered_features: true
+    
+    # Feature scaling options
+    scale_features: false
+    
+    # Feature selection options
+    feature_selection: false 

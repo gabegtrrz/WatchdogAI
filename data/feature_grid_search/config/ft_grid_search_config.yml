@@ -1,0 +1,64 @@
+# Feature Grid Search Configuration
+# Tests different combinations of features to find optimal feature sets
+
+data_source:
+  # Paths to training and validation datasets
+  training_csv_path: "data/grid_search/dataset/21_0.05/labeled/training.csv"
+  validation_csv_path: "data/grid_search/dataset/21_0.05/labeled/eval.csv"
+
+feature_grid_search:
+  # Define feature groups to test combinations
+  feature_groups:
+    financial_features:
+      - "price_per_unit_efficiency"
+      - "quantity_per_peso_ratio"
+      - "unit_price_vs_market_average"
+      - "budget_utilization_ratio"
+      - "price_volatility_index"
+      - "total_transaction_value"
+      - "price_vs_market_average"
+      - "price_competitiveness_score"
+    
+    date_features:
+      - "contract_signing_day_of_week"
+      - "bid_opening_day_of_week"
+      - "transaction_month"
+      - "bidding_period_number_of_days"
+      - "award_decision_duration"
+      - "contract_signing_number_of_days"
+      - "total_procurement_duration"
+    
+    supplier_features:
+      - "supplier_frequency"
+      - "price_per_supplier_freq"
+      - "price_vs_supplier_average"
+    
+    efficiency_features:
+      - "budget_efficiency_score"
+      - "procurement_timeline_speed_ratio"
+      - "transaction_on_a_weekend"
+    
+    base_features:
+      - "quantity"
+  
+  # Enable/disable AUC calculation (default: true)
+  calculate_auc: true
+  
+  # Number of parallel threads (default: 4)
+  # Set to 1 for single-threaded execution
+  # Set to number of CPU cores for maximum performance
+  max_workers: 13
+
+model:
+  # Fixed model parameters for feature testing
+  contamination: 0.1
+  n_estimators: 100
+  max_samples: "auto"
+  bootstrap: false
+  random_state: 42
+
+output:
+  # Output configuration
+  results_dir: "data/feature_grid_search/results"
+  # Optional: Custom filename (use {timestamp} for dynamic timestamp)
+  results_filename: "feature_grid_search_results_{timestamp}.json" 
