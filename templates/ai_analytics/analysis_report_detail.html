@@ -138,13 +138,18 @@
                                 </a>
                             </div>
                             <div class="mb-2">
-                                <a href="{% url 'transaction_list' %}" class="btn btn-outline-primary btn-sm w-100">
+                                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary btn-sm w-100">
                                     <i class="fas fa-list me-1"></i>Transaction List
                                 </a>
                             </div>
                             <div class="mb-2">
-                                <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-success btn-sm w-100">
+                                <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-primary btn-sm w-100">
                                     <i class="fas fa-flask-vial me-1"></i>New Analysis
+                                </a>
+                            </div>
+                            <div class="mb-2">
+                                <a href="{% url 'export_analysis_results_csv' analysis_run_id=report.analysis_run_id %}" class="btn btn-outline-success btn-sm w-100">
+                                    <i class="fas fa-download me-1"></i>Export Results
                                 </a>
                             </div>
                         </div>
@@ -485,11 +490,14 @@
                 <a href="{% url 'analysis_results' analysis_run_id=report.analysis_run_id %}" class="btn btn-secondary me-2">
                     <i class="fas fa-arrow-left me-2"></i>Back to Results
                 </a>
-                <a href="{% url 'transaction_list' %}" class="btn btn-outline-primary me-2">
+                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary me-2">
                     <i class="fas fa-list me-2"></i>Transaction List
                 </a>
-                <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-success">
+                <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-primary me-2">
                     <i class="fas fa-flask-vial me-2"></i>New Analysis
+                </a>
+                <a href="{% url 'export_analysis_results_csv' analysis_run_id=report.analysis_run_id %}" class="btn btn-outline-success">
+                    <i class="fas fa-download me-2"></i>Export Results
                 </a>
             </div>
         </div>
