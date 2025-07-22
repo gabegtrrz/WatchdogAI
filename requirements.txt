@@ -25,6 +25,9 @@ requests==2.32.3
 # Machine learning and visualization
 altair==5.5.0
 
+# System monitoring
+psutil==6.1.0
+
 # General purpose
 Pillow==11.1.0
 

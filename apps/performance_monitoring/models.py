@@ -172,6 +172,215 @@ class PerformanceMetric(models.Model):
         return summary
 
 
+class ResourceUsage(models.Model):
+    """
+    Tracks detailed resource consumption during transaction processing.
+    
+    **Purpose:** Monitor CPU, memory, database operations, and network usage
+    from transaction upload until blockchain integration completion.
+    """
+    
+    # Core tracking fields
+    session_id = models.CharField(
+        max_length=100,
+        help_text="Unique session identifier for tracking upload lifecycle"
+    )
+    transaction_count = models.IntegerField(
+        default=1,
+        help_text="Number of transactions being processed"
+    )
+    
+    # Resource measurements
+    cpu_usage_percent = models.FloatField(
+        default=0.0,
+        help_text="CPU usage percentage during processing"
+    )
+    memory_usage_mb = models.FloatField(
+        default=0.0,
+        help_text="Memory usage in megabytes"
+    )
+    database_queries_count = models.IntegerField(
+        default=0,
+        help_text="Number of database queries executed"
+    )
+    database_queries_time_ms = models.FloatField(
+        default=0.0,
+        help_text="Total time spent on database queries in milliseconds"
+    )
+    network_requests_count = models.IntegerField(
+        default=0,
+        help_text="Number of external network requests made"
+    )
+    network_requests_time_ms = models.FloatField(
+        default=0.0,
+        help_text="Total time spent on network requests in milliseconds"
+    )
+    
+    # Processing stages
+    upload_time_ms = models.FloatField(
+        default=0.0,
+        help_text="Time spent on file upload and validation"
+    )
+    preprocessing_time_ms = models.FloatField(
+        default=0.0,
+        help_text="Time spent on data preprocessing"
+    )
+    enrichment_time_ms = models.FloatField(
+        default=0.0,
+        help_text="Time spent on data enrichment"
+    )
+    blockchain_integration_time_ms = models.FloatField(
+        default=0.0,
+        help_text="Time spent on blockchain integration"
+    )
+    total_processing_time_ms = models.FloatField(
+        default=0.0,
+        help_text="Total end-to-end processing time"
+    )
+    
+    # Status tracking
+    upload_success = models.BooleanField(
+        default=False,
+        help_text="Whether upload stage completed successfully"
+    )
+    preprocessing_success = models.BooleanField(
+        default=False,
+        help_text="Whether preprocessing stage completed successfully"
+    )
+    enrichment_success = models.BooleanField(
+        default=False,
+        help_text="Whether enrichment stage completed successfully"
+    )
+    blockchain_success = models.BooleanField(
+        default=False,
+        help_text="Whether blockchain integration completed successfully"
+    )
+    overall_success = models.BooleanField(
+        default=False,
+        help_text="Whether entire process completed successfully"
+    )
+    
+    # Error tracking
+    error_stage = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Stage where error occurred (if any)"
+    )
+    error_message = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Detailed error message if process failed"
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        help_text="When resource tracking started"
+    )
+    completed_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="When resource tracking completed"
+    )
+    user_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="User who initiated the upload"
+    )
+    
+    class Meta:
+        db_table = 'resource_usage'
+        indexes = [
+            models.Index(fields=['session_id']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['overall_success']),
+            models.Index(fields=['user_id']),
+        ]
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Resource Usage - Session {self.session_id} ({self.transaction_count} transactions)"
+    
+    @property
+    def total_database_time_ms(self):
+        """Total database operations time"""
+        return self.database_queries_time_ms
+    
+    @property
+    def total_network_time_ms(self):
+        """Total network operations time"""
+        return self.network_requests_time_ms
+    
+    @property
+    def processing_efficiency(self):
+        """Calculate processing efficiency (successful operations / total time)"""
+        if self.total_processing_time_ms > 0:
+            return self.transaction_count / (self.total_processing_time_ms / 1000)  # transactions per second
+        return 0.0
+    
+    @classmethod
+    def get_resource_summary(cls, hours=24):
+        """
+        Get resource usage summary for the specified time period.
+        
+        Args:
+            hours: Number of hours to look back (default: 24)
+            
+        Returns:
+            dict: Summary of resource usage metrics
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        from django.db.models import Avg, Count, Sum, Min, Max
+        
+        cutoff_time = timezone.now() - timedelta(hours=hours)
+        
+        usage_data = cls.objects.filter(created_at__gte=cutoff_time)
+        
+        if not usage_data.exists():
+            return {
+                'total_sessions': 0,
+                'total_transactions': 0,
+                'success_rate': 0.0,
+                'average_processing_time_ms': 0.0,
+                'average_cpu_usage': 0.0,
+                'average_memory_usage_mb': 0.0,
+                'total_database_queries': 0,
+                'total_network_requests': 0
+            }
+        
+        stats = usage_data.aggregate(
+            total_sessions=Count('session_id', distinct=True),
+            total_transactions=Sum('transaction_count'),
+            successful_sessions=Count('session_id', filter=models.Q(overall_success=True)),
+            avg_processing_time=Avg('total_processing_time_ms'),
+            avg_cpu_usage=Avg('cpu_usage_percent'),
+            avg_memory_usage=Avg('memory_usage_mb'),
+            total_db_queries=Sum('database_queries_count'),
+            total_network_requests=Sum('network_requests_count'),
+            avg_db_time=Avg('database_queries_time_ms'),
+            avg_network_time=Avg('network_requests_time_ms')
+        )
+        
+        total_sessions = stats['total_sessions']
+        success_rate = (stats['successful_sessions'] / total_sessions * 100) if total_sessions > 0 else 0.0
+        
+        return {
+            'total_sessions': total_sessions,
+            'total_transactions': stats['total_transactions'] or 0,
+            'success_rate': success_rate,
+            'average_processing_time_ms': stats['avg_processing_time'] or 0.0,
+            'average_cpu_usage': stats['avg_cpu_usage'] or 0.0,
+            'average_memory_usage_mb': stats['avg_memory_usage'] or 0.0,
+            'total_database_queries': stats['total_db_queries'] or 0,
+            'total_network_requests': stats['total_network_requests'] or 0,
+            'average_database_time_ms': stats['avg_db_time'] or 0.0,
+            'average_network_time_ms': stats['avg_network_time'] or 0.0
+        }
+
+
 class PerformanceAlert(models.Model):
     """
     Stores alerts for performance issues.
