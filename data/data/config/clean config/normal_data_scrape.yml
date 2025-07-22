@@ -1,0 +1,95 @@
+# ----------------------------------------------------------------------------
+# CONFIGURATION FOR GENERATING NORMAL (NON-ANOMALOUS) DATA WITH SCRAPED PRICES
+# ----------------------------------------------------------------------------
+#
+# This configuration is designed to generate a dataset containing ONLY NORMAL
+# transactions using scraped average prices. This is useful for training 
+# unsupervised models like Isolation Forest, which learn the profile of normal 
+# data in order to later identify deviations.
+#
+# The key is `anomaly_fraction: 0.0`.
+#
+# ----------------------------------------------------------------------------
+
+data_generator:
+  # --- Main Configuration ---
+  n_samples: 20000        
+  random_state: 7          # Use a fixed state for reproducible training data.
+  anomaly_fraction: 0.0    # to train the model to detect anomalies
+  
+  # --- Output & Source Files ---
+  output_folder_path: "data/training_data"
+  item_source_file: "data/lab_equipment.txt"
+
+  # --- Average Price Configuration ---
+  # Mode: 'scrape' - Get average_price from web-scraped data (AUTOMATED)
+  # Note: Scraping runs automatically when no cached prices exist
+  average_price:
+    mode: 'scrape'
+    # Unit price variation configuration
+    unit_price_variation:
+      min_factor: 0.85  # Unit price can be 85% of average price
+      max_factor: 1.15  # Unit price can be 115% of average price (default ±15%)
+
+  # ----------------------------------------------------------------------------
+  # --- Field Generation Rules ---
+  # ----------------------------------------------------------------------------
+  field_rules:
+    project_name: { 
+      type: 'categorical', 
+      values: [
+        'AghamYaman Labs Project', 'DepEd Lingap Labs Project', 'DepEd Likha-Agham Project',
+        'Science Lab Enhancement Program', 'Laboratory Equipment Modernization', 'STEM Lab Development Initiative',
+        'Chemistry Lab Upgrade Project', 'Physics Lab Equipment Procurement', 'Biology Lab Enhancement Program',
+        'Science Education Modernization', 'Lab Safety Equipment Project', 'Science Equipment Replacement Program',
+        'STEM Learning Center Development', 'Laboratory Infrastructure Upgrade', 'Science Lab Renovation Project'
+      ] 
+    }
+
+    end_user_unit: { 
+      type: 'categorical', 
+      values: [
+        'DEPED - Division of City Schools',
+        'DEPED - Division of Provincial Schools',
+        'DEPED - Science and Technology Education Center',
+        'DEPED - Regional Science High School',
+        'DEPED - National Science High School',
+        'DEPED - Special Science Elementary School',
+        'DEPED - Science and Technology School',
+        'DEPED - Laboratory School',
+        'DEPED - Science Education Center',
+        'DEPED - STEM Learning Center'
+      ] 
+    }
+
+    project_description: { type: 'faker', provider: 'catch_phrase' }
+
+    # !!! MAKE SURE TO USE LOG NORMAL FOR PRICE FIELDS to ensure positive values
+    quantity: { type: 'log-normal', mean: 3, std_dev: 1 }
+    
+    # IMPORTANT: unit_purchase_price MUST be included as fallback for approved_budget calculation
+    # average_price is NOT included - will be populated from scraped data
+    unit_purchase_price: { type: 'log-normal', mean: 5.3, std_dev: 0.3 }  # REQUIRED FALLBACK
+
+    procurement_method_name: { 
+       type: 'categorical', 
+       values: [
+           'Competitive Bidding', 
+           'Negotiated Procurement (Small Value Procurement)', 
+           'Negotiated Procurement (Agency-to-Agency)', 
+           'Repeat Order', 
+           'Negotiated Procurement (Two Failed Biddings)', 
+           'Direct Contracting'
+       ], 
+       weights: [0.66, 0.225, 0.075, 0.03, 0.005, 0.005] 
+   }
+
+    supplier: { type: 'faker', provider: 'company' }
+
+    procurement_officer: { type: 'categorical', values: ['Jodi Marie Sta. Maria', 'Coco Martin Dela Cruz', 'Bea Alonzo Valera', 'Liza Soberano Reyes', 'Carlo Aquino Santos', 'Regine Velasquez Alcasid', 'John Lloyd Cruz Miranda', 'Anne Curtis Smith', 'Piolo Pascual Go', 'Nadine Lustre Panganiban'] }
+
+    transaction_date: { type: 'date_range', start_date: '2022-01-01', end_date: '2024-12-31' }
+
+  # --- Anomaly Generation ---
+  # This section is ignored when anomaly_fraction is 0.0, so it's left empty.
+  active_anomalies: [] 
