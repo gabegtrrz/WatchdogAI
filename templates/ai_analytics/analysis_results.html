@@ -18,80 +18,126 @@
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-light border-bottom">
-            <h4 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2"></i>Analysis Results</h4>
-            <p class="mb-0 text-muted small">Run ID: {{ analysis_run_id|default:"Unknown" }}</p>
-        </div>
-        <div class="card-body">
-            <!-- Analysis Summary -->
-            <div class="row g-3 mb-4">
-                <div class="col-6 col-md-4">
-                    <div class="text-center p-2 p-md-3 bg-light rounded h-100">
-                        <h5 class="text-primary mb-1 fs-6 fs-md-5">{{ total_transactions|default:"0" }}</h5>
-                        <small class="text-muted">Total Analyzed</small>
-                    </div>
+    <!-- Top Section: Analysis Summary and Quick Actions -->
+    <div class="row mb-4">
+        <!-- Analysis Summary Card -->
+        <div class="col-12 col-lg-9">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light border-bottom">
+                    <h4 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2"></i>Analysis Summary</h4>
+                    <p class="mb-0 text-muted small">Run ID: {{ analysis_run_id|default:"Unknown" }}</p>
                 </div>
-                <div class="col-6 col-md-4">
-                    <div class="text-center p-2 p-md-3 bg-light rounded h-100">
-                        <h5 class="text-danger mb-1 fs-6 fs-md-5">{{ anomaly_count|default:"0" }}</h5>
-                        <small class="text-muted">Anomalies Found</small>
+                <div class="card-body">
+                    <!-- Analysis Summary Stats -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 col-md-4">
+                            <div class="text-center p-2 p-md-3 bg-light rounded h-100">
+                                <h5 class="text-primary mb-1 fs-6 fs-md-5">{{ total_transactions|default:"0" }}</h5>
+                                <small class="text-muted">Total Analyzed</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="text-center p-2 p-md-3 bg-light rounded h-100">
+                                <h5 class="text-danger mb-1 fs-6 fs-md-5">{{ anomaly_count|default:"0" }}</h5>
+                                <small class="text-muted">Anomalies Found</small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="text-center p-2 p-md-3 bg-light rounded h-100">
+                                <h5 class="text-info mb-1 fs-6 fs-md-5">{{ contamination_param|default:"0.1"|floatformat:3 }}</h5>
+                                <small class="text-muted">Sensitivity (Contamination) Input</small>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-12 col-md-4">
-                    <div class="text-center p-2 p-md-3 bg-light rounded h-100">
-                        <h5 class="text-info mb-1 fs-6 fs-md-5">{{ contamination_param|default:"0.1"|floatformat:3 }}</h5>
-                        <small class="text-muted">Sensitivity (Contamination) Input</small>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Contamination Parameter Explanation -->
-            {% if contamination_param %}
-            <div class="alert alert-light border mb-4">
-                <div class="row align-items-start">
-                    <div class="col-12">
-                        <h6 class="mb-2"><i class="fas fa-sliders me-1"></i> <strong>How the Sensitivity Parameter Affects Results</strong></h6>
-                        <p class="mb-2 text-muted small">
-                            The sensitivity (a.k.a. contamination) parameter of <strong>{{ contamination_param|floatformat:3 }}</strong> tells the AI model to expect that approximately 
-                            <strong>{{ contamination_param|contamination_to_percentage }}%</strong> 
-                            of transactions in your dataset are likely to be anomalies.
-                        </p>
-                        <div class="row g-2">
-                            <div class="col-12 col-md-7">
-                                <small class="text-muted d-block">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    <strong>Lower values (0.01-0.1):</strong> More conservative detection, fewer false positives
-                                </small>
+                    <!-- Contamination Parameter Explanation -->
+                    {% if contamination_param %}
+                    <div class="alert alert-light border mb-4">
+                        <div class="row align-items-start">
+                            <div class="col-12">
+                                <h6 class="mb-2"><i class="fas fa-sliders me-1"></i> <strong>How the Sensitivity Setting Affects Results</strong></h6>
+                                <p class="mb-2 text-muted small">
+                                    The sensitivity (a.k.a. contamination) parameter of <strong>{{ contamination_param|floatformat:3 }}</strong> tells the AI model to expect that approximately 
+                                    <strong>{{ contamination_param|contamination_to_percentage }}%</strong> 
+                                    of transactions in your dataset are likely to be anomalies.
+                                </p>
+                                <div class="row g-2">
+                                    <div class="col-12 col-md-7">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            <strong>Lower values (0.01-0.1):</strong> More conservative detection, fewer false positives
+                                        </small>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            <strong>Higher values (0.2-0.5):</strong> More sensitive detection, catches more potential issues
+                                        </small>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <small class="text-muted d-block">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>
-                                    <strong>Higher values (0.2-0.5):</strong> More sensitive detection, catches more potential issues
-                                </small>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Analysis Coverage Summary -->
+                    {% if total_transactions %}
+                    <div class="alert alert-info mb-3">
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Analysis Coverage:</strong> 
+                                {% if total_transactions > 0 %}
+                                    <span>{{ total_transactions }} transactions processed</span>
+                                {% else %}
+                                    <span class="text-muted">No transactions processed</span>
+                                {% endif %}
                             </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Mobile Navigation to Results -->
+                    <div class="d-block d-lg-none">
+                        <div class="alert alert-primary text-center">
+                            <h6 class="mb-2"><i class="fas fa-arrow-down me-2"></i>Analysis Results Below</h6>
+                            <button class="btn btn-sm btn-primary" onclick="document.getElementById('results-table').scrollIntoView({behavior: 'smooth'})">
+                                <i class="fas fa-table me-1"></i>View Results
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-            {% endif %}
+        </div>
 
-            <!-- Analysis Coverage Summary -->
-            {% if total_transactions %}
-            <div class="alert alert-info mb-4">
-                <div class="row">
-                    <div class="col-12">
-                        <strong>Analysis Coverage:</strong> 
-                        {% if total_transactions > 0 %}
-                            <span>{{ total_transactions }} transactions processed</span>
-                        {% else %}
-                            <span class="text-muted">No transactions processed</span>
-                        {% endif %}
+        <!-- Quick Actions Card -->
+        <div class="col-12 col-lg-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'transaction_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-list me-2"></i>Back to Transaction List
+                        </a>
+                        <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-flask-vial me-2"></i>Run New Analysis
+                        </a>
+                        <a href="{% url 'export_analysis_results_csv' analysis_run_id=analysis_run_id %}" class="btn btn-outline-success">
+                            <i class="fas fa-download me-2"></i>Export Results (CSV)
+                        </a>
                     </div>
                 </div>
             </div>
-            {% endif %}
+        </div>
+    </div>
 
+    <!-- Results Table Card -->
+    <div class="card shadow-sm" id="results-table">
+        <div class="card-header bg-light border-bottom">
+            <h4 class="mb-0 fw-bold"><i class="fas fa-table me-2"></i>Analysis Results</h4>
+        </div>
+        <div class="card-body">
             {% if reports %}
                 <!-- Mobile table scroll hint -->
                 <div class="d-block d-md-none mb-3">
@@ -169,20 +215,6 @@
                 </div>
             </div>
             {% endif %}
-
-            <div class="mt-4 text-center">
-                <div class="d-grid d-md-inline-block gap-2">
-                    <a href="{% url 'transaction_list' %}" class="btn btn-secondary">
-                        <i class="fas fa-list me-2"></i>Back to Transaction List
-                    </a>
-                    <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-primary">
-                        <i class="fas fa-flask-vial me-2"></i>Run New Analysis
-                    </a>
-                    <a href="{% url 'export_analysis_results_csv' analysis_run_id=analysis_run_id %}" class="btn btn-outline-success">
-                        <i class="fas fa-download me-2"></i>Export Results (CSV)
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
 </div>
