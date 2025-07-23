@@ -2,119 +2,164 @@
   "test_configuration": {
     "total_runs": 5,
     "transactions_per_block": 100,
-    "test_timestamp": "2025-07-23T13:43:49.358260+00:00"
+    "test_timestamp": "2025-07-23T14:48:51.750511+00:00"
   },
   "throughput_statistics": {
-    "mean_tps": 585.7064183939743,
-    "median_tps": 591.9175383434284,
-    "min_tps": 545.2430536597794,
-    "max_tps": 623.7124409270841,
-    "std_dev_tps": 32.953195885040856,
-    "mean_total_time": 0.17117104530334473,
-    "median_total_time": 0.16894245147705078
+    "mean_tps": 123.52199237264813,
+    "median_tps": 115.7216976251733,
+    "min_tps": 109.73105804833625,
+    "max_tps": 160.33431524931058,
+    "std_dev_tps": 20.871413879228875,
+    "mean_total_time": 0.8251853466033936,
+    "median_total_time": 0.8641421794891357
   },
   "integrity_statistics": {
-    "mean_verification_time": 0.02914419174194336,
-    "median_verification_time": 0.028433561325073242,
-    "min_verification_time": 0.02628183364868164,
-    "max_verification_time": 0.03307223320007324,
-    "std_dev_verification_time": 0.002730619527442156,
+    "mean_verification_time": 0.03412718772888183,
+    "median_verification_time": 0.03146934509277344,
+    "min_verification_time": 0.029937267303466797,
+    "max_verification_time": 0.04149484634399414,
+    "std_dev_verification_time": 0.005152688267122215,
     "mean_blocks_verified": 2,
     "mean_transactions_verified": 201
   },
   "detailed_results": [
     {
       "run_number": 1,
-      "timestamp": "2025-07-23T13:43:48.270771+00:00",
+      "timestamp": "2025-07-23T14:48:47.363658+00:00",
       "throughput_test": {
         "transactions_created": 100,
-        "transaction_creation_time": 0.028052091598510742,
-        "block_creation_time": 0.13628911972045898,
-        "total_time": 0.16434121131896973,
-        "transactions_per_second": 608.4900993330887,
-        "block_index": 1,
-        "block_hash": "db756420480e60f091323caf36a185a35abbd09a9b96f048d1dae38b49f95e9f"
+        "csv_reading_time": 8.225440979003906e-05,
+        "pipeline_time": 0.6236145496368408,
+        "total_time": 0.6236968040466309,
+        "transactions_per_second": 160.33431524931058,
+        "blockchain_success": true,
+        "enrichment_stats": {
+          "updated": 100,
+          "skipped": 0,
+          "errors": 0
+        },
+        "block_info": {
+          "index": 1,
+          "hash": "47bde6e4d3cb388f5b8de10a9b1dcc0297b94a9abb8523598b2d618271999cb7",
+          "transaction_count": 100
+        }
       },
       "integrity_test": {
         "total_blocks": 2,
         "total_transactions": 201,
-        "verification_time": 0.027288198471069336,
+        "verification_time": 0.030181884765625,
         "integrity_valid": true
       }
     },
     {
       "run_number": 2,
-      "timestamp": "2025-07-23T13:43:48.483234+00:00",
+      "timestamp": "2025-07-23T14:48:48.041129+00:00",
       "throughput_test": {
         "transactions_created": 100,
-        "transaction_creation_time": 0.02033376693725586,
-        "block_creation_time": 0.13999652862548828,
-        "total_time": 0.16033029556274414,
-        "transactions_per_second": 623.7124409270841,
-        "block_index": 1,
-        "block_hash": "58273e56c98420732b3d9b1580c1dfc3d8f9421c0c89ecccff72af1a094df496"
+        "csv_reading_time": 7.653236389160156e-05,
+        "pipeline_time": 0.8871209621429443,
+        "total_time": 0.8871974945068359,
+        "transactions_per_second": 112.71447520891245,
+        "blockchain_success": true,
+        "enrichment_stats": {
+          "updated": 100,
+          "skipped": 0,
+          "errors": 0
+        },
+        "block_info": {
+          "index": 1,
+          "hash": "6a423d674a6d9c163068a168f8b6fdaff30afb5ceaf3ff20b3096c62ed788183",
+          "transaction_count": 100
+        }
       },
       "integrity_test": {
         "total_blocks": 2,
         "total_transactions": 201,
-        "verification_time": 0.02628183364868164,
+        "verification_time": 0.029937267303466797,
         "integrity_valid": true
       }
     },
     {
       "run_number": 3,
-      "timestamp": "2025-07-23T13:43:48.690092+00:00",
+      "timestamp": "2025-07-23T14:48:48.977880+00:00",
       "throughput_test": {
         "transactions_created": 100,
-        "transaction_creation_time": 0.03059840202331543,
-        "block_creation_time": 0.1482384204864502,
-        "total_time": 0.17883682250976562,
-        "transactions_per_second": 559.1689597064909,
-        "block_index": 1,
-        "block_hash": "e8e1dd93c688a553b2385941c87d5622c926155bfd74770e3e2414c3f4aa4fde"
+        "csv_reading_time": 8.392333984375e-05,
+        "pipeline_time": 0.864058256149292,
+        "total_time": 0.8641421794891357,
+        "transactions_per_second": 115.7216976251733,
+        "blockchain_success": true,
+        "enrichment_stats": {
+          "updated": 100,
+          "skipped": 0,
+          "errors": 0
+        },
+        "block_info": {
+          "index": 1,
+          "hash": "497181d9ec77e6b4fd18edcc7de341ebc1ef032d759a3176b4bc4aff3d2656a2",
+          "transaction_count": 100
+        }
       },
       "integrity_test": {
         "total_blocks": 2,
         "total_transactions": 201,
-        "verification_time": 0.03307223320007324,
+        "verification_time": 0.03146934509277344,
         "integrity_valid": true
       }
     },
     {
       "run_number": 4,
-      "timestamp": "2025-07-23T13:43:48.924021+00:00",
+      "timestamp": "2025-07-23T14:48:49.893265+00:00",
       "throughput_test": {
         "transactions_created": 100,
-        "transaction_creation_time": 0.030007123947143555,
-        "block_creation_time": 0.1533973217010498,
-        "total_time": 0.18340444564819336,
-        "transactions_per_second": 545.2430536597794,
-        "block_index": 1,
-        "block_hash": "cc6ab377745a770b28b41b3e22e63023924d33cd3740964b91da620b1d1902a9"
+        "csv_reading_time": 7.510185241699219e-05,
+        "pipeline_time": 0.9112439155578613,
+        "total_time": 0.9113190174102783,
+        "transactions_per_second": 109.73105804833625,
+        "blockchain_success": true,
+        "enrichment_stats": {
+          "updated": 100,
+          "skipped": 0,
+          "errors": 0
+        },
+        "block_info": {
+          "index": 1,
+          "hash": "378081c3af71b27b098705fd1ab040fadf4ef3a983342f08dcdbf075e0628cf9",
+          "transaction_count": 100
+        }
       },
       "integrity_test": {
         "total_blocks": 2,
         "total_transactions": 201,
-        "verification_time": 0.030645132064819336,
+        "verification_time": 0.04149484634399414,
         "integrity_valid": true
       }
     },
     {
       "run_number": 5,
-      "timestamp": "2025-07-23T13:43:49.159526+00:00",
+      "timestamp": "2025-07-23T14:48:50.868391+00:00",
       "throughput_test": {
         "transactions_created": 100,
-        "transaction_creation_time": 0.02349114418029785,
-        "block_creation_time": 0.14545130729675293,
-        "total_time": 0.16894245147705078,
-        "transactions_per_second": 591.9175383434284,
-        "block_index": 1,
-        "block_hash": "f22b4f873f30edd490009784b1ada063b272997ec02480d36312f71680444b0d"
+        "csv_reading_time": 0.0001437664031982422,
+        "pipeline_time": 0.8394274711608887,
+        "total_time": 0.8395712375640869,
+        "transactions_per_second": 119.10841573150809,
+        "blockchain_success": true,
+        "enrichment_stats": {
+          "updated": 100,
+          "skipped": 0,
+          "errors": 0
+        },
+        "block_info": {
+          "index": 1,
+          "hash": "cd9dbdd95d80502d8851c5eec56f0adb724096241bac88fa6ac313ee47cdef25",
+          "transaction_count": 100
+        }
       },
       "integrity_test": {
         "total_blocks": 2,
         "total_transactions": 201,
-        "verification_time": 0.028433561325073242,
+        "verification_time": 0.037552595138549805,
         "integrity_valid": true
       }
     }

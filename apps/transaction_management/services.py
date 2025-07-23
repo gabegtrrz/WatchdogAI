@@ -1,7 +1,7 @@
 import pandas as pd
 from io import StringIO
 from typing import List, Dict, Tuple
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from django.db import transaction
 from apps.core.models import ProcurementMethod, Transaction
@@ -147,7 +147,10 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
                 price = Decimal(str(raw_price).strip())
                 if price <= 0:
                     errors_in_row.append({'field': 'unit_purchase_price', 'error': 'Unit purchase price must be a positive number.'})
-                cleaned_row_data['unit_purchase_price'] = price
+                else:
+                    # Round to 2 decimal places to match model constraint
+                    price = price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                    cleaned_row_data['unit_purchase_price'] = price
             except InvalidOperation:
                 errors_in_row.append({'field': 'unit_purchase_price', 'error': 'Unit purchase price must be a valid number.'})
 
@@ -220,6 +223,8 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
                 if approved_budget <= 0:
                     errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget must be a positive number.'})
                 else:
+                    # Round to 2 decimal places to match model constraint
+                    approved_budget = approved_budget.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                     cleaned_row_data['approved_budget'] = approved_budget
             except InvalidOperation:
                 errors_in_row.append({'field': 'approved_budget', 'error': 'Approved budget must be a valid number.'})
@@ -228,6 +233,8 @@ def process_transaction_csv(file_stream) -> Tuple[List[Dict], List[Dict]]:
         if 'quantity' in cleaned_row_data and 'unit_purchase_price' in cleaned_row_data:
             try:
                 total_purchase_price = cleaned_row_data['quantity'] * cleaned_row_data['unit_purchase_price']
+                # Round to 2 decimal places to match model constraint
+                total_purchase_price = total_purchase_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                 cleaned_row_data['total_purchase_price'] = total_purchase_price
             except (TypeError, ValueError) as e:
                 errors_in_row.append({'field': 'total_purchase_price', 'error': f'Could not calculate total purchase price: {str(e)}'})
