@@ -146,26 +146,30 @@ class Command(BaseCommand):
         """Test transaction processing throughput using the full pipeline."""
         self.stdout.write("  📈 Testing throughput with full transaction pipeline...")
         
-        # Create test CSV data
+        # Ensure procurement methods exist
+        self.stdout.write("  🔧 Ensuring procurement methods exist...")
+        self._ensure_procurement_methods_exist()
+        
+        # Read from existing CSV file
         start_time = time.time()
-        csv_data = self._create_test_csv_data(transactions_per_block)
-        csv_creation_time = time.time() - start_time
+        csv_data = self._get_test_csv_data(transactions_per_block)
+        csv_reading_time = time.time() - start_time
         
         # Process CSV through the full pipeline
         start_time = time.time()
-        pipeline_results = self._run_transaction_pipeline(csv_data)
+        pipeline_results = self._run_transaction_pipeline(csv_data, transactions_per_block)
         pipeline_time = time.time() - start_time
         
         if not pipeline_results['success']:
             raise Exception(f"Pipeline failed: {pipeline_results.get('error', 'Unknown error')}")
         
         # Calculate metrics
-        total_time = csv_creation_time + pipeline_time
+        total_time = csv_reading_time + pipeline_time
         tps = transactions_per_block / total_time if total_time > 0 else 0
         
         return {
             'transactions_created': transactions_per_block,
-            'csv_creation_time': csv_creation_time,
+            'csv_reading_time': csv_reading_time,
             'pipeline_time': pipeline_time,
             'total_time': total_time,
             'transactions_per_second': tps,
@@ -194,54 +198,125 @@ class Command(BaseCommand):
             'integrity_valid': integrity_valid
         }
     
-    def _create_test_transactions(self, count):
-        """Create test transactions for performance testing."""
-        # Ensure we have a procurement method
+    def _get_test_csv_data(self, count):
+        """Read test CSV data from existing file."""
+        import os
+        
+        # Path to the existing CSV file
+        csv_path = "data/training/training_data/22_100/unlabeled/eval.csv"
+        
+        if not os.path.exists(csv_path):
+            raise FileNotFoundError(f"Test CSV file not found: {csv_path}")
+        
+        # Create a file-like object that mimics Django's uploaded file
+        class MockUploadedFile:
+            def __init__(self, file_path):
+                self.file_path = file_path
+                self.name = "eval.csv"
+                self.file = open(file_path, 'rb')
+            
+            def read(self):
+                return self.file.read()
+            
+            def decode(self, encoding='utf-8'):
+                return self.file.read().decode(encoding)
+            
+            def close(self):
+                self.file.close()
+        
+        return MockUploadedFile(csv_path)
+    
+    def _ensure_procurement_methods_exist(self):
+        """Ensure that procurement methods from the CSV exist in the database."""
         from apps.core.models import ProcurementMethod
         
-        procurement_method = ProcurementMethod.objects.first()
-        if not procurement_method:
-            # Create a default procurement method if none exists
-            procurement_method = ProcurementMethod.objects.create(name="Test Procurement Method")
-            self.stdout.write("  ⚠️  Created default procurement method for testing")
+        # Get procurement methods from the CSV file
+        csv_path = "data/training/training_data/22_100/unlabeled/eval.csv"
+        import pandas as pd
         
-        transactions = []
+        df = pd.read_csv(csv_path)
+        csv_methods = set(df['procurement_method_name'].unique())
         
-        for i in range(count):
-            transaction = Transaction(
-                transaction_id=f"TEST_TX_{int(time.time())}_{i}",
-                item_name=f"Test Item {i}",
-                quantity=i + 1,
-                unit_purchase_price=100.00 + i,
-                total_purchase_price=(100.00 + i) * (i + 1),
-                supplier=f"Test Supplier {i}",
-                invoice_number=f"INV-{i:06d}",
-                payment_receipt_number=f"REC-{i:06d}",
-                transaction_date=timezone.now().date(),
-                procurement_method=procurement_method,
-                project_name=f"Test Project {i}",
-                end_user_unit="Test Unit",
-                project_description=f"Test project description {i}"
-            )
-            transactions.append(transaction)
+        # Check which methods exist in the database
+        existing_methods = set(ProcurementMethod.objects.values_list('name', flat=True))
         
-        # Bulk create transactions
-        Transaction.objects.bulk_create(transactions)
+        # Find missing methods
+        missing_methods = csv_methods - existing_methods
         
-        # Refresh from database to get IDs
-        return list(Transaction.objects.filter(
-            transaction_id__startswith="TEST_TX_"
-        ).order_by('-created_at')[:count])
+        if missing_methods:
+            self.stdout.write(f"  ⚠️  Creating missing procurement methods: {missing_methods}")
+            for method_name in missing_methods:
+                ProcurementMethod.objects.get_or_create(name=method_name)
+                self.stdout.write(f"    - Created: {method_name}")
+        
+        return len(missing_methods)
+    
+    def _run_transaction_pipeline(self, csv_file, count):
+        """Run the complete transaction processing pipeline."""
+        try:
+            # Step 1: Process CSV through validation
+            valid_data, errors = process_transaction_csv(csv_file)
+            
+            if errors:
+                # Log detailed error information
+                self.stdout.write(f"  ❌ CSV validation errors:")
+                for error in errors:
+                    if 'type' in error:
+                        self.stdout.write(f"    - {error['type']}: {error['message']}")
+                    elif 'row' in error:
+                        self.stdout.write(f"    - Row {error['row']}:")
+                        for field_error in error.get('errors', []):
+                            self.stdout.write(f"      {field_error['field']}: {field_error['error']}")
+                
+                return {
+                    'success': False,
+                    'error': f"CSV validation failed: {len(errors)} errors"
+                }
+            
+            if not valid_data:
+                return {
+                    'success': False,
+                    'error': "No valid data found in CSV"
+                }
+            
+            # Limit to requested number of transactions
+            valid_data = valid_data[:count] if count < len(valid_data) else valid_data
+            
+            # Step 2: Create transactions from validated data
+            created_transactions = create_transactions_from_data(valid_data)
+            
+            # Step 3: Enrich transactions
+            enrichment_stats = enrich_transaction_list(created_transactions)
+            
+            # Step 4: Integrate with blockchain
+            blockchain_success, blockchain_result = integrate_transaction_batch(created_transactions)
+            
+            return {
+                'success': True,
+                'blockchain_success': blockchain_success,
+                'enrichment_stats': enrichment_stats,
+                'block_info': blockchain_result.get('block_info'),
+                'integrated_count': blockchain_result.get('integrated_count', 0),
+                'failed_count': blockchain_result.get('failed_count', 0)
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
     
     def _cleanup_previous_test_data(self):
         """Clean up test data from previous runs."""
-        # Delete test transactions
-        Transaction.objects.filter(
-            transaction_id__startswith="TEST_TX_"
-        ).delete()
+        # Delete transactions from the test CSV file
+        # We'll identify them by checking if they're from the eval.csv file
+        # Since the CSV has specific transaction IDs, we can clean them up
         
         # Delete test blocks (except genesis)
         Block.objects.filter(index__gt=0).delete()
+        
+        # Note: We don't delete the actual transactions from the CSV file
+        # as they are real test data that should persist
     
     def _calculate_aggregate_statistics(self, all_results):
         """Calculate aggregate statistics from all test runs."""
