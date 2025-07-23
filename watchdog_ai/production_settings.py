@@ -131,12 +131,7 @@ has_postgres_creds = all([
 print(f"Has PostgreSQL credentials: {has_postgres_creds}")
     
 if (ENVIRONMENT == 'production' or POSTGRES_LOCAL == True) and has_postgres_creds:
-    # database_url = os.environ.get('DATABASE_URL')
-    # if database_url:
-    #     # Parse the database URL and convert to dict
-    #     db_config = dj_database_url.parse(database_url)
-    #     DATABASES['default'] = dict(db_config)
-    # else:
+    try:
         # Fallback to PostgreSQL configuration
         DATABASES['default'] = {
             'ENGINE': 'django.db.backends.postgresql',
@@ -146,6 +141,19 @@ if (ENVIRONMENT == 'production' or POSTGRES_LOCAL == True) and has_postgres_cred
             'HOST': os.environ.get("PGHOST"),
             'PORT': os.environ.get("PGPORT"),
         }
+    except Exception as e:
+        print(f"PostgreSQL connection failed: {e}")
+        # Fallback to SQLite for development
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+else:
+    # Use SQLite for development
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 
 
 

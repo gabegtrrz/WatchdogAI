@@ -1,0 +1,122 @@
+{
+  "test_configuration": {
+    "total_runs": 5,
+    "transactions_per_block": 100,
+    "test_timestamp": "2025-07-23T13:43:49.358260+00:00"
+  },
+  "throughput_statistics": {
+    "mean_tps": 585.7064183939743,
+    "median_tps": 591.9175383434284,
+    "min_tps": 545.2430536597794,
+    "max_tps": 623.7124409270841,
+    "std_dev_tps": 32.953195885040856,
+    "mean_total_time": 0.17117104530334473,
+    "median_total_time": 0.16894245147705078
+  },
+  "integrity_statistics": {
+    "mean_verification_time": 0.02914419174194336,
+    "median_verification_time": 0.028433561325073242,
+    "min_verification_time": 0.02628183364868164,
+    "max_verification_time": 0.03307223320007324,
+    "std_dev_verification_time": 0.002730619527442156,
+    "mean_blocks_verified": 2,
+    "mean_transactions_verified": 201
+  },
+  "detailed_results": [
+    {
+      "run_number": 1,
+      "timestamp": "2025-07-23T13:43:48.270771+00:00",
+      "throughput_test": {
+        "transactions_created": 100,
+        "transaction_creation_time": 0.028052091598510742,
+        "block_creation_time": 0.13628911972045898,
+        "total_time": 0.16434121131896973,
+        "transactions_per_second": 608.4900993330887,
+        "block_index": 1,
+        "block_hash": "db756420480e60f091323caf36a185a35abbd09a9b96f048d1dae38b49f95e9f"
+      },
+      "integrity_test": {
+        "total_blocks": 2,
+        "total_transactions": 201,
+        "verification_time": 0.027288198471069336,
+        "integrity_valid": true
+      }
+    },
+    {
+      "run_number": 2,
+      "timestamp": "2025-07-23T13:43:48.483234+00:00",
+      "throughput_test": {
+        "transactions_created": 100,
+        "transaction_creation_time": 0.02033376693725586,
+        "block_creation_time": 0.13999652862548828,
+        "total_time": 0.16033029556274414,
+        "transactions_per_second": 623.7124409270841,
+        "block_index": 1,
+        "block_hash": "58273e56c98420732b3d9b1580c1dfc3d8f9421c0c89ecccff72af1a094df496"
+      },
+      "integrity_test": {
+        "total_blocks": 2,
+        "total_transactions": 201,
+        "verification_time": 0.02628183364868164,
+        "integrity_valid": true
+      }
+    },
+    {
+      "run_number": 3,
+      "timestamp": "2025-07-23T13:43:48.690092+00:00",
+      "throughput_test": {
+        "transactions_created": 100,
+        "transaction_creation_time": 0.03059840202331543,
+        "block_creation_time": 0.1482384204864502,
+        "total_time": 0.17883682250976562,
+        "transactions_per_second": 559.1689597064909,
+        "block_index": 1,
+        "block_hash": "e8e1dd93c688a553b2385941c87d5622c926155bfd74770e3e2414c3f4aa4fde"
+      },
+      "integrity_test": {
+        "total_blocks": 2,
+        "total_transactions": 201,
+        "verification_time": 0.03307223320007324,
+        "integrity_valid": true
+      }
+    },
+    {
+      "run_number": 4,
+      "timestamp": "2025-07-23T13:43:48.924021+00:00",
+      "throughput_test": {
+        "transactions_created": 100,
+        "transaction_creation_time": 0.030007123947143555,
+        "block_creation_time": 0.1533973217010498,
+        "total_time": 0.18340444564819336,
+        "transactions_per_second": 545.2430536597794,
+        "block_index": 1,
+        "block_hash": "cc6ab377745a770b28b41b3e22e63023924d33cd3740964b91da620b1d1902a9"
+      },
+      "integrity_test": {
+        "total_blocks": 2,
+        "total_transactions": 201,
+        "verification_time": 0.030645132064819336,
+        "integrity_valid": true
+      }
+    },
+    {
+      "run_number": 5,
+      "timestamp": "2025-07-23T13:43:49.159526+00:00",
+      "throughput_test": {
+        "transactions_created": 100,
+        "transaction_creation_time": 0.02349114418029785,
+        "block_creation_time": 0.14545130729675293,
+        "total_time": 0.16894245147705078,
+        "transactions_per_second": 591.9175383434284,
+        "block_index": 1,
+        "block_hash": "f22b4f873f30edd490009784b1ada063b272997ec02480d36312f71680444b0d"
+      },
+      "integrity_test": {
+        "total_blocks": 2,
+        "total_transactions": 201,
+        "verification_time": 0.028433561325073242,
+        "integrity_valid": true
+      }
+    }
+  ]
+}
