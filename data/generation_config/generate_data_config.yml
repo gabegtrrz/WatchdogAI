@@ -21,9 +21,9 @@ data_generator:
   
   # Split ratios for train-test-eval split
   split_ratios:
-    training: 0.9
+    training: 0.0
     testing: 0.0
-    evaluation: 0.1
+    evaluation: 1
 
   # !! MAKE SURE TO USE ABSOLUTE PATH !!
   output_folder_path: D:\Projects\WatchdogAI\data\training\training_data\22_100      # Path where CSV files will be saved 
