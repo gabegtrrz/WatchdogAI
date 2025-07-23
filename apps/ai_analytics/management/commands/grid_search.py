@@ -266,7 +266,7 @@ class Command(BaseCommand):
             # Calculate AUC if AUC calculation is enabled in config
             auc_enabled = config.get('grid_search', {}).get('calculate_auc', True)
             if auc_enabled:
-                auc = roc_auc_score(true_labels, anomaly_scores)
+                auc = roc_auc_score(true_labels, -anomaly_scores)
             else:
                 auc = 0.0 # AUC is not calculated
 
