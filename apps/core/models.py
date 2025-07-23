@@ -90,28 +90,28 @@ class Transaction(models.Model):
 
     # --- Pricing ---
     unit_purchase_price = models.DecimalField(
-        max_digits=15,
+        max_digits=16,
         decimal_places=2,
         null=False,
         blank=False,
         help_text="Price per unit of the item being procured."
     )
     total_purchase_price = models.DecimalField(
-        max_digits=15,
+        max_digits=16,
         decimal_places=2,
         null=True, # can be null if price or quantity are null
         blank=True,
         help_text="Total price for the transaction (quantity * unit_purchase_price)."
     )
     average_price = models.DecimalField(
-        max_digits=15,
+        max_digits=16,
         decimal_places=2,
         null=True, # Can be null/blank if not available
         blank=True,
         help_text="Average price per unit across similar transactions (if available)."
     ) 
     approved_budget = models.DecimalField(
-        max_digits=15,
+        max_digits=16,
         decimal_places=2,
         null=True,
         blank=True,
@@ -329,28 +329,28 @@ class Transaction(models.Model):
         if self.unit_purchase_price is not None:
             if self.unit_purchase_price <= 0:
                 raise ValidationError({'unit_purchase_price': 'Unit purchase price must be a positive value.'})
-            if self.unit_purchase_price > Decimal('9999999999999.99'):  # Max value for max_digits=15, decimal_places=2 (PHP)
+            if self.unit_purchase_price > Decimal('9999999999999999.99'):  # Max value for max_digits=16, decimal_places=2
                 raise ValidationError({'unit_purchase_price': 'Unit purchase price exceeds maximum allowed value.'})
         
         # Validate total purchase price if provided
         if self.total_purchase_price is not None:
             if self.total_purchase_price <= 0:
                 raise ValidationError({'total_purchase_price': 'Total purchase price must be a positive value.'})
-            if self.total_purchase_price > Decimal('9999999999999.99'):  # Max value for max_digits=15, decimal_places=2 (PHP)
+            if self.total_purchase_price > Decimal('9999999999999999.99'):  # Max value for max_digits=16, decimal_places=2
                 raise ValidationError({'total_purchase_price': 'Total purchase price exceeds maximum allowed value.'})
         
         # Validate average price if provided
         if self.average_price is not None:
             if self.average_price <= 0:
                 raise ValidationError({'average_price': 'Average price must be a positive value if provided.'})
-            if self.average_price > Decimal('9999999999999.99'):
+            if self.average_price > Decimal('9999999999999999.99'):
                 raise ValidationError({'average_price': 'Average price exceeds maximum allowed value.'})
         
         # Validate approved budget if provided
         if self.approved_budget is not None:
             if self.approved_budget <= 0:
                 raise ValidationError({'approved_budget': 'Approved budget must be a positive value if provided.'})
-            if self.approved_budget > Decimal('9999999999999.99'):
+            if self.approved_budget > Decimal('9999999999999999.99'):
                 raise ValidationError({'approved_budget': 'Approved budget exceeds maximum allowed value.'})
         
         # Validate price consistency
@@ -476,7 +476,7 @@ class AnalysisReport(models.Model):
         if self.anomaly_score is not None:
             try:
                 # Convert to percentage (assuming score is between 0 and 1)
-                return float(1 - float(self.anomaly_score)) * 100
+                return float(1 - self.anomaly_score) * 100
             except (TypeError, ValueError):
                 logger.warning(f"Failed to calculate anomaly percentage for analysis report {getattr(self, 'id', 'Unknown')}")
                 return None
