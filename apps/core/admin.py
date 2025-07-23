@@ -152,8 +152,8 @@ class TransactionAdmin(admin.ModelAdmin):
             'description': 'Blockchain integration status and error tracking'
         }),
         ('Integrity Verification', {
-            'fields': ('transaction_hash', 'hash_created_at'),
-            'description': 'Transaction hash for integrity verification'
+            'fields': ('transaction_hash',),
+            'description': 'Transaction hash for integrity verification (hash_created_at is automatically managed)'
         }),
     )
 
