@@ -41,7 +41,6 @@ class PerformanceMetricAdmin(admin.ModelAdmin):
     
     readonly_fields = [
         'operation_type',
-        'execution_time_ms',
         'transaction_count',
         'created_at',
         'success',
@@ -56,17 +55,22 @@ class PerformanceMetricAdmin(admin.ModelAdmin):
     
     def execution_time_display(self, obj):
         """Display execution time with color coding."""
-        if obj.execution_time_ms > 10000:  # > 10 seconds
+        try:
+            execution_time = float(obj.execution_time_ms)
+        except (ValueError, TypeError):
+            execution_time = 0.0
+        
+        if execution_time > 10000:  # > 10 seconds
             color = 'red'
-        elif obj.execution_time_ms > 5000:  # > 5 seconds
+        elif execution_time > 5000:  # > 5 seconds
             color = 'orange'
         else:
             color = 'green'
         
         return format_html(
-            '<span style="color: {};">{:.2f}ms</span>',
+            '<span style="color: {};">{}ms</span>',
             color,
-            obj.execution_time_ms
+            round(execution_time, 2)
         )
     execution_time_display.short_description = 'Execution Time'
     
@@ -165,29 +169,44 @@ class PerformanceAlertAdmin(admin.ModelAdmin):
     
     def threshold_display(self, obj):
         """Display threshold time."""
-        return f"{obj.threshold_ms:.2f}ms"
+        try:
+            threshold = float(obj.threshold_ms)
+            return f"{threshold:.2f}ms"
+        except (ValueError, TypeError):
+            return "N/A"
     threshold_display.short_description = 'Threshold'
     
     def actual_time_display(self, obj):
         """Display actual time with color coding."""
-        if obj.actual_time_ms > obj.threshold_ms * 3:
-            color = 'red'
-        elif obj.actual_time_ms > obj.threshold_ms * 2:
-            color = 'orange'
-        else:
-            color = 'yellow'
-        
-        return format_html(
-            '<span style="color: {};">{:.2f}ms</span>',
-            color,
-            obj.actual_time_ms
-        )
+        try:
+            actual_time = float(obj.actual_time_ms)
+            threshold = float(obj.threshold_ms)
+            
+            if actual_time > threshold * 3:
+                color = 'red'
+            elif actual_time > threshold * 2:
+                color = 'orange'
+            else:
+                color = 'yellow'
+            
+            return format_html(
+                '<span style="color: {};">{}ms</span>',
+                color,
+                round(actual_time, 2)
+            )
+        except (ValueError, TypeError):
+            return format_html('<span style="color: gray;">N/A</span>')
     actual_time_display.short_description = 'Actual Time'
     
     def ratio_display(self, obj):
         """Display ratio of actual to threshold time."""
-        ratio = obj.actual_time_ms / obj.threshold_ms
-        return f"{ratio:.1f}x"
+        try:
+            actual_time = float(obj.actual_time_ms)
+            threshold = float(obj.threshold_ms)
+            ratio = actual_time / threshold
+            return f"{ratio:.1f}x"
+        except (ValueError, TypeError, ZeroDivisionError):
+            return "N/A"
     ratio_display.short_description = 'Ratio'
     
     def resolve_alerts(self, request, queryset):

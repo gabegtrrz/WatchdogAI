@@ -83,7 +83,12 @@ class PerformanceMetric(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.operation_type} - {self.execution_time_ms:.2f}ms ({self.created_at.strftime('%Y-%m-%d %H:%M:%S')})"
+        """String representation with safe formatting."""
+        try:
+            execution_time = float(self.execution_time_ms)
+            return f"{self.operation_type} - {execution_time:.2f}ms ({self.created_at.strftime('%Y-%m-%d %H:%M:%S')})"
+        except (ValueError, TypeError):
+            return f"{self.operation_type} - N/A ({self.created_at.strftime('%Y-%m-%d %H:%M:%S')})"
     
     @classmethod
     def get_average_time(cls, operation_type, hours=24):
