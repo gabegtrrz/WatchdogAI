@@ -16,6 +16,13 @@ import math
 #   !! Items shall be from data/lab_equipment.txt file alone.
 # ---------------------------------------------------
 # GOAL: To use these to test the effectiveness of the anomaly detection (iforest) model.
+# ====================================
+# VARIABLES
+# ====================================
+
+REPORTING_THRESHOLD = (900000,999990)
+
+
 # 
 # ============================================================================
 # TYPE 1: PRICING & BIDDING ANOMALIES
@@ -303,7 +310,7 @@ class ContractSplitting:
     def apply(record):
         # Much wider range around the Small Value Procurement threshold
         # The total price is set just below this threshold with more variation
-        total_price = np.random.uniform(800000, 999999)
+        total_price = np.random.uniform(REPORTING_THRESHOLD[0], REPORTING_THRESHOLD[1])
         record['total_purchase_price'] = total_price
         
         quantity = record.get('quantity', 0)
