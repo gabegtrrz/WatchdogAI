@@ -4,22 +4,38 @@ This directory contains the controlled experiments for comparing different featu
 
 ## Overview
 
-The experiments compare four different feature sets:
+The experiments compare ten different feature sets:
 
-1. **Set A (Baseline)**: Raw numerical features only
+1. **Baseline**: Raw numerical features only
 
    - `quantity`, `unit_purchase_price`, `total_purchase_price`, `approved_budget`
 
-2. **Set B (Financial)**: Baseline + Financial engineered features
+2. **Financial Only**: Baseline + Financial engineered features
 
-   - Baseline features + `budget_utilization_ratio`, `price_variance_ratio`, `unit_price_ratio`
+   - `budget_utilization_ratio`, `price_vs_market_average`, `price_competitiveness_score`, `total_transaction_value`
 
-3. **Set C (Temporal)**: Baseline + Temporal engineered features
+3. **Temporal Only**: Baseline + Temporal engineered features
 
-   - Baseline features + `bidding_period_number_of_days`, `award_to_contract_days`, `posting_to_award_days`
+   - `bidding_period_number_of_days`, `award_decision_duration`, `contract_signing_number_of_days`, `total_procurement_duration`, `transaction_month`
 
-4. **Set D (Final)**: All engineered features combined
-   - Uses the complete feature engineering pipeline from `feature_engineering.py`
+4. **Supplier Only**: Baseline + Supplier engineered features
+
+   - `supplier_frequency`, `price_per_supplier_freq`, `price_vs_supplier_average`
+
+5. **Efficiency Only**: Baseline + Efficiency engineered features
+
+   - `price_per_unit_efficiency`, `quantity_per_peso_ratio`, `budget_efficiency_score`, `procurement_timeline_speed_ratio`, `transaction_on_a_weekend`
+
+6. **Financial + Temporal**: Baseline + Financial + Temporal features
+
+7. **Financial + Supplier**: Baseline + Financial + Supplier features
+
+8. **Temporal + Supplier**: Baseline + Temporal + Supplier features
+
+9. **Financial + Temporal + Supplier**: Baseline + Financial + Temporal + Supplier features
+
+10. **Final (All Engineered)**: All engineered features combined
+    - Uses the complete feature engineering pipeline from `feature_engineering.py`
 
 ## Experimental Design
 
@@ -37,8 +53,35 @@ The experiments compare four different feature sets:
 ### Data
 
 - **Training data**: `data/training/training_data/21_0.05/labeled/training.csv`
-- **Evaluation data**: `data/training/training_data/21_0.05/labeled/eval.csv`
+- **Evaluation data**: `data/training/training_data/21_0.05/labeled/training.csv`
 - **Actual contamination**: 5% (0.05)
+
+## Configuration Structure
+
+The `thesis_config.yml` file defines:
+
+- **Baseline features**: Raw features that are always included
+- **Feature sets**: Each set explicitly lists its engineered features
+- **Model parameters**: Isolation Forest hyperparameters
+- **Experiment settings**: Contamination range, metrics, output options
+
+### Example Feature Set Definition
+
+```yaml
+financial_temporal:
+  description: "Baseline + Financial + Temporal features"
+  features:
+    - "budget_utilization_ratio"
+    - "price_vs_market_average"
+    - "price_competitiveness_score"
+    - "total_transaction_value"
+    - "bidding_period_number_of_days"
+    - "award_decision_duration"
+    - "contract_signing_number_of_days"
+    - "total_procurement_duration"
+    - "transaction_month"
+  enabled: true
+```
 
 ## Running the Experiments
 
@@ -51,7 +94,7 @@ The experiments compare four different feature sets:
 ### Command
 
 ```bash
-python watchdog_ai/manage.py thesis_feature_comparison --config "1 Thesis/features/research_model/thesis_config.yml"
+python manage.py thesis_feature_comparison --config "1 Thesis/features/research_model/thesis_config.yml"
 ```
 
 ### Expected Output
@@ -93,12 +136,12 @@ Results are saved in `1 Thesis/features/research_model/results/` with the follow
       "best_f1_score": 0.4,
       "best_metrics": {...}
     },
-    "financial": {...},
-    "temporal": {...},
-    "final": {...}
+    "financial_only": {...},
+    "temporal_only": {...},
+    "final_all_engineered": {...}
   },
   "best_overall_model": {
-    "feature_set": "final",
+    "feature_set": "final_all_engineered",
     "f1_score": 0.75,
     "contamination": 0.05
   }
@@ -116,14 +159,13 @@ Results are saved in `1 Thesis/features/research_model/results/` with the follow
 
 ### Expected Outcomes
 
-- **Hypothesis**: Set D (Final) should achieve the highest F1-score
-- **Baseline**: Set A establishes the performance benchmark
-- **Incremental Improvement**: Sets B and C show the contribution of specific feature types
+- **Hypothesis**: Final set (All Engineered) should achieve the highest F1-score
+- **Baseline**: Baseline set establishes the performance benchmark
+- **Incremental Improvement**: Individual feature sets show the contribution of specific feature types
 
 ## Files
 
 - `thesis_config.yml`: Configuration file for experiments
-- `research_model_command.py`: Standalone command (not used)
 - `README.md`: This documentation file
 - `results/`: Directory containing experiment results
 - `models/`: Directory for saved models (if enabled)
