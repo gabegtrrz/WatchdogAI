@@ -1,14 +1,10 @@
-# -----------------
-# Contains all configured anomaly types
-# -----------------
-
 
 data_generator:
   # ========================
   # MAIN CONFIGURATION
   # ========================
   
-  n_samples: 100         # Number of records (rows) to generate
+  n_samples: 1000         # Number of records (rows) to generate
   random_state: 77         # Seed for reproducibility (same seed = same output)
   anomaly_fraction: 0.05
   
@@ -21,7 +17,7 @@ data_generator:
   
   # Split ratios for train-test-eval split
   split_ratios:
-    training: 0.0
+    training: 0.9
     testing: 0.0
     evaluation: 1
 

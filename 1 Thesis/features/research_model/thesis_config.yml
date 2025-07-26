@@ -1,0 +1,139 @@
+# THESIS FEATURE SET COMPARISON EXPERIMENTS CONFIGURATION
+# 
+# USAGE:
+# python watchdog_ai/manage.py research_model_command --config 1\ Thesis/features/research_model/thesis_config.yml
+#
+# This configuration runs controlled experiments to compare different feature sets:
+# - Set A (Baseline): Raw features only (quantity, unit_purchase_price, total_purchase_price, approved_budget)
+# - Set B: Baseline + Financial Features (budget_utilization_ratio, price_variance_ratio, unit_price_ratio)
+# - Set C: Baseline + Temporal Features (bidding_period_number_of_days, award_to_contract_days, posting_to_award_days)
+# - Set D (Final): All engineered features combined (using existing feature_engineering.py)
+
+# Data source configuration
+data_source:
+  # Training dataset (used for model training)
+  training_csv_path: D:\Projects\WatchdogAI\data\training\training_data\21_0.05\labeled\training.csv
+  
+  # Evaluation dataset (used for model evaluation)
+  evaluation_csv_path: D:\Projects\WatchdogAI\data\training\training_data\21_0.05\labeled\eval.csv
+  
+  # Actual contamination rate in the data (for reference)
+  actual_contamination: 0.05
+
+# Model configuration - same parameters for all experiments
+model:
+  # Contamination values to test for each feature set
+  contamination_range: [0.01, 0.05, 0.10, 0.15, 0.20]
+  
+  # Isolation Forest parameters (kept constant across all experiments)
+  n_estimators: 100      # Number of trees in the forest
+  random_state: 7       # Random seed for reproducibility
+  max_samples: 700       # Number of samples to draw for each tree
+  bootstrap: false       # Whether to use bootstrap samples
+  n_jobs: null           # Number of jobs to run in parallel (null = use all)
+  verbose: 0             # Verbosity level
+  warm_start: false      # Whether to reuse previous solution
+  max_features: 1.0      # Number of features to consider for best split
+
+# Feature sets configuration
+feature_sets:
+  # Set A: Baseline features (raw numerical features only)
+  baseline:
+    description: "Raw numerical features only"
+    features: ["quantity", "unit_purchase_price", "total_purchase_price", "approved_budget", "transaction_date"]
+    enabled: true
+  
+  # Set B: Baseline + Financial engineered features
+  financial:
+    description: "Baseline + Financial engineered features"
+    features: ["budget_utilization_ratio", "price_variance_ratio", "unit_price_ratio"]
+    enabled: true
+  
+  # Set C: Baseline + Temporal engineered features
+  temporal:
+    description: "Baseline + Temporal engineered features"
+    features: ["bidding_period_number_of_days", "award_to_contract_days", "posting_to_award_days"]
+    enabled: true
+  
+  # Set D: Final feature set (all engineered features)
+  final:
+    description: "All engineered features combined (using existing feature_engineering.py)"
+    features: "all_engineered"
+    enabled: true
+
+# Experiments configuration
+experiments:
+  # Enable all feature set experiments
+  run_baseline: true
+  run_financial: true
+  run_temporal: true
+  run_final: true
+  
+  # Evaluation metrics to calculate
+  metrics:
+    - "precision"
+    - "recall"
+    - "f1_score"
+  
+  # Output configuration
+  output:
+    # Save detailed results for each feature set
+    save_detailed_results: true
+    
+    # Save best model for each feature set
+    save_best_models: false
+    
+    # Include confusion matrices in results
+    include_confusion_matrices: true
+    
+    # Include feature importance analysis
+    include_feature_analysis: false
+
+# Thesis-specific output configuration
+thesis_output:
+  # Results will be saved to thesis directory
+  results_directory: "1 Thesis/features/research_model/results"
+  
+  # Include timestamp in results filename
+  include_timestamp: true
+  
+  # Results filename format
+  results_filename_format: "thesis_feature_comparison_results_{timestamp}.json"
+  
+  # Save summary report
+  save_summary_report: true
+  
+  # Summary report filename
+  summary_report_filename: "thesis_experiment_summary_{timestamp}.md"
+
+# Logging configuration
+logging:
+  # Log level for thesis experiments
+  level: "INFO"  # Options: "DEBUG", "INFO", "WARNING", "ERROR"
+  
+  # Include console output during experiments
+  console_output: true
+  
+  # Include file logging during experiments
+  file_logging: false
+  log_file_path: null
+
+# Advanced configuration
+advanced:
+  # Handle missing values in feature creation
+  handle_missing_values: true
+  
+  # Default value for missing numerical features
+  missing_value_default: 0
+  
+  # Validate data before experiments
+  validate_data: true
+  
+  # Continue experiments even if some feature sets fail
+  continue_on_feature_error: true
+  
+  # Random seed for reproducibility
+  random_seed: 42
+  
+  # Number of parallel jobs for model training
+  n_jobs: null 

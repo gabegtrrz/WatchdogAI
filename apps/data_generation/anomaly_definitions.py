@@ -20,7 +20,7 @@ import math
 # VARIABLES
 # ====================================
 
-REPORTING_THRESHOLD = (910000,999990)
+REPORTING_THRESHOLD = (910000,999999)
 
 
 # 
