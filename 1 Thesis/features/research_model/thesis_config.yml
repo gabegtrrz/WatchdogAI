@@ -69,28 +69,31 @@ feature_sets:
       - "unit_purchase_price"
       - "total_purchase_price"
       - "approved_budget"
+      - "average_price"
       - "budget_utilization_ratio"
       - "price_competitiveness_score"
       - "total_transaction_value"
     enabled: true
 
-  4_baseline+temporal_features_1:
+  5_baseline+temporal_features_1:
     description: "Baseline + Temporal features"
     features:
       - "quantity"
       - "unit_purchase_price"
       - "total_purchase_price"
       - "approved_budget"
+      - "average_price"
       - "transaction_month"
       - "transaction_date"
       - "contract_signing_day_of_week"
     enabled: true
 
-  5_baseline+temporal_features_2:
+  6_baseline+temporal_features_2:
     description: "Baseline + Temporal features"
     features:
       - "quantity"
       - "unit_purchase_price"
+      - "average_price"
       - "total_purchase_price"
       - "approved_budget"
       - 'contract_signing_day_of_week'
@@ -102,111 +105,146 @@ feature_sets:
       - "transaction_date"
     enabled: true
 
-  supplier_only:
-    description: "Baseline + Supplier features"
+  7_baseline+temporal_features+supplier:
+    description: "Baseline + Temporal features"
     features:
       - "quantity"
       - "unit_purchase_price"
+      - "average_price"
       - "total_purchase_price"
       - "approved_budget"
+      - 'contract_signing_day_of_week'
+      - "bidding_period_number_of_days"
+      - "award_decision_duration"
+      - "contract_signing_number_of_days"
+      - "total_procurement_duration"
+      - "transaction_month"
+      - "transaction_date"
+      # supplier
       - "supplier_frequency"
+    enabled: true
+
+  8_baseline+temporal_features+enhanced_supplier:
+    description: "Baseline + Temporal features"
+    features:
+      - "quantity"
+      - "unit_purchase_price"
+      - "average_price"
+      - "total_purchase_price"
+      - "approved_budget"
+      - 'contract_signing_day_of_week'
+      - "bidding_period_number_of_days"
+      - "award_decision_duration"
+      - "contract_signing_number_of_days"
+      - "total_procurement_duration"
+      - "transaction_month"
+      - "transaction_date"
+      # supplier
+      - "supplier_frequency"
+      # enhanced supplier
       - "price_per_supplier_freq"
       - "price_vs_supplier_average"
     enabled: true
 
-  efficiency_only:
-    description: "Baseline + Efficiency features"
+  9_baseline+temporal+supplier+efficiency:
+      description: "Baseline + Temporal features"
+      features:
+        - "quantity"
+        - "unit_purchase_price"
+        - "average_price"
+        - "total_purchase_price"
+        - "approved_budget"
+        - 'contract_signing_day_of_week'
+        - "bidding_period_number_of_days"
+        - "award_decision_duration"
+        - "contract_signing_number_of_days"
+        - "total_procurement_duration"
+        - "transaction_month"
+        - "transaction_date"
+        # supplier
+        - "supplier_frequency"
+        # enhanced supplier
+        - "price_per_supplier_freq"
+        - "price_vs_supplier_average"
+        # Efficiency
+        - "quantity_per_peso_ratio"
+        - "budget_efficiency_score"
+      enabled: true
+
+  10_baseline+temporal+supplier+enhanced_efficiency:
+      description: "Baseline + Temporal features"
+      features:
+        - "quantity"
+        - "unit_purchase_price"
+        - "average_price"
+        - "total_purchase_price"
+        - "approved_budget"
+        - 'contract_signing_day_of_week'
+        - "bidding_period_number_of_days"
+        - "award_decision_duration"
+        - "contract_signing_number_of_days"
+        - "total_procurement_duration"
+        - "transaction_month"
+        - "transaction_date"
+        # supplier
+        - "supplier_frequency"
+        # enhanced supplier
+        - "price_per_supplier_freq"
+        - "price_vs_supplier_average"
+        # Efficiency
+        - "quantity_per_peso_ratio"
+        - "budget_efficiency_score"
+        - "procurement_timeline_speed_ratio"
+        - "transaction_on_a_weekend"
+      enabled: true
+
+
+  11_baseline+financial+temporal+supplier+efficiency:
+    description: "included financial compared to 10"
     features:
       - "quantity"
       - "unit_purchase_price"
+      - "average_price"
       - "total_purchase_price"
       - "approved_budget"
-      - "price_per_unit_efficiency"
+
+      # Financial
+      - "budget_utilization_ratio"
+      - "price_vs_market_average"
+      - "price_competitiveness_score"
+      - "total_transaction_value"
+
+      # Temporal
+      - 'contract_signing_day_of_week'
+      - "bidding_period_number_of_days"
+      - "award_decision_duration"
+      - "contract_signing_number_of_days"
+      - "total_procurement_duration"
+      - "transaction_month"
+      - "transaction_date"
+      # supplier
+      - "supplier_frequency"
+      # enhanced supplier
+      - "price_per_supplier_freq"
+      - "price_vs_supplier_average"
+      # Efficiency
       - "quantity_per_peso_ratio"
       - "budget_efficiency_score"
       - "procurement_timeline_speed_ratio"
       - "transaction_on_a_weekend"
     enabled: true
-
-  financial_temporal:
-    description: "Baseline + Financial + Temporal features"
-    features:
-      - "quantity"
-      - "unit_purchase_price"
-      - "total_purchase_price"
-      - "approved_budget"
-      - "budget_utilization_ratio"
-      - "price_vs_market_average"
-      - "price_competitiveness_score"
-      - "total_transaction_value"
-      - "bidding_period_number_of_days"
-      - "award_decision_duration"
-      - "contract_signing_number_of_days"
-      - "total_procurement_duration"
-      - "transaction_month"
-    enabled: true
-
-  financial_supplier:
-    description: "Baseline + Financial + Supplier features"
-    features:
-      - "quantity"
-      - "unit_purchase_price"
-      - "total_purchase_price"
-      - "approved_budget"
-      - "budget_utilization_ratio"
-      - "price_vs_market_average"
-      - "price_competitiveness_score"
-      - "total_transaction_value"
-      - "supplier_frequency"
-      - "price_per_supplier_freq"
-      - "price_vs_supplier_average"
-    enabled: true
-
-  temporal_supplier:
-    description: "Baseline + Temporal + Supplier features"
-    features:
-      - "quantity"
-      - "unit_purchase_price"
-      - "total_purchase_price"
-      - "approved_budget"
-      - "bidding_period_number_of_days"
-      - "award_decision_duration"
-      - "contract_signing_number_of_days"
-      - "total_procurement_duration"
-      - "transaction_month"
-      - "supplier_frequency"
-      - "price_per_supplier_freq"
-      - "price_vs_supplier_average"
-    enabled: true
-
-  financial_temporal_supplier:
-    description: "Baseline + Financial + Temporal + Supplier features"
-    features:
-      - "quantity"
-      - "unit_purchase_price"
-      - "total_purchase_price"
-      - "approved_budget"
-      - "budget_utilization_ratio"
-      - "price_vs_market_average"
-      - "price_competitiveness_score"
-      - "total_transaction_value"
-      - "bidding_period_number_of_days"
-      - "award_decision_duration"
-      - "contract_signing_number_of_days"
-      - "total_procurement_duration"
-      - "transaction_month"
-      - "supplier_frequency"
-      - "price_per_supplier_freq"
-      - "price_vs_supplier_average"
-    enabled: true
   
   final_all_engineered:
-    description: "All engineered features combined"
+    description: "dropped irrelevant fields (baseline values), included methods"
     features:
+
+      # Baseline
       - "quantity"
       - "unit_purchase_price"
+      - "average_price"
       - "total_purchase_price"
       - "approved_budget"
+
       # Financial features
       - "price_per_unit_efficiency"
       - "quantity_per_peso_ratio"
