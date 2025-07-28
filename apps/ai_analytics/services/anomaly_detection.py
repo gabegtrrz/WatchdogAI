@@ -94,6 +94,7 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
     3. Preprocesses the data
     4. Generates features (using the training columns)
     5. Aligns columns with training data
+    5.5. Refit model using ALL existing transaction data
     6. Performs anomaly detection
     7. Saves the results for each transaction into an AnalysisReport
 
@@ -139,7 +140,48 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         final_df = _prepare_features_for_prediction(featured_df, training_columns_copy)
         del training_columns_copy  # Clean up the copy after use
         
-
+        ### 5.5. Refit model using ALL existing transaction data
+        logger.info("Refitting model using ALL existing transaction data...")
+        step_start = time.time()
+        
+        try:
+            # Get all existing transactions from database
+            all_transactions = Transaction.objects.all()
+            logger.info(f"Retrieved {all_transactions.count()} total transactions for model refitting")
+            
+            # Convert all transactions to DataFrame
+            all_raw_df = preprocessing.get_transaction_dataframe(all_transactions)
+            
+            # Remove is_anomaly column if present (for inference)
+            if 'is_anomaly' in all_raw_df.columns:
+                # logger.info("Removing is_anomaly column from all transaction data for refitting")
+                all_raw_df = all_raw_df.drop('is_anomaly', axis=1)
+            
+            # Preprocess all transaction data
+            all_cleaned_df = preprocessing.clean_raw_data(all_raw_df)
+            
+            # Generate features for all transactions
+            all_featured_df, _ = feature_engineering.create_features(all_cleaned_df)
+            
+            # Prepare features for model refitting (using same training columns)
+            all_training_columns_copy = training_columns.copy()
+            all_final_df = _prepare_features_for_prediction(all_featured_df, all_training_columns_copy)
+            del all_training_columns_copy
+            
+            # Refit the model with all data
+            logger.info(f"Refitting model with {all_final_df.shape[0]} samples and {all_final_df.shape[1]} features")
+            model.fit(all_final_df)
+            
+            # Save the refitted model
+            import joblib
+            joblib.dump(model, MODEL_PATH)
+            joblib.dump(training_columns, COLUMNS_PATH)
+            
+            logger.info(f"Model successfully refitted and saved in {time.time() - step_start:.2f} seconds")
+            
+        except Exception as e:
+            logger.warning(f"Model refitting failed: {e}. Continuing with original model.")
+            logger.warning("Using original model for anomaly detection")
         
         # 6. Perform anomaly detection with sophisticated contamination handling
         prediction_results = _get_predictions_and_scores(final_df, contamination)
