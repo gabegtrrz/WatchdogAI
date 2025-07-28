@@ -23,7 +23,7 @@ model:
   # Optional: Isolation Forest parameters
   n_estimators: 100  # Number of trees in the forest
   random_state: 7   # Random seed for reproducibility
-  max_samples: 500   # Number of samples to draw for each tree
+  max_samples: 1.00   # Number of samples to draw for each tree
   bootstrap: false   # Whether to use bootstrap samples
   n_jobs: null       # Number of jobs to run in parallel (null = use all)
   verbose: 0         # Verbosity level

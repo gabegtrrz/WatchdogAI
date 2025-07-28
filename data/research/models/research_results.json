@@ -1,5 +1,173 @@
 [
   {
+    "research_date": "2025-07-28T15:23:20.448996",
+    "configuration": {
+      "data_source": {
+        "training_csv_path": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500\\labeled\\eval.csv",
+        "evaluation_csv_path": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500\\labeled\\eval.csv",
+        "actual_contamination": 0.05
+      },
+      "model": {
+        "contamination_range": [
+          0.05
+        ],
+        "n_estimators": 100,
+        "random_state": 7,
+        "max_samples": 1.0,
+        "bootstrap": false,
+        "n_jobs": null,
+        "verbose": 0,
+        "warm_start": false,
+        "max_features": 1.0
+      },
+      "training": {
+        "research_mode": true,
+        "cross_validation": false,
+        "actual_contamination": 0.05
+      },
+      "evaluation": {
+        "output_format": "both",
+        "log_directory": "D:\\Projects\\WatchdogAI\\data\\research\\evaluation_logs",
+        "include_timestamp": true,
+        "log_filename_format": "research_evaluation_{timestamp}.json",
+        "metrics": [
+          "precision",
+          "recall",
+          "f1_score",
+          "accuracy",
+          "specificity",
+          "balanced_accuracy",
+          "confusion_matrix"
+        ],
+        "reporting": {
+          "include_dataset_info": true,
+          "include_model_info": true,
+          "include_prediction_summary": true,
+          "include_confusion_matrix": true
+        }
+      },
+      "output": {
+        "model_dir": "D:\\Projects\\WatchdogAI\\data\\research\\models",
+        "model_filename": "research_isolation_forest.joblib",
+        "columns_filename": "research_training_columns.joblib",
+        "research_log_filename": "research_results.json"
+      },
+      "logging": {
+        "level": "INFO",
+        "console_output": true,
+        "file_logging": false,
+        "log_file_path": null
+      },
+      "advanced": {
+        "handle_missing_columns": true,
+        "missing_column_default": 0,
+        "remove_extra_columns": true,
+        "validate_data": true,
+        "continue_on_metric_error": false,
+        "feature_engineering": {
+          "include_engineered_features": true,
+          "scale_features": false,
+          "feature_selection": false
+        }
+      }
+    },
+    "dataset_info": {
+      "training_sample_count": 500,
+      "training_feature_count": 29,
+      "training_feature_columns": [
+        "quantity",
+        "price_per_unit_efficiency",
+        "quantity_per_peso_ratio",
+        "unit_price_vs_market_average",
+        "budget_efficiency_score",
+        "price_volatility_index",
+        "total_transaction_value",
+        "budget_utilization_ratio",
+        "price_vs_market_average",
+        "price_competitiveness_score",
+        "contract_signing_day_of_week",
+        "bid_opening_day_of_week",
+        "transaction_month",
+        "bidding_period_number_of_days",
+        "award_decision_duration",
+        "contract_signing_number_of_days",
+        "total_procurement_duration",
+        "supplier_frequency",
+        "price_per_supplier_freq",
+        "price_vs_supplier_average",
+        "procurement_timeline_speed_ratio",
+        "transaction_on_a_weekend",
+        "procurement_method_Competitive Bidding",
+        "procurement_method_Direct Contracting",
+        "procurement_method_Negotiated Procurement (Agency-to-Agency)",
+        "procurement_method_Negotiated Procurement (Small Value Procurement)",
+        "procurement_method_Negotiated Procurement (Two Failed Biddings)",
+        "procurement_method_Repeat Order",
+        "procurement_method_nan"
+      ],
+      "evaluation_sample_count": 500,
+      "evaluation_feature_count": 29,
+      "evaluation_labeled_data_count": 500,
+      "true_anomalies": 25,
+      "true_normal": 475,
+      "actual_contamination": 0.05
+    },
+    "contamination_analysis": {
+      "0.05": {
+        "contamination": 0.05,
+        "threshold": -0.4881327712171308,
+        "predicted_anomalies": 25,
+        "predicted_normal": 475,
+        "true_anomalies": 25,
+        "true_normal": 475,
+        "precision": 0.72,
+        "recall": 0.72,
+        "f1_score": 0.72,
+        "accuracy": 0.972,
+        "specificity": 0.9852631578947368,
+        "balanced_accuracy": 0.8526315789473684,
+        "confusion_matrix": [
+          [
+            468,
+            7
+          ],
+          [
+            7,
+            18
+          ]
+        ],
+        "true_positives": 18,
+        "false_positives": 7,
+        "false_negatives": 7,
+        "true_negatives": 468
+      }
+    },
+    "best_model": {
+      "contamination": 0.05,
+      "f1_score": 0.72,
+      "precision": 0.72,
+      "recall": 0.72,
+      "true_anomalies": 25,
+      "predicted_anomalies": 25,
+      "model_path": "D:\\Projects\\WatchdogAI\\data\\research\\models\\research_isolation_forest.joblib",
+      "columns_path": "D:\\Projects\\WatchdogAI\\data\\research\\models\\research_training_columns.joblib"
+    },
+    "recommendations": [],
+    "training_summary": {
+      "total_contamination_values_tested": 1,
+      "contamination_values_tested": [
+        0.05
+      ],
+      "best_contamination": 0.05,
+      "best_f1_score": 0.72,
+      "training_completed_at": "2025-07-28T15:23:20.552651",
+      "model_saved_to": "D:\\Projects\\WatchdogAI\\data\\research\\models\\research_isolation_forest.joblib",
+      "columns_saved_to": "D:\\Projects\\WatchdogAI\\data\\research\\models\\research_training_columns.joblib",
+      "research_log_saved_to": "D:\\Projects\\WatchdogAI\\data\\research\\models\\research_results.json"
+    },
+    "research_timestamp": "2025-07-28T15:23:20.552753"
+  },
+  {
     "research_date": "2025-07-28T15:20:20.184963",
     "configuration": {
       "data_source": {
