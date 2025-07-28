@@ -7,10 +7,10 @@
 # Data source configuration
 data_source:
   # Training dataset (used for model training)
-  training_csv_path: D:\Projects\WatchdogAI\data\training\training_data\21_0.05\labeled\training.csv
+  training_csv_path: D:\Projects\WatchdogAI\data\training\training_data\24_500\labeled\eval.csv
   
   # Evaluation dataset (used for model evaluation)
-  evaluation_csv_path: D:\Projects\WatchdogAI\data\training\training_data\21_0.05\labeled\training.csv
+  evaluation_csv_path: D:\Projects\WatchdogAI\data\training\training_data\24_500\labeled\eval.csv
   
   # Actual contamination rate in the data (optional)
   actual_contamination: 0.05
@@ -21,9 +21,9 @@ model:
   contamination_range: [0.05]
   
   # Optional: Isolation Forest parameters
-  n_estimators: 50  # Number of trees in the forest
+  n_estimators: 100  # Number of trees in the forest
   random_state: 7   # Random seed for reproducibility
-  max_samples:    # Number of samples to draw for each tree
+  max_samples: 500   # Number of samples to draw for each tree
   bootstrap: false   # Whether to use bootstrap samples
   n_jobs: null       # Number of jobs to run in parallel (null = use all)
   verbose: 0         # Verbosity level

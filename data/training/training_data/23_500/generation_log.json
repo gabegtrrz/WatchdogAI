@@ -1,12 +1,12 @@
 [
   {
     "test_name": "Unnamed Test",
-    "generation_date": "2025-07-27T22:16:40.265536",
+    "generation_date": "2025-07-28T14:58:12.515932",
     "configuration": {
       "data_generator": {
         "n_samples": 500,
-        "random_state": 88,
-        "anomaly_fraction": 0.05,
+        "random_state": 8,
+        "anomaly_fraction": 0.03,
         "split_mode": true,
         "split_ratios": {
           "training": 0.0,
@@ -152,7 +152,8 @@
           "Favored Supplier",
           "Fictitious Winner",
           "Supplier Monopoly",
-          "Method Misuse"
+          "Method Misuse",
+          "Coordinated Fraud"
         ]
       }
     },
@@ -182,9 +183,9 @@
         "contract_signing_date"
       ],
       "labeled_data_count": 500,
-      "true_anomalies": 25,
-      "true_normal": 475,
-      "anomaly_fraction": 0.05
+      "true_anomalies": 15,
+      "true_normal": 485,
+      "anomaly_fraction": 0.03
     },
     "data_split": {
       "mode": "split",
@@ -218,9 +219,9 @@
     "generation_settings": {
       "is_training_data": false,
       "split_mode": true,
-      "random_state": 88,
+      "random_state": 8,
       "n_samples": 500,
-      "anomaly_fraction": 0.05,
+      "anomaly_fraction": 0.03,
       "active_anomalies": [
         "Suspicious Overpricing",
         "Budget Efficiency Anomaly",
@@ -246,16 +247,17 @@
         "Favored Supplier",
         "Fictitious Winner",
         "Supplier Monopoly",
-        "Method Misuse"
+        "Method Misuse",
+        "Coordinated Fraud"
       ],
       "average_price_mode": "scrape"
     },
     "generation_summary": {
-      "generation_completed_at": "2025-07-27T22:16:40.265563",
+      "generation_completed_at": "2025-07-28T14:58:12.515958",
       "output_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_500",
       "log_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_500",
       "total_files_created": 6
     },
-    "generation_timestamp": "2025-07-27T22:16:40.265695"
+    "generation_timestamp": "2025-07-28T14:58:12.516078"
   }
 ]

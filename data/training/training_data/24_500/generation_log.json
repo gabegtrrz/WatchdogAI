@@ -1,20 +1,20 @@
 [
   {
     "test_name": "Unnamed Test",
-    "generation_date": "2025-07-27T22:28:37.708412",
+    "generation_date": "2025-07-28T14:59:37.239894",
     "configuration": {
       "data_generator": {
-        "n_samples": 1000,
-        "random_state": 42,
+        "n_samples": 500,
+        "random_state": 24,
         "anomaly_fraction": 0.05,
         "split_mode": true,
         "split_ratios": {
-          "training": 0.9,
+          "training": 0.0,
           "testing": 0.0,
           "evaluation": 1
         },
-        "output_folder_path": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000",
-        "log_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\22_1000",
+        "output_folder_path": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500",
+        "log_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500",
         "item_source_file": "data/lab_equipment.txt",
         "average_price": {
           "mode": "scrape",
@@ -152,12 +152,13 @@
           "Favored Supplier",
           "Fictitious Winner",
           "Supplier Monopoly",
-          "Method Misuse"
+          "Method Misuse",
+          "Coordinated Fraud"
         ]
       }
     },
     "dataset_info": {
-      "total_samples": 1000,
+      "total_samples": 500,
       "columns_count": 20,
       "columns": [
         "transaction_date",
@@ -181,45 +182,45 @@
         "notice_of_award_date",
         "contract_signing_date"
       ],
-      "labeled_data_count": 1000,
-      "true_anomalies": 50,
-      "true_normal": 950,
+      "labeled_data_count": 500,
+      "true_anomalies": 25,
+      "true_normal": 475,
       "anomaly_fraction": 0.05
     },
     "data_split": {
       "mode": "split",
-      "training_samples": 900,
+      "training_samples": 0,
       "testing_samples": 0,
-      "evaluation_samples": 100,
+      "evaluation_samples": 500,
       "split_ratios": {
-        "training": 0.9,
+        "training": 0.0,
         "testing": 0.0,
         "evaluation": 1
       }
     },
     "output_structure": {
-      "output_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000",
-      "labeled_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000\\labeled",
-      "unlabeled_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000\\unlabeled",
-      "log_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000",
+      "output_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500",
+      "labeled_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500\\labeled",
+      "unlabeled_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500\\unlabeled",
+      "log_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500",
       "files_created": {
         "labeled": [
-          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000\\labeled\\training.csv",
-          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000\\labeled\\testing.csv",
-          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000\\labeled\\eval.csv"
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500\\labeled\\training.csv",
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500\\labeled\\testing.csv",
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500\\labeled\\eval.csv"
         ],
         "unlabeled": [
-          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000\\unlabeled\\training.csv",
-          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000\\unlabeled\\testing.csv",
-          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000\\unlabeled\\eval.csv"
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500\\unlabeled\\training.csv",
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500\\unlabeled\\testing.csv",
+          "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500\\unlabeled\\eval.csv"
         ]
       }
     },
     "generation_settings": {
       "is_training_data": false,
       "split_mode": true,
-      "random_state": 42,
-      "n_samples": 1000,
+      "random_state": 24,
+      "n_samples": 500,
       "anomaly_fraction": 0.05,
       "active_anomalies": [
         "Suspicious Overpricing",
@@ -246,16 +247,17 @@
         "Favored Supplier",
         "Fictitious Winner",
         "Supplier Monopoly",
-        "Method Misuse"
+        "Method Misuse",
+        "Coordinated Fraud"
       ],
       "average_price_mode": "scrape"
     },
     "generation_summary": {
-      "generation_completed_at": "2025-07-27T22:28:37.708439",
-      "output_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000",
-      "log_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\23_1000",
+      "generation_completed_at": "2025-07-28T14:59:37.239937",
+      "output_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500",
+      "log_directory": "D:\\Projects\\WatchdogAI\\data\\training\\training_data\\24_500",
       "total_files_created": 6
     },
-    "generation_timestamp": "2025-07-27T22:28:37.708601"
+    "generation_timestamp": "2025-07-28T14:59:37.240098"
   }
 ]
