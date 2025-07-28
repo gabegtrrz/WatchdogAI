@@ -140,14 +140,15 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         final_df = _prepare_features_for_prediction(featured_df, training_columns_copy)
         del training_columns_copy  # Clean up the copy after use
         
-        ### 5.5. Refit model using ALL existing transaction data
+        ### 5.5. Refit model using ALL existing transaction data with max_samples optimization
         logger.info("Refitting model using ALL existing transaction data...")
         step_start = time.time()
         
         try:
             # Get all existing transactions from database
             all_transactions = Transaction.objects.all()
-            logger.info(f"Retrieved {all_transactions.count()} total transactions for model refitting")
+            total_transactions = all_transactions.count()
+            logger.info(f"Retrieved {total_transactions} total transactions for model refitting")
             
             # Convert all transactions to DataFrame
             all_raw_df = preprocessing.get_transaction_dataframe(all_transactions)
@@ -168,8 +169,12 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             all_final_df = _prepare_features_for_prediction(all_featured_df, all_training_columns_copy)
             del all_training_columns_copy
             
+            # Set max_samples to use 100% of available samples for maximum coverage
+            # This ensures the model uses all available samples (1.0 = 100%)
+            model.set_params(max_samples=1.0)  # Use 100% of available samples
+            
             # Refit the model with all data
-            logger.info(f"Refitting model with {all_final_df.shape[0]} samples and {all_final_df.shape[1]} features")
+            logger.info(f"Refitting model with {all_final_df.shape[0]} samples and {all_final_df.shape[1]} features (max_samples={model.get_params()['max_samples']})")
             model.fit(all_final_df)
             
             # Save the refitted model
