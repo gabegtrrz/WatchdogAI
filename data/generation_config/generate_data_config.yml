@@ -4,8 +4,8 @@ data_generator:
   # MAIN CONFIGURATION
   # ========================
   
-  n_samples: 100         # Number of records (rows) to generate
-  random_state: 77         # Seed for reproducibility (same seed = same output)
+  n_samples: 1000         # Number of records (rows) to generate
+  random_state: 42         # Seed for reproducibility (same seed = same output)
   anomaly_fraction: 0.05
   
   # ============================
@@ -17,13 +17,13 @@ data_generator:
   
   # Split ratios for train-test-eval split
   split_ratios:
-    training: 0.0
+    training: 0.9
     testing: 0.0
     evaluation: 1
 
   # !! MAKE SURE TO USE ABSOLUTE PATH !!
-  output_folder_path: D:\Projects\WatchdogAI\data\training\training_data\23_100      # Path where CSV files will be saved 
-  log_directory: D:\Projects\WatchdogAI\data\training\training_data\22_100                      # Path where JSON logs will be saved
+  output_folder_path: D:\Projects\WatchdogAI\data\training\training_data\23_1000      # Path where CSV files will be saved 
+  log_directory: D:\Projects\WatchdogAI\data\training\training_data\22_1000                      # Path where JSON logs will be saved
 
   item_source_file: "data/lab_equipment.txt" # Text file with one item name per line
   

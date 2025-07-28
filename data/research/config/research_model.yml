@@ -1,5 +1,5 @@
 # USAGE:
-# python watchdog_ai/manage.py research_model --config path/to/your/config.yml
+# python manage.py research_model --config path/to/your/config.yml
 #
 # This configuration combines training and evaluation settings for research mode
 # using separate datasets for training and evaluation.
@@ -7,10 +7,10 @@
 # Data source configuration
 data_source:
   # Training dataset (used for model training)
-  training_csv_path: D:\Projects\WatchdogAI\data\training\training_data\17_0.05\2025-07-19_18-49-54\labeled\train.csv
+  training_csv_path: D:\Projects\WatchdogAI\data\training\training_data\21_0.05\labeled\training.csv
   
   # Evaluation dataset (used for model evaluation)
-  evaluation_csv_path: D:\Projects\WatchdogAI\data\training\training_data\17_0.05\2025-07-19_18-49-54\labeled\eval.csv
+  evaluation_csv_path: D:\Projects\WatchdogAI\data\training\training_data\21_0.05\labeled\training.csv
   
   # Actual contamination rate in the data (optional)
   actual_contamination: 0.05
@@ -18,12 +18,12 @@ data_source:
 # Model configuration
 model:
   # Required: Range of contamination values to test in research mode
-  contamination_range: [0.01, 0.05, 0.10, 0.15, 0.20]
+  contamination_range: [0.05]
   
   # Optional: Isolation Forest parameters
-  n_estimators: 100  # Number of trees in the forest
-  random_state: 42   # Random seed for reproducibility
-  max_samples: 700   # Number of samples to draw for each tree
+  n_estimators: 50  # Number of trees in the forest
+  random_state: 7   # Random seed for reproducibility
+  max_samples:    # Number of samples to draw for each tree
   bootstrap: false   # Whether to use bootstrap samples
   n_jobs: null       # Number of jobs to run in parallel (null = use all)
   verbose: 0         # Verbosity level
