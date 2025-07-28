@@ -225,7 +225,9 @@ data_generator:
     - "Favored Supplier"            # Specific supplier consistently winning
     - "Fictitious Winner"           # Shell or non-existent company
     - "Supplier Monopoly"           # Single supplier with inside budget knowledge
-    - "Method Misuse"               # Inappropriate procurement methods
+    - "Method Misuse"   
+    
+    - "Coordinated Fraud"            # Inappropriate procurement methods
 
 # ============================================================================
 # OUTPUT CONFIGURATION EXPLAINED

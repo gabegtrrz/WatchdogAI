@@ -843,6 +843,49 @@ class MethodMisuse:
         record['project_description'] = 'Special procurement arrangement due to unique requirements.'
         return record
 
+
+class CoordinatedFraud:
+    """
+    Scenario: A complex, coordinated fraud scheme involving a favored supplier,
+    a manipulated timeline to stifle competition, and pricing that suggests
+    inside knowledge of the budget. This anomaly combines multiple red flags.
+    """
+    name = "Coordinated Fraud"
+    weight = 0.25
+
+    @staticmethod
+    def apply(record):
+        """
+        Applies a multi-faceted fraud scenario to a transaction record.
+
+        This method simulates a coordinated scheme by sequentially applying three
+        distinct types of anomalies:
+        1.  **Favored Supplier**: Assigns the contract to a specific supplier
+            using a non-competitive procurement method.
+        2.  **Insufficient Bidding Period**: Shortens the bidding window to
+            prevent legitimate competition.
+        3.  **Bid Ceiling Collusion**: Sets the final price suspiciously close
+            to the approved budget, implying inside knowledge.
+
+        Args:
+            record (pd.Series): The transaction record to be modified.
+
+        Returns:
+            pd.Series: The modified, anomalous transaction record.
+        """
+        # Apply multiple, reinforcing anomalies to a single record.
+        # 1. Assign a favored supplier and non-competitive method.
+        record = FavoredSupplier.apply(record)
+
+        # 2. Manipulate the timeline to make bidding difficult.
+        record = InsufficientBiddingPeriod.apply(record)
+
+        # 3. Set the price suspiciously close to the budget ceiling.
+        record = BidCeilingCollusion.apply(record)
+
+        record['project_description'] = 'Complex project awarded to a preferred partner under an expedited timeline.'
+        return record
+
 # --- Master list of all available anomaly blueprints ---
 # The generator command will import this list to find available scenarios.
 ANOMALY_BLUEPRINTS = [
@@ -875,4 +918,5 @@ ANOMALY_BLUEPRINTS = [
     FictitiousWinner,
     SupplierMonopoly,
     MethodMisuse,
+    CoordinatedFraud,
 ] 
