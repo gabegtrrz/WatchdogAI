@@ -61,6 +61,7 @@ evaluation:
     - "accuracy"
     - "specificity"
     - "balanced_accuracy"
+    - "auc_score"
     - "confusion_matrix"
   
   # Detailed reporting options
@@ -77,20 +78,20 @@ evaluation:
     # Include confusion matrix in results
     include_confusion_matrix: true
 
-# Output configuration - save to custom directory for research experiments
+# Output configuration for research experiments
 output:
-  # Option 1: Specify a custom model directory (relative to BASE_DIR)
-  model_dir: D:\Projects\WatchdogAI\data\research\models
+  # Base directory for all research outputs.
+  # Subdirectories for 'models' and 'results' will be created here.
+  base_dir: D:\Projects\WatchdogAI\data\research_final
   
-  # Option 2: Specify individual file names (will be saved in model_dir)
+  # Filenames for the output files
   model_filename: 'research_isolation_forest.joblib'
   columns_filename: 'research_training_columns.joblib'
-  research_log_filename: 'research_results.json'
-  
-  # Option 3: Specify absolute paths for individual files
-  # model_path: D:\Projects\WatchdogAI\data\research\models\research_isolation_forest.joblib
-  # columns_path: D:\Projects\WatchdogAI\data\research\models\research_training_columns.joblib
-  # research_log_path: D:\Projects\WatchdogAI\data\research\results\research_results.json
+  results_filename: 'research_results.json'
+  roc_curve_filename: 'research_roc_curve.png'
+
+  # Whether to generate the ROC curve plot
+  generate_roc_curve: true
 
 # Logging configuration
 logging:

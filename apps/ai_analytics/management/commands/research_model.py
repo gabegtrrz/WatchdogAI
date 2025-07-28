@@ -12,9 +12,10 @@ from typing import Union, List, Optional, Dict, Any, Tuple
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, classification_report
+from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, classification_report, roc_curve, auc
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from apps.ai_analytics.services import preprocessing, feature_engineering
 
@@ -50,8 +51,8 @@ class Command(BaseCommand):
                 return
 
             # Get output paths
-            model_dir, model_path, columns_path, research_log_path = self._get_output_paths(config)
-            self._ensure_directories_exist(model_dir, model_path, columns_path, research_log_path)
+            output_paths = self._get_output_paths(config)
+            self._ensure_directories_exist(output_paths)
 
             # Process training data
             training_data, training_columns = self._process_training_data(config)
@@ -66,7 +67,7 @@ class Command(BaseCommand):
             # Perform research mode training and evaluation
             research_results = self._research_mode_training_and_evaluation(
                 training_data, training_columns, evaluation_data, true_labels, 
-                model_path, columns_path, research_log_path, config
+                output_paths, config
             )
             if not research_results:
                 return
@@ -132,58 +133,48 @@ class Command(BaseCommand):
         
         return True
 
-    def _get_output_paths(self, config: Dict[str, Any]) -> Tuple[str, str, str, str]:
-        """Get output paths from configuration or use defaults."""
+    def _get_output_paths(self, config: Dict[str, Any]) -> Dict[str, str]:
+        """Get output paths from configuration."""
         output_config = config.get('output', {})
-        
-        # Get model directory
-        model_dir = output_config.get('model_dir', DEFAULT_MODEL_DIR)
-        if not os.path.isabs(model_dir):
-            model_dir = os.path.join(settings.BASE_DIR, model_dir)
-        
-        # Get individual file paths
-        model_path = output_config.get('model_path')
-        if model_path:
-            if not os.path.isabs(model_path):
-                model_path = os.path.join(settings.BASE_DIR, model_path)
-        else:
-            model_filename = output_config.get('model_filename', 'isolation_forest.joblib')
-            model_path = os.path.join(model_dir, model_filename)
-        
-        columns_path = output_config.get('columns_path')
-        if columns_path:
-            if not os.path.isabs(columns_path):
-                columns_path = os.path.join(settings.BASE_DIR, columns_path)
-        else:
-            columns_filename = output_config.get('columns_filename', 'training_columns.joblib')
-            columns_path = os.path.join(model_dir, columns_filename)
-        
-        research_log_path = output_config.get('research_log_path')
-        if research_log_path:
-            if not os.path.isabs(research_log_path):
-                research_log_path = os.path.join(settings.BASE_DIR, research_log_path)
-        else:
-            research_log_filename = output_config.get('research_log_filename', 'research_log.json')
-            research_log_path = os.path.join(model_dir, research_log_filename)
+        base_dir = output_config.get('base_dir', DEFAULT_MODEL_DIR)
+
+        if not os.path.isabs(base_dir):
+            base_dir = os.path.join(settings.BASE_DIR, base_dir)
+
+        # Define separate directories for models and results
+        model_dir = os.path.join(base_dir, 'models')
+        results_dir = os.path.join(base_dir, 'results')
+
+        # Get filenames
+        model_filename = output_config.get('model_filename', 'research_isolation_forest.joblib')
+        columns_filename = output_config.get('columns_filename', 'research_training_columns.joblib')
+        results_filename = output_config.get('results_filename', 'research_results.json')
+        roc_curve_filename = output_config.get('roc_curve_filename', 'research_roc_curve.png')
+
+        output_paths = {
+            'model_dir': model_dir,
+            'results_dir': results_dir,
+            'model_path': os.path.join(model_dir, model_filename),
+            'columns_path': os.path.join(model_dir, columns_filename),
+            'results_path': os.path.join(results_dir, results_filename),
+            'roc_curve_path': os.path.join(results_dir, roc_curve_filename)
+        }
         
         logger.info(f'Output paths configured:')
-        logger.info(f'  Model directory: {model_dir}')
-        logger.info(f'  Model file: {model_path}')
-        logger.info(f'  Columns file: {columns_path}')
-        logger.info(f'  Research log: {research_log_path}')
-        
-        return model_dir, model_path, columns_path, research_log_path
+        for key, value in output_paths.items():
+            logger.info(f'  - {key.replace("_", " ").title()}: {value}')
+            
+        return output_paths
 
-    def _ensure_directories_exist(self, model_dir: str, model_path: str, columns_path: str, research_log_path: str):
+    def _ensure_directories_exist(self, output_paths: Dict[str, str]):
         """Ensure all required directories exist."""
-        directories_to_create = set()
-        
-        directories_to_create.add(os.path.dirname(model_path))
-        directories_to_create.add(os.path.dirname(columns_path))
-        directories_to_create.add(os.path.dirname(research_log_path))
+        directories_to_create = {
+            output_paths['model_dir'],
+            output_paths['results_dir']
+        }
         
         for directory in directories_to_create:
-            if directory and directory != '.':
+            if directory:
                 try:
                     os.makedirs(directory, exist_ok=True)
                     logger.info(f'Ensured directory exists: {directory}')
@@ -281,7 +272,7 @@ class Command(BaseCommand):
 
     def _research_mode_training_and_evaluation(self, training_data: pd.DataFrame, training_columns: List[str],
                                             evaluation_data: pd.DataFrame, true_labels: np.ndarray,
-                                            model_path: str, columns_path: str, research_log_path: str,
+                                            output_paths: Dict[str, str],
                                             config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Perform research mode training and evaluation with separate datasets."""
         logger.info('Starting research mode training and evaluation...')
@@ -350,17 +341,20 @@ class Command(BaseCommand):
                 self.stderr.write(f'Error testing contamination={contamination}: {e}')
         
         # Save best model and results
+        # !! best model is defined as the model with the highest f1_score
+
         if best_model and best_contamination:
-            logger.info(f'Best contamination value: {best_contamination} (F1-score: {best_f1_score:.4f})')
-            self.stdout.write(f'Best contamination value: {best_contamination} (F1-score: {best_f1_score:.4f})')
+            best_results = research_results['contamination_analysis'][best_contamination]
+            logger.info(f'Best contamination value: {best_contamination} (F1-score: {best_f1_score:.4f}, AUC-score: {best_results["auc_score"]:.4f})')
+            self.stdout.write(f'Best contamination value: {best_contamination} (F1-score: {best_f1_score:.4f}, AUC-score: {best_results["auc_score"]:.4f})')
             
             # Save best model
-            logger.info(f'Saving best model to {model_path}')
-            joblib.dump(best_model, model_path)
+            logger.info(f'Saving best model to {output_paths["model_path"]}')
+            joblib.dump(best_model, output_paths['model_path'])
             
             # Save training columns
-            logger.info(f'Saving training columns to {columns_path}')
-            joblib.dump(training_columns, columns_path)
+            logger.info(f'Saving training columns to {output_paths["columns_path"]}')
+            joblib.dump(training_columns, output_paths['columns_path'])
             
             # Update research results with best model info
             best_results = research_results['contamination_analysis'][best_contamination]
@@ -369,29 +363,41 @@ class Command(BaseCommand):
                 'f1_score': best_f1_score,
                 'precision': best_results['precision'],
                 'recall': best_results['recall'],
+                'auc_score': best_results['auc_score'],
                 'true_anomalies': best_results['true_anomalies'],
                 'predicted_anomalies': best_results['predicted_anomalies'],
-                'model_path': model_path,
-                'columns_path': columns_path
+                'model_path': output_paths['model_path'],
+                'columns_path': output_paths['columns_path']
             }
-            
+
+            # Generate and save ROC curve for the best model if enabled
+            if config.get('output', {}).get('generate_roc_curve', True):
+                roc_auc_score = self._generate_and_save_roc_curve(
+                    true_labels=true_labels,
+                    anomaly_scores=best_results['anomaly_scores'],
+                    output_path=output_paths['roc_curve_path']
+                )
+                # Update best model with ROC AUC score (should match the calculated AUC score)
+                research_results['best_model']['roc_auc_score'] = roc_auc_score
+
             # Add training summary
             research_results['training_summary'] = {
                 'total_contamination_values_tested': len(contamination_range),
                 'contamination_values_tested': contamination_range,
                 'best_contamination': best_contamination,
                 'best_f1_score': best_f1_score,
+                'best_auc_score': best_results['auc_score'],
                 'training_completed_at': datetime.now().isoformat(),
-                'model_saved_to': model_path,
-                'columns_saved_to': columns_path,
-                'research_log_saved_to': research_log_path
+                'model_saved_to': output_paths['model_path'],
+                'columns_saved_to': output_paths['columns_path'],
+                'research_log_saved_to': output_paths['results_path']
             }
             
             # Save research results
-            self._save_research_results(research_results, research_log_path)
+            self._save_research_results(research_results, output_paths['results_path'])
             
-            logger.info(f'Research results saved to {research_log_path}')
-            self.stdout.write(f'Research results saved to {research_log_path}')
+            logger.info(f'Research results saved to {output_paths["results_path"]}')
+            self.stdout.write(f'Research results saved to {output_paths["results_path"]}')
             
             return research_results
         
@@ -422,6 +428,10 @@ class Command(BaseCommand):
             # Calculate metrics
             metrics = self._calculate_evaluation_metrics(true_labels, predicted_labels)
             
+            # Calculate AUC score
+            auc_score = self._calculate_auc_score(true_labels, anomaly_scores)
+            metrics['auc_score'] = auc_score
+            
             # Add prediction details
             trial_results = {
                 'contamination': contamination,
@@ -430,6 +440,7 @@ class Command(BaseCommand):
                 'predicted_normal': len(predicted_labels) - np.sum(predicted_labels),
                 'true_anomalies': np.sum(true_labels),
                 'true_normal': len(true_labels) - np.sum(true_labels),
+                'anomaly_scores': anomaly_scores,
                 **metrics
             }
             
@@ -437,6 +448,7 @@ class Command(BaseCommand):
             logger.info(f'  - Precision: {metrics["precision"]:.4f}')
             logger.info(f'  - Recall: {metrics["recall"]:.4f}')
             logger.info(f'  - F1-Score: {metrics["f1_score"]:.4f}')
+            logger.info(f'  - AUC Score: {metrics["auc_score"]:.4f}')
             logger.info(f'  - Predicted anomalies: {trial_results["predicted_anomalies"]}')
             
             return trial_results
@@ -537,6 +549,52 @@ class Command(BaseCommand):
             'false_negatives': int(fn),
             'true_negatives': int(tn)
         }
+
+    def _generate_and_save_roc_curve(self, true_labels: np.ndarray, anomaly_scores: np.ndarray, output_path: str) -> float:
+        """Generate and save the ROC curve. Returns the AUC score."""
+        try:
+            # The Isolation Forest scores are inverted (lower is more anomalous),
+            # so we negate them to treat higher scores as more anomalous for ROC calculation.
+            fpr, tpr, _ = roc_curve(true_labels, -anomaly_scores)
+            roc_auc = auc(fpr, tpr)
+
+            plt.figure(figsize=(10, 8))
+            plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.title('Receiver Operating Characteristic (ROC) Curve')
+            plt.legend(loc="lower right")
+            
+            # Save the plot
+            plt.savefig(output_path)
+            plt.close()
+            
+            logger.info(f'ROC curve saved to {output_path}')
+            logger.info(f'AUC score: {roc_auc:.4f}')
+            self.stdout.write(f'ROC curve saved to {output_path}')
+            self.stdout.write(f'AUC score: {roc_auc:.4f}')
+
+            return float(roc_auc)
+
+        except Exception as e:
+            logger.error(f'Failed to generate or save ROC curve: {e}', exc_info=True)
+            self.stderr.write(f'Failed to generate or save ROC curve: {e}')
+            return 0.0
+
+    def _calculate_auc_score(self, true_labels: np.ndarray, anomaly_scores: np.ndarray) -> float:
+        """Calculate AUC score from true labels and anomaly scores."""
+        try:
+            # The Isolation Forest scores are inverted (lower is more anomalous),
+            # so we negate them to treat higher scores as more anomalous for ROC calculation.
+            fpr, tpr, _ = roc_curve(true_labels, -anomaly_scores)
+            roc_auc = auc(fpr, tpr)
+            return float(roc_auc)
+        except Exception as e:
+            logger.error(f'Failed to calculate AUC score: {e}', exc_info=True)
+            return 0.0
 
     def _get_model_parameters(self, contamination: Union[float, str], config: Dict[str, Any]) -> Dict[str, Any]:
         """Get model parameters from configuration."""
@@ -646,6 +704,7 @@ class Command(BaseCommand):
             self.stdout.write(f'\nBest Model Information:')
             self.stdout.write(f'  - Best contamination: {best_model.get("contamination", "N/A")}')
             self.stdout.write(f'  - Best F1-Score: {best_model.get("f1_score", "N/A"):.4f}')
+            self.stdout.write(f'  - Best AUC-Score: {best_model.get("auc_score", "N/A"):.4f}')
             self.stdout.write(f'  - Best Precision: {best_model.get("precision", "N/A"):.4f}')
             self.stdout.write(f'  - Best Recall: {best_model.get("recall", "N/A"):.4f}')
             self.stdout.write(f'  - Predicted anomalies: {best_model.get("predicted_anomalies", "N/A")}')
@@ -658,6 +717,7 @@ class Command(BaseCommand):
             for contamination, results in contamination_analysis.items():
                 self.stdout.write(f'  - Contamination {contamination}:')
                 self.stdout.write(f'    F1-Score: {results.get("f1_score", 0):.4f}')
+                self.stdout.write(f'    AUC-Score: {results.get("auc_score", 0):.4f}')
                 self.stdout.write(f'    Precision: {results.get("precision", 0):.4f}')
                 self.stdout.write(f'    Recall: {results.get("recall", 0):.4f}')
                 self.stdout.write(f'    Predicted anomalies: {results.get("predicted_anomalies", 0)}')
@@ -670,6 +730,7 @@ class Command(BaseCommand):
             self.stdout.write(f'  - Values tested: {training_summary.get("contamination_values_tested", "N/A")}')
             self.stdout.write(f'  - Best contamination: {training_summary.get("best_contamination", "N/A")}')
             self.stdout.write(f'  - Best F1-Score: {training_summary.get("best_f1_score", "N/A"):.4f}')
+            self.stdout.write(f'  - Best AUC-Score: {training_summary.get("best_auc_score", "N/A"):.4f}')
             self.stdout.write(f'  - Research log saved to: {training_summary.get("research_log_saved_to", "N/A")}')
         
         self.stdout.write('\n' + '='*80) 
