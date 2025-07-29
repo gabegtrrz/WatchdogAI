@@ -4,11 +4,13 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlencode
 import logging
 import os
+import time
 from decimal import Decimal, getcontext
 from django.utils import timezone
 from django.conf import settings
 from apps.core.models import Transaction
 from .models import ItemAveragePrice
+from apps.performance_monitoring.services import PerformanceMonitor
 
 # It's better to configure this in Django's settings.py
 # For now, we will use a placeholder or get it from env.
@@ -57,9 +59,18 @@ def clean_price(price_str) -> Decimal | None:
 def scrape_amazon_prices(product_name: str, location="us", retries=3) -> list[Decimal]:
     """Scrapes a single page of Amazon search results for a product and returns a list of prices."""
     
+    # Initialize performance monitoring
+    monitor = PerformanceMonitor(f"scrape-amazon-{int(time.time())}")
+    monitor.start_analysis()
+    
     # Check if scraping is enabled
     if not getattr(settings, 'ENABLE_PRICE_SCRAPING', False):
         logger.info(f"Price scraping is disabled. Skipping scraping for '{product_name}'.")
+        monitor.end_analysis({
+            'product_name': product_name,
+            'prices_found': 0,
+            'status': 'disabled'
+        })
         return []
     
     search_url = f"https://www.amazon.com/s?k={product_name.replace(' ', '+')}"
@@ -72,6 +83,8 @@ def scrape_amazon_prices(product_name: str, location="us", retries=3) -> list[De
     
     for attempt in range(retries):
         try:
+            monitor.start_step(f"attempt_{attempt+1}")
+            
             proxy_url = get_scrapeops_url(search_url, location=location)
             logger.info(f"Attempt {attempt+1}/{retries}: Fetching page for '{product_name}' via proxy.")
             
@@ -86,6 +99,7 @@ def scrape_amazon_prices(product_name: str, location="us", retries=3) -> list[De
             
             if not results:
                 logger.warning(f"No search result containers found for '{product_name}'.")
+                monitor.end_step(f"attempt_{attempt+1}")
                 continue
 
             for result in results:
@@ -105,21 +119,55 @@ def scrape_amazon_prices(product_name: str, location="us", retries=3) -> list[De
                             prices.append(price_decimal)
                             logger.debug(f"Found price for '{product_name}': ${price_decimal}")
             
+            monitor.end_step(f"attempt_{attempt+1}")
+            
             if prices:
                 logger.info(f"Successfully scraped {len(prices)} prices for '{product_name}': {prices}")
+                # End analysis with success
+                monitor.end_analysis({
+                    'product_name': product_name,
+                    'prices_found': len(prices),
+                    'attempts_made': attempt + 1,
+                    'status': 'success'
+                })
                 return prices # Return prices if found
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Request failed for '{product_name}' on attempt {attempt+1}: {e}")
+            monitor.end_step(f"attempt_{attempt+1}")
             if attempt >= retries - 1:
                 logger.error(f"All retry attempts failed for '{product_name}'")
+                # End analysis with error
+                monitor.end_analysis({
+                    'product_name': product_name,
+                    'prices_found': 0,
+                    'attempts_made': retries,
+                    'status': 'error',
+                    'error_message': str(e)
+                })
                 return [] # Return empty list after last retry
         
         except Exception as e:
             logger.error(f"An unexpected error occurred while scraping Amazon for '{product_name}': {e}")
+            monitor.end_step(f"attempt_{attempt+1}")
+            # End analysis with error
+            monitor.end_analysis({
+                'product_name': product_name,
+                'prices_found': 0,
+                'attempts_made': attempt + 1,
+                'status': 'error',
+                'error_message': str(e)
+            })
             return [] # Return empty list on unexpected error
 
     logger.warning(f"No prices found for '{product_name}' after {retries} attempts")
+    # End analysis with no prices found
+    monitor.end_analysis({
+        'product_name': product_name,
+        'prices_found': 0,
+        'attempts_made': retries,
+        'status': 'no_prices_found'
+    })
     return prices
 
 ### Orchestrator
