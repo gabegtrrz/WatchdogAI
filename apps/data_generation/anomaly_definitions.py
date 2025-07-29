@@ -156,6 +156,9 @@ class SuspiciousOverpricing:
         if pd.isna(record.get('unit_purchase_price')) or record.get('unit_purchase_price', 0) <= 0:
             return record
             
+        # Set a realistic average_price that is much lower than the new unit_purchase_price
+        record['average_price'] = record['unit_purchase_price']
+
         # Apply multiplier with bounds checking
         multiplier = np.random.uniform(7.5, 12.5)
         new_unit_price = _safe_multiplication(record['unit_purchase_price'], multiplier)

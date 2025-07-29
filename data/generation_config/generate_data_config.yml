@@ -22,8 +22,8 @@ data_generator:
     evaluation: 1
 
   # !! MAKE SURE TO USE ABSOLUTE PATH !!
-  output_folder_path: D:\Projects\WatchdogAI\data\training\training_data\24_500      # Path where CSV files will be saved 
-  log_directory: D:\Projects\WatchdogAI\data\training\training_data\24_500                      # Path where JSON logs will be saved
+  output_folder_path: D:\Projects\WatchdogAI\data\training\training_data\25_500      # Path where CSV files will be saved 
+  log_directory: D:\Projects\WatchdogAI\data\training\training_data\25_500                      # Path where JSON logs will be saved
 
   item_source_file: "data/lab_equipment.txt" # Text file with one item name per line
   
