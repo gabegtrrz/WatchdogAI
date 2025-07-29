@@ -27,6 +27,7 @@ from .services import create_new_block, verify_blockchain_integrity, create_gene
 from .integrity_service import integrity_service
 from apps.core.models import Transaction
 from apps.performance_monitoring.services import monitor_blockchain_save
+import time
 
 # Setup logging for this module
 logger = logging.getLogger(__name__)
@@ -74,11 +75,23 @@ class BlockchainIntegrationService:
             'hash_generation': {
                 'hashes_generated': 0,
                 'errors': []
+            },
+            'timing': {
+                'integrity_before': 0,
+                'hash_generation': 0,
+                'create_new_block': 0,
+                'update_transactions': 0,
+                'integrity_after': 0,
+                'total': 0
             }
         }
         
+        total_start_time = time.time()
+
         # Step 0: Check integrity BEFORE integration
+        integrity_start_time = time.time()
         before_check = integrity_service.check_integrity_before_integration(transactions)
+        result['timing']['integrity_before'] = time.time() - integrity_start_time
         result['integrity_checks']['before'] = before_check
         
         if not before_check['integrity_valid']:
@@ -94,6 +107,7 @@ class BlockchainIntegrationService:
         try:
             with db_transaction.atomic():
                 # Step 1: Calculate and store transaction hashes, update status to 'pending'
+                hash_start_time = time.time()
                 for transaction in transactions:
                     # Generate transaction hash if not already present
                     if not transaction.transaction_hash:
@@ -107,17 +121,22 @@ class BlockchainIntegrationService:
                         'blockchain_status', 
                         'last_blockchain_attempt'
                     ])
+                result['timing']['hash_generation'] = time.time() - hash_start_time
                 
                 # Step 2: Create new block with transactions
+                block_creation_start_time = time.time()
                 new_block = create_new_block(transactions)
+                result['timing']['create_new_block'] = time.time() - block_creation_start_time
                 if not new_block:
                     raise BlockchainIntegrationError("Failed to create new block")
                 
                 # Step 3: Update transaction status to 'integrated'
+                update_start_time = time.time()
                 for transaction in transactions:
                     transaction.blockchain_status = 'integrated'
                     transaction.blockchain_error = None
                     transaction.save(update_fields=['blockchain_status', 'blockchain_error'])
+                result['timing']['update_transactions'] = time.time() - update_start_time
                 
                 result.update({
                     'success': True,
@@ -154,9 +173,12 @@ class BlockchainIntegrationService:
             return result
         
         # Step 4: Check integrity AFTER integration
+        integrity_after_start_time = time.time()
         after_check = integrity_service.check_integrity_after_integration(transactions, result['success'])
+        result['timing']['integrity_after'] = time.time() - integrity_after_start_time
         result['integrity_checks']['after'] = after_check
         
+        result['timing']['total'] = time.time() - total_start_time
         return result
 
     def retry_failed_integrations(self, max_retries=3):
