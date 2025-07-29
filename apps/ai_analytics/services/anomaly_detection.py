@@ -166,7 +166,7 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             
             # Prepare features for model refitting (using same training columns)
             all_training_columns_copy = training_columns.copy()
-            all_final_df = _prepare_features_for_prediction(all_featured_df, all_training_columns_copy)
+            all_txns_final_df = _prepare_features_for_prediction(all_featured_df, all_training_columns_copy)
             del all_training_columns_copy
             
             # Set max_samples to use 100% of available samples for maximum coverage
@@ -174,8 +174,8 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             model.set_params(max_samples=1.0)  # Use 100% of available samples
             
             # Refit the model with all data
-            logger.info(f"Refitting model with {all_final_df.shape[0]} samples and {all_final_df.shape[1]} features (max_samples={model.get_params()['max_samples']})")
-            model.fit(all_final_df)
+            logger.info(f"Refitting model with {all_txns_final_df.shape[0]} samples and {all_txns_final_df.shape[1]} features (max_samples={model.get_params()['max_samples']})")
+            model.fit(all_txns_final_df)
             
             # Save the refitted model
             import joblib
