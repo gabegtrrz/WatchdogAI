@@ -1,0 +1,35 @@
+
+# This file configures the cleanup parameters for blockchain test data
+
+# Cleanup behavior
+cleanup:
+  # Whether to perform a dry run (show what would be deleted without actually deleting)
+  dry_run: false
+  
+  # Only delete test data older than N days (null = delete all test data)
+  older_than_days: null
+  
+  # Force deletion without confirmation prompts
+  force: True
+  
+  # Show detailed information about what is being deleted
+  verbose: true
+
+# Data selection
+data:
+  # Clean up test transactions (those with transaction_id starting with 'TEST-')
+  clean_transactions: False
+  
+  # Clean up test blocks (all blocks except genesis block with index 0)
+  clean_blocks: true
+  
+  # Preserve genesis block (always true, cannot be changed)
+  preserve_genesis: true
+
+# Safety settings
+safety:
+  # Maximum number of items to delete in one operation (null = no limit)
+  max_delete_count: null
+  
+  # Require confirmation for large deletions (number of items)
+  confirm_threshold: 10000 
