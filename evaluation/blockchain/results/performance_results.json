@@ -1,0 +1,143 @@
+[
+    {
+        "run": 1,
+        "data_path": "evaluation/blockchain/data/100/unlabeled/eval.csv",
+        "num_transactions": 100,
+        "total_time_seconds": 0.3439490795135498,
+        "transactions_per_second": 290.7407112164128,
+        "integration_details": {
+            "success": true,
+            "integrated_count": 100,
+            "failed_count": 0,
+            "error_message": null,
+            "block_info": {
+                "index": 1,
+                "hash": "d5913ab3b29e3accc91955c7f643a03c26e8cded299618c3575689bd9521ce5a",
+                "transaction_count": 100
+            },
+            "integrity_checks": {
+                "before": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T06:58:04.615988+00:00",
+                    "transaction_count": 100,
+                    "alert_sent": false,
+                    "check_id": 123
+                },
+                "after": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T06:58:04.934337+00:00",
+                    "transaction_count": 100,
+                    "integration_success": true,
+                    "alert_sent": false,
+                    "check_id": 124
+                }
+            },
+            "hash_generation": {
+                "hashes_generated": 100,
+                "errors": []
+            },
+            "timing": {
+                "integrity_before": 0.015380859375,
+                "hash_generation": 0.06939482688903809,
+                "create_new_block": 0.11562609672546387,
+                "update_transactions": 0.08122682571411133,
+                "integrity_after": 0.035225629806518555,
+                "total": 0.3361656665802002
+            }
+        }
+    },
+    {
+        "run": 2,
+        "data_path": "evaluation/blockchain/data/100/unlabeled/eval.csv",
+        "num_transactions": 100,
+        "total_time_seconds": 0.35382866859436035,
+        "transactions_per_second": 282.62266140634,
+        "integration_details": {
+            "success": true,
+            "integrated_count": 100,
+            "failed_count": 0,
+            "error_message": null,
+            "block_info": {
+                "index": 1,
+                "hash": "cf2bb0c0a6ee9f78cbd8183eb6f36bdfd04c59cc0b0d09142b208bcc8fd64452",
+                "transaction_count": 100
+            },
+            "integrity_checks": {
+                "before": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T06:58:05.070432+00:00",
+                    "transaction_count": 100,
+                    "alert_sent": false,
+                    "check_id": 125
+                },
+                "after": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T06:58:05.402028+00:00",
+                    "transaction_count": 100,
+                    "integration_success": true,
+                    "alert_sent": false,
+                    "check_id": 126
+                }
+            },
+            "hash_generation": {
+                "hashes_generated": 100,
+                "errors": []
+            },
+            "timing": {
+                "integrity_before": 0.014961481094360352,
+                "hash_generation": 0.08322381973266602,
+                "create_new_block": 0.1312248706817627,
+                "update_transactions": 0.07764148712158203,
+                "integrity_after": 0.03148341178894043,
+                "total": 0.34740161895751953
+            }
+        }
+    },
+    {
+        "run": 3,
+        "data_path": "evaluation/blockchain/data/100/unlabeled/eval.csv",
+        "num_transactions": 100,
+        "total_time_seconds": 0.3489696979522705,
+        "transactions_per_second": 286.5578317739131,
+        "integration_details": {
+            "success": true,
+            "integrated_count": 100,
+            "failed_count": 0,
+            "error_message": null,
+            "block_info": {
+                "index": 1,
+                "hash": "3757ed61fb815f549cba375974a6500ccc1bdb6218e3aa941df8036ac4e52e0b",
+                "transaction_count": 100
+            },
+            "integrity_checks": {
+                "before": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T06:58:05.522566+00:00",
+                    "transaction_count": 100,
+                    "alert_sent": false,
+                    "check_id": 127
+                },
+                "after": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T06:58:05.847493+00:00",
+                    "transaction_count": 100,
+                    "integration_success": true,
+                    "alert_sent": false,
+                    "check_id": 128
+                }
+            },
+            "hash_generation": {
+                "hashes_generated": 100,
+                "errors": []
+            },
+            "timing": {
+                "integrity_before": 0.01517033576965332,
+                "hash_generation": 0.07247328758239746,
+                "create_new_block": 0.1236875057220459,
+                "update_transactions": 0.07764911651611328,
+                "integrity_after": 0.03181099891662598,
+                "total": 0.3407413959503174
+            }
+        }
+    }
+]

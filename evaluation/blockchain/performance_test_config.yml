@@ -1,0 +1,5 @@
+test_runs: 3
+cleanup_after_test: true
+output_path: "evaluation/blockchain/results/performance_results.json"
+transaction_data_paths:
+  - "evaluation/blockchain/data/100/unlabeled/eval.csv"
