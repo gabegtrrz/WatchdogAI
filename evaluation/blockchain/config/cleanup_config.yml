@@ -1,4 +1,5 @@
 
+# Blockchain Test Data Cleanup Configuration
 # This file configures the cleanup parameters for blockchain test data
 
 # Cleanup behavior
@@ -25,6 +26,26 @@ data:
   
   # Preserve genesis block (always true, cannot be changed)
   preserve_genesis: true
+  
+  # Complete cleanup options (use with extreme caution)
+  complete_cleanup:
+    # Enable complete cleanup (removes ALL blockchain data, not just test data)
+    enabled: true
+    
+    # Remove all transactions (including production data)
+    remove_all_transactions: true
+    
+    # Remove all blocks (including genesis block)
+    remove_all_blocks: false
+    
+    # Remove all procurement methods
+    remove_procurement_methods: false
+    
+    # Backup before complete cleanup (recommended)
+    create_backup: false
+    
+    # Backup file path (if create_backup is true)
+    backup_path: "evaluation/blockchain/backup/blockchain_backup_{timestamp}.json"
 
 # Safety settings
 safety:
@@ -32,4 +53,10 @@ safety:
   max_delete_count: null
   
   # Require confirmation for large deletions (number of items)
-  confirm_threshold: 10000 
+  confirm_threshold: 10000
+  
+  # Require confirmation for complete cleanup (regardless of item count)
+  require_complete_cleanup_confirmation: true
+  
+  # Additional confirmation for production data deletion
+  require_production_data_confirmation: true 
