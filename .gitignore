@@ -212,3 +212,4 @@ logs/
 *.log
 
 
+apps/ai_analytics/model_files/iforest.joblib
