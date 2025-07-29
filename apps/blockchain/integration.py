@@ -44,8 +44,14 @@ class BlockchainIntegrationService:
     Handles the complete lifecycle of adding transactions to the blockchain.
     """
 
-    def __init__(self):
+    def __init__(self, stdout=None):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self.stdout = stdout
+        
+    def _log(self, message):
+        if self.stdout:
+            self.stdout.write(message)
+        self.logger.info(message)
         
     @monitor_blockchain_save
     def integrate_transactions_atomic(self, transactions):
@@ -89,6 +95,7 @@ class BlockchainIntegrationService:
         total_start_time = time.time()
 
         # Step 0: Check integrity BEFORE integration
+        self._log("Step 0: Verifying blockchain integrity before integration...")
         integrity_start_time = time.time()
         before_check = integrity_service.check_integrity_before_integration(transactions)
         result['timing']['integrity_before'] = time.time() - integrity_start_time
@@ -107,6 +114,7 @@ class BlockchainIntegrationService:
         try:
             with db_transaction.atomic():
                 # Step 1: Calculate and store transaction hashes, update status to 'pending'
+                self._log("Step 1: Generating transaction hashes...")
                 hash_start_time = time.time()
                 for transaction in transactions:
                     # Generate transaction hash if not already present
@@ -124,6 +132,7 @@ class BlockchainIntegrationService:
                 result['timing']['hash_generation'] = time.time() - hash_start_time
                 
                 # Step 2: Create new block with transactions
+                self._log("Step 2: Creating new block...")
                 block_creation_start_time = time.time()
                 new_block = create_new_block(transactions)
                 result['timing']['create_new_block'] = time.time() - block_creation_start_time
@@ -131,6 +140,7 @@ class BlockchainIntegrationService:
                     raise BlockchainIntegrationError("Failed to create new block")
                 
                 # Step 3: Update transaction status to 'integrated'
+                self._log("Step 3: Updating transaction statuses...")
                 update_start_time = time.time()
                 for transaction in transactions:
                     transaction.blockchain_status = 'integrated'
@@ -173,12 +183,14 @@ class BlockchainIntegrationService:
             return result
         
         # Step 4: Check integrity AFTER integration
+        self._log("Step 4: Verifying blockchain integrity after integration...")
         integrity_after_start_time = time.time()
         after_check = integrity_service.check_integrity_after_integration(transactions, result['success'])
         result['timing']['integrity_after'] = time.time() - integrity_after_start_time
         result['integrity_checks']['after'] = after_check
         
         result['timing']['total'] = time.time() - total_start_time
+        self._log("Integration process complete.")
         return result
 
     def retry_failed_integrations(self, max_retries=3):
@@ -277,17 +289,18 @@ class BlockchainIntegrationService:
 
 
 ### Convenience functions for direct usage
-def integrate_transaction_batch(transactions):
+def integrate_transaction_batch(transactions, stdout=None):
     """
     Integrates a batch of transactions into the blockchain atomically.
     
     Args:
         transactions (list): List of Transaction objects to integrate
+        stdout: Optional stdout object for progress logging
         
     Returns:
         tuple: (success_status, result_data)
     """
-    service = BlockchainIntegrationService()
+    service = BlockchainIntegrationService(stdout=stdout)
     result = service.integrate_transactions_atomic(transactions)
     return result['success'], result
 
