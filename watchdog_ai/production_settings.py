@@ -7,12 +7,31 @@ import os
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
+import sys
+import logging
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file
 load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env'))
+
+# Custom logging handler for Windows compatibility
+class SafeStreamHandler(logging.StreamHandler):
+    def emit(self, record):
+        try:
+            super().emit(record)
+        except UnicodeEncodeError:
+            # Fallback: encode as ASCII with replacement characters
+            try:
+                msg = self.format(record)
+                safe_msg = msg.encode('ascii', 'replace').decode('ascii')
+                stream = self.stream
+                stream.write(safe_msg)
+                stream.write(self.terminator)
+                self.flush()
+            except Exception:
+                self.handleError(record)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", False)
@@ -24,7 +43,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 ALLOWED_HOSTS = ["*"]
 
 # Data Augmentation Settings
-ENABLE_PRICE_SCRAPING = os.environ.get('ENABLE_PRICE_SCRAPING', 'false').lower() in ('true', '1', 't')
+ENABLE_PRICE_SCRAPING = os.environ.get('ENABLE_PRICE_SCRAPING', 'true').lower() in ('true', '1', 't')
+ENABLE_STARTUP_PRICE_SCRAPING = os.environ.get('ENABLE_STARTUP_PRICE_SCRAPING', 'true').lower() in ('true', '1', 't')
 SCRAPING_TIMEOUT = int(os.environ.get('SCRAPING_TIMEOUT', 10))  # seconds
 
 # Performance Monitoring Settings
@@ -252,29 +272,62 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
+        'simple': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
-            'class': 'logging.StreamHandler',
+            'class': 'watchdog_ai.production_settings.SafeStreamHandler',
             'formatter': 'verbose',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'watchdog_ai.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'ERROR',
+            'propagate': False,
+        },
+        # Specific logger for data_augmentation app
+        'apps.data_augmentation': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # Capture all levels for debugging
+            'propagate': False,
+        },
+        'apps.data_augmentation.services': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.data_augmentation.tasks': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # Performance monitoring logs
+        'apps.performance_monitoring': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
             'propagate': False,
         },
     },
     'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
+        'handlers': ['console', 'file'],
+        'level': 'INFO',  # Lowered from WARNING to INFO
     },
 }
 
