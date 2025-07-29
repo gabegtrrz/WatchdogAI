@@ -1,0 +1,56 @@
+[
+  {
+    "analysis_run_id": "4dc939ca-3258-4681-941b-7f65fc39fc88",
+    "total_analysis_time": 0.384,
+    "step_timings": {
+      "data_conversion": 0.004331350326538086,
+      "data_preprocessing": 0.0023097991943359375,
+      "feature_engineering": 0.017907142639160156,
+      "model_refitting": 0.1549091339111328,
+      "anomaly_detection": 0.006060361862182617,
+      "shap_analysis": 0.16968226432800293,
+      "database_save": 0.02577662467956543
+    },
+    "total_steps": 7,
+    "transactions_analyzed": 100,
+    "anomalies_found": 14,
+    "contamination_rate": 0.14,
+    "status": "success"
+  },
+  {
+    "analysis_run_id": "87ec1fdc-3127-427f-a16c-cbbfc1302f1c",
+    "total_analysis_time": 0.402,
+    "step_timings": {
+      "data_conversion": 0.0045888423919677734,
+      "data_preprocessing": 0.004714012145996094,
+      "feature_engineering": 0.032503366470336914,
+      "model_refitting": 0.16628313064575195,
+      "anomaly_detection": 0.0069239139556884766,
+      "shap_analysis": 0.15032267570495605,
+      "database_save": 0.032869815826416016
+    },
+    "total_steps": 7,
+    "transactions_analyzed": 100,
+    "anomalies_found": 5,
+    "contamination_rate": 0.05,
+    "status": "success"
+  },
+  {
+    "analysis_run_id": "ec22be51-8a08-46dd-96b8-93e81e9c2a37",
+    "total_analysis_time": 0.493,
+    "step_timings": {
+      "data_conversion": 0.008068561553955078,
+      "data_preprocessing": 0.0057337284088134766,
+      "feature_engineering": 0.02333545684814453,
+      "model_refitting": 0.26019978523254395,
+      "anomaly_detection": 0.007760524749755859,
+      "shap_analysis": 0.15617108345031738,
+      "database_save": 0.029786348342895508
+    },
+    "total_steps": 7,
+    "transactions_analyzed": 100,
+    "anomalies_found": 5,
+    "contamination_rate": 0.05,
+    "status": "success"
+  }
+]
