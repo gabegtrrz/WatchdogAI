@@ -4,7 +4,7 @@ data_generator:
   # MAIN CONFIGURATION
   # ========================
   
-  n_samples: 10000         # Number of records (rows) to generate
+  n_samples: 100         # Number of records (rows) to generate
   random_state: 24        # Seed for reproducibility (same seed = same output)
   anomaly_fraction: 0.05
   
@@ -22,8 +22,8 @@ data_generator:
     evaluation: 1
 
   # !! MAKE SURE TO USE ABSOLUTE PATH !!
-  output_folder_path: D:\Projects\WatchdogAI\evaluation\blockchain\data      # Path where CSV files will be saved 
-  log_directory: D:\Projects\WatchdogAI\evaluation\blockchain\data                      # Path where JSON logs will be saved
+  output_folder_path: D:\Projects\WatchdogAI\evaluation\blockchain\data\100      # Path where CSV files will be saved 
+  log_directory: D:\Projects\WatchdogAI\evaluation\blockchain\data\100                      # Path where JSON logs will be saved
 
   item_source_file: "data/lab_equipment.txt" # Text file with one item name per line
   
