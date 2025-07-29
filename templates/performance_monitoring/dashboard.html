@@ -1,215 +1,191 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Performance Dashboard{% endblock %}
+{% block title %}Performance Monitoring Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1 class="mb-4">Performance Dashboard</h1>
-    
-    <!-- Time Range Selector -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <form method="get" class="form-inline">
-                <label for="hours" class="mr-2">Time Range:</label>
-                <select name="hours" id="hours" class="form-control mr-2" onchange="this.form.submit()">
-                    {% for range in time_ranges %}
-                        <option value="{{ range }}" {% if range == hours %}selected{% endif %}>
-                            {% if range == 1 %}1 Hour{% elif range == 6 %}6 Hours{% elif range == 24 %}24 Hours{% elif range == 72 %}3 Days{% elif range == 168 %}1 Week{% endif %}
-                        </option>
-                    {% endfor %}
-                </select>
-            </form>
-        </div>
-    </div>
-
-    <!-- Performance Metrics -->
+<div class="container mt-5">
     <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Performance Metrics</h5>
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h4 class="mb-0 fw-bold">
+                        <i class="fas fa-chart-line me-2"></i>Performance Monitoring Dashboard
+                    </h4>
                 </div>
-                <div class="card-body">
-                    {% if performance_data %}
-                        {% for operation, stats in performance_data.items %}
-                            {% if stats.total_operations > 0 %}
-                                <div class="mb-3">
-                                    <h6>{{ operation|title|replace:"_" " " }}</h6>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <small class="text-muted">Avg Time:</small><br>
-                                            <strong>{{ stats.average_time_ms|floatformat:1 }}ms</strong>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">Success Rate:</small><br>
-                                            <strong>{{ stats.success_rate|floatformat:1 }}%</strong>
-                                        </div>
-                                    </div>
-                                    <div class="progress mt-1" style="height: 5px;">
-                                        <div class="progress-bar" style="width: {{ stats.success_rate }}%"></div>
+                <div class="card-body p-4">
+                    {% if not monitoring_enabled %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Performance monitoring is disabled.</strong>
+                            <p class="mb-0 mt-2">{{ error_message }}</p>
+                        </div>
+                    {% elif error_message %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Error loading performance data:</strong>
+                            <p class="mb-0 mt-2">{{ error_message }}</p>
+                        </div>
+                    {% else %}
+                        <!-- Summary Statistics -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card border-primary">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-primary">{{ summary.total_analyses }}</h5>
+                                        <p class="card-text">Total Analyses</p>
                                     </div>
                                 </div>
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-muted">No performance data available.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-success">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-success">{{ summary.successful_analyses }}</h5>
+                                        <p class="card-text">Successful</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-danger">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-danger">{{ summary.failed_analyses }}</h5>
+                                        <p class="card-text">Failed</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-info">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-info">{{ summary.avg_total_time }}s</h5>
+                                        <p class="card-text">Avg Time</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Resource Usage -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Resource Usage</h5>
-                </div>
-                <div class="card-body">
-                    {% if resource_data %}
-                        <div class="row">
-                            <div class="col-6">
-                                <small class="text-muted">Total Sessions:</small><br>
-                                <strong>{{ resource_data.total_sessions }}</strong>
-                            </div>
-                            <div class="col-6">
-                                <small class="text-muted">Success Rate:</small><br>
-                                <strong>{{ resource_data.success_rate|floatformat:1 }}%</strong>
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="row">
-                            <div class="col-6">
-                                <small class="text-muted">Avg CPU Usage:</small><br>
-                                <strong>{{ resource_data.average_cpu_usage|floatformat:1 }}%</strong>
-                            </div>
-                            <div class="col-6">
-                                <small class="text-muted">Avg Memory:</small><br>
-                                <strong>{{ resource_data.average_memory_usage_mb|floatformat:1 }}MB</strong>
+                        <!-- Success Rate -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Success Rate</h6>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" 
+                                                 role="progressbar" 
+                                                 style="width: {{ summary.success_rate }}%"
+                                                 aria-valuenow="{{ summary.success_rate }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                {{ summary.success_rate }}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <hr>
-                        <div class="row">
-                            <div class="col-6">
-                                <small class="text-muted">DB Queries:</small><br>
-                                <strong>{{ resource_data.total_database_queries }}</strong>
-                            </div>
-                            <div class="col-6">
-                                <small class="text-muted">Network Requests:</small><br>
-                                <strong>{{ resource_data.total_network_requests }}</strong>
-                            </div>
-                        </div>
-                    {% else %}
-                        <p class="text-muted">No resource data available.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Recent Alerts -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Recent Alerts</h5>
-                </div>
-                <div class="card-body">
-                    {% if recent_alerts %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Operation</th>
-                                        <th>Severity</th>
-                                        <th>Threshold</th>
-                                        <th>Actual Time</th>
-                                        <th>Time</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for alert in recent_alerts %}
-                                        <tr>
-                                            <td>{{ alert.operation_type|title|replace:"_" " " }}</td>
-                                            <td>
-                                                <span class="badge badge-{% if alert.severity == 'critical' %}danger{% elif alert.severity == 'high' %}warning{% elif alert.severity == 'medium' %}info{% else %}secondary{% endif %}">
-                                                    {{ alert.severity|title }}
-                                                </span>
-                                            </td>
-                                            <td>{{ alert.threshold_ms|floatformat:0 }}ms</td>
-                                            <td>{{ alert.actual_time_ms|floatformat:0 }}ms</td>
-                                            <td>{{ alert.created_at|date:"M d, H:i" }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                        <!-- Step Performance -->
+                        {% if summary.avg_step_times %}
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Average Step Performance</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            {% for step_name, avg_time in summary.avg_step_times.items %}
+                                            <div class="col-md-6 col-lg-4 mb-3">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="text-muted">{{ step_name|title }}</span>
+                                                    <span class="badge bg-secondary">{{ avg_time }}s</span>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    {% else %}
-                        <p class="text-muted">No recent alerts.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
+                        {% endif %}
 
-    <!-- Recent Resource Usage -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Recent Resource Usage</h5>
-                    <a href="{% url 'performance_monitoring:resource_list' %}?hours={{ hours }}" class="btn btn-sm btn-outline-primary">View All</a>
-                </div>
-                <div class="card-body">
-                    {% if recent_usage %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Session ID</th>
-                                        <th>Transactions</th>
-                                        <th>Total Time</th>
-                                        <th>CPU Usage</th>
-                                        <th>Memory</th>
-                                        <th>Status</th>
-                                        <th>Time</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for usage in recent_usage %}
-                                        <tr>
-                                            <td>
-                                                <a href="{% url 'performance_monitoring:resource_detail' usage.session_id %}">
-                                                    {{ usage.session_id|truncatechars:12 }}
-                                                </a>
-                                            </td>
-                                            <td>{{ usage.transaction_count }}</td>
-                                            <td>{{ usage.total_processing_time_ms|floatformat:0 }}ms</td>
-                                            <td>{{ usage.cpu_usage_percent|floatformat:1 }}%</td>
-                                            <td>{{ usage.memory_usage_mb|floatformat:1 }}MB</td>
-                                            <td>
-                                                <span class="badge badge-{% if usage.overall_success %}success{% else %}danger{% endif %}">
-                                                    {% if usage.overall_success %}Success{% else %}Failed{% endif %}
-                                                </span>
-                                            </td>
-                                            <td>{{ usage.created_at|date:"M d, H:i" }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                        <!-- Recent Analyses -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Recent Analyses ({{ metrics|length }} of {{ total_entries }})</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if metrics %}
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Run ID</th>
+                                                            <th>Timestamp</th>
+                                                            <th>Total Time</th>
+                                                            <th>Transactions</th>
+                                                            <th>Anomalies</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for metric in metrics %}
+                                                        <tr>
+                                                            <td>
+                                                                <small class="text-muted">{{ metric.analysis_run_id|truncatechars:12 }}</small>
+                                                            </td>
+                                                            <td>
+                                                                <small>{{ metric.timestamp|slice:":19" }}</small>
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge bg-info">{{ metric.total_analysis_time }}s</span>
+                                                            </td>
+                                                            <td>
+                                                                <small>{{ metric.transactions_analyzed|default:"-" }}</small>
+                                                            </td>
+                                                            <td>
+                                                                <small>{{ metric.anomalies_found|default:"-" }}</small>
+                                                            </td>
+                                                            <td>
+                                                                {% if metric.status == 'success' %}
+                                                                    <span class="badge bg-success">Success</span>
+                                                                {% elif metric.status == 'error' %}
+                                                                    <span class="badge bg-danger">Error</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">{{ metric.status|default:"Unknown" }}</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <p class="text-muted text-center mb-0">No performance data available.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    {% else %}
-                        <p class="text-muted">No recent resource usage data.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-// Auto-refresh dashboard every 30 seconds
-setTimeout(function() {
-    location.reload();
-}, 30000);
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Performance dashboard loaded');
+    
+    // Auto-refresh every 30 seconds
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+});
 </script>
 {% endblock %} 

@@ -21,7 +21,7 @@ import uuid
 from . import preprocessing
 from . import feature_engineering
 from apps.core.models import Transaction, AnalysisReport
-from apps.performance_monitoring.services import monitor_anomaly_detection
+from apps.performance_monitoring.services import PerformanceMonitor
 import numpy as np
 from django.db.models.query import QuerySet
 
@@ -81,7 +81,6 @@ def _load_model_files():
 _load_model_files()
 
 
-@monitor_anomaly_detection
 def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05, analysis_run_id: Optional[uuid.UUID] = None) -> Dict[str, Any]:
     """
     Run the complete anomaly detection pipeline for all selected transactions.
@@ -107,18 +106,22 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         A dictionary containing the results of the analysis.
     """
 
-    start_time = time.time()
+    # Initialize performance monitoring
+    monitor = PerformanceMonitor(str(analysis_run_id))
+    monitor.start_analysis()
+    
     logger.info(f"Starting anomaly analysis for {transactions_qs.count()} transactions.")
     logger.debug(f"Contamination parameter: {contamination}")
 
     try:
         ### 1. Convert the transaction data to a DataFrame
-        step_start = time.time()
+        monitor.start_step("data_conversion")
         if not model_loaded:
             raise ValueError("Model files not found. Please run the training script first.")
 
         raw_df = preprocessing.get_transaction_dataframe(transactions_qs)
-        logger.info(f"Raw data converted to DataFrame in {time.time() - step_start:.2f} seconds")
+        monitor.end_step("data_conversion")
+        logger.info(f"Raw data converted to DataFrame")
         
         ### 2. Extract labels and remove is_anomaly column if present
         # This matches the evaluate_model.py flow
@@ -127,13 +130,15 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             raw_df = raw_df.drop('is_anomaly', axis=1)
         
         ### 3. Preprocess the data
+        monitor.start_step("data_preprocessing")
         cleaned_df = preprocessing.clean_raw_data(raw_df)
-        
-        step_start = time.time()
-        logger.info(f"Preprocessing completed in {time.time() - step_start:.2f} seconds")
+        monitor.end_step("data_preprocessing")
+        logger.info(f"Preprocessing completed")
 
         ### 4. Generate features
+        monitor.start_step("feature_engineering")
         featured_df, _ = feature_engineering.create_features(cleaned_df)
+        monitor.end_step("feature_engineering")
 
         ### 5. Align columns with the model's training columns (IMPROVED)
         training_columns_copy = training_columns.copy()
@@ -141,8 +146,8 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         del training_columns_copy  # Clean up the copy after use
         
         ### 5.5. Refit model using ALL existing transaction data with max_samples optimization
+        monitor.start_step("model_refitting")
         logger.info("Refitting model using ALL existing transaction data...")
-        step_start = time.time()
         
         try:
             # Get all existing transactions from database
@@ -171,43 +176,56 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             
             # Set max_samples to use 100% of available samples for maximum coverage
             # This ensures the model uses all available samples (1.0 = 100%)
-            model.set_params(max_samples=1.0)  # Use 100% of available samples
-            
-            # Refit the model with all data
-            logger.info(f"Refitting model with {all_txns_final_df.shape[0]} samples and {all_txns_final_df.shape[1]} features (max_samples={model.get_params()['max_samples']})")
-            model.fit(all_txns_final_df)
+            if model is not None:
+                model.set_params(max_samples=1.0)  # Use 100% of available samples
+                
+                # Refit the model with all data
+                logger.info(f"Refitting model with {all_txns_final_df.shape[0]} samples and {all_txns_final_df.shape[1]} features (max_samples={model.get_params()['max_samples']})")
+                model.fit(all_txns_final_df)
+            else:
+                logger.error("Model is None, cannot refit")
+                raise ValueError("Model is None, cannot refit")
             
             # Save the refitted model
             import joblib
-            joblib.dump(model, MODEL_PATH)
-            joblib.dump(training_columns, COLUMNS_PATH)
+            if model is not None:
+                joblib.dump(model, MODEL_PATH)
+                joblib.dump(training_columns, COLUMNS_PATH)
+            else:
+                logger.error("Cannot save model - model is None")
+                raise ValueError("Cannot save model - model is None")
             
-            logger.info(f"Model successfully refitted and saved in {time.time() - step_start:.2f} seconds")
+            logger.info(f"Model successfully refitted and saved")
+            monitor.end_step("model_refitting")
             
         except Exception as e:
             logger.warning(f"Model refitting failed: {e}. Continuing with original model.")
             logger.warning("Using original model for anomaly detection")
+            monitor.end_step("model_refitting")
         
         # 6. Perform anomaly detection with sophisticated contamination handling
+        monitor.start_step("anomaly_detection")
         prediction_results = _get_predictions_and_scores(final_df, contamination)
         
         if prediction_results is None:
             raise ValueError("Anomaly detection failed, received no results (None).")
         
         predicted_labels, anomaly_scores, threshold = prediction_results
+        monitor.end_step("anomaly_detection")
 
         # Step 7: SHAP Analysis - Generate explainability
+        monitor.start_step("shap_analysis")
         logger.debug("Generating SHAP values for explainability...")
-        step_start = time.time()
         
         shap_values = generate_shap_values(model, final_df)
         # shape: (n_samples, n_features)
 
         logger.debug("SHAP values generated successfully")
-        logger.info(f"SHAP values generated in {time.time() - step_start:.2f} seconds")
+        monitor.end_step("shap_analysis")
 
         
         # 8. Unpack SHAP and Save to Database
+        monitor.start_step("database_save")
         if not analysis_run_id:
             raise ValueError("Analysis run ID is required")
 
@@ -240,6 +258,7 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         # Use Django's bulk_create method
         AnalysisReport.objects.bulk_create(reports_to_create)  # type: ignore
         logger.info(f"Successfully saved {len(reports_to_create)} analysis reports.")
+        monitor.end_step("database_save")
 
         # Compile final results
         results = {
@@ -251,14 +270,28 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             "contamination_rate": float(contamination)
         }
 
-        # Log successful completion
-        total_time = time.time() - start_time
-        logger.info(f"Analysis completed successfully in {total_time:.3f}s")
+        # End performance monitoring and save metrics
+        monitor.end_analysis({
+            'transactions_analyzed': len(transactions_list),
+            'anomalies_found': int(np.sum(predicted_labels)),
+            'contamination_rate': float(contamination),
+            'status': 'success'
+        })
+
+        logger.info(f"Analysis completed successfully")
         return results
 
     except Exception as e:
         # Comprehensive error handling with timing information
         logger.error(f"Analysis failed: {e}", exc_info=True)
+        
+        # End performance monitoring with error status
+        if 'monitor' in locals():
+            monitor.end_analysis({
+                'status': 'error',
+                'error_message': str(e)
+            })
+        
         return {
             "status": "error",
             "message": str(e)

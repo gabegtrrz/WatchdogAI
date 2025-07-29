@@ -1,143 +1,172 @@
 """
-Performance monitoring views for displaying resource usage and performance metrics.
+Views for displaying performance monitoring data.
+
+This module provides views to display performance metrics
+collected during analysis pipeline execution.
 """
-
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.utils import timezone
-from datetime import timedelta
-from .models import PerformanceMetric, PerformanceAlert, ResourceUsage
-from .services import get_performance_summary, get_resource_summary, performance_monitor
+from django.conf import settings
+import json
+import os
+from typing import List, Dict, Any
 
 
-@login_required
 def performance_dashboard(request):
     """
-    Dashboard view for displaying performance metrics and resource usage.
-    """
-    # Get time range from request (default to 24 hours)
-    hours = int(request.GET.get('hours', 24))
+    Display performance metrics dashboard.
     
-    # Get performance summary
-    performance_data = get_performance_summary(hours)
-    
-    # Get resource usage summary
-    resource_data = get_resource_summary(hours)
-    
-    # Get recent alerts
-    recent_alerts = performance_monitor.get_recent_alerts(hours=24, severity='high')
-    
-    # Get recent resource usage records
-    recent_usage = ResourceUsage.objects.filter(
-        created_at__gte=timezone.now() - timedelta(hours=hours)
-    ).order_by('-created_at')[:10]
-    
-    context = {
-        'performance_data': performance_data,
-        'resource_data': resource_data,
-        'recent_alerts': recent_alerts,
-        'recent_usage': recent_usage,
-        'hours': hours,
-        'time_ranges': [1, 6, 24, 72, 168]  # 1h, 6h, 24h, 3d, 1w
-    }
-    
-    return render(request, 'performance_monitoring/dashboard.html', context)
-
-
-@login_required
-def resource_usage_detail(request, session_id):
-    """
-    Detailed view for a specific resource usage session.
+    Shows recent analysis performance data including:
+    - Total analysis times
+    - Step-by-step timing breakdowns
+    - Success/failure rates
+    - Performance trends
     """
     try:
-        resource_record = ResourceUsage.objects.get(session_id=session_id)
+        # Get performance log path from settings
+        log_path = getattr(settings, 'PERFORMANCE_LOG_PATH', 'logs/performance_metrics.json')
         
-        # Get related performance metrics
-        related_metrics = PerformanceMetric.objects.filter(
-            session_id=session_id
-        ).order_by('-created_at')
+        # Check if monitoring is enabled
+        monitoring_enabled = getattr(settings, 'ENABLE_PERFORMANCE_MONITORING', True)
+        
+        if not monitoring_enabled:
+            return render(request, 'performance_monitoring/dashboard.html', {
+                'monitoring_enabled': False,
+                'error_message': 'Performance monitoring is disabled in settings.'
+            })
+        
+        # Read performance data
+        if not os.path.exists(log_path):
+            return render(request, 'performance_monitoring/dashboard.html', {
+                'monitoring_enabled': True,
+                'error_message': f'Performance log file not found at {log_path}',
+                'metrics': []
+            })
+        
+        with open(log_path, 'r', encoding='utf-8') as f:
+            metrics_data = json.load(f)
+        
+        if not isinstance(metrics_data, list):
+            metrics_data = [metrics_data]
+        
+        # Limit to last 50 entries for performance
+        recent_metrics = metrics_data[:50]
+        
+        # Calculate summary statistics
+        summary = _calculate_summary_stats(recent_metrics)
         
         context = {
-            'resource_record': resource_record,
-            'related_metrics': related_metrics,
+            'monitoring_enabled': True,
+            'metrics': recent_metrics,
+            'summary': summary,
+            'total_entries': len(metrics_data)
         }
         
-        return render(request, 'performance_monitoring/resource_detail.html', context)
+        return render(request, 'performance_monitoring/dashboard.html', context)
         
-    except ResourceUsage.DoesNotExist:
-        return render(request, 'performance_monitoring/not_found.html', {
-            'message': f'Resource usage session {session_id} not found.'
+    except Exception as e:
+        return render(request, 'performance_monitoring/dashboard.html', {
+            'monitoring_enabled': True,
+            'error_message': f'Error loading performance data: {str(e)}',
+            'metrics': []
         })
 
 
-@login_required
 def performance_api(request):
     """
-    API endpoint for performance data (for AJAX requests).
-    """
-    hours = int(request.GET.get('hours', 24))
+    API endpoint to return performance metrics as JSON.
     
+    Returns:
+        JSON response with recent performance metrics and summary statistics
+    """
     try:
-        performance_data = get_performance_summary(hours)
-        resource_data = get_resource_summary(hours)
+        log_path = getattr(settings, 'PERFORMANCE_LOG_PATH', 'logs/performance_metrics.json')
+        monitoring_enabled = getattr(settings, 'ENABLE_PERFORMANCE_MONITORING', True)
+        
+        if not monitoring_enabled:
+            return JsonResponse({
+                'error': 'Performance monitoring is disabled',
+                'monitoring_enabled': False
+            })
+        
+        if not os.path.exists(log_path):
+            return JsonResponse({
+                'error': 'Performance log file not found',
+                'monitoring_enabled': True,
+                'metrics': []
+            })
+        
+        with open(log_path, 'r', encoding='utf-8') as f:
+            metrics_data = json.load(f)
+        
+        if not isinstance(metrics_data, list):
+            metrics_data = [metrics_data]
+        
+        # Return last 20 entries
+        recent_metrics = metrics_data[:20]
+        summary = _calculate_summary_stats(recent_metrics)
         
         return JsonResponse({
-            'success': True,
-            'performance': performance_data,
-            'resource': resource_data,
-            'timestamp': timezone.now().isoformat()
+            'monitoring_enabled': True,
+            'metrics': recent_metrics,
+            'summary': summary,
+            'total_entries': len(metrics_data)
         })
         
     except Exception as e:
         return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+            'error': f'Error loading performance data: {str(e)}',
+            'monitoring_enabled': True,
+            'metrics': []
+        })
 
 
-@login_required
-def alerts_view(request):
+def _calculate_summary_stats(metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    View for displaying performance alerts.
+    Calculate summary statistics from performance metrics.
+    
+    Args:
+        metrics: List of performance metric dictionaries
+        
+    Returns:
+        Dictionary containing summary statistics
     """
-    hours = int(request.GET.get('hours', 24))
-    severity = request.GET.get('severity')
+    if not metrics:
+        return {
+            'total_analyses': 0,
+            'successful_analyses': 0,
+            'failed_analyses': 0,
+            'avg_total_time': 0,
+            'avg_step_times': {},
+            'success_rate': 0
+        }
     
-    alerts = performance_monitor.get_recent_alerts(hours=hours, severity=severity)
+    total_analyses = len(metrics)
+    successful_analyses = sum(1 for m in metrics if m.get('status') == 'success')
+    failed_analyses = total_analyses - successful_analyses
     
-    context = {
-        'alerts': alerts,
-        'hours': hours,
-        'severity': severity,
-        'severity_choices': ['low', 'medium', 'high', 'critical']
-    }
+    # Calculate average total analysis time
+    total_times = [m.get('total_analysis_time', 0) for m in metrics if m.get('total_analysis_time')]
+    avg_total_time = sum(total_times) / len(total_times) if total_times else 0
     
-    return render(request, 'performance_monitoring/alerts.html', context)
-
-
-@login_required
-def resource_usage_list(request):
-    """
-    List view for resource usage records.
-    """
-    hours = int(request.GET.get('hours', 24))
-    success_only = request.GET.get('success_only', 'false').lower() == 'true'
+    # Calculate average step times
+    step_times = {}
+    for metric in metrics:
+        if 'step_timings' in metric:
+            for step_name, step_time in metric['step_timings'].items():
+                if step_name not in step_times:
+                    step_times[step_name] = []
+                step_times[step_name].append(step_time)
     
-    queryset = ResourceUsage.objects.filter(
-        created_at__gte=timezone.now() - timedelta(hours=hours)
-    )
+    avg_step_times = {}
+    for step_name, times in step_times.items():
+        avg_step_times[step_name] = sum(times) / len(times)
     
-    if success_only:
-        queryset = queryset.filter(overall_success=True)
-    
-    resource_records = queryset.order_by('-created_at')[:50]
-    
-    context = {
-        'resource_records': resource_records,
-        'hours': hours,
-        'success_only': success_only,
-        'total_count': queryset.count()
-    }
-    
-    return render(request, 'performance_monitoring/resource_list.html', context) 
+    return {
+        'total_analyses': total_analyses,
+        'successful_analyses': successful_analyses,
+        'failed_analyses': failed_analyses,
+        'avg_total_time': round(avg_total_time, 3),
+        'avg_step_times': {k: round(v, 3) for k, v in avg_step_times.items()},
+        'success_rate': round((successful_analyses / total_analyses) * 100, 1) if total_analyses > 0 else 0
+    } 
