@@ -8,6 +8,7 @@ Usage:
 import json
 import time
 import statistics
+import os
 from django.core.management.base import BaseCommand
 from apps.blockchain.services import create_genesis_block
 from apps.blockchain.integration import integrate_transaction_batch
@@ -44,10 +45,10 @@ class Command(BaseCommand):
             help='Path to the CSV file containing transaction data.'
         )
         parser.add_argument(
-            '--output-file',
+            '--output',
             type=str,
             default='blockchain_throughput_results.json',
-            help='Output file for JSON results.'
+            help='Output path for the JSON results file (directory will be created if it does not exist).'
         )
     
     def handle(self, *args, **options):
@@ -56,11 +57,11 @@ class Command(BaseCommand):
         """
         runs = options['runs']
         csv_path = options['csv_path']
-        output_file = options['output_file']
+        output_file = options['output']
 
-        self.stdout.write(self.style.SUCCESS("🚀 Starting Blockchain Throughput Measurement..."))
-        self.stdout.write(f"📈 Number of runs: {runs}")
-        self.stdout.write(f"📄 Using CSV file: {csv_path}")
+        self.stdout.write("Starting Blockchain Throughput Measurement...")
+        self.stdout.write(f"Number of runs: {runs}")
+        self.stdout.write(f"Using CSV file: {csv_path}")
 
         # Load and process the CSV file once before the runs
         try:
@@ -68,22 +69,22 @@ class Command(BaseCommand):
                 transactions_data, errors = process_transaction_csv(f)
             
             if errors:
-                self.stdout.write(self.style.ERROR("❌ Errors found in CSV file:"))
+                self.stdout.write("Errors found in CSV file:")
                 for error in errors:
                     self.stdout.write(str(error))
                 return
             if not transactions_data:
-                self.stdout.write(self.style.ERROR("❌ No valid transaction data found in the CSV."))
+                self.stdout.write("No valid transaction data found in the CSV.")
                 return
         except FileNotFoundError:
-            self.stdout.write(self.style.ERROR(f"❌ CSV file not found at: {csv_path}"))
+            self.stdout.write(f"CSV file not found at: {csv_path}")
             return
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"❌ An error occurred while reading the CSV: {e}"))
+            self.stdout.write(f"An error occurred while reading the CSV: {e}")
             return
 
         transactions_per_run = len(transactions_data)
-        self.stdout.write(f"📦 Transactions per run: {transactions_per_run}")
+        self.stdout.write(f"Transactions per run: {transactions_per_run}")
 
         # Ensure genesis block exists before starting
         create_genesis_block()
@@ -99,21 +100,28 @@ class Command(BaseCommand):
             transactions_to_process = create_transactions_from_data(transactions_data)
             
             # Start the timer and run the test
-            start_time = time.time()
-            integrate_transaction_batch(transactions_to_process)
-            end_time = time.time()
-            
+        start_time = time.time()
+        success, result_data = integrate_transaction_batch(transactions_to_process, stdout=self.stdout)
+        end_time = time.time()
+
             # Calculate results
-            duration = end_time - start_time
-            tps = transactions_per_run / duration if duration > 0 else float('inf')
+        duration = end_time - start_time
+        tps = transactions_per_run / duration if duration > 0 else float('inf')
             
-            self.stdout.write(self.style.SUCCESS(f"✅ Run {i+1} completed in {duration:.2f} seconds."))
-            self.stdout.write(f"   Transactions Per Second (TPS): {tps:.2f}")
+        self.stdout.write(f"Run {i+1} completed in {duration:.2f} seconds.")
+        self.stdout.write(f"   Transactions Per Second (TPS): {tps:.2f}")
+
+        timing_details = result_data.get('timing', {})
+        if timing_details:
+                self.stdout.write("   Timing Breakdown:")
+                for step, step_time in timing_details.items():
+                    self.stdout.write(f"     - {step}: {step_time:.4f}s")
             
-            all_results.append({
+        all_results.append({
                 'run': i + 1,
                 'duration': duration,
-                'tps': tps
+                'tps': tps,
+                'timing_details': timing_details
             })
 
         # Calculate and display summary statistics
@@ -129,17 +137,17 @@ class Command(BaseCommand):
         """
         Removes all blocks except the genesis block and their associated transactions.
         """
-        self.stdout.write("🧹 Cleaning up test data...")
+        self.stdout.write("Cleaning up test data...")
         # Deleting blocks will cascade and delete associated transactions
         Block.objects.filter(index__gt=0).delete()
-        self.stdout.write("✅ Cleanup complete.")
+        self.stdout.write("Cleanup complete.")
 
     def _display_summary(self, results, transactions_per_run):
         """
         Calculates and displays the summary of all test runs.
         """
         if not results:
-            self.stdout.write(self.style.WARNING("No results to display."))
+            self.stdout.write("No results to display.")
             return
 
         tps_values = [r['tps'] for r in results]
@@ -152,7 +160,7 @@ class Command(BaseCommand):
         std_dev_tps = statistics.stdev(tps_values) if len(tps_values) > 1 else 0
 
         self.stdout.write("\n" + "="*50)
-        self.stdout.write(self.style.SUCCESS("📊 Throughput Test Summary"))
+        self.stdout.write("Throughput Test Summary")
         self.stdout.write("="*50)
         self.stdout.write(f"Transactions per run: {transactions_per_run}")
         self.stdout.write(f"Mean TPS: {mean_tps:.2f}")
@@ -160,12 +168,32 @@ class Command(BaseCommand):
         self.stdout.write(f"Min TPS: {min_tps:.2f}")
         self.stdout.write(f"Max TPS: {max_tps:.2f}")
         self.stdout.write(f"Standard Deviation: {std_dev_tps:.2f}")
+
+        # Display average timing breakdown
+        if results and 'timing_details' in results[0]:
+            avg_timing = {}
+            timing_keys = results[0]['timing_details'].keys()
+            for key in timing_keys:
+                avg_timing[key] = statistics.mean([r['timing_details'].get(key, 0) for r in results])
+            
+            self.stdout.write("\n   Average Timing Breakdown:")
+            for step, step_time in avg_timing.items():
+                self.stdout.write(f"     - {step}: {step_time:.4f}s")
+
         self.stdout.write("="*50)
     
     def _save_results(self, results, output_file):
         """
         Saves the collected results to a JSON file.
+        Creates the output directory if it doesn't exist.
         """
-        with open(output_file, 'w') as f:
-            json.dump(results, f, indent=4)
-        self.stdout.write(f"💾 Results saved to '{output_file}'") 
+        try:
+            output_dir = os.path.dirname(output_file)
+            if output_dir:
+                os.makedirs(output_dir, exist_ok=True)
+            
+            with open(output_file, 'w') as f:
+                json.dump(results, f, indent=4)
+            self.stdout.write(f"Results saved to '{output_file}'")
+        except Exception as e:
+            self.stdout.write(f"Failed to save results to '{output_file}': {e}") 
