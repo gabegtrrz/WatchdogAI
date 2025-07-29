@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Union, List, Optional, Dict, Any
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, classification_report
+from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, classification_report, roc_auc_score
 import numpy as np
 import pandas as pd
 
@@ -229,7 +229,7 @@ class Command(BaseCommand):
             predicted_labels, anomaly_scores, threshold = prediction_results
 
             # Calculate metrics
-            evaluation_results = self._calculate_metrics(true_labels, predicted_labels, config)
+            evaluation_results = self._calculate_metrics(true_labels, predicted_labels, anomaly_scores, config)
             
             # Add metadata
             evaluation_results = self._add_metadata(evaluation_results, df_processed, training_columns, 
@@ -362,45 +362,55 @@ class Command(BaseCommand):
         return float(default_rate)
 
     def _calculate_metrics(self, true_labels: np.ndarray, predicted_labels: np.ndarray, 
-                          config: Dict[str, Any]) -> Dict[str, Any]:
-        """Calculate comprehensive evaluation metrics."""
+                          anomaly_scores: np.ndarray, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate comprehensive evaluation metrics including AUC."""
         logger.info('Calculating evaluation metrics...')
         
         evaluation_config = config.get('evaluation', {})
         metrics_to_calculate = evaluation_config.get('metrics', [
             'precision', 'recall', 'f1_score', 'accuracy', 
-            'specificity', 'balanced_accuracy', 'confusion_matrix'
+            'specificity', 'balanced_accuracy', 'confusion_matrix', 'auc'
         ])
         
-        # Handle case where no anomalies are predicted
-        if np.sum(predicted_labels) == 0:
-            logger.warning('No anomalies predicted by the model')
+        # Calculate basic metrics
+        try:
+            precision = precision_score(true_labels, predicted_labels, zero_division=0)
+            recall = recall_score(true_labels, predicted_labels, zero_division=0)
+            f1 = f1_score(true_labels, predicted_labels, zero_division=0)
+        except:
             precision = recall = f1 = 0.0
-        else:
-            precision = precision_score(true_labels, predicted_labels, zero_division='warn')
-            recall = recall_score(true_labels, predicted_labels, zero_division='warn')
-            f1 = f1_score(true_labels, predicted_labels, zero_division='warn')
         
         # Calculate confusion matrix and derived metrics
-        cm = confusion_matrix(true_labels, predicted_labels)
-        tn, fp, fn, tp = cm.ravel() if cm.shape == (2, 2) else (0, 0, 0, 0)
+        try:
+            cm = confusion_matrix(true_labels, predicted_labels)
+            tn, fp, fn, tp = cm.ravel() if cm.shape == (2, 2) else (0, 0, 0, 0)
+            
+            specificity = tn / (tn + fp) if (tn + fp) > 0 else 0.0
+            accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0.0
+            balanced_accuracy = (recall + specificity) / 2
+        except:
+            tn = fp = fn = tp = 0
+            specificity = accuracy = balanced_accuracy = 0.0
         
-        specificity = tn / (tn + fp) if (tn + fp) > 0 else 0.0
-        accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0.0
-        balanced_accuracy = (recall + specificity) / 2
+        # Calculate AUC using anomaly scores
+        try:
+            # Invert scores for ROC AUC (Isolation Forest: lower = more anomalous)
+            auc_scores = -anomaly_scores
+            auc = roc_auc_score(true_labels, auc_scores)
+        except:
+            auc = 0.0
         
         # Build metrics dictionary
-        metrics = {}
-        metric_values = {
-            'precision': precision, 'recall': recall, 'f1_score': f1,
-            'accuracy': accuracy, 'specificity': specificity, 'balanced_accuracy': balanced_accuracy
+        metrics = {
+            'precision': float(precision),
+            'recall': float(recall), 
+            'f1_score': float(f1),
+            'accuracy': float(accuracy), 
+            'specificity': float(specificity), 
+            'balanced_accuracy': float(balanced_accuracy),
+            'auc': float(auc),
+            'confusion_matrix': cm.tolist()
         }
-        
-        for metric in metrics_to_calculate:
-            if metric in metric_values:
-                metrics[metric] = float(metric_values[metric])
-            elif metric == 'confusion_matrix':
-                metrics[metric] = cm.tolist()
         
         # Add prediction counts
         metrics.update({
@@ -420,7 +430,7 @@ class Command(BaseCommand):
     def _log_metrics(self, metrics: Dict[str, Any]):
         """Log calculated metrics."""
         logger.info('Evaluation metrics calculated:')
-        for metric in ['precision', 'recall', 'f1_score', 'accuracy', 'specificity', 'balanced_accuracy']:
+        for metric in ['precision', 'recall', 'f1_score', 'accuracy', 'specificity', 'balanced_accuracy', 'auc']:
             if metric in metrics:
                 logger.info(f'  - {metric.title()}: {metrics[metric]:.4f}')
 
@@ -611,7 +621,7 @@ class Command(BaseCommand):
     def _print_performance_metrics(self, evaluation_results: Dict[str, Any]):
         """Print performance metrics."""
         self.stdout.write(f'\nPerformance Metrics:')
-        metrics = ['precision', 'recall', 'f1_score', 'accuracy', 'specificity', 'balanced_accuracy']
+        metrics = ['precision', 'recall', 'f1_score', 'accuracy', 'specificity', 'balanced_accuracy', 'auc']
         for metric in metrics:
             if metric in evaluation_results:
                 self.stdout.write(f'  - {metric.title()}: {evaluation_results.get(metric, 0):.4f}')
