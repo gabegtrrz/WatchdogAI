@@ -852,20 +852,48 @@ function formatFeatureName(featureName) {
 
 function getFeatureDescription(featureName) {
     const descriptions = {
-        'unit_purchase_price': 'Price per individual item unit',
-        'total_purchase_price': 'Total amount paid for all items',
+        // Base Features
         'quantity': 'Number of items purchased',
-        'average_price': 'Market average price for similar items',
-        'price_deviation': 'Difference from expected price range',
-        'procurement_method_encoded': 'Method used for procurement (bidding, direct, etc.)',
+        
+        // Date-based features
+        'contract_signing_day_of_week': 'Day of the week for contract signing (Monday=0, Sunday=6)',
+        'bid_opening_day_of_week': 'Day of the week for bid opening (Monday=0, Sunday=6)',
+        'transaction_month': 'Month of the transaction (January=1, December=12)',
+        'bidding_period_number_of_days': 'Date(Bid Submission Deadline) - Date(Invitation Posting)',
+        'award_decision_duration': 'Date(Notice of Award) - Date(Bid Opening)',
+        'contract_signing_number_of_days': 'Date(Contract Signing) - Date(Notice of Award)',
+        'total_procurement_duration': 'Date(Contract Signing) - Date(Invitation Posting)',
+        
+        // Financial features
+        'price_per_unit_efficiency': 'Unit Purchase Price / (Total Purchase Price / Quantity)',
+        'quantity_per_peso_ratio': 'Quantity / Total Purchase Price',
+        'unit_price_vs_market_average': 'Unit Purchase Price - Market Average Price',
+        'budget_utilization_ratio': 'Total Purchase Price / Approved Budget',
+        'budget_efficiency_score': '(Total Purchase Price / Approved Budget) * (1 / (1 + |Price vs Supplier Average|))',
+        'price_volatility_index': 'Standard Deviation of Unit Price / Mean of Unit Price',
+        'total_transaction_value': 'Quantity * Unit Purchase Price',
+        'price_vs_market_average': 'Unit Purchase Price - Market Average Price',
+        'price_competitiveness_score': 'Unit Purchase Price / Market Average Price',
+
+        // Supplier features
+        'supplier_frequency': 'Frequency of transactions with a supplier (normalized)',
+        'price_per_supplier_freq': 'Unit Purchase Price / Supplier Frequency',
+        'price_vs_supplier_average': 'Unit Purchase Price - Average Price for this Supplier',
+
+        // Efficiency features
+        'procurement_timeline_speed_ratio': 'Total Procurement Duration / (Bidding Period + Award Duration + Signing Duration)',
+        'transaction_on_a_weekend': '1 if contract signing or bid opening is on a weekend, else 0',
+
+        // Encoded and other features
+        'procurement_method_encoded': 'Method used for procurement (e.g., bidding, direct)',
         'supplier_encoded': 'Vendor or supplier providing the items',
-        'item_category_encoded': 'Category or type of item purchased',
-        'procurement_officer_encoded': 'Officer responsible for the procurement',
-        'end_user_unit_encoded': 'Department or unit receiving the items',
-        'transaction_date_encoded': 'When the transaction occurred',
-        'price_to_average_ratio': 'Ratio of purchase price to market average',
-        'quantity_price_interaction': 'Combined effect of quantity and pricing'
     };
+    
+    // Handle one-hot encoded procurement methods
+    if (featureName.startsWith('procurement_method_')) {
+        const method = featureName.replace('procurement_method_', '').replace(/_/g, ' ');
+        return `Indicator for procurement method: ${method.charAt(0).toUpperCase() + method.slice(1)}`;
+    }
     
     return descriptions[featureName] || 'Feature used in anomaly detection analysis';
 }
