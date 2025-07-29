@@ -88,9 +88,10 @@ REQUIRED_COLUMNS.extend(PROCUREMENT_METHODS)
 
 # Map to configure columns for one-hot encoding and their categories
 ONE_HOT_ENCODING_MAP = {
+    # 'column_name': [categories]
     'procurement_method': PROCUREMENT_METHODS,
     # To encode other columns, add here
-
+    
 }
 
 # =============================================================================
@@ -153,7 +154,7 @@ def create_features(df: pd.DataFrame, is_training: bool = False) -> Tuple[pd.Dat
 
         # Step 8: Drop transformed unnecessary columns
         logger.debug("Dropping transformed source columns...")
-        df_processed.drop(columns=COLUMNS_TO_DROP_FROM_FINAL, inplace=True, errors='ignore')
+        df_processed.drop(columns=COLUMNS_TO_DROP_FROM_FINAL, inplace=True, errors='ignore') # errors='ignore' to just skip the column if the column is not found.
 
         # Step 9: Get final feature columns and create final DataFrame
         df_final, final_feature_columns = _get_final_feature_columns(df_processed)
@@ -219,7 +220,7 @@ def _convert_decimal_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def _perform_one_hot_encoding(df: pd.DataFrame, column_name: str, categories: list) -> pd.DataFrame:
-    """Performs generic one-hot encoding on specified categorical column.
+    """Performs one-hot encoding on specified categorical column.
     
     Args:
         df: Input DataFrame
@@ -235,7 +236,7 @@ def _perform_one_hot_encoding(df: pd.DataFrame, column_name: str, categories: li
             df[f'{column_name}_{category}'] = 0
         return df
     else:
-        # Convert column to a categorical type to ensure all predefined categories are included.
+        # ensure all predefined categories are included by converting the column to a categorical type. (this will include all categories, even absent ones, in the column)
         df[column_name] = pd.Categorical(df[column_name], categories=categories)
 
         # Create the one-hot encoded dummy variables.
