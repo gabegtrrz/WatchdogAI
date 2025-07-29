@@ -595,7 +595,7 @@ function createShapChart(featureNames, shapValues) {
     
     // Sort by SHAP value (descending) - higher positive values = more anomalous
     featureData.sort((a, b) => b.value - a.value);
-    const topFeatures = featureData.slice(0, 10);
+    const topFeatures = featureData.slice(0, 12);
     
     // Prepare data for Chart.js
     const labels = topFeatures.map(f => formatFeatureName(f.name));
@@ -631,7 +631,7 @@ function createShapChart(featureNames, shapValues) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Top 10 Factors Contributing to Risk Score',
+                    text: 'Top 12 Factors Contributing to Risk Score',
                     font: { size: 16, weight: 'bold' }
                 },
                 legend: { display: false },
@@ -690,8 +690,8 @@ function populateShapTable(featureNames, shapValues) {
     // Sort by SHAP value (descending) - higher positive values = more anomalous
     featureData.sort((a, b) => b.value - a.value);
     
-    // Take only top 10 features for the table
-    const topFeatures = featureData.slice(0, 10);
+    // Take only top 12 features for the table
+    const topFeatures = featureData.slice(0, 12);
     
     // Populate table
     topFeatures.forEach(feature => {
