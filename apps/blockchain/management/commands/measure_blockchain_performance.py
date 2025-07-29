@@ -137,7 +137,17 @@ class Command(BaseCommand):
                 self.stdout.write(f"Throughput: {throughput:.2f} transactions/sec")
                 
                 if 'timing' in result:
+                    self.stdout.write("--- Timing (seconds) ---")
                     self.stdout.write(json.dumps(result['timing'], indent=4, cls=DateTimeEncoder))
+
+                if 'resources' in result:
+                    self.stdout.write("--- Resource Usage (Deltas) ---")
+                    if 'deltas' in result['resources']:
+                        self.stdout.write(json.dumps(result['resources']['deltas'], indent=4, cls=DateTimeEncoder))
+                    
+                    self.stdout.write("--- Resource Usage (Snapshots) ---")
+                    if 'snapshots' in result['resources']:
+                        self.stdout.write(json.dumps(result['resources']['snapshots'], indent=4, cls=DateTimeEncoder))
 
 
         self._save_results(results, output_path)
