@@ -856,9 +856,9 @@ function getFeatureDescription(featureName) {
         'quantity': 'Number of items purchased',
         
         // Date-based features
-        'contract_signing_day_of_week': 'Day of the week for contract signing (Monday=0, Sunday=6)',
+        'contract_signing_day_of_week': 'Day of the week for contract signing',
         'bid_opening_day_of_week': 'Day of the week for bid opening (Monday=0, Sunday=6)',
-        'transaction_month': 'Month of the transaction (January=1, December=12)',
+        'transaction_month': 'Month of the transaction',
         'bidding_period_number_of_days': 'Date(Bid Submission Deadline) - Date(Invitation Posting)',
         'award_decision_duration': 'Date(Notice of Award) - Date(Bid Opening)',
         'contract_signing_number_of_days': 'Date(Contract Signing) - Date(Notice of Award)',
@@ -891,8 +891,7 @@ function getFeatureDescription(featureName) {
     
     // Handle one-hot encoded procurement methods
     if (featureName.startsWith('procurement_method_')) {
-        const method = featureName.replace('procurement_method_', '').replace(/_/g, ' ');
-        return `Indicator for procurement method: ${method.charAt(0).toUpperCase() + method.slice(1)}`;
+        return 'Procurement Method';
     }
     
     return descriptions[featureName] || 'Feature used in anomaly detection analysis';
