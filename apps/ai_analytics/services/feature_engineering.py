@@ -329,8 +329,17 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
     # Unit price deviation from average
     # Measures how much each transaction's unit price deviates from the overall average.
     # Large deviations might indicate price manipulation or quality differences.
-    overall_avg_unit_price = df['unit_purchase_price'].mean()
-    df['unit_price_vs_market_average'] = df['unit_purchase_price'] - overall_avg_unit_price
+    if 'average_price' in df.columns:
+        # Use the average_price column when available for more accurate market comparison
+        # Impute missing average_price with unit_purchase_price plus random variation (±20%)
+        random_variation_arr = np.random.uniform(0.8, 1.2, size=len(df))  # +/- 20% variation
+        imputed_average_price = df['unit_purchase_price'] * random_variation_arr
+        average_price = df['average_price'].fillna(imputed_average_price)
+        df['unit_price_vs_market_average'] = df['unit_purchase_price'] - average_price
+    else:
+        # Fallback to dataset-wide average when average_price column is not available
+        overall_avg_unit_price = df['unit_purchase_price'].mean()
+        df['unit_price_vs_market_average'] = df['unit_purchase_price'] - overall_avg_unit_price
     
     # Budget utilization ratio
     # This feature measures how much of the approved budget is actually spent.
