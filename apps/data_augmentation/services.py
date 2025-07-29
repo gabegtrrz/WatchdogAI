@@ -17,6 +17,7 @@ MAX_SOURCES_PER_ITEM = 5
 USD_TO_PHP_RATE = 56
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)  # Force DEBUG level for this module
 
 # Set precision for Decimal
 getcontext().prec = 17 # max_digits=15, decimal_places=2 needs precision
@@ -67,6 +68,8 @@ def scrape_amazon_prices(product_name: str, location="us", retries=3) -> list[De
     # Get timeout from settings
     timeout = getattr(settings, 'SCRAPING_TIMEOUT', 10)
     
+    logger.info(f"Starting Amazon scraping for '{product_name}' (timeout: {timeout}s)")
+    
     for attempt in range(retries):
         try:
             proxy_url = get_scrapeops_url(search_url, location=location)
@@ -79,12 +82,15 @@ def scrape_amazon_prices(product_name: str, location="us", retries=3) -> list[De
             soup = BeautifulSoup(resp.text, 'html.parser')
             results = soup.find_all('div', attrs={'data-component-type': 's-search-result'})
             
+            logger.info(f"Found {len(results)} search results for '{product_name}'")
+            
             if not results:
                 logger.warning(f"No search result containers found for '{product_name}'.")
                 continue
 
             for result in results:
                 if len(prices) >= MAX_SOURCES_PER_ITEM:
+                    logger.debug(f"Reached max sources ({MAX_SOURCES_PER_ITEM}) for '{product_name}'")
                     break
                 
                 price_element = result.find('span', {'class': 'a-price'})
@@ -97,19 +103,23 @@ def scrape_amazon_prices(product_name: str, location="us", retries=3) -> list[De
                         price_decimal = clean_price(price_str)
                         if price_decimal:
                             prices.append(price_decimal)
+                            logger.debug(f"Found price for '{product_name}': ${price_decimal}")
             
             if prices:
+                logger.info(f"Successfully scraped {len(prices)} prices for '{product_name}': {prices}")
                 return prices # Return prices if found
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Request failed for '{product_name}' on attempt {attempt+1}: {e}")
             if attempt >= retries - 1:
+                logger.error(f"All retry attempts failed for '{product_name}'")
                 return [] # Return empty list after last retry
         
         except Exception as e:
             logger.error(f"An unexpected error occurred while scraping Amazon for '{product_name}': {e}")
             return [] # Return empty list on unexpected error
 
+    logger.warning(f"No prices found for '{product_name}' after {retries} attempts")
     return prices
 
 ### Orchestrator
@@ -131,12 +141,16 @@ def scrape_average_price_for_item(item_name: str) -> Decimal | None:
         return None
         
     average_price = sum(all_prices) / Decimal(len(all_prices))
+    logger.info(f"Calculated average price for '{item_name}': ${average_price} USD")
 
     # Convert to PHP
     average_price = average_price * Decimal(str(USD_TO_PHP_RATE))
     
     # Standardize to 2 decimal places for consistency with the model
-    return average_price.quantize(Decimal('0.01'))
+    final_price = average_price.quantize(Decimal('0.01'))
+    logger.info(f"Final price for '{item_name}': ₱{final_price} PHP")
+    
+    return final_price
 
 
 def enrich_transaction_list(transactions: list[Transaction]):
@@ -214,3 +228,11 @@ def enrich_transaction_list(transactions: list[Transaction]):
         'skipped': skipped_count,
         'errors': error_count
     } 
+
+def test_logging():
+    """Test function to verify logging is working correctly."""
+    logger.debug("DEBUG: This is a debug message from data_augmentation.services")
+    logger.info("INFO: This is an info message from data_augmentation.services")
+    logger.warning("WARNING: This is a warning message from data_augmentation.services")
+    logger.error("ERROR: This is an error message from data_augmentation.services")
+    return "Logging test completed" 

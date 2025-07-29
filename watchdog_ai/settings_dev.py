@@ -238,7 +238,7 @@ LOGGING = {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'detailed',
+            'formatter': 'clean',
         },
         'console_clean': {
             'level': 'INFO',
@@ -343,6 +343,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'apps.data_augmentation.services': {
+            'handlers': ['console', 'file_transactions'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'apps.users': {
             'handlers': ['console', 'file_general'],
             'level': 'INFO',
@@ -371,7 +376,7 @@ LOGGING = {
         # Root logger - catches all other loggers
         '': {
             'handlers': ['console', 'file_general'],
-            'level': 'WARNING',
+            'level': 'DEBUG',
         },
     },
 }
