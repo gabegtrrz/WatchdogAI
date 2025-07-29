@@ -7,11 +7,13 @@ collected during analysis pipeline execution.
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 import json
 import os
 from typing import List, Dict, Any
 
 
+@login_required
 def performance_dashboard(request):
     """
     Display performance metrics dashboard.
@@ -21,6 +23,7 @@ def performance_dashboard(request):
     - Step-by-step timing breakdowns
     - Success/failure rates
     - Performance trends
+    Requires authentication.
     """
     try:
         # Get performance log path from settings
@@ -72,12 +75,14 @@ def performance_dashboard(request):
         })
 
 
+@login_required
 def performance_api(request):
     """
     API endpoint to return performance metrics as JSON.
     
     Returns:
         JSON response with recent performance metrics and summary statistics
+    Requires authentication.
     """
     try:
         log_path = getattr(settings, 'PERFORMANCE_LOG_PATH', 'logs/performance_metrics.json')

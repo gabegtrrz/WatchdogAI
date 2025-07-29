@@ -4,6 +4,8 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from typing import TYPE_CHECKING, Dict, Any
 import json
@@ -90,12 +92,13 @@ def apply_rate_limit(request, action_name):
     
     return None  # Continue with normal processing
 
-class TransactionListView(ListView):
+class TransactionListView(LoginRequiredMixin, ListView):
     """
     A view that displays a list of transactions with filtering, sorting, and pagination.
     This view uses the TransactionFilter to allow users to filter the transaction
     list based on various criteria, and supports sorting by different columns.
     Pagination is enabled for performance, but "Select All" works across all pages.
+    Requires authentication.
     """
     model = Transaction
     template_name = 'ai_analytics/transaction_list.html'
@@ -175,6 +178,7 @@ class TransactionListView(ListView):
         
         return context
 
+@login_required
 @require_POST
 def select_transactions(request):
     """
@@ -248,6 +252,7 @@ def select_transactions(request):
 
 
 
+@login_required
 def analysis_configuration(request):
     """
     Displays the analysis configuration form.
@@ -285,6 +290,7 @@ def analysis_configuration(request):
         'transaction_count': transaction_count
     })
 
+@login_required
 @require_POST
 def run_analysis(request):
     """
@@ -354,6 +360,7 @@ def run_analysis(request):
         logger.error(f"Unexpected error in run_analysis: {e}")
         return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'}, status=500)
 
+@login_required
 def get_task_status(request, task_id):
     """
     Pollable endpoint to check the status of a Celery task with timeout and comprehensive error handling.
@@ -392,6 +399,7 @@ def get_task_status(request, task_id):
             'error': str(e)
         }, status=500)
 
+@login_required
 def analysis_results(request, analysis_run_id):
     """
     Displays the results of a specific analysis run.
@@ -425,6 +433,7 @@ def analysis_results(request, analysis_run_id):
     
     return render(request, 'ai_analytics/analysis_results.html', context)
 
+@login_required
 def analysis_report_detail(request, report_id):
     """
     Displays the detailed report for a single transaction analysis.
@@ -439,6 +448,7 @@ def analysis_report_detail(request, report_id):
         'shap_values_data': shap_values_data
     })
 
+@login_required
 def export_analysis_results_csv(request, analysis_run_id):
     """
     Export all analysis results for a specific analysis run to CSV format.
