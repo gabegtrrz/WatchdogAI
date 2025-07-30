@@ -2,10 +2,12 @@ import logging
 from typing import List
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from decimal import Decimal
 from datetime import datetime
 from django.db import transaction
@@ -21,10 +23,12 @@ from apps.blockchain.integrity_service import integrity_service
 from apps.core.models import Transaction, ProcurementMethod
 from apps.performance_monitoring.services import track_performance, create_resource_tracker
 
+@login_required
 def transaction_upload_ui(request):
     """
     Renders a UI for procurement officers to upload transaction CSV files.
     Handles POST to process the file by calling the service layer directly.
+    Requires authentication.
     """
     if request.method == 'POST':
         # Handle retry action
@@ -162,6 +166,7 @@ def transaction_upload_ui(request):
     })
 
 
+@login_required
 def handle_blockchain_retry(request):
     """
     Handles retry of failed blockchain integrations.
@@ -202,8 +207,10 @@ class TransactionUploadAPIView(APIView):
     API endpoint for uploading a CSV file to create multiple transactions.
     
     Accepts a POST request with 'multipart/form-data' containing a 'csv_file'.
+    Requires authentication.
     """
     parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         """
@@ -306,6 +313,7 @@ class TransactionUploadAPIView(APIView):
             )
 
 
+@login_required
 @track_performance('single_transaction_upload', transaction_count=1)
 def single_transaction_upload(request):
     """
