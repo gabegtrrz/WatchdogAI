@@ -27,14 +27,6 @@
 
 ### System Credentials
 
-#### Superuser Account
-
-| Username     | Password     |
-| ------------ | ------------ |
-| `superadmin` | `securepass` |
-
-**Access Level**: Full system access including admin panel and all features
-
 #### Regular User Accounts
 
 | Username      | Password      |
