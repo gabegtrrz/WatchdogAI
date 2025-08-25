@@ -405,4 +405,4 @@ Click "Advanced Filters" to access:
 
 _This manual covers the core functionality of WatchdogAI. For advanced features or technical support, please contact your system administrator._
 
-**Last Updated**: July 2025
+**Last Updated**: August 2025
