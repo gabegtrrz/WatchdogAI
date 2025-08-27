@@ -21,8 +21,10 @@ import uuid
 from . import preprocessing
 from . import feature_engineering
 from apps.core.models import Transaction, AnalysisReport
+from apps.performance_monitoring.services import PerformanceMonitor
 import numpy as np
 from django.db.models.query import QuerySet
+from sklearn.ensemble import IsolationForest
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
@@ -38,7 +40,7 @@ MODEL_PATH = 'apps/ai_analytics/model_files/iforest.joblib'
 COLUMNS_PATH = 'apps/ai_analytics/model_files/columns.joblib'
 
 # Global model state variables
-model_loaded: bool = False
+columns_loaded: bool = False
 model: Optional[Any] = None
 training_columns: List[str] = []
 
@@ -54,26 +56,24 @@ def _load_model_files():
     Error Handling: Sets fallback state if files are missing or corrupted.
     """
 
-    global model_loaded, model, training_columns
+    global columns_loaded, model, training_columns
     
     try:
         logger.info("Loading model files...")
         
         # Validate file existence
-        if not os.path.exists(MODEL_PATH) or not os.path.exists(COLUMNS_PATH):
-            raise FileNotFoundError("Model files not found")
+        if not os.path.exists(COLUMNS_PATH):
+            raise FileNotFoundError("Model columns not found")
         
         # Load model and training columns
-        model = joblib.load(MODEL_PATH)
+        # model = joblib.load(MODEL_PATH)
         training_columns = joblib.load(COLUMNS_PATH)
-        model_loaded = True
-        
-        logger.info(f"Model loaded successfully. Training columns: {len(training_columns)}")
+        columns_loaded = True
+        logger.info(f"Model columns loaded successfully. Training columns: {len(training_columns)}")
         
     except (FileNotFoundError, Exception) as e:
-        logger.warning(f"Model files not found. Using fallback. Error: {e}")
-        model_loaded = False
-        model = None
+        logger.warning(f"Model columns not found. Using fallback. Error: {e}")
+        columns_loaded = False
         training_columns = []
 
 # Initialize model loading at module import
@@ -92,6 +92,7 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
     3. Preprocesses the data
     4. Generates features (using the training columns)
     5. Aligns columns with training data
+    5.5. Refit model using ALL existing transaction data
     6. Performs anomaly detection
     7. Saves the results for each transaction into an AnalysisReport
 
@@ -104,18 +105,22 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         A dictionary containing the results of the analysis.
     """
 
-    start_time = time.time()
+    # Initialize performance monitoring
+    monitor = PerformanceMonitor(str(analysis_run_id))
+    monitor.start_analysis()
+    
     logger.info(f"Starting anomaly analysis for {transactions_qs.count()} transactions.")
     logger.debug(f"Contamination parameter: {contamination}")
 
     try:
         ### 1. Convert the transaction data to a DataFrame
-        step_start = time.time()
-        if not model_loaded:
+        monitor.start_step("data_conversion")
+        if not columns_loaded:
             raise ValueError("Model files not found. Please run the training script first.")
 
         raw_df = preprocessing.get_transaction_dataframe(transactions_qs)
-        logger.info(f"Raw data converted to DataFrame in {time.time() - step_start:.2f} seconds")
+        monitor.end_step("data_conversion")
+        logger.info(f"Raw data converted to DataFrame")
         
         ### 2. Extract labels and remove is_anomaly column if present
         # This matches the evaluate_model.py flow
@@ -124,41 +129,109 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             raw_df = raw_df.drop('is_anomaly', axis=1)
         
         ### 3. Preprocess the data
+        monitor.start_step("data_preprocessing")
         cleaned_df = preprocessing.clean_raw_data(raw_df)
-        
-        step_start = time.time()
-        logger.info(f"Preprocessing completed in {time.time() - step_start:.2f} seconds")
+        monitor.end_step("data_preprocessing")
+        logger.info(f"Preprocessing completed")
 
         ### 4. Generate features
+        monitor.start_step("feature_engineering")
         featured_df, _ = feature_engineering.create_features(cleaned_df)
+        monitor.end_step("feature_engineering")
 
         ### 5. Align columns with the model's training columns (IMPROVED)
         training_columns_copy = training_columns.copy()
         final_df = _prepare_features_for_prediction(featured_df, training_columns_copy)
         del training_columns_copy  # Clean up the copy after use
         
+        ### 5.5. Fit model using ALL existing transaction data with max_samples optimization
+        monitor.start_step("model_fitting")
+        logger.info("Fitting model using ALL existing transaction data...")
+        
+        try:
+            # Get all existing transactions from database
+            all_transactions = Transaction.objects.all()
+            total_transactions = all_transactions.count()
+            logger.info(f"Retrieved {total_transactions} total transactions for model fitting")
+            
+            # Convert all transactions to DataFrame
+            all_raw_df = preprocessing.get_transaction_dataframe(all_transactions)
+            
+            # Remove is_anomaly column if present (for inference)
+            if 'is_anomaly' in all_raw_df.columns:
+                # logger.info("Removing is_anomaly column from all transaction data for fitting")
+                all_raw_df = all_raw_df.drop('is_anomaly', axis=1)
+            
+            # Preprocess all transaction data
+            all_cleaned_df = preprocessing.clean_raw_data(all_raw_df)
+            
+            # Generate features for all transactions
+            all_featured_df, _ = feature_engineering.create_features(all_cleaned_df)
+            
+            # Prepare features for model fitting (using same training columns)
+            all_training_columns_copy = training_columns.copy()
+            all_txns_final_df = _prepare_features_for_prediction(
+                featured_df=all_featured_df,
+                feature_columns_list= all_training_columns_copy
+            )
 
+            del all_training_columns_copy
+            
+            # Set max_samples to use 100% of available samples for maximum coverage
+            # This ensures the model uses all available samples (1.0 = 100%)
+            model= IsolationForest(
+                n_estimators=50,
+                contamination=0.05,
+                max_samples=1.0, # Use 100% of available samples
+                random_state=77,
+            )
+            
+            # Fit the model with all data
+            logger.info(f"Fitting model with {all_txns_final_df.shape[0]} samples and {all_txns_final_df.shape[1]} features (max_samples={model.get_params()['max_samples']})")
+
+            model.fit(all_txns_final_df)
+            
+            
+            # Save the refitted model
+            import joblib
+            if model is not None:
+                joblib.dump(model, MODEL_PATH)
+                joblib.dump(training_columns, COLUMNS_PATH)
+            else:
+                logger.error("Cannot save model - model is None")
+                raise ValueError("Cannot save model - model is None")
+            
+            logger.info(f"Model successfully refitted and saved")
+            monitor.end_step("model_fitting")
+            
+        except Exception as e:
+            logger.warning(f"Model fitting failed: {e}. Continuing with original model.")
+            logger.warning("Using original model for anomaly detection")
+            monitor.end_step("model_fitting")
         
         # 6. Perform anomaly detection with sophisticated contamination handling
-        prediction_results = _get_predictions_and_scores(final_df, contamination)
+        monitor.start_step("anomaly_detection")
+        prediction_results = _get_predictions_and_scores(final_df=final_df, contamination=contamination, model=model)
         
         if prediction_results is None:
             raise ValueError("Anomaly detection failed, received no results (None).")
         
         predicted_labels, anomaly_scores, threshold = prediction_results
+        monitor.end_step("anomaly_detection")
 
         # Step 7: SHAP Analysis - Generate explainability
+        monitor.start_step("shap_analysis")
         logger.debug("Generating SHAP values for explainability...")
-        step_start = time.time()
         
         shap_values = generate_shap_values(model, final_df)
         # shape: (n_samples, n_features)
 
         logger.debug("SHAP values generated successfully")
-        logger.info(f"SHAP values generated in {time.time() - step_start:.2f} seconds")
+        monitor.end_step("shap_analysis")
 
         
         # 8. Unpack SHAP and Save to Database
+        monitor.start_step("database_save")
         if not analysis_run_id:
             raise ValueError("Analysis run ID is required")
 
@@ -191,6 +264,7 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         # Use Django's bulk_create method
         AnalysisReport.objects.bulk_create(reports_to_create)  # type: ignore
         logger.info(f"Successfully saved {len(reports_to_create)} analysis reports.")
+        monitor.end_step("database_save")
 
         # Compile final results
         results = {
@@ -202,14 +276,28 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             "contamination_rate": float(contamination)
         }
 
-        # Log successful completion
-        total_time = time.time() - start_time
-        logger.info(f"Analysis completed successfully in {total_time:.3f}s")
+        # End performance monitoring and save metrics
+        monitor.end_analysis({
+            'transactions_analyzed': len(transactions_list),
+            'anomalies_found': int(np.sum(predicted_labels)),
+            'contamination_rate': float(contamination),
+            'status': 'success'
+        })
+
+        logger.info(f"Analysis completed successfully")
         return results
 
     except Exception as e:
         # Comprehensive error handling with timing information
         logger.error(f"Analysis failed: {e}", exc_info=True)
+        
+        # End performance monitoring with error status
+        if 'monitor' in locals():
+            monitor.end_analysis({
+                'status': 'error',
+                'error_message': str(e)
+            })
+        
         return {
             "status": "error",
             "message": str(e)
@@ -286,7 +374,7 @@ def _prepare_features_for_prediction(featured_df: pd.DataFrame, feature_columns_
 # UTILITY FUNCTIONS
 # =============================================================================
 
-def _get_predictions_and_scores(final_df: pd.DataFrame, contamination: float = 0.05) -> Optional[tuple[np.ndarray, np.ndarray, float]]:
+def _get_predictions_and_scores(model, final_df: pd.DataFrame, contamination: float = 0.05) -> Optional[tuple[np.ndarray, np.ndarray, float]]:
     """
     Performs anomaly detection on the final DataFrame using the trained Isolation Forest model.
     
@@ -307,36 +395,31 @@ def _get_predictions_and_scores(final_df: pd.DataFrame, contamination: float = 0
     """
 
     try:
-        if model is not None:
-            logger.info('Getting predictions and anomaly scores from trained model...')
+        logger.info('Getting predictions and anomaly scores from trained model...')
 
-            # Get raw anomaly scores (lower score means more anomalous)
-            anomaly_scores = model.score_samples(final_df)
+        # Get raw anomaly scores (lower score means more anomalous)
+        anomaly_scores = model.score_samples(final_df)
 
-            logger.debug(f'Anomaly scores:\n{chr(10).join([f"  [{i}]: {score}" for i, score in enumerate(anomaly_scores)])}')
-            
-            logger.debug(f'Contamination before thresholding: {contamination}')
-            
-            # Calculate threshold based on contamination rate
-            threshold = np.percentile(anomaly_scores, contamination * 100)
+        logger.debug(f'Anomaly scores:\n{chr(10).join([f"  [{i}]: {score}" for i, score in enumerate(anomaly_scores)])}')
+        
+        logger.debug(f'Contamination before thresholding: {contamination}')
+        
+        # Calculate threshold based on contamination rate
+        threshold = np.percentile(anomaly_scores, contamination * 100)
 
-            logger.debug(f'Threshold: {threshold}')
+        logger.debug(f'Threshold: {threshold}')
 
-            # Classify samples as anomalies (1) or normal (0)
-            predicted_labels = (anomaly_scores <= threshold).astype(int)
+        # Classify samples as anomalies (1) or normal (0)
+        predicted_labels = (anomaly_scores <= threshold).astype(int)
 
-            logger.debug(f'Predicted labels:\n{chr(10).join([f"  [{i}]: {label}" for i, label in enumerate(predicted_labels)])}')
+        logger.debug(f'Predicted labels:\n{chr(10).join([f"  [{i}]: {label}" for i, label in enumerate(predicted_labels)])}')
 
-            logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
+        logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
 
-            logger.info(f'Contamination rate: {contamination:.4f}')
-            logger.info(f'Final Threshold: {threshold:.4f}')
+        logger.info(f'Contamination rate: {contamination:.4f}')
+        logger.info(f'Final Threshold: {threshold:.4f}')
 
-            return predicted_labels, anomaly_scores, threshold
-
-        else:
-            logger.error("Model is None, cannot perform inference")
-            return None
+        return predicted_labels, anomaly_scores, threshold
     
     except Exception as e:
         logger.error(f"Error in anomaly detection: {e}", exc_info=True)

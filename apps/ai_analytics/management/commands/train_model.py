@@ -124,7 +124,7 @@ class Command(BaseCommand):
         true_labels = preprocessing.extract_labels(df)
 
         
-        # 2. Preprocess data (this will drop 'is_anomaly' column)
+    # 2. Preprocess data (this will drop 'is_anomaly' column)
         logger.info('Preprocessing data...')
         self.stdout.write('Preprocessing data...')
         
@@ -137,7 +137,7 @@ class Command(BaseCommand):
             self.stderr.write(f'Error during data preprocessing: {e}')
             return
 
-        # 3. Engineer features
+    # 3. Engineer features
         logger.info('Starting feature engineering...')
         self.stdout.write('Starting feature engineering...')
 

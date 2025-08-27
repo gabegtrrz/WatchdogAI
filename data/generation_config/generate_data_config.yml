@@ -1,15 +1,11 @@
-# -----------------
-# Contains all configured anomaly types
-# -----------------
-
 
 data_generator:
   # ========================
   # MAIN CONFIGURATION
   # ========================
   
-  n_samples: 1000         # Number of records (rows) to generate
-  random_state: 77         # Seed for reproducibility (same seed = same output)
+  n_samples: 10         # Number of records (rows) to generate
+  random_state: 24        # Seed for reproducibility (same seed = same output)
   anomaly_fraction: 0.05
   
   # ============================
@@ -21,13 +17,13 @@ data_generator:
   
   # Split ratios for train-test-eval split
   split_ratios:
-    training: 0.9
+    training: 0.0
     testing: 0.0
-    evaluation: 0.1
+    evaluation: 1
 
   # !! MAKE SURE TO USE ABSOLUTE PATH !!
-  output_folder_path: D:\Projects\WatchdogAI\data\training\training_data\21_0.05      # Path where CSV files will be saved 
-  log_directory: "data/generation_config"                     # Path where JSON logs will be saved
+  output_folder_path: D:\Projects\WatchdogAI\evaluation\blockchain\data\10      # Path where CSV files will be saved 
+  log_directory: D:\Projects\WatchdogAI\evaluation\blockchain\data\10                      # Path where JSON logs will be saved
 
   item_source_file: "data/lab_equipment.txt" # Text file with one item name per line
   
@@ -229,7 +225,9 @@ data_generator:
     - "Favored Supplier"            # Specific supplier consistently winning
     - "Fictitious Winner"           # Shell or non-existent company
     - "Supplier Monopoly"           # Single supplier with inside budget knowledge
-    - "Method Misuse"               # Inappropriate procurement methods
+    - "Method Misuse"   
+    
+    - "Coordinated Fraud"            # Inappropriate procurement methods
 
 # ============================================================================
 # OUTPUT CONFIGURATION EXPLAINED

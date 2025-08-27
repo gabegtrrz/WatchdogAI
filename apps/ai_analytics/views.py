@@ -2,11 +2,15 @@
 from django.views.generic import ListView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from typing import TYPE_CHECKING, Dict, Any
 import json
+import csv
+from datetime import datetime
 
 if TYPE_CHECKING:
     from apps.core.models import Transaction, AnalysisReport
@@ -88,12 +92,13 @@ def apply_rate_limit(request, action_name):
     
     return None  # Continue with normal processing
 
-class TransactionListView(ListView):
+class TransactionListView(LoginRequiredMixin, ListView):
     """
     A view that displays a list of transactions with filtering, sorting, and pagination.
     This view uses the TransactionFilter to allow users to filter the transaction
     list based on various criteria, and supports sorting by different columns.
     Pagination is enabled for performance, but "Select All" works across all pages.
+    Requires authentication.
     """
     model = Transaction
     template_name = 'ai_analytics/transaction_list.html'
@@ -173,6 +178,7 @@ class TransactionListView(ListView):
         
         return context
 
+@login_required
 @require_POST
 def select_transactions(request):
     """
@@ -246,6 +252,7 @@ def select_transactions(request):
 
 
 
+@login_required
 def analysis_configuration(request):
     """
     Displays the analysis configuration form.
@@ -267,28 +274,23 @@ def analysis_configuration(request):
         request.session.pop('selected_transaction_ids', None)
         return redirect('transaction_list')
     
-    # Update session with validated IDs
-    request.session['selected_transaction_ids'] = valid_ids
-    transaction_ids = valid_ids
-    transaction_count = len(transaction_ids)
-    logger.info(f"Configuration page loaded with {transaction_count} valid transactions")
+    # Update session with unique, validated IDs
+    unique_ids = list(set(valid_ids))
+    request.session['selected_transaction_ids'] = unique_ids
+    transaction_count = len(unique_ids)
+    logger.info(f"Configuration page loaded with {transaction_count} unique, valid transactions")
 
-# Analysis Configuration Form
-    if request.method == 'POST':
-        form = AnalysisConfigurationForm(request.POST)
-        if form.is_valid():
-            # This logic is now handled by run_analysis view via fetch
-            pass
-    else:
-        form = AnalysisConfigurationForm(initial={
-            'transaction_ids': json.dumps(transaction_ids)
-        })
+    form = AnalysisConfigurationForm(initial={
+        'contamination': 5,  # Default to 5%
+        'transaction_ids': json.dumps(unique_ids)
+    })
 
     return render(request, 'ai_analytics/analysis_configuration.html', {
         'form': form,
         'transaction_count': transaction_count
     })
 
+@login_required
 @require_POST
 def run_analysis(request):
     """
@@ -358,6 +360,7 @@ def run_analysis(request):
         logger.error(f"Unexpected error in run_analysis: {e}")
         return JsonResponse({'success': False, 'error': f'Unexpected error: {str(e)}'}, status=500)
 
+@login_required
 def get_task_status(request, task_id):
     """
     Pollable endpoint to check the status of a Celery task with timeout and comprehensive error handling.
@@ -396,6 +399,7 @@ def get_task_status(request, task_id):
             'error': str(e)
         }, status=500)
 
+@login_required
 def analysis_results(request, analysis_run_id):
     """
     Displays the results of a specific analysis run.
@@ -429,6 +433,7 @@ def analysis_results(request, analysis_run_id):
     
     return render(request, 'ai_analytics/analysis_results.html', context)
 
+@login_required
 def analysis_report_detail(request, report_id):
     """
     Displays the detailed report for a single transaction analysis.
@@ -442,4 +447,136 @@ def analysis_report_detail(request, report_id):
         'report': report,
         'shap_values_data': shap_values_data
     })
+
+@login_required
+def export_analysis_results_csv(request, analysis_run_id):
+    """
+    Export all analysis results for a specific analysis run to CSV format.
+    Includes both anomalous and normal transactions with their analysis details and top anomalous features.
+    """
+    # Get all reports for this analysis run
+    all_reports = AnalysisReport.objects.filter(
+        analysis_run_id=analysis_run_id
+    ).select_related('transaction')
+    
+    if not all_reports.exists():
+        return HttpResponse("No analysis results found for this run.", status=404)
+    
+    # Create the HTTP response with CSV content type
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="analysis_results_{analysis_run_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+    
+    # Create CSV writer
+    writer = csv.writer(response)
+    
+    # Define feature name mapping for better readability
+    feature_name_mapping = {
+        'unit_purchase_price': 'Unit Purchase Price',
+        'total_purchase_price': 'Total Purchase Price',
+        'quantity': 'Quantity',
+        'average_price': 'Market Average Price',
+        'price_deviation': 'Price Deviation',
+        'procurement_method_encoded': 'Procurement Method',
+        'supplier_encoded': 'Supplier',
+        'item_category_encoded': 'Item Category',
+        'procurement_officer_encoded': 'Procurement Officer',
+        'end_user_unit_encoded': 'End User Unit',
+        'transaction_date_encoded': 'Transaction Date',
+        'price_to_average_ratio': 'Price to Average Ratio',
+        'quantity_price_interaction': 'Quantity-Price Interaction'
+    }
+    
+    # Write header row with top 5 anomalous features
+    header_row = [
+        'Transaction ID',
+        'Item Name',
+        'Supplier',
+        'Procurement Method',
+        'Quantity',
+        'Unit Price',
+        'Total Price',
+        'Average Price',
+        'Approved Budget',
+        'Project Name',
+        'End User Unit',
+        'Procurement Officer',
+        'Transaction Date',
+        'Is Anomaly',
+        'Anomaly Score',
+        'Risk Score (%)',
+        'Contamination Parameter',
+        'Analysis Date',
+        'Error Message'
+    ]
+    
+    # Add top 5 anomalous features columns
+    for i in range(1, 6):
+        header_row.extend([
+            f'Top {i} Feature',
+            f'Top {i} Feature Score',
+            f'Top {i} Feature Impact'
+        ])
+    
+    writer.writerow(header_row)
+    
+    # Write data rows
+    for report in all_reports:
+        transaction = report.transaction
+        
+        # Calculate risk score percentage (absolute value * 100)
+        risk_score_percentage = abs(report.anomaly_score * 100) if report.anomaly_score else 0
+        
+        # Get SHAP values for this report
+        shap_values = report.shap_values if report.shap_values else {}
+        
+        # Process SHAP values to get top anomalous features
+        top_features = []
+        if shap_values and isinstance(shap_values, dict):
+            try:
+                # Convert to list of tuples (feature_name, shap_value) and sort by SHAP value (descending)
+                feature_data = [(k, v) for k, v in shap_values.items() if isinstance(v, (int, float))]
+                # Sort by SHAP value (descending) - higher values = more anomalous
+                feature_data.sort(key=lambda x: x[1], reverse=True)
+                
+                # Take top 5 features
+                for feature_name, shap_value in feature_data[:5]:
+                    # Scale SHAP value by 100 for consistency with UI
+                    scaled_value = shap_value * 100
+                    # Determine impact direction
+                    impact = "Increases Anomaly" if shap_value > 0 else "Decreases Anomaly"
+                    # Get readable feature name
+                    readable_name = feature_name_mapping.get(feature_name, feature_name.replace('_', ' ').title())
+                    
+                    top_features.extend([readable_name, f"{scaled_value:.2f}", impact])
+            except (TypeError, ValueError) as e:
+                # Log error but continue with empty features
+                logger.warning(f"Error processing SHAP values for report {report.id}: {e}")
+        
+        # Pad with empty values if less than 5 features
+        while len(top_features) < 15:  # 5 features * 3 columns each
+            top_features.extend(['', '', ''])
+        
+        writer.writerow([
+            transaction.transaction_id,
+            transaction.item_name,
+            transaction.supplier,
+            transaction.procurement_method.name if transaction.procurement_method else '',
+            transaction.quantity,
+            float(transaction.unit_purchase_price) if transaction.unit_purchase_price else '',
+            float(transaction.total_purchase_price) if transaction.total_purchase_price else '',
+            float(transaction.average_price) if transaction.average_price else '',
+            float(transaction.approved_budget) if transaction.approved_budget else '',
+            transaction.project_name or '',
+            transaction.end_user_unit or '',
+            transaction.procurement_officer or '',
+            transaction.transaction_date.strftime('%Y-%m-%d') if transaction.transaction_date else '',
+            'Yes' if report.is_anomaly else 'No',
+            report.anomaly_score or '',
+            f"{risk_score_percentage:.2f}",
+            report.contamination_param or '',
+            report.created_at.strftime('%Y-%m-%d %H:%M:%S') if report.created_at else '',
+            report.error_message or ''
+        ] + top_features)
+    
+    return response
     

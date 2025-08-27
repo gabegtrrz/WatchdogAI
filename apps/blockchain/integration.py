@@ -26,6 +26,10 @@ from .models import Block
 from .services import create_new_block, verify_blockchain_integrity, create_genesis_block
 from .integrity_service import integrity_service
 from apps.core.models import Transaction
+from apps.performance_monitoring.services import monitor_blockchain_save
+import time
+import psutil
+import os
 
 # Setup logging for this module
 logger = logging.getLogger(__name__)
@@ -42,9 +46,27 @@ class BlockchainIntegrationService:
     Handles the complete lifecycle of adding transactions to the blockchain.
     """
 
-    def __init__(self):
+    def __init__(self, stdout=None):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self.stdout = stdout
+        self.process = psutil.Process(os.getpid())
+        self.process.cpu_percent()  # Initialize to start measurement interval
         
+    def _log(self, message):
+        if self.stdout:
+            self.stdout.write(message)
+        self.logger.info(message)
+    
+    def _get_resource_usage(self):
+        """
+        Gets current CPU and memory usage.
+        """
+        return {
+            'cpu_percent': self.process.cpu_percent(),
+            'memory_mb': self.process.memory_info().rss / (1024 * 1024)  # RSS in MB
+        }
+
+    @monitor_blockchain_save
     def integrate_transactions_atomic(self, transactions):
         """
         Atomically integrates transactions into the blockchain.
@@ -72,12 +94,53 @@ class BlockchainIntegrationService:
             'hash_generation': {
                 'hashes_generated': 0,
                 'errors': []
+            },
+            'timing': {
+                'integrity_before': 0,
+                'hash_generation': 0,
+                'create_new_block': 0,
+                'update_transactions': 0,
+                'integrity_after': 0,
+                'total': 0
+            },
+            'resources': {
+                'snapshots': {
+                    'before_integration': {},
+                    'after_integrity_before': {},
+                    'after_hash_generation': {},
+                    'after_create_new_block': {},
+                    'after_update_transactions': {},
+                    'after_integrity_after': {}
+                },
+                'deltas': {
+                    'integrity_before': {},
+                    'hash_generation': {},
+                    'create_new_block': {},
+                    'update_transactions': {},
+                    'integrity_after': {}
+                }
             }
         }
         
+        total_start_time = time.time()
+        
+        last_usage = self._get_resource_usage()
+        result['resources']['snapshots']['before_integration'] = last_usage
+
         # Step 0: Check integrity BEFORE integration
+        self._log("Step 0: Verifying blockchain integrity before integration...")
+        integrity_start_time = time.time()
         before_check = integrity_service.check_integrity_before_integration(transactions)
+        result['timing']['integrity_before'] = time.time() - integrity_start_time
         result['integrity_checks']['before'] = before_check
+        
+        current_usage = self._get_resource_usage()
+        result['resources']['snapshots']['after_integrity_before'] = current_usage
+        result['resources']['deltas']['integrity_before'] = {
+            'cpu_percent': current_usage['cpu_percent'],
+            'memory_mb_delta': current_usage['memory_mb'] - last_usage['memory_mb']
+        }
+        last_usage = current_usage
         
         if not before_check['integrity_valid']:
             error_msg = "Blockchain integrity compromised before integration"
@@ -92,6 +155,8 @@ class BlockchainIntegrationService:
         try:
             with db_transaction.atomic():
                 # Step 1: Calculate and store transaction hashes, update status to 'pending'
+                self._log("Step 1: Generating transaction hashes...")
+                hash_start_time = time.time()
                 for transaction in transactions:
                     # Generate transaction hash if not already present
                     if not transaction.transaction_hash:
@@ -105,18 +170,50 @@ class BlockchainIntegrationService:
                         'blockchain_status', 
                         'last_blockchain_attempt'
                     ])
+                result['timing']['hash_generation'] = time.time() - hash_start_time
                 
+                current_usage = self._get_resource_usage()
+                result['resources']['snapshots']['after_hash_generation'] = current_usage
+                result['resources']['deltas']['hash_generation'] = {
+                    'cpu_percent': current_usage['cpu_percent'],
+                    'memory_mb_delta': current_usage['memory_mb'] - last_usage['memory_mb']
+                }
+                last_usage = current_usage
+
                 # Step 2: Create new block with transactions
+                self._log("Step 2: Creating new block...")
+                block_creation_start_time = time.time()
                 new_block = create_new_block(transactions)
+                result['timing']['create_new_block'] = time.time() - block_creation_start_time
+
+                current_usage = self._get_resource_usage()
+                result['resources']['snapshots']['after_create_new_block'] = current_usage
+                result['resources']['deltas']['create_new_block'] = {
+                    'cpu_percent': current_usage['cpu_percent'],
+                    'memory_mb_delta': current_usage['memory_mb'] - last_usage['memory_mb']
+                }
+                last_usage = current_usage
+
                 if not new_block:
                     raise BlockchainIntegrationError("Failed to create new block")
                 
                 # Step 3: Update transaction status to 'integrated'
+                self._log("Step 3: Updating transaction statuses...")
+                update_start_time = time.time()
                 for transaction in transactions:
                     transaction.blockchain_status = 'integrated'
                     transaction.blockchain_error = None
                     transaction.save(update_fields=['blockchain_status', 'blockchain_error'])
-                
+                result['timing']['update_transactions'] = time.time() - update_start_time
+
+                current_usage = self._get_resource_usage()
+                result['resources']['snapshots']['after_update_transactions'] = current_usage
+                result['resources']['deltas']['update_transactions'] = {
+                    'cpu_percent': current_usage['cpu_percent'],
+                    'memory_mb_delta': current_usage['memory_mb'] - last_usage['memory_mb']
+                }
+                last_usage = current_usage
+
                 result.update({
                     'success': True,
                     'integrated_count': len(transactions),
@@ -152,9 +249,21 @@ class BlockchainIntegrationService:
             return result
         
         # Step 4: Check integrity AFTER integration
+        self._log("Step 4: Verifying blockchain integrity after integration...")
+        integrity_after_start_time = time.time()
         after_check = integrity_service.check_integrity_after_integration(transactions, result['success'])
+        result['timing']['integrity_after'] = time.time() - integrity_after_start_time
         result['integrity_checks']['after'] = after_check
-        
+
+        current_usage = self._get_resource_usage()
+        result['resources']['snapshots']['after_integrity_after'] = current_usage
+        result['resources']['deltas']['integrity_after'] = {
+            'cpu_percent': current_usage['cpu_percent'],
+            'memory_mb_delta': current_usage['memory_mb'] - last_usage['memory_mb']
+        }
+
+        result['timing']['total'] = time.time() - total_start_time
+        self._log("Integration process complete.")
         return result
 
     def retry_failed_integrations(self, max_retries=3):
@@ -253,17 +362,18 @@ class BlockchainIntegrationService:
 
 
 ### Convenience functions for direct usage
-def integrate_transaction_batch(transactions):
+def integrate_transaction_batch(transactions, stdout=None):
     """
     Integrates a batch of transactions into the blockchain atomically.
     
     Args:
         transactions (list): List of Transaction objects to integrate
+        stdout: Optional stdout object for progress logging
         
     Returns:
         tuple: (success_status, result_data)
     """
-    service = BlockchainIntegrationService()
+    service = BlockchainIntegrationService(stdout=stdout)
     result = service.integrate_transactions_atomic(transactions)
     return result['success'], result
 

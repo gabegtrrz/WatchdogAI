@@ -1,0 +1,42 @@
+# Test Feature Grid Search Configuration
+# Minimal configuration for testing feature combinations
+
+data_source:
+  training_csv_path: "data/grid_search/dataset/21_0.05/labeled/training.csv"
+  validation_csv_path: "data/grid_search/dataset/21_0.05/labeled/eval.csv"
+
+feature_grid_search:
+  # Minimal feature groups for testing
+  feature_groups:
+    financial_features:
+      - "price_per_unit_efficiency"
+      - "budget_utilization_ratio"
+      - "total_transaction_value"
+    
+    date_features:
+      - "transaction_month"
+      - "total_procurement_duration"
+    
+    supplier_features:
+      - "supplier_frequency"
+    
+    base_features:
+      - "quantity"
+  
+  # Enable/disable AUC calculation (default: true)
+  calculate_auc: true
+  
+  # Number of parallel threads (default: 4)
+  max_workers: 13
+
+model:
+  # Fixed model parameters for feature testing
+  contamination: 0.1
+  n_estimators: 50
+  max_samples: "auto"
+  bootstrap: false
+  random_state: 42
+
+output:
+  results_dir: "data/feature_grid_search/results"
+  results_filename: "test_feature_grid_search_{timestamp}.json" 

@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 import warnings
 import logging
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
@@ -88,9 +88,10 @@ REQUIRED_COLUMNS.extend(PROCUREMENT_METHODS)
 
 # Map to configure columns for one-hot encoding and their categories
 ONE_HOT_ENCODING_MAP = {
+    # 'column_name': [categories]
     'procurement_method': PROCUREMENT_METHODS,
     # To encode other columns, add here
-
+    
 }
 
 # =============================================================================
@@ -153,7 +154,7 @@ def create_features(df: pd.DataFrame, is_training: bool = False) -> Tuple[pd.Dat
 
         # Step 8: Drop transformed unnecessary columns
         logger.debug("Dropping transformed source columns...")
-        df_processed.drop(columns=COLUMNS_TO_DROP_FROM_FINAL, inplace=True, errors='ignore')
+        df_processed.drop(columns=COLUMNS_TO_DROP_FROM_FINAL, inplace=True, errors='ignore') # errors='ignore' to just skip the column if the column is not found.
 
         # Step 9: Get final feature columns and create final DataFrame
         df_final, final_feature_columns = _get_final_feature_columns(df_processed)
@@ -219,7 +220,7 @@ def _convert_decimal_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def _perform_one_hot_encoding(df: pd.DataFrame, column_name: str, categories: list) -> pd.DataFrame:
-    """Performs generic one-hot encoding on specified categorical column.
+    """Performs one-hot encoding on specified categorical column.
     
     Args:
         df: Input DataFrame
@@ -235,7 +236,7 @@ def _perform_one_hot_encoding(df: pd.DataFrame, column_name: str, categories: li
             df[f'{column_name}_{category}'] = 0
         return df
     else:
-        # Convert column to a categorical type to ensure all predefined categories are included.
+        # ensure all predefined categories are included by converting the column to a categorical type. (this will include all categories, even absent ones, in the column)
         df[column_name] = pd.Categorical(df[column_name], categories=categories)
 
         # Create the one-hot encoded dummy variables.
@@ -325,12 +326,6 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
     df['quantity_per_peso_ratio'] = df['quantity'] / (df['total_purchase_price'] + epsilon)
 
     
-    # Unit price deviation from average
-    # Measures how much each transaction's unit price deviates from the overall average.
-    # Large deviations might indicate price manipulation or quality differences.
-    overall_avg_unit_price = df['unit_purchase_price'].mean()
-    df['unit_price_vs_market_average'] = df['unit_purchase_price'] - overall_avg_unit_price
-    
     # Budget utilization ratio
     # This feature measures how much of the approved budget is actually spent.
     # Values > 1 indicate budget overruns, which could signal poor planning,
@@ -340,10 +335,6 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
     safe_budget = df['approved_budget'].replace(0, np.nan)  # Avoid division by zero
     df['budget_utilization_ratio'] = df['total_purchase_price'] / safe_budget
     
-    # Budget efficiency score
-    # Combines budget utilization with price efficiency.
-    # Values close to 1 indicate good budget utilization, while very high or low values might indicate issues.
-    df['budget_efficiency_score'] = (df['total_purchase_price'] / safe_budget) * (1 / (1 + abs(df['unit_price_vs_market_average'])))
     
     # Price variance indicator
     # Measures the coefficient of variation for unit prices across the dataset.
@@ -358,25 +349,23 @@ def _create_finance_features(df: pd.DataFrame) -> pd.DataFrame:
     # bulk purchase anomalies, pricing irregularities, or procurement scale issues.
     df['total_transaction_value'] = df['quantity'] * df['unit_purchase_price']
     
-    # Average price deviation (if average_price column exists)
-    # Measures how much each transaction's total price deviates from the average price for similar items.
+    # Price vs. market average (relative difference)
+    # This feature highlights how much a transaction's price deviates from the market average in relative terms,
+    # making it a more robust indicator for anomaly detection than absolute difference.
     if 'average_price' in df.columns:
         # Impute missing average_price with unit_purchase_price plus random variation (±20%)
         # This creates more realistic imputed values while maintaining neutral baseline
         random_variation_arr = np.random.uniform(0.8, 1.2, size=len(df))  # +/- 20% variation
 
         imputed_average_price = df['unit_purchase_price'] * random_variation_arr
-
-        # Convert average_price to float to prevent decimal.Decimal type errors
         average_price = df['average_price'].fillna(imputed_average_price).astype(float)
         
-        df['price_vs_market_average'] = df['unit_purchase_price'] - average_price
-
+        # Relative difference to better capture the magnitude of the deviation
+        df['unit_price_vs_market_average'] = (df['unit_purchase_price'] - average_price) / (average_price + epsilon)
         df['price_competitiveness_score'] = df['unit_purchase_price'] / (average_price + epsilon)
-        
     else:
-        # If 'average_price' column is missing entirely, create neutral features
-        df['price_vs_market_average'] = 0
+        # If 'average_price' is missing, create neutral features
+        df['unit_price_vs_market_average'] = 0  
         df['price_competitiveness_score'] = 1.0
     
     return df
@@ -401,7 +390,7 @@ def _create_supplier_features(df: pd.DataFrame) -> pd.DataFrame:
     # collusion or favoritism.
     # High frequency suppliers might indicate legitimate preferred partnerships,
     # but could also signal collusion if combined with suspicious pricing patterns.
-    supplier_freq_map = df['supplier'].value_counts(normalize=True).to_dict()
+    supplier_freq_map: Dict[str, float] = df['supplier'].value_counts(normalize=True).to_dict()
     # .value_counts() counts the occurrences of each unique value in the 'supplier' column.
     # normalize=True: returns the frequency of each supplier as a percentage of the total number of suppliers.
     # to_dict(): converts the Series to a dictionary (key: supplier, value: frequency)
@@ -428,6 +417,7 @@ def _create_supplier_features(df: pd.DataFrame) -> pd.DataFrame:
     # High variance might indicate inconsistent pricing or potential price manipulation.
     # Handle empty groups by filtering out suppliers with no valid price data
     valid_prices_df = df[df['unit_purchase_price'].notna()]
+    supplier_price_stats: pd.DataFrame
     if not valid_prices_df.empty:
         valid_supplier_prices = valid_prices_df.groupby('supplier')['unit_purchase_price']
         supplier_price_stats = valid_supplier_prices.agg(['mean', 'std']).fillna(0).infer_objects(copy=False) 
@@ -461,14 +451,22 @@ def _create_efficiency_features(df: pd.DataFrame) -> pd.DataFrame:
     # Budget efficiency score
     # Combines budget utilization with price efficiency.
     # Values close to 1 indicate good budget utilization, while very high or low values might indicate issues.
+    safe_budget = df['approved_budget'].replace(0, np.nan)  # Avoid division by zero
+    epsilon = 1e-6  # Small value to prevent division by zero
+    
+    # Use price_vs_supplier_average if available, otherwise use a neutral value
+    if 'price_vs_supplier_average' in df.columns:
+        price_deviation = df['price_vs_supplier_average'].abs()
+    else:
+        price_deviation = 0
+    
     df['budget_efficiency_score'] = (
-        df['total_purchase_price'] / df['approved_budget']
-    ) * (1 / (1 + df['price_vs_supplier_average'].abs()))
+        df['total_purchase_price'] / safe_budget
+    ) * (1 / (1 + price_deviation + epsilon))
 
     # Timeline efficiency
     # Measures how efficiently the procurement timeline is used.
     # Very short timelines might indicate rushed processes, while very long ones might indicate delays.
-    epsilon = 1e-6  # Small value to prevent division by zero
     df['procurement_timeline_speed_ratio'] = df['total_procurement_duration'] / (
         df['bidding_period_number_of_days'] + df['award_decision_duration'] + df['contract_signing_number_of_days'] + epsilon
     )
@@ -505,7 +503,7 @@ def _impute_missing_values(df: pd.DataFrame) -> pd.DataFrame:
         'quantity_per_peso_ratio',
         'unit_price_vs_market_average',
         'budget_efficiency_score', 'price_volatility_index', 'total_transaction_value',
-        'budget_utilization_ratio', 'price_vs_market_average', 'price_competitiveness_score',
+        'budget_utilization_ratio', 'price_competitiveness_score',
         
         # Date-based features
         'contract_signing_day_of_week', 'bid_opening_day_of_week', 'transaction_month',
@@ -526,7 +524,6 @@ def _impute_missing_values(df: pd.DataFrame) -> pd.DataFrame:
             missing_count = df[col].isnull().sum()
             median_val = df[col].median()
             df.fillna({col: median_val}, inplace=True)
-            df.infer_objects(copy=False)
             logger.debug(f"Imputed {missing_count} missing values in {col} with median: {median_val}")
     return df
 
@@ -550,11 +547,12 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
     ]
 
     engineered_features = [
-        # Financial features
+        # Base numerical features
         'price_per_unit_efficiency',
-        'quantity_per_peso_ratio','unit_price_vs_market_average',
+        'quantity_per_peso_ratio',
+        'unit_price_vs_market_average',
         'budget_efficiency_score', 'price_volatility_index', 'total_transaction_value',
-        'budget_utilization_ratio', 'price_vs_market_average', 'price_competitiveness_score',
+        'budget_utilization_ratio', 'price_competitiveness_score',
         
         # Date-based features
         'contract_signing_day_of_week', 'bid_opening_day_of_week', 'transaction_month',
@@ -562,7 +560,8 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
         
         # Supplier features
         'supplier_frequency',
-        'price_per_supplier_freq', 'price_vs_supplier_average',
+        'price_per_supplier_freq',
+        'price_vs_supplier_average',
         
         # Efficiency features
         'procurement_timeline_speed_ratio', 'transaction_on_a_weekend'
@@ -602,6 +601,6 @@ def _get_final_feature_columns(df_processed: pd.DataFrame) -> Tuple[pd.DataFrame
     final_feature_columns = present_expected_features + unexpected_new_features
 
     # Safety check to ensure all columns exist, creating the final DataFrame
-    df_final = df_processed[final_feature_columns]
+    df_final = pd.DataFrame(df_processed[final_feature_columns])
 
     return df_final, final_feature_columns

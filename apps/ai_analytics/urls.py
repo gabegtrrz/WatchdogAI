@@ -15,5 +15,7 @@ urlpatterns = [
 
     path('analysis/results/<uuid:analysis_run_id>/', views.analysis_results, name='analysis_results'),
     
+    path('analysis/results/<uuid:analysis_run_id>/export/', views.export_analysis_results_csv, name='export_analysis_results_csv'),
+    
     path('analysis/report/<int:report_id>/', views.analysis_report_detail, name='analysis_report_detail'),
 ]

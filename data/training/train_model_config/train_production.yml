@@ -17,7 +17,7 @@ model:
   # Optional:Isolation Forest parameters
   n_estimators: 100 # n_estimators specifies the number of individual trees to build in the forest.
   random_state: 10
-  max_samples: null # best result so far when max_samples is null
+  max_samples: 1.0 # Use 100% of available samples for maximum coverage
   bootstrap: false
   n_jobs: null
   verbose: 0

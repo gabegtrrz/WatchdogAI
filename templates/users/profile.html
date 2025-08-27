@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Profile - WatchdogAI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-user-circle me-2"></i>User Profile
+                </h4>
+            </div>
+
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>{{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary mb-3">
+                                    <i class="fas fa-user me-2"></i>Account Information
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted">Username</label>
+                                    <p class="form-control-plaintext">{{ user.username }}</p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted">Full Name</label>
+                                    <p class="form-control-plaintext">
+                                        {% if user.first_name and user.last_name %}
+                                            {{ user.first_name }} {{ user.last_name }}
+                                        {% else %}
+                                            <span class="text-muted">Not provided</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted">Email</label>
+                                    <p class="form-control-plaintext">
+                                        {% if user.email %}
+                                            {{ user.email }}
+                                        {% else %}
+                                            <span class="text-muted">Not provided</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted">Account Status</label>
+                                    <p class="form-control-plaintext">
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted">Member Since</label>
+                                    <p class="form-control-plaintext">{{ user.date_joined|date:"F j, Y" }}</p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted">Last Login</label>
+                                    <p class="form-control-plaintext">
+                                        {% if user.last_login %}
+                                            {{ user.last_login|date:"F j, Y g:i A" }}
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary mb-3">
+                                    <i class="fas fa-cog me-2"></i>Account Actions
+                                </h5>
+                                
+                                <div class="d-grid gap-3">
+                                    <a href="{% url 'home' %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-home me-2"></i>Go to Dashboard
+                                    </a>
+                                    
+                                    <a href="/admin/" class="btn btn-outline-secondary" target="_blank">
+                                        <i class="fas fa-cog me-2"></i>Admin Panel
+                                    </a>
+                                    
+                                    <a href="{% url 'users:logout' %}" class="btn btn-outline-danger">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </a>
+                                </div>
+                                
+                                <hr class="my-4">
+                                
+                                <div class="alert alert-info">
+                                    <h6 class="alert-heading">
+                                        <i class="fas fa-info-circle me-2"></i>Account Security
+                                    </h6>
+                                    <p class="mb-0 small">
+                                        Your account is protected by Django's built-in authentication system. 
+                                        For security reasons, password changes must be done through the admin panel.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

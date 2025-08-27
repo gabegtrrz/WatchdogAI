@@ -1,0 +1,38 @@
+[
+  {
+    "analysis_run_id": "scrape-amazon-1753799010",
+    "total_analysis_time": 4.248,
+    "step_timings": {
+      "attempt_1": 4.247692584991455
+    },
+    "total_steps": 1,
+    "product_name": "laptop",
+    "prices_found": 5,
+    "attempts_made": 1,
+    "status": "success"
+  },
+  {
+    "analysis_run_id": "scrape-amazon-1753799006",
+    "total_analysis_time": 3.952,
+    "step_timings": {
+      "attempt_1": 3.951921224594116
+    },
+    "total_steps": 1,
+    "product_name": "laptop",
+    "prices_found": 5,
+    "attempts_made": 1,
+    "status": "success"
+  },
+  {
+    "analysis_run_id": "scrape-amazon-1753799000",
+    "total_analysis_time": 6.342,
+    "step_timings": {
+      "attempt_1": 6.3413050174713135
+    },
+    "total_steps": 1,
+    "product_name": "laptop",
+    "prices_found": 5,
+    "attempts_made": 1,
+    "status": "success"
+  }
+]

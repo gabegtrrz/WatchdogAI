@@ -68,6 +68,7 @@
         gap: 0.75rem;
         max-width: 100%;
         margin: 0 auto;
+        align-items: center;
     }
     
     @media (min-width: 768px) {
@@ -75,6 +76,7 @@
             flex-direction: row;
             justify-content: center;
             gap: 1rem;
+            flex-wrap: wrap;
         }
     }
     
@@ -90,12 +92,24 @@
         justify-content: center;
         gap: 0.5rem;
         white-space: nowrap;
-        min-width: fit-content;
+        min-width: 140px;
+        flex-shrink: 0;
     }
     
     .btn-user-type:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    @media (max-width: 576px) {
+        .btn-user-type {
+            min-width: 120px;
+            font-size: 0.9rem;
+            padding: 0.6rem 1.2rem;
+        }
+        .welcome-card {
+            padding: 2rem 1rem;
+        }
     }
 </style>
 
@@ -105,19 +119,46 @@
             <div class="text-center mb-3">
                 <img src="{% static 'img/WATCHDOG AI LOGO.png' %}" alt="WatchdogAI Logo" class="img-fluid" style="max-height: 120px; margin-bottom: 1rem;">
             </div>
-            <h1 class="welcome-title">Procurement Integrity and Anomaly Detection System</h1>
-            <p class="welcome-subtitle">The Power of AI. The Integrity of Blockchain.<br>The Future of Procurement.</p>
-            
-            <div class="user-type-buttons">
-                <a href="{% url 'transaction-upload-ui' %}" class="btn btn-primary btn-user-type">
-                    <i class="fas fa-upload"></i>
-                    Mission 1
-                </a>
-                <a href="{% url 'transaction_list' %}" class="btn btn-secondary btn-user-type">
-                    <i class="fas fa-search"></i>
-                    Mission 2
-                </a>
-            </div>
+            {% if is_authenticated %}
+                <h1 class="welcome-title">Welcome back, {{ user.username }}!</h1>
+                <p class="welcome-subtitle">Access your procurement integrity and anomaly detection tools.</p>
+                
+                <div class="user-type-buttons">
+                    <a href="{% url 'transaction-upload-ui' %}" class="btn btn-primary btn-user-type">
+                        <i class="fas fa-upload"></i>
+                        Upload Transactions
+                    </a>
+                    <a href="{% url 'transaction_list' %}" class="btn btn-secondary btn-user-type">
+                        <i class="fas fa-search"></i>
+                        View & Analyze
+                    </a>
+                    <a href="{% url 'users:profile' %}" class="btn btn-outline-primary btn-user-type">
+                        <i class="fas fa-user"></i>
+                        My Profile
+                    </a>
+                </div>
+            {% else %}
+                <h1 class="welcome-title">Procurement Integrity and Anomaly Detection System</h1>
+                <p class="welcome-subtitle">The Power of AI. The Integrity of Blockchain.<br>The Future of Procurement.</p>
+                
+                <div class="user-type-buttons">
+                    <a href="{% url 'users:login' %}" class="btn btn-primary btn-user-type">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login to Access
+                    </a>
+                    <a href="/admin/" class="btn btn-outline-secondary btn-user-type" target="_blank">
+                        <i class="fas fa-cog"></i>
+                        Admin Panel
+                    </a>
+                </div>
+                
+                <div class="mt-4">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Authentication Required:</strong> Please login to access the procurement analysis tools.
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>

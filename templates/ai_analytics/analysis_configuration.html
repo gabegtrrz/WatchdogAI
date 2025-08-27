@@ -12,14 +12,23 @@
                     <h4 class="mb-0 fw-bold"><i class="fas fa-sliders me-2"></i>Configure Anomaly Detection Settings</h4>
                 </div>
                 <div class="card-body p-4">
-                    <p class="text-muted"><strong id="transaction-count">{{ transaction_count }}</strong> transaction(s) selected for analysis.</p>
-
                     <form id="analysis-form" action="{% url 'run_analysis' %}" method="POST">
                         {% csrf_token %}
-                        {{ form.as_p }}
-                        <div class="mt-3 p-2 bg-light rounded">
+                        {{ form.transaction_ids }}
+                        <div class="mb-3">
+                            <div class="text-center">
+                                <h6>Adjust the slider to change analysis sensitivity.</h6>
+                            </div>
+                            <input type="range" name="contamination" id="contamination-slider" class="form-range mt-2" min="1" max="50" step="1" value="{{ form.contamination.value|default:5 }}">
+                            <input type="hidden" id="transaction-count-data" value="{{ transaction_count }}">
+                            <p id="scan-description" class="text-center fs-7 mt-2 mb-0"></p>
+                        </div>
+                        <div class="mb-3">
+                            <p class='text-muted small'> (Selecting 1 transaction will run and reveal anomalous parts of that 1 transaction.)</p>
+                        </div>
+                        <div class="mt-3 p-2 bg-warning rounded">
                             <p class="mb-0 text-muted">
-                                <small><i class="fas fa-lightbulb me-1"></i><strong>Tip:</strong> Start with 0.05 (5%) for this demo.</small>
+                                <small><i class="fas fa-lightbulb me-1"></i><strong>Tip:</strong> Start with 5% for this demo.</small>
                             </p>
                         </div>
 
@@ -108,46 +117,19 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Analysis configuration page loaded');
     
-    // Add real-time contamination explanation
-    const contaminationField = document.getElementById('id_contamination');
-    const explanationDiv = document.getElementById('contamination-explanation');
-    const explanationText = document.getElementById('explanation-text');
+    const contaminationSlider = document.getElementById('contamination-slider');
+    const scanDescription = document.getElementById('scan-description');
+    const transactionCount = document.getElementById('transaction-count-data').value;
     
-    if (contaminationField && explanationDiv && explanationText) {
-        function updateExplanation() {
-            const value = parseFloat(contaminationField.value);
-            if (isNaN(value) || value < 0.01 || value > 0.5) {
-                explanationDiv.style.display = 'none';
-                return;
-            }
-            
-            const percentage = Math.round(value * 100);
-            let explanation = '';
-            
-            if (value <= 0.05) {
-                explanation = `Very conservative setting (${percentage}%). The AI will only flag the most obvious anomalies. Good for datasets where you expect very few issues.`;
-            } else if (value <= 0.1) {
-                explanation = `Conservative setting (${percentage}%). The AI will flag clear anomalies while avoiding false alarms. Recommended for most procurement datasets.`;
-            } else if (value <= 0.2) {
-                explanation = `Moderate setting (${percentage}%). The AI will catch more potential issues but may include some borderline cases.`;
-            } else if (value <= 0.3) {
-                explanation = `Sensitive setting (${percentage}%). The AI will flag many potential issues, including borderline cases. Good for high-risk scenarios.`;
-            } else {
-                explanation = `Very sensitive setting (${percentage}%). The AI will flag most unusual transactions. May include many false positives but catches most issues.`;
-            }
-            
-            explanationText.textContent = explanation;
-            explanationDiv.style.display = 'block';
-        }
-        
-        contaminationField.addEventListener('input', updateExplanation);
-        contaminationField.addEventListener('change', updateExplanation);
-        
-        // Show explanation on page load if there's a default value
-        if (contaminationField.value) {
-            updateExplanation();
-        }
+    function updateDescription() {
+        const percentage = contaminationSlider.value;
+        scanDescription.innerHTML = `Scan for top <strong class="text-danger">${percentage}%</strong> most anomalous transactions out of <strong>${transactionCount}</strong> selected transactions.`;
     }
+    
+    contaminationSlider.addEventListener('input', updateDescription);
+    
+    // Set initial value
+    updateDescription();
     
     const analysisForm = document.getElementById('analysis-form');
     const analysisModal = document.getElementById('analysis-modal');
@@ -192,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
         statusText.textContent = 'Starting analysis...';
 
         // Get form data
-        const contaminationField = document.getElementById('id_contamination');
+        const contaminationField = document.getElementById('contamination-slider');
         if (!contaminationField) {
             console.error('Contamination field not found');
             analysisModalInstance.hide();
@@ -200,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        const contamination = contaminationField.value;
+        const contamination = parseFloat(contaminationField.value) / 100;
         console.log('Contamination value:', contamination);
         
         const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;

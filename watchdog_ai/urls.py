@@ -26,6 +26,9 @@ urlpatterns = [
     # Home page
     path('', user_views.home, name='home'),
 
+    # Include users app URLs for authentication
+    path('users/', include('apps.users.urls')),
+
     # Include the transaction_management app's URLs under the 'transactions' namespace
     path('transactions/', include('apps.transaction_management.urls')),
     
@@ -34,4 +37,7 @@ urlpatterns = [
 
     # Include ai_analytics app's URLs
     path('analytics/', include('apps.ai_analytics.urls')),
+    
+    # Include performance monitoring app's URLs
+    path('performance/', include('apps.performance_monitoring.urls')),
 ]

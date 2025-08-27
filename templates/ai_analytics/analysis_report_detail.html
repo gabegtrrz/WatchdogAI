@@ -16,7 +16,13 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <h6 class="mb-0"><strong>Steps:</strong> 5. See if the summary helps you get a clue why the AI flagged the transaction as anomalous.</h6>
+                    <h6 class="mb-0">
+                        <strong>Step 5:</strong> Check the summary and see if it helps show which parts of the transaction make it anomalous (different from the norm).
+                        <br>
+                        <br>
+                        You could go back to the survey after this :)
+                    
+                    </h6>
                     <p class="mb-0 text-muted"><br><i class="fas fa-info-circle 
                         me-1"></i><strong> Terms:</strong>
                      
@@ -132,13 +138,18 @@
                                 </a>
                             </div>
                             <div class="mb-2">
-                                <a href="{% url 'transaction_list' %}" class="btn btn-outline-primary btn-sm w-100">
+                                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary btn-sm w-100">
                                     <i class="fas fa-list me-1"></i>Transaction List
                                 </a>
                             </div>
                             <div class="mb-2">
-                                <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-success btn-sm w-100">
+                                <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-primary btn-sm w-100">
                                     <i class="fas fa-flask-vial me-1"></i>New Analysis
+                                </a>
+                            </div>
+                            <div class="mb-2">
+                                <a href="{% url 'export_analysis_results_csv' analysis_run_id=report.analysis_run_id %}" class="btn btn-outline-success btn-sm w-100">
+                                    <i class="fas fa-download me-1"></i>Export Results
                                 </a>
                             </div>
                         </div>
@@ -225,7 +236,7 @@
                     <div class="mt-4">
                         
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="text-primary mb-0"><strong>Detailed Feature Contributions</strong></h6>
+                            <h6 class="text-primary mb-0"><strong>Detailed Factor Contributions</strong></h6>
                             <small class="text-muted">Sorted by risk score </small>
                         </div>
                         <!-- SHAP Value Guide -->
@@ -246,7 +257,7 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th style="width: 50%;">
-                                            <i class="fas fa-cog me-1"></i>Feature
+                                            <i class="fas fa-cog me-1"></i>Factor (Feature)
                                         </th>
                                         <th class="text-end" style="width: 25%;">
                                             <i class="fas fa-calculator me-1"></i>Risk Score
@@ -378,31 +389,31 @@
                             <div class="row mb-3">
                                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                                     <small class="text-muted d-block">Invitation Posting</small>
-                                    <strong class="d-block text-break">{{ report.transaction.invitation_to_bid_posting_date|date:"M d, Y"|default:"-" }}</strong>
+                                    <strong class="d-block text-break">{{ report.transaction.invitation_to_bid_posting_date|date:"D, M d, Y"|default:"-" }}</strong>
                                 </div>
                                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                                     <small class="text-muted d-block">Bid Opening Date</small>
-                                    <strong class="d-block text-break">{{ report.transaction.bid_opening_date|date:"M d, Y"|default:"-" }}</strong>
+                                    <strong class="d-block text-break">{{ report.transaction.bid_opening_date|date:"D, M d, Y"|default:"-" }}</strong>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                                     <small class="text-muted d-block">Bid Submission Deadline</small>
-                                    <strong class="d-block text-break">{{ report.transaction.bid_submission_deadline|date:"M d, Y"|default:"-" }}</strong>
+                                    <strong class="d-block text-break">{{ report.transaction.bid_submission_deadline|date:"D, M d, Y"|default:"-" }}</strong>
                                 </div>
                                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                                     <small class="text-muted d-block">Notice of Award</small>
-                                    <strong class="d-block text-break">{{ report.transaction.notice_of_award_date|date:"M d, Y"|default:"-" }}</strong>
+                                    <strong class="d-block text-break">{{ report.transaction.notice_of_award_date|date:"D, M d, Y"|default:"-" }}</strong>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                                     <small class="text-muted d-block">Contract Signing</small>
-                                    <strong class="d-block text-break">{{ report.transaction.contract_signing_date|date:"M d, Y"|default:"-" }}</strong>
+                                    <strong class="d-block text-break">{{ report.transaction.contract_signing_date|date:"D, M d, Y"|default:"-" }}</strong>
                                 </div>
                                 <div class="col-12 col-md-6 mb-2 mb-md-0">
                                     <small class="text-muted d-block">Transaction Date</small>
-                                    <strong class="d-block text-break">{{ report.transaction.transaction_date|date:"M d, Y"|default:"-" }}</strong>
+                                    <strong class="d-block text-break">{{ report.transaction.transaction_date|date:"D, M d, Y"|default:"-" }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -479,11 +490,14 @@
                 <a href="{% url 'analysis_results' analysis_run_id=report.analysis_run_id %}" class="btn btn-secondary me-2">
                     <i class="fas fa-arrow-left me-2"></i>Back to Results
                 </a>
-                <a href="{% url 'transaction_list' %}" class="btn btn-outline-primary me-2">
+                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary me-2">
                     <i class="fas fa-list me-2"></i>Transaction List
                 </a>
-                <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-success">
+                <a href="{% url 'analysis_configuration' %}" class="btn btn-outline-primary me-2">
                     <i class="fas fa-flask-vial me-2"></i>New Analysis
+                </a>
+                <a href="{% url 'export_analysis_results_csv' analysis_run_id=report.analysis_run_id %}" class="btn btn-outline-success">
+                    <i class="fas fa-download me-2"></i>Export Results
                 </a>
             </div>
         </div>
@@ -581,7 +595,7 @@ function createShapChart(featureNames, shapValues) {
     
     // Sort by SHAP value (descending) - higher positive values = more anomalous
     featureData.sort((a, b) => b.value - a.value);
-    const topFeatures = featureData.slice(0, 10);
+    const topFeatures = featureData.slice(0, 12);
     
     // Prepare data for Chart.js
     const labels = topFeatures.map(f => formatFeatureName(f.name));
@@ -617,7 +631,7 @@ function createShapChart(featureNames, shapValues) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Top 10 Factors Contributing to Risk Score',
+                    text: 'Top 12 Factors Contributing to Risk Score',
                     font: { size: 16, weight: 'bold' }
                 },
                 legend: { display: false },
@@ -676,8 +690,8 @@ function populateShapTable(featureNames, shapValues) {
     // Sort by SHAP value (descending) - higher positive values = more anomalous
     featureData.sort((a, b) => b.value - a.value);
     
-    // Take only top 10 features for the table
-    const topFeatures = featureData.slice(0, 10);
+    // Take only top 12 features for the table
+    const topFeatures = featureData.slice(0, 12);
     
     // Populate table
     topFeatures.forEach(feature => {
@@ -838,20 +852,47 @@ function formatFeatureName(featureName) {
 
 function getFeatureDescription(featureName) {
     const descriptions = {
-        'unit_purchase_price': 'Price per individual item unit',
-        'total_purchase_price': 'Total amount paid for all items',
+        // Base Features
         'quantity': 'Number of items purchased',
-        'average_price': 'Market average price for similar items',
-        'price_deviation': 'Difference from expected price range',
-        'procurement_method_encoded': 'Method used for procurement (bidding, direct, etc.)',
+        
+        // Date-based features
+        'contract_signing_day_of_week': 'Day of the week for contract signing',
+        'bid_opening_day_of_week': 'Day of the week for bid opening (Monday=0, Sunday=6)',
+        'transaction_month': 'Month of the transaction',
+        'bidding_period_number_of_days': 'Date(Bid Submission Deadline) - Date(Invitation Posting)',
+        'award_decision_duration': 'Date(Notice of Award) - Date(Bid Opening)',
+        'contract_signing_number_of_days': 'Date(Contract Signing) - Date(Notice of Award)',
+        'total_procurement_duration': 'Date(Contract Signing) - Date(Invitation Posting)',
+        
+        // Financial features
+        'price_per_unit_efficiency': 'Unit Purchase Price / (Total Purchase Price / Quantity)',
+        'quantity_per_peso_ratio': 'Quantity / Total Purchase Price',
+        'unit_price_vs_market_average': 'Unit Purchase Price - Market Average Price',
+        'budget_utilization_ratio': 'Total Purchase Price / Approved Budget',
+        'budget_efficiency_score': '(Total Purchase Price / Approved Budget) * (1 / (1 + |Price vs Supplier Average|))',
+        'price_volatility_index': 'Standard Deviation of Unit Price / Mean of Unit Price',
+        'total_transaction_value': 'Quantity * Unit Purchase Price',
+        'price_vs_market_average': 'Unit Purchase Price - Market Average Price',
+        'price_competitiveness_score': 'Unit Purchase Price / Market Average Price',
+
+        // Supplier features
+        'supplier_frequency': 'Frequency of transactions with a supplier (normalized)',
+        'price_per_supplier_freq': 'Unit Purchase Price / Supplier Frequency',
+        'price_vs_supplier_average': 'Unit Purchase Price - Average Price for this Supplier',
+
+        // Efficiency features
+        'procurement_timeline_speed_ratio': 'Total Procurement Duration / (Bidding Period + Award Duration + Signing Duration)',
+        'transaction_on_a_weekend': '1 if contract signing or bid opening is on a weekend, else 0',
+
+        // Encoded and other features
+        'procurement_method_encoded': 'Method used for procurement (e.g., bidding, direct)',
         'supplier_encoded': 'Vendor or supplier providing the items',
-        'item_category_encoded': 'Category or type of item purchased',
-        'procurement_officer_encoded': 'Officer responsible for the procurement',
-        'end_user_unit_encoded': 'Department or unit receiving the items',
-        'transaction_date_encoded': 'When the transaction occurred',
-        'price_to_average_ratio': 'Ratio of purchase price to market average',
-        'quantity_price_interaction': 'Combined effect of quantity and pricing'
     };
+    
+    // Handle one-hot encoded procurement methods
+    if (featureName.startsWith('procurement_method_')) {
+        return 'Procurement Method';
+    }
     
     return descriptions[featureName] || 'Feature used in anomaly detection analysis';
 }

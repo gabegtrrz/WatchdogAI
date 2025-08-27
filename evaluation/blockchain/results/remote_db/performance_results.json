@@ -1,0 +1,293 @@
+[
+    {
+        "run": 1,
+        "data_path": "evaluation/blockchain/data/10000/unlabeled/eval.csv",
+        "num_transactions": 10000,
+        "total_time_seconds": 5071.597781896591,
+        "transactions_per_second": 1.971765197093443,
+        "integration_details": {
+            "success": true,
+            "integrated_count": 10000,
+            "failed_count": 0,
+            "error_message": null,
+            "block_info": {
+                "index": 1,
+                "hash": "e3f84f42f7b55c63f24b0408c6354dd1db7b1b4239bfa52fd846aa33fa66fce2",
+                "transaction_count": 10000
+            },
+            "integrity_checks": {
+                "before": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T09:13:21.252497+00:00",
+                    "transaction_count": 10000,
+                    "alert_sent": false,
+                    "check_id": 130
+                },
+                "after": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T10:37:48.111032+00:00",
+                    "transaction_count": 10000,
+                    "integration_success": true,
+                    "alert_sent": false,
+                    "check_id": 131
+                }
+            },
+            "hash_generation": {
+                "hashes_generated": 10000,
+                "errors": []
+            },
+            "timing": {
+                "integrity_before": 0.3239006996154785,
+                "hash_generation": 1101.4970819950104,
+                "create_new_block": 1847.877828836441,
+                "update_transactions": 1498.6317160129547,
+                "integrity_after": 621.0745627880096,
+                "total": 5069.557018041611
+            },
+            "resources": {
+                "snapshots": {
+                    "before_integration": {
+                        "cpu_percent": 0.0,
+                        "memory_mb": 300.8671875
+                    },
+                    "after_integrity_before": {
+                        "cpu_percent": 4.8,
+                        "memory_mb": 302.75
+                    },
+                    "after_hash_generation": {
+                        "cpu_percent": 3.0,
+                        "memory_mb": 221.60546875
+                    },
+                    "after_create_new_block": {
+                        "cpu_percent": 3.2,
+                        "memory_mb": 157.26171875
+                    },
+                    "after_update_transactions": {
+                        "cpu_percent": 2.9,
+                        "memory_mb": 148.3203125
+                    },
+                    "after_integrity_after": {
+                        "cpu_percent": 1.6,
+                        "memory_mb": 293.7578125
+                    }
+                },
+                "deltas": {
+                    "integrity_before": {
+                        "cpu_percent": 4.8,
+                        "memory_mb_delta": 1.8828125
+                    },
+                    "hash_generation": {
+                        "cpu_percent": 3.0,
+                        "memory_mb_delta": -81.14453125
+                    },
+                    "create_new_block": {
+                        "cpu_percent": 3.2,
+                        "memory_mb_delta": -64.34375
+                    },
+                    "update_transactions": {
+                        "cpu_percent": 2.9,
+                        "memory_mb_delta": -8.94140625
+                    },
+                    "integrity_after": {
+                        "cpu_percent": 1.6,
+                        "memory_mb_delta": 145.4375
+                    }
+                }
+            }
+        }
+    },
+    {
+        "run": 1,
+        "data_path": "evaluation/blockchain/data/1000/unlabeled/eval.csv",
+        "num_transactions": 1000,
+        "total_time_seconds": 473.4355399608612,
+        "transactions_per_second": 2.112219965747966,
+        "integration_details": {
+            "success": true,
+            "integrated_count": 1000,
+            "failed_count": 0,
+            "error_message": null,
+            "block_info": {
+                "index": 1,
+                "hash": "db21f68c9e0a2ab057208d42692a0d70455006a8cbadbff8507611017b17b05c",
+                "transaction_count": 1000
+            },
+            "integrity_checks": {
+                "before": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T08:44:00.185988+00:00",
+                    "transaction_count": 1000,
+                    "alert_sent": false,
+                    "check_id": 128
+                },
+                "after": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T08:51:53.320320+00:00",
+                    "transaction_count": 1000,
+                    "integration_success": true,
+                    "alert_sent": false,
+                    "check_id": 129
+                }
+            },
+            "hash_generation": {
+                "hashes_generated": 1000,
+                "errors": []
+            },
+            "timing": {
+                "integrity_before": 0.23047804832458496,
+                "hash_generation": 115.97144794464111,
+                "create_new_block": 180.10406684875488,
+                "update_transactions": 141.06779623031616,
+                "integrity_after": 35.92228078842163,
+                "total": 473.36027336120605
+            },
+            "resources": {
+                "snapshots": {
+                    "before_integration": {
+                        "cpu_percent": 0.0,
+                        "memory_mb": 258.78125
+                    },
+                    "after_integrity_before": {
+                        "cpu_percent": 0.0,
+                        "memory_mb": 258.91796875
+                    },
+                    "after_hash_generation": {
+                        "cpu_percent": 4.2,
+                        "memory_mb": 260.421875
+                    },
+                    "after_create_new_block": {
+                        "cpu_percent": 3.2,
+                        "memory_mb": 270.26171875
+                    },
+                    "after_update_transactions": {
+                        "cpu_percent": 2.9,
+                        "memory_mb": 270.25390625
+                    },
+                    "after_integrity_after": {
+                        "cpu_percent": 2.5,
+                        "memory_mb": 270.31640625
+                    }
+                },
+                "deltas": {
+                    "integrity_before": {
+                        "cpu_percent": 0.0,
+                        "memory_mb_delta": 0.13671875
+                    },
+                    "hash_generation": {
+                        "cpu_percent": 4.2,
+                        "memory_mb_delta": 1.50390625
+                    },
+                    "create_new_block": {
+                        "cpu_percent": 3.2,
+                        "memory_mb_delta": 9.83984375
+                    },
+                    "update_transactions": {
+                        "cpu_percent": 2.9,
+                        "memory_mb_delta": -0.0078125
+                    },
+                    "integrity_after": {
+                        "cpu_percent": 2.5,
+                        "memory_mb_delta": 0.0625
+                    }
+                }
+            }
+        }
+    },
+    {
+        "run": 1,
+        "data_path": "evaluation/blockchain/data/100/unlabeled/eval.csv",
+        "num_transactions": 100,
+        "total_time_seconds": 47.04913306236267,
+        "transactions_per_second": 2.1254376752798407,
+        "integration_details": {
+            "success": true,
+            "integrated_count": 100,
+            "failed_count": 0,
+            "error_message": null,
+            "block_info": {
+                "index": 1,
+                "hash": "4fd9a6bc929015dd78fae863057975b0934e3813b224063983b2e98b99132542",
+                "transaction_count": 100
+            },
+            "integrity_checks": {
+                "before": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T08:41:09.125511+00:00",
+                    "transaction_count": 100,
+                    "alert_sent": false,
+                    "check_id": 126
+                },
+                "after": {
+                    "integrity_valid": true,
+                    "check_timestamp": "2025-07-29T08:41:55.865169+00:00",
+                    "transaction_count": 100,
+                    "integration_success": true,
+                    "alert_sent": false,
+                    "check_id": 127
+                }
+            },
+            "hash_generation": {
+                "hashes_generated": 100,
+                "errors": []
+            },
+            "timing": {
+                "integrity_before": 0.2378230094909668,
+                "hash_generation": 10.89720606803894,
+                "create_new_block": 17.89401149749756,
+                "update_transactions": 14.10539698600769,
+                "integrity_after": 3.791726589202881,
+                "total": 46.96926164627075
+            },
+            "resources": {
+                "snapshots": {
+                    "before_integration": {
+                        "cpu_percent": 0.0,
+                        "memory_mb": 252.37890625
+                    },
+                    "after_integrity_before": {
+                        "cpu_percent": 6.6,
+                        "memory_mb": 252.4296875
+                    },
+                    "after_hash_generation": {
+                        "cpu_percent": 3.2,
+                        "memory_mb": 252.60546875
+                    },
+                    "after_create_new_block": {
+                        "cpu_percent": 3.0,
+                        "memory_mb": 253.328125
+                    },
+                    "after_update_transactions": {
+                        "cpu_percent": 2.2,
+                        "memory_mb": 253.34765625
+                    },
+                    "after_integrity_after": {
+                        "cpu_percent": 2.9,
+                        "memory_mb": 253.55859375
+                    }
+                },
+                "deltas": {
+                    "integrity_before": {
+                        "cpu_percent": 6.6,
+                        "memory_mb_delta": 0.05078125
+                    },
+                    "hash_generation": {
+                        "cpu_percent": 3.2,
+                        "memory_mb_delta": 0.17578125
+                    },
+                    "create_new_block": {
+                        "cpu_percent": 3.0,
+                        "memory_mb_delta": 0.72265625
+                    },
+                    "update_transactions": {
+                        "cpu_percent": 2.2,
+                        "memory_mb_delta": 0.01953125
+                    },
+                    "integrity_after": {
+                        "cpu_percent": 2.9,
+                        "memory_mb_delta": 0.2109375
+                    }
+                }
+            }
+        }
+    }
+]

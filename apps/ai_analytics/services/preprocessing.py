@@ -165,6 +165,11 @@ def get_transaction_dataframe_from_csv(csv_path: Union[str, Path]) -> pd.DataFra
         # Set transaction_id as index if it exists, otherwise create one
         df.index = range(len(df))
         
+        # Map column names for consistency with feature engineering
+        # CSV data uses procurement_method_name, but feature engineering expects procurement_method
+        if 'procurement_method_name' in df.columns:
+            df.rename(columns={'procurement_method_name': 'procurement_method'}, inplace=True)
+        
         # Ensure procurement_method is properly formatted for consistency
         if 'procurement_method' in df.columns and df['procurement_method'].dtype == 'object':
             # Convert procurement method objects to their names

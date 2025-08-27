@@ -1,0 +1,35 @@
+
+# Input data configuration
+input:
+  # Path to CSV file containing transaction data for testing
+  csv_file: "evaluation/blockchain/data/10/unlabeled/eval.csv"
+  
+  # Number of transactions to include in each block
+  transactions_per_block: 10
+
+# Test parameters
+test:
+  # List of block sizes to test (number of blocks in each test blockchain)
+  block_sizes: [100, 1000, 10000]
+  
+  # Number of iterations to run for each block size (for statistical reliability)
+  iterations: 3
+  
+  # Whether to clean up test data after evaluation
+  cleanup: true
+
+# Output configuration
+output:
+  # Path where results will be saved as JSON
+  results_file: "evaluation/blockchain/results/integrity_performance_results.json"
+  
+  # Enable detailed logging during evaluation
+  detailed_logging: true
+
+# Performance thresholds (optional - used for warnings)
+thresholds:
+  # Maximum acceptable verification time in seconds
+  max_verification_time_seconds: 30.0
+  
+  # Minimum acceptable throughput in transactions per second
+  min_throughput_transactions_per_second: 100.0 

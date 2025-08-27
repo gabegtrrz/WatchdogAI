@@ -16,6 +16,13 @@ import math
 #   !! Items shall be from data/lab_equipment.txt file alone.
 # ---------------------------------------------------
 # GOAL: To use these to test the effectiveness of the anomaly detection (iforest) model.
+# ====================================
+# VARIABLES
+# ====================================
+
+REPORTING_THRESHOLD = (910000,999999)
+
+
 # 
 # ============================================================================
 # TYPE 1: PRICING & BIDDING ANOMALIES
@@ -149,6 +156,9 @@ class SuspiciousOverpricing:
         if pd.isna(record.get('unit_purchase_price')) or record.get('unit_purchase_price', 0) <= 0:
             return record
             
+        # Set a realistic average_price that is much lower than the new unit_purchase_price
+        record['average_price'] = record['unit_purchase_price']
+
         # Apply multiplier with bounds checking
         multiplier = np.random.uniform(7.5, 12.5)
         new_unit_price = _safe_multiplication(record['unit_purchase_price'], multiplier)
@@ -303,7 +313,7 @@ class ContractSplitting:
     def apply(record):
         # Much wider range around the Small Value Procurement threshold
         # The total price is set just below this threshold with more variation
-        total_price = np.random.uniform(800000, 999999)
+        total_price = np.random.uniform(REPORTING_THRESHOLD[0], REPORTING_THRESHOLD[1])
         record['total_purchase_price'] = total_price
         
         quantity = record.get('quantity', 0)
@@ -836,6 +846,49 @@ class MethodMisuse:
         record['project_description'] = 'Special procurement arrangement due to unique requirements.'
         return record
 
+
+class CoordinatedFraud:
+    """
+    Scenario: A complex, coordinated fraud scheme involving a favored supplier,
+    a manipulated timeline to stifle competition, and pricing that suggests
+    inside knowledge of the budget. This anomaly combines multiple red flags.
+    """
+    name = "Coordinated Fraud"
+    weight = 0.25
+
+    @staticmethod
+    def apply(record):
+        """
+        Applies a multi-faceted fraud scenario to a transaction record.
+
+        This method simulates a coordinated scheme by sequentially applying three
+        distinct types of anomalies:
+        1.  **Favored Supplier**: Assigns the contract to a specific supplier
+            using a non-competitive procurement method.
+        2.  **Insufficient Bidding Period**: Shortens the bidding window to
+            prevent legitimate competition.
+        3.  **Bid Ceiling Collusion**: Sets the final price suspiciously close
+            to the approved budget, implying inside knowledge.
+
+        Args:
+            record (pd.Series): The transaction record to be modified.
+
+        Returns:
+            pd.Series: The modified, anomalous transaction record.
+        """
+        # Apply multiple, reinforcing anomalies to a single record.
+        # 1. Assign a favored supplier and non-competitive method.
+        record = FavoredSupplier.apply(record)
+
+        # 2. Manipulate the timeline to make bidding difficult.
+        record = InsufficientBiddingPeriod.apply(record)
+
+        # 3. Set the price suspiciously close to the budget ceiling.
+        record = BidCeilingCollusion.apply(record)
+
+        record['project_description'] = 'Complex project awarded to a preferred partner under an expedited timeline.'
+        return record
+
 # --- Master list of all available anomaly blueprints ---
 # The generator command will import this list to find available scenarios.
 ANOMALY_BLUEPRINTS = [
@@ -868,4 +921,5 @@ ANOMALY_BLUEPRINTS = [
     FictitiousWinner,
     SupplierMonopoly,
     MethodMisuse,
+    CoordinatedFraud,
 ] 
