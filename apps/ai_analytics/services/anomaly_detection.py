@@ -24,6 +24,7 @@ from apps.core.models import Transaction, AnalysisReport
 from apps.performance_monitoring.services import PerformanceMonitor
 import numpy as np
 from django.db.models.query import QuerySet
+from sklearn.ensemble import IsolationForest
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ MODEL_PATH = 'apps/ai_analytics/model_files/iforest.joblib'
 COLUMNS_PATH = 'apps/ai_analytics/model_files/columns.joblib'
 
 # Global model state variables
-model_loaded: bool = False
+columns_loaded: bool = False
 model: Optional[Any] = None
 training_columns: List[str] = []
 
@@ -55,26 +56,24 @@ def _load_model_files():
     Error Handling: Sets fallback state if files are missing or corrupted.
     """
 
-    global model_loaded, model, training_columns
+    global columns_loaded, model, training_columns
     
     try:
         logger.info("Loading model files...")
         
         # Validate file existence
-        if not os.path.exists(MODEL_PATH) or not os.path.exists(COLUMNS_PATH):
-            raise FileNotFoundError("Model files not found")
+        if not os.path.exists(COLUMNS_PATH):
+            raise FileNotFoundError("Model columns not found")
         
         # Load model and training columns
-        model = joblib.load(MODEL_PATH)
+        # model = joblib.load(MODEL_PATH)
         training_columns = joblib.load(COLUMNS_PATH)
-        model_loaded = True
-        
-        logger.info(f"Model loaded successfully. Training columns: {len(training_columns)}")
+        columns_loaded = True
+        logger.info(f"Model columns loaded successfully. Training columns: {len(training_columns)}")
         
     except (FileNotFoundError, Exception) as e:
-        logger.warning(f"Model files not found. Using fallback. Error: {e}")
-        model_loaded = False
-        model = None
+        logger.warning(f"Model columns not found. Using fallback. Error: {e}")
+        columns_loaded = False
         training_columns = []
 
 # Initialize model loading at module import
@@ -116,7 +115,7 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
     try:
         ### 1. Convert the transaction data to a DataFrame
         monitor.start_step("data_conversion")
-        if not model_loaded:
+        if not columns_loaded:
             raise ValueError("Model files not found. Please run the training script first.")
 
         raw_df = preprocessing.get_transaction_dataframe(transactions_qs)
@@ -145,22 +144,22 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
         final_df = _prepare_features_for_prediction(featured_df, training_columns_copy)
         del training_columns_copy  # Clean up the copy after use
         
-        ### 5.5. Refit model using ALL existing transaction data with max_samples optimization
-        monitor.start_step("model_refitting")
-        logger.info("Refitting model using ALL existing transaction data...")
+        ### 5.5. Fit model using ALL existing transaction data with max_samples optimization
+        monitor.start_step("model_fitting")
+        logger.info("Fitting model using ALL existing transaction data...")
         
         try:
             # Get all existing transactions from database
             all_transactions = Transaction.objects.all()
             total_transactions = all_transactions.count()
-            logger.info(f"Retrieved {total_transactions} total transactions for model refitting")
+            logger.info(f"Retrieved {total_transactions} total transactions for model fitting")
             
             # Convert all transactions to DataFrame
             all_raw_df = preprocessing.get_transaction_dataframe(all_transactions)
             
             # Remove is_anomaly column if present (for inference)
             if 'is_anomaly' in all_raw_df.columns:
-                # logger.info("Removing is_anomaly column from all transaction data for refitting")
+                # logger.info("Removing is_anomaly column from all transaction data for fitting")
                 all_raw_df = all_raw_df.drop('is_anomaly', axis=1)
             
             # Preprocess all transaction data
@@ -169,22 +168,29 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
             # Generate features for all transactions
             all_featured_df, _ = feature_engineering.create_features(all_cleaned_df)
             
-            # Prepare features for model refitting (using same training columns)
+            # Prepare features for model fitting (using same training columns)
             all_training_columns_copy = training_columns.copy()
-            all_txns_final_df = _prepare_features_for_prediction(all_featured_df, all_training_columns_copy)
+            all_txns_final_df = _prepare_features_for_prediction(
+                featured_df=all_featured_df,
+                feature_columns_list= all_training_columns_copy
+            )
+
             del all_training_columns_copy
             
             # Set max_samples to use 100% of available samples for maximum coverage
             # This ensures the model uses all available samples (1.0 = 100%)
-            if model is not None:
-                model.set_params(max_samples=1.0)  # Use 100% of available samples
-                
-                # Refit the model with all data
-                logger.info(f"Refitting model with {all_txns_final_df.shape[0]} samples and {all_txns_final_df.shape[1]} features (max_samples={model.get_params()['max_samples']})")
-                model.fit(all_txns_final_df)
-            else:
-                logger.error("Model is None, cannot refit")
-                raise ValueError("Model is None, cannot refit")
+            model= IsolationForest(
+                n_estimators=50,
+                contamination=0.05,
+                max_samples=1.0, # Use 100% of available samples
+                random_state=77,
+            )
+            
+            # Fit the model with all data
+            logger.info(f"Fitting model with {all_txns_final_df.shape[0]} samples and {all_txns_final_df.shape[1]} features (max_samples={model.get_params()['max_samples']})")
+
+            model.fit(all_txns_final_df)
+            
             
             # Save the refitted model
             import joblib
@@ -196,16 +202,16 @@ def run_complete_analysis(transactions_qs: QuerySet, contamination: float = 0.05
                 raise ValueError("Cannot save model - model is None")
             
             logger.info(f"Model successfully refitted and saved")
-            monitor.end_step("model_refitting")
+            monitor.end_step("model_fitting")
             
         except Exception as e:
-            logger.warning(f"Model refitting failed: {e}. Continuing with original model.")
+            logger.warning(f"Model fitting failed: {e}. Continuing with original model.")
             logger.warning("Using original model for anomaly detection")
-            monitor.end_step("model_refitting")
+            monitor.end_step("model_fitting")
         
         # 6. Perform anomaly detection with sophisticated contamination handling
         monitor.start_step("anomaly_detection")
-        prediction_results = _get_predictions_and_scores(final_df, contamination)
+        prediction_results = _get_predictions_and_scores(final_df=final_df, contamination=contamination, model=model)
         
         if prediction_results is None:
             raise ValueError("Anomaly detection failed, received no results (None).")
@@ -368,7 +374,7 @@ def _prepare_features_for_prediction(featured_df: pd.DataFrame, feature_columns_
 # UTILITY FUNCTIONS
 # =============================================================================
 
-def _get_predictions_and_scores(final_df: pd.DataFrame, contamination: float = 0.05) -> Optional[tuple[np.ndarray, np.ndarray, float]]:
+def _get_predictions_and_scores(model, final_df: pd.DataFrame, contamination: float = 0.05) -> Optional[tuple[np.ndarray, np.ndarray, float]]:
     """
     Performs anomaly detection on the final DataFrame using the trained Isolation Forest model.
     
@@ -389,36 +395,31 @@ def _get_predictions_and_scores(final_df: pd.DataFrame, contamination: float = 0
     """
 
     try:
-        if model is not None:
-            logger.info('Getting predictions and anomaly scores from trained model...')
+        logger.info('Getting predictions and anomaly scores from trained model...')
 
-            # Get raw anomaly scores (lower score means more anomalous)
-            anomaly_scores = model.score_samples(final_df)
+        # Get raw anomaly scores (lower score means more anomalous)
+        anomaly_scores = model.score_samples(final_df)
 
-            logger.debug(f'Anomaly scores:\n{chr(10).join([f"  [{i}]: {score}" for i, score in enumerate(anomaly_scores)])}')
-            
-            logger.debug(f'Contamination before thresholding: {contamination}')
-            
-            # Calculate threshold based on contamination rate
-            threshold = np.percentile(anomaly_scores, contamination * 100)
+        logger.debug(f'Anomaly scores:\n{chr(10).join([f"  [{i}]: {score}" for i, score in enumerate(anomaly_scores)])}')
+        
+        logger.debug(f'Contamination before thresholding: {contamination}')
+        
+        # Calculate threshold based on contamination rate
+        threshold = np.percentile(anomaly_scores, contamination * 100)
 
-            logger.debug(f'Threshold: {threshold}')
+        logger.debug(f'Threshold: {threshold}')
 
-            # Classify samples as anomalies (1) or normal (0)
-            predicted_labels = (anomaly_scores <= threshold).astype(int)
+        # Classify samples as anomalies (1) or normal (0)
+        predicted_labels = (anomaly_scores <= threshold).astype(int)
 
-            logger.debug(f'Predicted labels:\n{chr(10).join([f"  [{i}]: {label}" for i, label in enumerate(predicted_labels)])}')
+        logger.debug(f'Predicted labels:\n{chr(10).join([f"  [{i}]: {label}" for i, label in enumerate(predicted_labels)])}')
 
-            logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
+        logger.info(f'Predicted anomalies: {np.sum(predicted_labels)} out of {len(predicted_labels)}')
 
-            logger.info(f'Contamination rate: {contamination:.4f}')
-            logger.info(f'Final Threshold: {threshold:.4f}')
+        logger.info(f'Contamination rate: {contamination:.4f}')
+        logger.info(f'Final Threshold: {threshold:.4f}')
 
-            return predicted_labels, anomaly_scores, threshold
-
-        else:
-            logger.error("Model is None, cannot perform inference")
-            return None
+        return predicted_labels, anomaly_scores, threshold
     
     except Exception as e:
         logger.error(f"Error in anomaly detection: {e}", exc_info=True)

@@ -59,7 +59,7 @@ class Command(BaseCommand):
             'data_conversion',
             'data_preprocessing', 
             'feature_engineering',
-            'model_refitting',
+            'model_fitting',
             'anomaly_detection',
             'shap_analysis',
             'database_save'
