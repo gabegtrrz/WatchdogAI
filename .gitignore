@@ -1,5 +1,15 @@
-dev_manage.py
+# Model Files
 *.joblib
+
+# Environments
+.env
+.env_production
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -122,16 +132,6 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
-.env
-.env_production
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -210,6 +210,3 @@ data/training/results/
 # Logs
 logs/
 *.log
-
-
-apps/ai_analytics/model_files/iforest.joblib
