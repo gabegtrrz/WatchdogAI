@@ -1,6 +1,5 @@
 """
-Production settings for watchdog_ai project.
-This file contains settings optimized for production deployment on Railway.
+Production Settings for Watchdog AI Django Application
 """
 
 import os
@@ -37,7 +36,7 @@ class SafeStreamHandler(logging.StreamHandler):
 DEBUG = os.environ.get("DEBUG", False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenviron.get('SECRET_KEY')
 
 # Configure allowed hosts for production
 ALLOWED_HOSTS = ["*"]
@@ -153,17 +152,13 @@ has_postgres_creds = all([
 ])
 
 print(f"Has PostgreSQL credentials: {has_postgres_creds}")
-    
+
 if (ENVIRONMENT == 'production' or POSTGRES_LOCAL == True) and has_postgres_creds:
     try:
         # Fallback to PostgreSQL configuration
-        DATABASES['default'] = {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get("PGDATABASE", "railway"),
-            'USER': os.environ.get("PGUSER","postgres"),
-            'PASSWORD': os.environ.get("PGPASSWORD"),
-            'HOST': os.environ.get("PGHOST"),
-            'PORT': os.environ.get("PGPORT"),
+        DATABASES= {
+            'default':dj_database_url.config(conn_max_age=600, ssl_require=True)
+            # By default, dj_database_url.config() looks for an environment variable named DATABASE_URL. If it’s present, it parses that string into a Django-compatible DATABASES['default'] dictionary.
         }
     except Exception as e:
         print(f"PostgreSQL connection failed: {e}")
@@ -178,9 +173,11 @@ else:
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
+    print("Using SQLite database for development.")
 
 
-
+if 'RENDER' in os.environ:
+    ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
 
 
 # Password validation
