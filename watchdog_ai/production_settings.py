@@ -36,7 +36,7 @@ class SafeStreamHandler(logging.StreamHandler):
 DEBUG = os.environ.get("DEBUG", False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenviron.get('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # Configure allowed hosts for production
 ALLOWED_HOSTS = ["*"]
