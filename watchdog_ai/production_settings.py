@@ -118,13 +118,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'watchdog_ai.wsgi.application'
+
+
+# Database Configuration
+    # DB_LIVE = os.environ.get("DB_LIVE", "false").lower() in ('true', '1', 't')
+    # print(f"DB_LIVE: {DB_LIVE}")
+    
 DATABASE_URL = os.environ.get('DATABASE_URL')
-
-# Database configuration for Railway PostgreSQL
-
-# # Check if we're on Railway and have database variables
-# DB_LIVE = os.environ.get("DB_LIVE", "false").lower() in ('true', '1', 't')
-# print(f"DB_LIVE: {DB_LIVE}")
 
 DATABASES = {
         'default': {
@@ -144,16 +144,16 @@ print(f"ENVIRONMENT: {ENVIRONMENT}")
 print(f"POSTGRES_LOCAL: {POSTGRES_LOCAL}")
 
 # Check if we have valid PostgreSQL credentials
-has_postgres_creds = all([
-    os.environ.get("PGHOST"),
-    os.environ.get("PGUSER"),
-    os.environ.get("PGPASSWORD"),
-    os.environ.get("PGDATABASE")
-])
+# has_postgres_creds = all([
+#     os.environ.get("PGHOST"),
+#     os.environ.get("PGUSER"),
+#     os.environ.get("PGPASSWORD"),
+#     os.environ.get("PGDATABASE")
+# ])
 
 print(f"Has PostgreSQL credentials: {has_postgres_creds}")
 
-if (ENVIRONMENT == 'production' or POSTGRES_LOCAL == True) and has_postgres_creds:
+if (ENVIRONMENT == 'production' or POSTGRES_LOCAL == True) and DATABASE_URL:
     try:
         # Fallback to PostgreSQL configuration
         DATABASES= {
@@ -177,6 +177,7 @@ else:
 
 
 if 'RENDER' in os.environ:
+    # when Render runs, it automatically injects a special environment variable named RENDER into the environment
     ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
 
 
