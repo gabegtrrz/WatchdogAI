@@ -144,7 +144,11 @@ if (ENVIRONMENT == 'production') and DATABASE_URL:
     try:
         # Fallback to PostgreSQL configuration
         DATABASES= {
-            'default':dj_database_url.config(conn_max_age=600, ssl_require=True)
+            'default':dj_database_url.config(
+                default=DATABASE_URL,
+                conn_max_age=600,
+                ssl_require=True
+            )
             # By default, dj_database_url.config() looks for an environment variable named DATABASE_URL. If it’s present, it parses that string into a Django-compatible DATABASES['default'] dictionary.
         }
     except Exception as e:
