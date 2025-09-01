@@ -123,37 +123,24 @@ WSGI_APPLICATION = 'watchdog_ai.wsgi.application'
 # Database Configuration
     # DB_LIVE = os.environ.get("DB_LIVE", "false").lower() in ('true', '1', 't')
     # print(f"DB_LIVE: {DB_LIVE}")
-    
+
 DATABASE_URL = os.environ.get('DATABASE_URL')
-
-DATABASES = {
-        'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('LCLNAME'),
-        'USER': os.environ.get('LCLUSER'),
-        'PASSWORD': os.environ.get('LCLPASSWORD'),
-        'HOST': os.environ.get('LCLHOST'),
-        'PORT': os.environ.get('LCLPORT', 5432),
-    }
-    }
-
 ENVIRONMENT = os.environ.get("ENVIRONMENT")
-POSTGRES_LOCAL = os.environ.get("POSTGRES_LOCAL", "False").lower() in ('true', '1', 't')
-
 print(f"ENVIRONMENT: {ENVIRONMENT}")
-print(f"POSTGRES_LOCAL: {POSTGRES_LOCAL}")
 
-# Check if we have valid PostgreSQL credentials
-# has_postgres_creds = all([
-#     os.environ.get("PGHOST"),
-#     os.environ.get("PGUSER"),
-#     os.environ.get("PGPASSWORD"),
-#     os.environ.get("PGDATABASE")
-# ])
+if ENVIRONMENT=='development':
+    DATABASES = {
+            'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('LCLNAME'),
+            'USER': os.environ.get('LCLUSER'),
+            'PASSWORD': os.environ.get('LCLPASSWORD'),
+            'HOST': os.environ.get('LCLHOST'),
+            'PORT': os.environ.get('LCLPORT', 5432),
+        }
+        }
 
-print(f"Has PostgreSQL credentials: {has_postgres_creds}")
-
-if (ENVIRONMENT == 'production' or POSTGRES_LOCAL == True) and DATABASE_URL:
+if (ENVIRONMENT == 'production') and DATABASE_URL:
     try:
         # Fallback to PostgreSQL configuration
         DATABASES= {
@@ -167,6 +154,7 @@ if (ENVIRONMENT == 'production' or POSTGRES_LOCAL == True) and DATABASE_URL:
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
+'''
 else:
     # Use SQLite for development
     DATABASES['default'] = {
@@ -174,11 +162,26 @@ else:
         'NAME': BASE_DIR / 'db.sqlite3',
     }
     print("Using SQLite database for development.")
-
+'''
 
 if 'RENDER' in os.environ:
     # when Render runs, it automatically injects a special environment variable named RENDER into the environment
     ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
+
+'''
+POSTGRES_LOCAL = os.environ.get("POSTGRES_LOCAL", "False").lower() in ('true', '1', 't')
+
+print(f"POSTGRES_LOCAL: {POSTGRES_LOCAL}")
+
+# Check if we have valid PostgreSQL credentials
+# has_postgres_creds = all([
+#     os.environ.get("PGHOST"),
+#     os.environ.get("PGUSER"),
+#     os.environ.get("PGPASSWORD"),
+#     os.environ.get("PGDATABASE")
+# ])
+# print(f"Has PostgreSQL credentials: {has_postgres_creds}")
+'''
 
 
 # Password validation
