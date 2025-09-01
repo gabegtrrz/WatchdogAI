@@ -8,6 +8,7 @@ import dj_database_url
 from dotenv import load_dotenv
 import sys
 import logging
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +38,8 @@ DEBUG = os.environ.get("DEBUG", False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+       raise ImproperlyConfigured("SECRET_KEY environment variable must be set")
 
 # Configure allowed hosts for production
 ALLOWED_HOSTS = ["*"]
@@ -125,12 +128,15 @@ WSGI_APPLICATION = 'watchdog_ai.wsgi.application'
     # print(f"DB_LIVE: {DB_LIVE}")
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
-ENVIRONMENT = os.environ.get("ENVIRONMENT")
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")  # Default to production for deployment
 print(f"ENVIRONMENT: {ENVIRONMENT}")
 
-if ENVIRONMENT=='development':
+# Initialize DATABASES dict
+DATABASES = {}
+
+if ENVIRONMENT == 'development':
     DATABASES = {
-            'default': {
+        'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('LCLNAME'),
             'USER': os.environ.get('LCLUSER'),
@@ -138,26 +144,29 @@ if ENVIRONMENT=='development':
             'HOST': os.environ.get('LCLHOST'),
             'PORT': os.environ.get('LCLPORT', 5432),
         }
-        }
-
-if (ENVIRONMENT == 'production') and DATABASE_URL:
+    }
+elif ENVIRONMENT == 'production':
+    if not DATABASE_URL:
+        raise ImproperlyConfigured(
+            "DATABASE_URL environment variable must be set for production deployment"
+        )
+    
     try:
-        # Fallback to PostgreSQL configuration
-        DATABASES= {
-            'default':dj_database_url.config(
+        # Production PostgreSQL configuration
+        DATABASES = {
+            'default': dj_database_url.config(
                 default=DATABASE_URL,
                 conn_max_age=600,
                 ssl_require=True
             )
-            # By default, dj_database_url.config() looks for an environment variable named DATABASE_URL. If it’s present, it parses that string into a Django-compatible DATABASES['default'] dictionary.
         }
+        print("Successfully configured PostgreSQL database for production")
     except Exception as e:
-        print(f"PostgreSQL connection failed: {e}")
-        # Fallback to SQLite for development
-        DATABASES['default'] = {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+        raise ImproperlyConfigured(
+            f"Failed to configure PostgreSQL database: {e}. "
+            "Please check your DATABASE_URL environment variable."
+        )
+
 '''
 else:
     # Use SQLite for development
