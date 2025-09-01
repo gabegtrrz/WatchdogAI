@@ -11,8 +11,8 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-# Use production settings for Railway deployment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'watchdog_ai.settings_production')
+# Use production settings for deployment
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'watchdog_ai.production_settings')
 
 application = get_wsgi_application()
 
