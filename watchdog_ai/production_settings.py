@@ -75,36 +75,51 @@ def get_platform_tier():
         import psutil
         platform = detect_platform()
         memory_gb = psutil.virtual_memory().total / (1024**3)
-        
+                
         if platform == 'render':
-            if memory_gb < 1:
+            render_tier = os.environ.get('RENDER_SERVICE_TYPE')
+            if render_tier:
+                return render_tier.lower()
+            
+            # Fallback to memory-based detection
+            memory_gb = psutil.virtual_memory().total / (1024**3)
+            if memory_gb < 0.6:  # More conservative threshold
                 return 'free'
-            elif memory_gb < 2:
+            elif memory_gb < 1.2:
                 return 'starter'
-            elif memory_gb < 4:
+            elif memory_gb < 2.5:
                 return 'standard'
             else:
                 return 'premium'
         elif platform == 'heroku':
-            if memory_gb < 1:
+            # Heroku provides DYNO environment variable
+            dyno_type = os.environ.get('DYNO', '').split('.')[0] if os.environ.get('DYNO') else None
+            if dyno_type:
+                return dyno_type.lower()
+            
+            # Fallback to memory-based detection
+            memory_gb = psutil.virtual_memory().total / (1024**3)
+            if memory_gb < 0.6:
                 return 'eco'
-            elif memory_gb < 2:
+            elif memory_gb < 1.2:
                 return 'basic'
             else:
                 return 'performance'
         elif platform == 'railway':
             return 'standard'  # Railway has consistent resources
         elif platform in ['aws', 'gcp', 'azure', 'digitalocean']:
-            if memory_gb < 2:
+            memory_gb = psutil.virtual_memory().total / (1024**3)
+            if memory_gb < 1.5:
                 return 'small'
-            elif memory_gb < 4:
+            elif memory_gb < 3:
                 return 'medium'
             else:
                 return 'large'
         else:
-            if memory_gb < 1:
+            memory_gb = psutil.virtual_memory().total / (1024**3)
+            if memory_gb < 0.6:
                 return 'minimal'
-            elif memory_gb < 2:
+            elif memory_gb < 1.5:
                 return 'small'
             else:
                 return 'standard'
