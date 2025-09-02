@@ -13,10 +13,17 @@ from django.core.exceptions import ImproperlyConfigured
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
-load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env'))
+# ---------------------------
+# Load ENVIRONMENT and environment variables
+# ---------------------------
 
+load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env'))
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")  # Default to production for deployment
+print(f"ENVIRONMENT: {ENVIRONMENT}")
+
+# ---------------------------
 # Custom logging handler for Windows compatibility
+# ---------------------------
 class SafeStreamHandler(logging.StreamHandler):
     def emit(self, record):
         try:
@@ -44,7 +51,9 @@ if not SECRET_KEY:
 # Configure allowed hosts for production
 ALLOWED_HOSTS = ["*"]
 
+# ---------------------------
 # Data Augmentation Settings
+# ---------------------------
 ENABLE_PRICE_SCRAPING = os.environ.get('ENABLE_PRICE_SCRAPING', 'false').lower() in ('true', '1', 't')
 ENABLE_STARTUP_PRICE_SCRAPING = os.environ.get('ENABLE_STARTUP_PRICE_SCRAPING', 'false').lower() in ('true', '1', 't')
 SCRAPING_TIMEOUT = int(os.environ.get('SCRAPING_TIMEOUT', 10))  # seconds
@@ -127,8 +136,9 @@ def get_platform_tier():
         return 'unknown'
 
 
-
+# ---------------------------
 # Performance Monitoring Settings
+# ---------------------------
 ENABLE_PERFORMANCE_MONITORING = os.environ.get('ENABLE_PERFORMANCE_MONITORING', 'false').lower() in ('true', '1', 't')
 PERFORMANCE_LOG_PATH = os.environ.get('PERFORMANCE_LOG_PATH', os.path.join(BASE_DIR, 'logs', 'performance_monitoring', 'performance_metrics.json'))
 
@@ -207,8 +217,6 @@ WSGI_APPLICATION = 'watchdog_ai.wsgi.application'
     # print(f"DB_LIVE: {DB_LIVE}")
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
-ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")  # Default to production for deployment
-print(f"ENVIRONMENT: {ENVIRONMENT}")
 
 # Initialize DATABASES dict
 DATABASES = {}
