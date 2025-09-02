@@ -12,12 +12,18 @@ class DataAugmentationConfig(AppConfig):
         try:
             import apps.data_augmentation.admin  # noqa
             
-            # Only run startup scraping in production or when explicitly enabled
+            # Run startup scraping when explicitly enabled (in any environment)
             from django.conf import settings
-            if getattr(settings, 'ENABLE_STARTUP_PRICE_SCRAPING', False):
+            environment = getattr(settings, 'ENVIRONMENT', 'development')
+            enable_startup = getattr(settings, 'ENABLE_STARTUP_PRICE_SCRAPING', False)
+            
+            if enable_startup:
                 # Use background task for startup scraping to avoid blocking
                 from .tasks import startup_price_scraping_task
                 startup_price_scraping_task.delay()
+                print(f"Started background price scraping task in {environment} environment")
+            else:
+                print(f"Startup price scraping disabled in {environment} environment")
                 
         except ImportError:
             pass
