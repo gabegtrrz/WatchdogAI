@@ -1,2 +1,2 @@
-web: OPENBLAS_NUM_THREADS=1 gunicorn --workers 2 --bind 0.0.0.0:$PORT --timeout 60 watchdog_ai.wsgi --log-file -
-worker: OPENBLAS_NUM_THREADS=1 celery -A watchdog_ai.celery worker --loglevel=info
+web: OPENBLAS_NUM_THREADS=1 gunicorn --workers=1 --threads=2 --bind 0.0.0.0:$PORT --timeout 60 watchdog_ai.wsgi --log-file -
+worker: OPENBLAS_NUM_THREADS=1 celery -A watchdog_ai.celery worker --loglevel=info --concurrency=1
