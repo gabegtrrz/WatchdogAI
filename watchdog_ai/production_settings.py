@@ -48,8 +48,6 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
        raise ImproperlyConfigured("SECRET_KEY environment variable must be set")
 
-# Configure allowed hosts for production
-ALLOWED_HOSTS = ["*"]
 
 # ---------------------------
 # Data Augmentation Settings
@@ -267,19 +265,46 @@ PLATFORM = detect_platform()
 PLATFORM_TIER = get_platform_tier()
 print(f"Detected platform: {PLATFORM}, tier: {PLATFORM_TIER}")
 
-# Platform-specific ALLOWED_HOSTS configuration
+# Secure ALLOWED_HOSTS configuration
+_env_allowed = os.environ.get('ALLOWED_HOSTS', '')
+_env_allowed_list = [h.strip() for h in _env_allowed.split(',') if h.strip()]
+
+hosts: list[str] = []
+
+# Platform-derived hosts
 if PLATFORM == 'render':
-    ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
+    render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    if render_host:
+        hosts.append(render_host)
 elif PLATFORM == 'railway':
-    ALLOWED_HOSTS = [os.environ.get('RAILWAY_PUBLIC_DOMAIN')]
+    railway_host = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
+    if railway_host:
+        hosts.append(railway_host)
 elif PLATFORM == 'heroku':
-    ALLOWED_HOSTS = [(os.environ.get('HEROKU_APP_NAME')) + '.herokuapp.com']
+    heroku_app = os.environ.get('HEROKU_APP_NAME')
+    if heroku_app:
+        hosts.append(f"{heroku_app}.herokuapp.com")
 elif PLATFORM in ['aws', 'gcp', 'azure', 'digitalocean']:
-    # For cloud platforms, use environment variable or wildcard
-    ALLOWED_HOSTS = [os.environ.get('ALLOWED_HOST')]
-else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-    print(f"Unknown platform '{PLATFORM}' detected - using localhost ALLOWED_HOSTS for local development")
+    cloud_host = os.environ.get('ALLOWED_HOST')
+    if cloud_host:
+        hosts.append(cloud_host)
+
+# Explicit env override/appends
+hosts.extend(_env_allowed_list)
+
+# Development safety
+if DEBUG:
+    hosts.extend(['localhost', '127.0.0.1'])
+
+# Deduplicate and filter empties
+ALLOWED_HOSTS = [h for i, h in enumerate(hosts) if h and h not in hosts[:i]]
+
+# Final guard: must not be wildcard and must not be empty in production
+if not DEBUG:
+    if not ALLOWED_HOSTS:
+        raise ImproperlyConfigured("ALLOWED_HOSTS is empty. Set platform host env var or ALLOWED_HOSTS.")
+    if '*' in ALLOWED_HOSTS:
+        raise ImproperlyConfigured("Wildcard '*' is not allowed in ALLOWED_HOSTS for production.")
 
 '''
 POSTGRES_LOCAL = os.environ.get("POSTGRES_LOCAL", "False").lower() in ('true', '1', 't')
@@ -353,24 +378,12 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Platform-specific CSRF trusted origins
+# Platform-specific and env-provided CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = []
-if PLATFORM == 'render':
-    render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-    if render_hostname:
-        CSRF_TRUSTED_ORIGINS.append(f"https://{render_hostname}")
-elif PLATFORM == 'railway':
-    railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
-    if railway_domain:
-        CSRF_TRUSTED_ORIGINS.append(f"https://{railway_domain}")
-elif PLATFORM == 'heroku':
-    heroku_app = os.environ.get('HEROKU_APP_NAME')
-    if heroku_app:
-        CSRF_TRUSTED_ORIGINS.append(f"https://{heroku_app}.herokuapp.com")
-elif PLATFORM in ['aws', 'gcp', 'azure', 'digitalocean']:
-    allowed_host = os.environ.get('ALLOWED_HOST')
-    if allowed_host:
-        CSRF_TRUSTED_ORIGINS.append(f"https://{allowed_host}")
+for host in ALLOWED_HOSTS:
+    # Only add hostnames (not IPs without scheme) for CSRF
+    if host and host != 'localhost' and host != '127.0.0.1':
+        CSRF_TRUSTED_ORIGINS.append(f"https://{host}")
 
 # Add localhost for development
 CSRF_TRUSTED_ORIGINS.extend(['http://localhost:8000', 'http://127.0.0.1:8000'])
