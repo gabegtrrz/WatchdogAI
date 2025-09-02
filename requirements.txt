@@ -2,7 +2,6 @@ Django==5.2
 djangorestframework==3.16.0
 django-cors-headers==4.7.0
 django-filter==25.1
-django-celery-results==2.5.1
 
 # Database
 psycopg2-binary==2.9.10
@@ -31,7 +30,12 @@ psutil==6.1.0
 # General purpose
 Pillow==11.1.0
 
-# Production dependencies for Railway deployment
+# Production dependencies for deployment
 gunicorn==23.0.0
 whitenoise==6.9.0
-celery==5.4.0
+
+# Asynchronous tasks
+celery==5.5.3
+redis==5.2.1
+django-celery-results==2.6.0
+django-celery-beat==2.8.1
