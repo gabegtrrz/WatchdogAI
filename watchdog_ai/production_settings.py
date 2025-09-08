@@ -3,6 +3,7 @@ Production Settings for Watchdog AI Django Application
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
@@ -157,7 +158,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_filters',
-    'django_celery_results',
     
     # Local apps
     'apps.core',
@@ -168,6 +168,10 @@ INSTALLED_APPS = [
     'apps.data_generation',
     'apps.data_augmentation',
     'apps.performance_monitoring',
+
+    # Celery
+    # 'django_celery_results',
+    'django_celery_beat',
 ]
 
 # Add whitenoise middleware for static file serving
@@ -480,20 +484,52 @@ LOGGING = {
     },
 }
 
-# Celery configuration - Adaptive
-CELERY_TASK_ALWAYS_EAGER = True  # Run tasks synchronously (no Redis needed)
-CELERY_TASK_EAGER_PROPAGATES = True  # Propagate exceptions in eager mode
-CELERY_RESULT_BACKEND = 'django-db'  # Use database instead of Redis
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
-CELERY_TASK_TRACK_STARTED = True
+### CELERY SETTINGS ###
 
+# ---------------------------
+# CELERY BROKER & BACKEND
+# ---------------------------
+if ENVIRONMENT == "development":
+    # Local Redis via Docker
+    CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+    # CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1")
+else:
+    # Production: Managed Redis (Render, Railway, etc.)
+    CELERY_BROKER_URL = os.environ["REDIS_URL"]       # must exist in env
+    # CELERY_RESULT_BACKEND = os.environ["REDIS_URL"]
+
+# ---------------------------
+# SERIALIZATION
+# ---------------------------
+CELERY_TASK_SERIALIZER = "json"
+CELERY_ACCEPT_CONTENT = ["json"]
+# CELERY_RESULT_SERIALIZER = "json"
+CELERY_ENABLE_UTC = True
+CELERY_TIMEZONE = 'UTC'
+
+# ---------------------------
+# TASK RELIABILITY & PERFORMANCE
+# ---------------------------
+CELERY_TASK_ACKS_LATE = True                # only ack (acknowledge) after successful completion
+CELERY_TASK_REJECT_ON_WORKER_LOST = True    # requeue if worker crashes
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1       # fair task distribution
+CELERY_TASK_TRACK_STARTED = True
+# Adaptive task time limits in section below
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 100     # recycle workers to prevent memory leaks
+
+# ---------------------------
+# RESULT EXPIRATION
+# ---------------------------
+# CELERY_RESULT_EXPIRES = timedelta(days=1)
+
+
+# ---------------------------
 # Adaptive task time limits based on platform and tier
+# ---------------------------
 if PLATFORM_TIER in ['free', 'eco', 'minimal']:
     CELERY_TASK_TIME_LIMIT = 5 * 60  # 5 minutes for free/low tiers
-    CELERY_TASK_SOFT_TIME_LIMIT = 3 * 60  # 3 minutes soft limit
+    CELERY_TASK_SOFT_TIME_LIMIT = 3 * 60  # 3 minutes graceful timeout before hard-kill
+
 elif PLATFORM_TIER in ['starter', 'basic', 'small']:
     CELERY_TASK_TIME_LIMIT = 10 * 60  # 10 minutes for starter tiers
     CELERY_TASK_SOFT_TIME_LIMIT = 8 * 60  # 8 minutes soft limit
@@ -504,7 +540,21 @@ else:  # premium, performance, large
     CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes for higher tiers
     CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes soft limit
 
+
+# ---------------------------
+# Sycnhronous Processing Celery configuration (archived)
+# ---------------------------
+# CELERY_TASK_ALWAYS_EAGER = True  # Run tasks synchronously (no Redis needed)
+# CELERY_TASK_EAGER_PROPAGATES = True  # Propagate exceptions in eager mode
+# # CELERY_RESULT_BACKEND = 'django-db'  # Use database instead of Redis
+# CELERY_TASK_TRACK_STARTED = True
+
+#
+
+
+# ---------------------------
 # Email configuration for production
+# ---------------------------
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
@@ -512,9 +562,10 @@ EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
+# ---------------------------
 # CORS settings for production
+# ---------------------------
 CORS_ALLOWED_ORIGINS = [
     os.getenv('FRONTEND_URL', 'http://localhost:3000'),
 ]
-
 CORS_ALLOW_CREDENTIALS = True 
