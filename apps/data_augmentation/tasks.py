@@ -1,4 +1,5 @@
 from celery import shared_task
+
 from django.conf import settings
 from django.utils import timezone
 from apps.data_augmentation.services import (
@@ -14,13 +15,50 @@ logger = logging.getLogger(__name__)
 @shared_task(bind=True, max_retries=3)
 def scrape_item_price_task(self, item_name: str):
     """
-    Background task to scrape price for a single item.
-    Retries up to 3 times if scraping fails.
+    Fetch and cache the average price for a single item as a background task.
+
+    This Celery task retrieves today's average price for the specified item_name in a way that is idempotent—meaning it can be executed multiple times without changing the outcome or causing unintended effects. If a cache entry for today already exists in
+    `ItemAveragePrice`, the cached value is returned and no external scraping is
+    performed. Otherwise, it will call `scrape_average_price_for_item` to obtain
+    a fresh value and persist it.
+
+    Retries: Up to 3 attempts with exponential backoff on unhandled exceptions.
+
+    Args:
+        item_name: Case-insensitive name of the item to price-check.
+
+    Returns:
+        A dictionary shaped for logging/inspection with keys:
+        - 'status': One of {'cached', 'success', 'failed'}
+        - 'item_name': The normalized item name provided to the task
+        - 'price': Stringified price when available
+        - 'date': ISO date string for the cache entry when available
+        - 'error': Present only when status == 'failed'
+
+    Status semantics:
+        - 'cached': A record for `item_name` already existed in `ItemAveragePrice`
+          for today's date, so no external scraping occurred. The returned 'price'
+          and 'date' reflect the existing database entry.
+        - 'success': No cache existed for today; the task scraped a fresh price
+          via `scrape_average_price_for_item`, persisted it as a new
+          `ItemAveragePrice` row for today, and returns that value in 'price'.
+        - 'failed': Either no price could be obtained from the scraper (e.g.,
+          parsing or availability issue) or an exception occurred and retries were
+          exhausted. In this case, no new cache entry is created for today and the
+          response includes an 'error' message.
+
+    Side Effects:
+        - Reads/writes `ItemAveragePrice` for today's date. Saved to model in the database.
+        - Emits structured logs for observability.
+
+    Raises:
+        The task will schedule a retry on unexpected exceptions until
+        `max_retries` is reached, then return a 'failed' result.
     """
     try:
         logger.info(f"Starting background price scraping for item: {item_name}")
         
-        # Check if we already have today's price
+        # Fast-path: return early if today's price is already cached
         today = timezone.now().date()
         try:
             cached_price = ItemAveragePrice.objects.get(
@@ -37,11 +75,11 @@ def scrape_item_price_task(self, item_name: str):
         except ItemAveragePrice.DoesNotExist:
             pass
         
-        # Scrape the price
+        # Scrape a fresh average price via the service layer
         scraped_price = scrape_average_price_for_item(item_name)
         
         if scraped_price:
-            # Save to cache
+            # Persist the newly scraped price as today's cache entry
             ItemAveragePrice.objects.create(
                 item_name=item_name,
                 date=today,
@@ -67,7 +105,7 @@ def scrape_item_price_task(self, item_name: str):
     except Exception as exc:
         logger.error(f"Error scraping price for '{item_name}': {exc}")
         
-        # Retry the task
+        # Retry using exponential backoff (60s, 120s, 240s) up to max_retries
         if self.request.retries < self.max_retries:
             logger.info(f"Retrying task for '{item_name}' (attempt {self.request.retries + 1})")
             raise self.retry(countdown=60 * (2 ** self.request.retries))  # Exponential backoff
@@ -88,7 +126,7 @@ def startup_price_scraping_task():
     logger.info("Starting background startup price scraping task...")
     
     # Check if scraping is enabled
-    if not getattr(settings, 'ENABLE_PRICE_SCRAPING', False):
+    if not getattr(settings, 'ENABLE_PRICE_SCRAPING', False): # django's global settings object
         logger.info("Price scraping is disabled. Skipping background startup scraping.")
         return {
             'status': 'disabled',
@@ -107,16 +145,16 @@ def startup_price_scraping_task():
         }
     
     # Create tasks for each item
-    tasks = []
+    tasks_num = 0
     for item_name in unique_items:
         task = scrape_item_price_task.delay(item_name)
-        tasks.append(task)
+        tasks_num += 1
     
-    logger.info(f"Created {len(tasks)} background scraping tasks")
+    logger.info(f"Created {len(tasks_num)} background scraping tasks")
     
     return {
         'status': 'started',
-        'tasks_created': len(tasks),
+        'tasks_created': tasks_num,
         'items': unique_items
     }
 
