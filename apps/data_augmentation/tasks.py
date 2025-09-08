@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @shared_task(bind=True, max_retries=3)
 def scrape_item_price_task(self, item_name: str):
     """
-    Fetch and cache the average price for a single item as a background task.
+    Fetch and cache the average price for a SINGLE item as a background task.
 
     This Celery task retrieves today's average price for the specified item_name in a way that is idempotent—meaning it can be executed multiple times without changing the outcome or causing unintended effects. If a cache entry for today already exists in
     `ItemAveragePrice`, the cached value is returned and no external scraping is
@@ -73,7 +73,7 @@ def scrape_item_price_task(self, item_name: str):
                 'date': str(today)
             }
         except ItemAveragePrice.DoesNotExist:
-            pass
+            pass # move on to scraping a fresh price
         
         # Scrape a fresh average price via the service layer
         scraped_price = scrape_average_price_for_item(item_name)
@@ -109,6 +109,9 @@ def scrape_item_price_task(self, item_name: str):
         if self.request.retries < self.max_retries:
             logger.info(f"Retrying task for '{item_name}' (attempt {self.request.retries + 1})")
             raise self.retry(countdown=60 * (2 ** self.request.retries))  # Exponential backoff
+            # First failure (retries == 0): 60 * 2^0 = 60s
+            # Second failure (retries == 1): 60 * 2^1 = 120s
+            # Third failure (retries == 2): 60 * 2^2 = 240s
         
         return {
             'status': 'failed',
