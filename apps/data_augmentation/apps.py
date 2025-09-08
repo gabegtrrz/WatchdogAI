@@ -2,6 +2,9 @@ from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class DataAugmentationConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
@@ -21,9 +24,9 @@ class DataAugmentationConfig(AppConfig):
                 # Use background task for startup scraping to avoid blocking
                 from .tasks import startup_price_scraping_task
                 startup_price_scraping_task.delay()
-                print(f"Started background price scraping task in {environment} environment")
+                logger.info(f"Started price scraping task in background for '{environment}' environment")
             else:
-                print(f"Startup price scraping disabled in {environment} environment")
+                logger.info(f"Startup price scraping disabled in '{environment}' environment")
                 
         except ImportError:
             pass
