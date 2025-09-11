@@ -171,7 +171,7 @@ INSTALLED_APPS = [
 
     # Celery
     # 'django_celery_results',
-    'django_celery_beat',
+    # 'django_celery_beat',
 ]
 
 # Add whitenoise middleware for static file serving
@@ -491,12 +491,12 @@ LOGGING = {
 # ---------------------------
 if ENVIRONMENT == "development":
     # Local Redis via Docker
-    CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
-    # CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1")
+    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+    # CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/1")
 else:
     # Production: Managed Redis (Render, Railway, etc.)
-    CELERY_BROKER_URL = os.environ["REDIS_URL"]       # must exist in env
-    # CELERY_RESULT_BACKEND = os.environ["REDIS_URL"]
+    CELERY_BROKER_URL = os.environ["CELERY_BROKER_URL"]       # must exist in env
+    # CELERY_RESULT_BACKEND = os.environ["CELERY_BROKER_URL"]
 
 # ---------------------------
 # SERIALIZATION
